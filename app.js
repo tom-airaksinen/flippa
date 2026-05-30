@@ -27,6 +27,26 @@ let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
 let seeding = false;
 
+// ---- Språk (för uttal) ----
+const LANG_OPTIONS = [
+  { label: "Inget / ej språk", code: "" },
+  { label: "Italienska", code: "it-IT" },
+  { label: "Tyska", code: "de-DE" },
+  { label: "Franska", code: "fr-FR" },
+  { label: "Spanska", code: "es-ES" },
+  { label: "Engelska", code: "en-GB" },
+  { label: "Portugisiska", code: "pt-PT" },
+];
+const LANG_GUESS = {
+  italienska: "it-IT", tyska: "de-DE", franska: "fr-FR",
+  spanska: "es-ES", engelska: "en-GB", portugisiska: "pt-PT",
+};
+// Returnerar ämnets språkkod (explicit fält, annars gissning från namnet)
+function subjectLang(s) {
+  if (!s) return "";
+  return s.lang || LANG_GUESS[(s.name || "").trim().toLowerCase()] || "";
+}
+
 // =========================================================================
 //  SRS-lager (localStorage) – graderad Leitner
 // =========================================================================
@@ -97,6 +117,7 @@ function normalize(subjectsObj) {
       id,
       name: s.name,
       order: s.order ?? 0,
+      lang: s.lang || null,
       lessons: Object.entries(s.lessons || {})
         .map(([lid, l]) => ({
           id: lid,
@@ -388,6 +409,7 @@ function loadCard() {
   cardFront.textContent = showFrontFirst ? c.front : c.back;
   cardBack.textContent = showFrontFirst ? c.back : c.front;
   updateProgress();
+  updateSpeakBtn();
 }
 
 function finishSession() {
@@ -423,6 +445,49 @@ function showFeedback(grade) {
   feedbackEl.classList.remove("show");
   void feedbackEl.offsetWidth;
   feedbackEl.classList.add("show");
+}
+
+// =========================================================================
+//  Uttal (Web Speech API)
+// =========================================================================
+const speakBtn = $("speak-btn");
+
+function speak(text, lang) {
+  if (!text || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(text);
+  if (lang) {
+    u.lang = lang;
+    const voices = speechSynthesis.getVoices();
+    const v = voices.find((x) => x.lang === lang) ||
+              voices.find((x) => x.lang.replace("_", "-").startsWith(lang.slice(0, 2)));
+    if (v) u.voice = v;
+  }
+  speechSynthesis.cancel();
+  speechSynthesis.speak(u);
+}
+
+// Är den utländska sidan (front-fältet) synlig just nu?
+function foreignVisible() {
+  if (!session || !session.current) return false;
+  const flipped = card.classList.contains("flipped");
+  return session.shownDir === "f2b" ? !flipped : flipped;
+}
+
+function updateSpeakBtn() {
+  const ok = !!subjectLang(currentSubject) && foreignVisible() && "speechSynthesis" in window;
+  speakBtn.classList.toggle("hidden", !ok);
+}
+
+speakBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+speakBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (session && session.current) speak(session.current.front, subjectLang(currentSubject));
+});
+
+// Förladda röstlistan (laddas asynkront i vissa webbläsare)
+if ("speechSynthesis" in window) {
+  speechSynthesis.getVoices();
+  speechSynthesis.onvoiceschanged = () => speechSynthesis.getVoices();
 }
 
 // =========================================================================
@@ -463,6 +528,7 @@ function flyOut(grade) {
 card.addEventListener("click", () => {
   if (didSwipe || animating) return;
   card.classList.toggle("flipped");
+  updateSpeakBtn();
 });
 
 card.addEventListener("pointerdown", (e) => {
@@ -542,6 +608,35 @@ function askName(title, value = "", okLabel = "Spara") {
     m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
     m.querySelector("#m-ok").onclick = ok;
     input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
+  });
+}
+
+function askSubject(title, name = "", lang = "") {
+  return new Promise((resolve) => {
+    const opts = LANG_OPTIONS.map(
+      (o) => `<option value="${o.code}" ${o.code === lang ? "selected" : ""}>${esc(o.label)}</option>`
+    ).join("");
+    const m = openModal(`
+      <h3>${esc(title)}</h3>
+      <label>Namn</label>
+      <input type="text" id="m-name" value="${esc(name)}" autocomplete="off" />
+      <label>Språk (för uttal)</label>
+      <select id="m-lang">${opts}</select>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="m-cancel">Avbryt</button>
+        <button class="btn-primary" id="m-ok">Spara</button>
+      </div>`);
+    const nameI = m.querySelector("#m-name");
+    nameI.focus();
+    nameI.select();
+    m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
+    m.querySelector("#m-ok").onclick = () => {
+      const n = nameI.value.trim();
+      const l = m.querySelector("#m-lang").value;
+      closeModal();
+      resolve(n ? { name: n, lang: l } : null);
+    };
+    nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#m-ok").click(); });
   });
 }
 
@@ -643,11 +738,11 @@ function writeError(err) {
   flash("Fel: " + (err.code || err.message), 4000);
 }
 
-function addSubject(name) {
-  db.ref("content/subjects").push({ name, order: Date.now(), createdAt: TS }).catch(writeError);
+function addSubject(name, lang) {
+  db.ref("content/subjects").push({ name, order: Date.now(), createdAt: TS, lang: lang || null }).catch(writeError);
 }
-function renameSubject(sid, name) {
-  db.ref(`content/subjects/${sid}/name`).set(name).catch(writeError);
+function updateSubject(sid, name, lang) {
+  db.ref(`content/subjects/${sid}`).update({ name, lang: lang || null }).catch(writeError);
 }
 function removeSubject(sid) {
   db.ref(`content/subjects/${sid}`).remove().catch(writeError);
@@ -684,12 +779,12 @@ async function editSubject(sid) {
   const s = content.find((x) => x.id === sid);
   if (!s) return;
   const action = await actionSheet(s.name, [
-    { label: "✎ Byt namn", value: "rename" },
+    { label: "✎ Redigera (namn & språk)", value: "rename" },
     { label: "🗑 Ta bort ämne", value: "delete", danger: true },
   ]);
   if (action === "rename") {
-    const name = await askName("Byt namn på ämne", s.name);
-    if (name) renameSubject(sid, name);
+    const res = await askSubject("Redigera ämne", s.name, subjectLang(s));
+    if (res) updateSubject(sid, res.name, res.lang);
   } else if (action === "delete") {
     const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
@@ -753,8 +848,8 @@ async function deleteWord(cid) {
 
 // Header-knappar
 $("add-subject").onclick = async () => {
-  const name = await askName("Nytt ämne", "");
-  if (name) addSubject(name);
+  const res = await askSubject("Nytt ämne", "", "");
+  if (res) addSubject(res.name, res.lang);
 };
 $("add-lesson").onclick = async () => {
   if (!currentSubject) return;

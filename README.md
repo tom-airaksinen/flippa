@@ -12,6 +12,7 @@ Ren HTML/CSS/JS – inga ramverk eller byggsteg. Innehåll i Firebase, statistik
 - **Två träningslägen:** lektionsträning (svagast först) och "Dags att öva" (förfallna idag)
 - **Full redigering från mobilen:** skapa/byt namn/ta bort ämnen, lektioner & ord
 - **Snabbinmatning:** klistra in flera ord på formatet `utländskt;svenskt`
+- **Uttal:** 🔊-knapp läser upp det utländska ordet (Web Speech API, språk per ämne)
 - **Synk & backup:** innehåll i Firebase (delas mellan enheter), SRS-statistik i localStorage per enhet (ingen inloggning)
 - **Offline:** service worker cachar appen + senaste innehållet
 
