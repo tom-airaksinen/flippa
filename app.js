@@ -596,7 +596,7 @@ function setDrag(dx, dy) {
 function snapBack() {
   card.classList.add("snapping");
   card.style.transform = "";
-  card.addEventListener("transitionend", () => card.classList.remove("snapping"), { once: true });
+  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); }, { once: true });
 }
 
 function flyOut(grade) {
@@ -627,6 +627,7 @@ card.addEventListener("pointerdown", (e) => {
   startY = e.clientY;
   dragging = true;
   didSwipe = false;
+  speakBtn.classList.add("hidden"); // dölj direkt när man tar i kortet
   card.setPointerCapture(e.pointerId);
 });
 
