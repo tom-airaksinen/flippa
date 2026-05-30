@@ -437,8 +437,11 @@ function loadCard() {
   updateSpeakBtn();
 }
 
+const DONE_LABELS = ["Grymt!", "Nice!", "Hell yeah!", "Snyggt!", "Kanon!", "Toppen!", "Bra jobbat!", "Yes!", "Så ska det se ut!", "Mästerligt!"];
+
 function finishSession() {
   $("congrats-sub").textContent = (session && session.note) || `${session ? session.label : ""} – klar! 🎉`;
+  $("congrats-done").textContent = DONE_LABELS[Math.floor(Math.random() * DONE_LABELS.length)];
   session = null;
   show("congrats");
   activeScreen = "congrats";
