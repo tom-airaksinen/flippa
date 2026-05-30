@@ -277,6 +277,19 @@ body {
 #congrats-sub { color: var(--muted); }
 #congrats-screen .primary-btn { margin-top: 12px; min-width: 160px; }
 
+.editor-search {
+  margin: 0 16px 10px;
+  width: calc(100% - 32px);
+  background: var(--surface-2);
+  border: 1px solid #3a4150;
+  border-radius: 10px;
+  color: var(--text);
+  padding: 11px 14px;
+  font-size: 0.95rem;
+  font-family: inherit;
+}
+.editor-search::placeholder { color: var(--muted); }
+
 /* ---- Editor: ordrader ---- */
 .word-row {
   display: flex;

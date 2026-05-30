@@ -797,8 +797,12 @@ async function editSubject(sid) {
   }
 }
 
+const editorSearch = $("editor-search");
+editorSearch.addEventListener("input", () => { if (activeScreen === "editor") renderEditor(); });
+
 function openEditor(lessonId) {
   currentLessonId = lessonId;
+  editorSearch.value = ""; // nollställ filter vid byte av lektion
   renderEditor();
 }
 
@@ -819,7 +823,15 @@ function renderEditor() {
     list.innerHTML = `<p class="empty">Inga ord än. Tryck ＋ Lägg till ord.</p>`;
     return;
   }
-  list.innerHTML = lesson.cards
+  const filter = (editorSearch.value || "").trim().toLowerCase();
+  const cards = filter
+    ? lesson.cards.filter((c) => c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter))
+    : lesson.cards;
+  if (!cards.length) {
+    list.innerHTML = `<p class="empty">Inga träffar på "${esc(filter)}".</p>`;
+    return;
+  }
+  list.innerHTML = cards
     .map(
       (c) => `<div class="word-row">
         <div class="word-texts" data-edit="${c.id}">
