@@ -1200,8 +1200,22 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
+const APP_VERSION = "v17";
+$("version-tag").textContent = "Flippa " + APP_VERSION;
+
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js").catch(() => {});
+  const hadController = !!navigator.serviceWorker.controller;
+  let refreshing = false;
+  // När en ny service worker tar över → ladda om en gång så nya versionen syns direkt
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (!hadController || refreshing) return;
+    refreshing = true;
+    location.reload();
+  });
+  navigator.serviceWorker
+    .register("sw.js")
+    .then((reg) => reg.update())
+    .catch(() => {});
 }
 
 boot();

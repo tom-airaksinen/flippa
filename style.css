@@ -100,6 +100,7 @@ body {
   margin-right: 8px;
 }
 .empty { color: var(--muted); padding: 24px 16px; text-align: center; }
+.version-tag { margin-top: auto; text-align: center; color: var(--muted); font-size: 0.7rem; opacity: 0.55; padding: 10px 0 16px; }
 
 .settings-row {
   display: flex;
