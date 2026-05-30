@@ -1226,7 +1226,7 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v22";
+const APP_VERSION = "v23";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
@@ -1241,7 +1241,14 @@ if ("serviceWorker" in navigator) {
   });
   navigator.serviceWorker
     .register("sw.js")
-    .then((reg) => reg.update())
+    .then((reg) => {
+      reg.update();
+      // Leta efter ny version när appen kommer i förgrunden + periodiskt
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible") reg.update();
+      });
+      setInterval(() => reg.update(), 60000);
+    })
     .catch(() => {});
 }
 

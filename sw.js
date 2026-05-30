@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v22";
+const CACHE = "flashcards-v23";
 const ASSETS = [
   "./",
   "./index.html",
@@ -16,7 +16,12 @@ const ASSETS = [
 
 self.addEventListener("install", (e) => {
   e.waitUntil(
-    caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE).then(async (c) => {
+      // Lokala filer MÅSTE cachas (annars är installationen meningslös)
+      await c.addAll(ASSETS.filter((u) => !u.startsWith("http")));
+      // CDN-filer (Firebase) cachas best-effort – får inte blockera uppdateringen
+      await Promise.allSettled(ASSETS.filter((u) => u.startsWith("http")).map((u) => c.add(u)));
+    }).then(() => self.skipWaiting())
   );
 });
 
