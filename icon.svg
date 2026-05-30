@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#15171c"/>
-  <g transform="translate(256 262)">
-    <rect x="-150" y="-110" width="300" height="200" rx="26" fill="#272c36" transform="rotate(-9)"/>
-    <rect x="-150" y="-110" width="300" height="200" rx="26" fill="#5b8cff" transform="rotate(7)"/>
-    <text x="0" y="40" font-family="-apple-system, Helvetica, Arial, sans-serif" font-size="150" font-weight="800" fill="#ffffff" text-anchor="middle" transform="rotate(7)">A</text>
-  </g>
-</svg>

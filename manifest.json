@@ -1,6 +1,6 @@
 {
-  "name": "Flashcards",
-  "short_name": "Flashcards",
+  "name": "Flippa",
+  "short_name": "Flippa",
   "description": "Träna glosor med spaced repetition",
   "start_url": ".",
   "scope": ".",
