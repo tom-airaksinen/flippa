@@ -272,6 +272,7 @@ body {
 .card.fly-right { transition: transform 0.22s ease-in; transform: translateX(140%) rotate(18deg); }
 .card.fly-left  { transition: transform 0.22s ease-in; transform: translateX(-140%) rotate(-18deg); }
 .card.fly-up    { transition: transform 0.22s ease-in; transform: translateY(-140%) scale(0.9); }
+.card.fly-down  { transition: transform 0.22s ease-in; transform: translateY(140%) rotate(-6deg); }
 .card.emerge    { animation: emerge 0.26s ease-out; }
 @keyframes emerge {
   from { opacity: 0; transform: scale(0.92) translateY(12px); }
@@ -298,9 +299,9 @@ body {
 .train-footer {
   display: flex;
   justify-content: space-around;
-  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  padding: 14px 8px calc(14px + env(safe-area-inset-bottom));
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 0.78rem;
 }
 
 /* ---- Klar-skärm ---- */
@@ -465,3 +466,15 @@ body {
   cursor: pointer;
 }
 .sheet-btn.danger { color: var(--fail); }
+.full-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 11px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+.modal input[type="file"] { color: var(--muted); font-size: 0.85rem; }

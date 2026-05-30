@@ -28,7 +28,7 @@
 - [x] Snabbinmatning? → **Svar:** Klistra in flera rader `utländskt;svenskt`, en per ord (2026-05-30)
 - [ ] Ska man kunna flytta ord mellan lektioner, eller räcker lägg till/ta bort?
 - [ ] Import: slå ihop (merge) eller ersätta befintligt innehåll?
-- [ ] Behövs export/import-JSON till git som backup, eller litar vi på Firebase?
+- [x] Behövs export/import-JSON? → **Svar:** Ja, för SRS-statistiken (localStorage) inför ominstallation – content ligger i Firebase och är redan säkert. Byggt 2026-05-30 (export/import via menyn ⋯).
 
 ## Projekt & drift
 - [x] Repo-namn på privata GitHub-kontot? → **Svar:** "flashcards" (lokal mapp heter "glosappen" – får skilja sig) (2026-05-30)

@@ -84,7 +84,7 @@ function isDue(cardId, dir, now) {
 function gradeCard(cardId, dir, grade) {
   const e = getEntry(cardId, dir);
   const now = Date.now();
-  if (grade === "fail") {
+  if (grade === "fail" || grade === "hard") {
     e.box = 1;
     e.due = now; // dyker upp igen idag
   } else {
@@ -480,26 +480,30 @@ function answer(grade) {
   if (!session.graded.has(key)) {
     gradeCard(c.id, dir, grade);
     session.graded.add(key);
-    // Att öva ordet räknas som repetition även för andra riktningen:
+    // Ett LYCKAT svar räknas som repetition även för andra riktningen:
     // är den introducerad och förfallen, skjut fram datumet (behåll lådan)
     // så att ett tränat ord försvinner helt från "Dags att öva".
-    const otherDir = dir === "f2b" ? "b2f" : "f2b";
-    const oe = getEntry(c.id, otherDir);
-    const now = Date.now();
-    if (oe.box >= 1 && oe.due <= now) {
-      oe.due = now + BOX_INTERVALS[oe.box] * DAY_MS;
-      saveSRS();
+    if (grade === "good" || grade === "easy") {
+      const otherDir = dir === "f2b" ? "b2f" : "f2b";
+      const oe = getEntry(c.id, otherDir);
+      const now = Date.now();
+      if (oe.box >= 1 && oe.due <= now) {
+        oe.due = now + BOX_INTERVALS[oe.box] * DAY_MS;
+        saveSRS();
+      }
     }
   }
-  // ta bort från kön; vid fel läggs det tillbaka sist (oavsett SRS-räkning)
+  // Köhantering inom passet (oberoende av SRS-räkningen):
+  // fel → tillbaka sist; hopplöst → tillbaka snart (drilla hårt); kan/kan bra → klart
   session.queue.shift();
   if (grade === "fail") session.queue.push(c);
+  else if (grade === "hard") session.queue.splice(Math.min(3, session.queue.length), 0, c);
   loadCard();
 }
 
 // ---- Feedback ----
 function showFeedback(grade) {
-  const map = { fail: ["✗", "#e05a4f"], good: ["✓", "#5bbf72"], easy: ["★", "#f4c542"] };
+  const map = { fail: ["✗", "#e05a4f"], good: ["✓", "#5bbf72"], easy: ["★", "#f4c542"], hard: ["⇊", "#b06bf0"] };
   const [sym, color] = map[grade];
   feedbackEl.textContent = sym;
   feedbackEl.style.color = color;
@@ -586,8 +590,7 @@ const ROT = 0.06;
 
 function setDrag(dx, dy) {
   const deg = dx * ROT;
-  const ty = Math.min(0, dy);
-  card.style.transform = `translateX(${dx}px) translateY(${ty}px) rotate(${deg}deg)`;
+  card.style.transform = `translateX(${dx}px) translateY(${dy}px) rotate(${deg}deg)`;
 }
 
 function snapBack() {
@@ -598,7 +601,7 @@ function snapBack() {
 
 function flyOut(grade) {
   animating = true;
-  const cls = grade === "good" ? "fly-right" : grade === "easy" ? "fly-up" : "fly-left";
+  const cls = grade === "good" ? "fly-right" : grade === "easy" ? "fly-up" : grade === "hard" ? "fly-down" : "fly-left";
   card.classList.add(cls);
   setTimeout(() => {
     card.classList.remove("fly-right", "fly-left", "fly-up");
@@ -639,10 +642,11 @@ card.addEventListener("pointerup", (e) => {
   const dy = e.clientY - startY;
   const adx = Math.abs(dx), ady = Math.abs(dy);
 
-  if (ady > THRESH && ady > adx && dy < 0) {
+  if (ady > THRESH && ady > adx) {
     didSwipe = true;
-    showFeedback("easy");
-    flyOut("easy");
+    const g = dy < 0 ? "easy" : "hard";
+    showFeedback(g);
+    flyOut(g);
   } else if (dx > THRESH) {
     didSwipe = true;
     showFeedback("good");
@@ -1093,6 +1097,104 @@ function openTranslate(defaultLessonId) {
 
 $("translate-subject").onclick = () => openTranslate(null);
 $("translate-words").onclick = () => openTranslate(currentLessonId);
+
+// =========================================================================
+//  Backup: exportera / importera SRS-statistik (localStorage)
+// =========================================================================
+function buildBackup() {
+  return JSON.stringify({
+    app: "flippa",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    srs: srs,
+    sessionLimit: localStorage.getItem(SESSION_LIMIT_KEY) || "0",
+  }, null, 0);
+}
+
+function downloadBackup(data) {
+  const blob = new Blob([data], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `flippa-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function openExport() {
+  const data = buildBackup();
+  const count = Object.keys(srs).length;
+  const m = openModal(`
+    <h3>Exportera statistik</h3>
+    <p class="modal-hint">Din inlärningsstatistik (${count} poster) ligger lokalt och försvinner om du avinstallerar appen eller rensar webbläsardata. Spara den här som backup. Glosorna i sig ligger redan tryggt i molnet.</p>
+    <textarea id="exp-text" readonly>${esc(data)}</textarea>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="m-cancel">Stäng</button>
+      <button class="btn-primary" id="exp-copy">Kopiera</button>
+    </div>
+    <button class="full-btn" id="exp-download">⬇︎ Ladda ner som fil</button>`);
+  m.querySelector("#m-cancel").onclick = closeModal;
+  m.querySelector("#exp-copy").onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(data);
+      flash("Kopierat ✓", 1500);
+    } catch {
+      m.querySelector("#exp-text").select();
+      flash("Markera och kopiera manuellt");
+    }
+  };
+  m.querySelector("#exp-download").onclick = () => downloadBackup(data);
+}
+
+function openImport() {
+  const m = openModal(`
+    <h3>Importera statistik</h3>
+    <p class="modal-hint">Välj en backup-fil eller klistra in JSON. Statistiken slås ihop med befintlig (importerad vinner vid krock).</p>
+    <input type="file" id="imp-file" accept="application/json,.json" />
+    <textarea id="imp-text" placeholder="…eller klistra in backup-JSON här"></textarea>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="m-cancel">Avbryt</button>
+      <button class="btn-primary" id="imp-go">Importera</button>
+    </div>`);
+  const ta = m.querySelector("#imp-text");
+  m.querySelector("#imp-file").onchange = (e) => {
+    const f = e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => { ta.value = reader.result; };
+    reader.readAsText(f);
+  };
+  m.querySelector("#m-cancel").onclick = closeModal;
+  m.querySelector("#imp-go").onclick = () => {
+    const txt = ta.value.trim();
+    if (!txt) { flash("Välj en fil eller klistra in JSON först"); return; }
+    let obj;
+    try { obj = JSON.parse(txt); } catch { flash("Ogiltig JSON"); return; }
+    const imported = obj && obj.srs;
+    if (!imported || typeof imported !== "object") { flash("Hittar ingen statistik i filen"); return; }
+    let n = 0;
+    for (const k in imported) { srs[k] = imported[k]; n++; }
+    saveSRS();
+    if (obj.sessionLimit != null) {
+      localStorage.setItem(SESSION_LIMIT_KEY, String(obj.sessionLimit));
+      sessionLimitSel.value = String(obj.sessionLimit);
+    }
+    closeModal();
+    flash(`Importerade statistik för ${n} kort ✓`, 2500);
+    renderCurrentScreen();
+  };
+}
+
+$("menu-btn").onclick = async () => {
+  const a = await actionSheet("Backup av statistik", [
+    { label: "⬆︎ Exportera statistik", value: "export" },
+    { label: "⬇︎ Importera statistik", value: "import" },
+  ]);
+  if (a === "export") openExport();
+  else if (a === "import") openImport();
+};
 
 // =========================================================================
 //  PWA + start

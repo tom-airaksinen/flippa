@@ -8,7 +8,8 @@ Ren HTML/CSS/JS – inga ramverk eller byggsteg. Innehåll i Firebase, statistik
 ## Funktioner
 
 - **3 nivåer:** Ämne (t.ex. Italienska) → Lektion (t.ex. Mat & dryck) → Ord
-- **Graderad Leitner-SRS:** 👈 kan inte · 👉 kan · 👆 kan väldigt bra → ord schemaläggs med förfallodatum
+- **Graderad Leitner-SRS:** 👇 hopplöst · 👈 kan inte · 👉 kan · 👆 kan väldigt bra → ord schemaläggs med förfallodatum
+- **Backup:** exportera/importera SRS-statistik (localStorage) som JSON inför ominstallation
 - **Två träningslägen:** lektionsträning (svagast först) och "Dags att öva" (förfallna idag)
 - **Full redigering från mobilen:** skapa/byt namn/ta bort ämnen, lektioner & ord
 - **Snabbinmatning:** klistra in flera ord på formatet `utländskt;svenskt`
