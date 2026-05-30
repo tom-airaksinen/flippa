@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Flashcards</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#15171c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Status / laddning -->
+  <div id="status-banner" class="hidden"></div>
+
+  <!-- Ämnesskärm -->
+  <section id="subjects-screen" class="screen">
+    <header class="app-header">
+      <h1>📚 Flashcards</h1>
+      <button id="add-subject" class="icon-btn" title="Nytt ämne">＋</button>
+    </header>
+    <div id="subjects-list" class="list"></div>
+  </section>
+
+  <!-- Lektionsskärm -->
+  <section id="lessons-screen" class="screen hidden">
+    <header class="app-header">
+      <button class="back-btn" data-back="subjects">←</button>
+      <h1 id="lessons-title"></h1>
+      <button id="edit-subject" class="icon-btn" title="Redigera ämne">✎</button>
+      <button id="add-lesson" class="icon-btn" title="Ny lektion">＋</button>
+    </header>
+    <button id="due-btn" class="primary-btn hidden"></button>
+    <div id="lessons-list" class="list"></div>
+  </section>
+
+  <!-- Lektionseditor -->
+  <section id="editor-screen" class="screen hidden">
+    <header class="app-header">
+      <button class="back-btn" data-back="lessons">←</button>
+      <h1 id="editor-title"></h1>
+      <button id="rename-lesson" class="icon-btn" title="Byt namn">✎</button>
+      <button id="delete-lesson" class="icon-btn" title="Ta bort lektion">🗑</button>
+    </header>
+    <button id="add-words" class="primary-btn">＋ Lägg till ord</button>
+    <div id="editor-list" class="list"></div>
+  </section>
+
+  <!-- Träningsskärm -->
+  <section id="training-screen" class="screen hidden">
+    <div id="train-bar">
+      <button class="back-btn" data-back="lessons">←</button>
+      <select id="dir-select">
+        <option value="f2b">Fram → Bak</option>
+        <option value="b2f">Bak → Fram</option>
+        <option value="mixed">Blandat</option>
+      </select>
+      <span id="progress-pill">0</span>
+    </div>
+
+    <div id="swipe-feedback"></div>
+
+    <main class="card-area">
+      <div class="card-stack">
+        <div id="card" class="card">
+          <div class="card-inner">
+            <div class="card-front" id="card-front"></div>
+            <div class="card-back" id="card-back"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="train-footer">
+      <span>👈 kan inte</span>
+      <span>👆 kan bra</span>
+      <span>kan 👉</span>
+    </footer>
+  </section>
+
+  <!-- Klar-skärm -->
+  <section id="congrats-screen" class="screen hidden">
+    <div class="congrats-emoji">🎉</div>
+    <h2>Klart!</h2>
+    <p id="congrats-sub">Du har gått igenom alla kort.</p>
+    <button id="congrats-done" class="primary-btn">Tillbaka</button>
+  </section>
+
+  <!-- Modal -->
+  <div id="modal-root" class="hidden"></div>
+
+  <!-- Firebase compat-SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
+  <script src="firebase-config.js"></script>
+  <script src="data/seed.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

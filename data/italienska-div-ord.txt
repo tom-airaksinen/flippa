@@ -1,0 +1,44 @@
+l'indirizzo;adress
+la metropolitana;tunnelbana
+poi;sedan
+dritto;rakt fram
+Scusate!;Ursäkta! (Till flera personer)
+Scusi!;Ursäkta! (Till en person formellt)
+Il pallacanestro;basket
+Il pallamano;handboll
+il problema;problem
+la foto;fotografi
+destra;höger
+sinistra;vänster
+spaventoso;läskig
+scarico;urladdad (om batteri/telefon)
+tra/fra;om (en timme)
+tra/fra;mellan (Milano och Rom)
+un anno fa;för ett år sedan
+impegnato;upptagen
+comodo;bekväm
+Svezia;Sverige
+pronto;färdig
+mentre;medan, under tiden (med verb)
+durante;medan, under tiden (med substantiv)
+pomeriggio;eftermiddag
+riposare;att vila
+la pelle;huden
+farina;mjöl
+soggiorno;vardagsrum
+Piacere;trevligt att träffas
+tutti i giorni;varje dag
+lontano;långt bort
+vicino;nära
+carota;morot
+in contanti;med kontanter
+quando;när
+sporco;smutsig
+portafoglio;plånbok
+fare escursionismo;vandra (som intresse)
+ottimo;utmärkt, väldigt bra
+hotel a tre stelle;trestjärnigt hotell
+cattivo;elak, ond - olydig - dålig
+pessimo;jätteond/-olydig (superlativform av cattivo)
+succo di arancia;apelsinjuice
+sorbetto al limone;citronsorbet
