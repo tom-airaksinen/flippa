@@ -363,7 +363,7 @@ function startDueSession() {
 }
 
 function beginSession({ queue, dirMode, label }) {
-  session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label };
+  session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, graded: new Set() };
   show("training");
   activeScreen = "training";
   loadCard();
@@ -400,8 +400,15 @@ function finishSession() {
 function answer(grade) {
   const c = session.current;
   const dir = session.shownDir;
-  gradeCard(c.id, dir, grade);
-  // ta bort från kön; vid fel läggs det tillbaka sist
+  // Endast första svaret per ord+riktning i sessionen räknas mot SRS.
+  // Senare möten (efter felsvar) nöter ordet men ändrar inte lådan – så ett ord
+  // man först bommade ligger kvar lågt och kommer oftare än ett man kunde direkt.
+  const key = c.id + ":" + dir;
+  if (!session.graded.has(key)) {
+    gradeCard(c.id, dir, grade);
+    session.graded.add(key);
+  }
+  // ta bort från kön; vid fel läggs det tillbaka sist (oavsett SRS-räkning)
   session.queue.shift();
   if (grade === "fail") session.queue.push(c);
   loadCard();
