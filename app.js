@@ -94,8 +94,9 @@ function gradeCard(card, dir, grade) {
     e.box = 1;
     e.due = now; // dyker upp igen idag
   } else {
+    // kan = +1 låda, kan väldigt bra = +2. Nytt ord + "kan" → låda 1 = tidigast imorgon.
     const step = grade === "easy" ? 2 : 1;
-    e.box = Math.min(MAX_BOX, Math.max(1, e.box) + step);
+    e.box = Math.min(MAX_BOX, (e.box || 0) + step);
     e.due = now + BOX_INTERVALS[e.box] * DAY_MS;
   }
   e.lastSeen = now;
@@ -509,9 +510,21 @@ function startLessonSession(lessonId) {
   const lesson = currentSubject.lessons.find((l) => l.id === lessonId);
   if (!lesson || !lesson.cards.length) return;
   const dirMode = dirSelect.value;
+  // Bara ord som är aktiva idag: nya + de man svarat fel/hopplöst på (due <= nu).
+  // Kan/kan-bra-ord har skjutits framåt och dyker inte upp igen samma dag.
+  const now = Date.now();
+  const activeToday = (c) =>
+    dirMode === "f2b" ? getEntry(c, "f2b").due <= now
+    : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
+    : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
+  const pool = lesson.cards.filter(activeToday);
+  if (!pool.length) {
+    flash(`Inget kvar att öva i "${lesson.name}" idag – allt inlärt ✅`, 3500);
+    return;
+  }
   // svagast först (lägsta låda), men slumpad ordning inom samma låda
   const minBox = (c) => Math.min(getEntry(c, "f2b").box || 0, getEntry(c, "b2f").box || 0);
-  const ordered = [...lesson.cards]
+  const ordered = [...pool]
     .map((c) => ({ c, box: minBox(c), r: Math.random() }))
     .sort((a, b) => a.box - b.box || a.r - b.r)
     .map((x) => x.c);
@@ -1457,7 +1470,7 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v29";
+const APP_VERSION = "v30";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
