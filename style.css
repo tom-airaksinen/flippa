@@ -247,6 +247,24 @@ body {
   animation: speak-fade 0.2s ease-out;
 }
 #speak-btn:active { background: var(--accent); }
+
+#edit-card-btn {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 10;
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#edit-card-btn:active { background: var(--accent); }
 #speak-btn.auto { background: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(91,140,255,0.45); }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
@@ -451,8 +469,9 @@ body {
   inset: 0;
   z-index: 100;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
+  padding-top: calc(env(safe-area-inset-top) + 8px);
 }
 .modal-backdrop {
   position: absolute;
@@ -464,8 +483,8 @@ body {
   width: 100%;
   max-width: 460px;
   background: var(--surface);
-  border-radius: 20px 20px 0 0;
-  padding: 20px 18px calc(20px + env(safe-area-inset-bottom));
+  border-radius: 0 0 20px 20px;
+  padding: 20px 18px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -477,7 +496,7 @@ body {
   #modal-root { align-items: center; }
   .modal { border-radius: 20px; }
 }
-@keyframes slideup { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes slideup { from { transform: translateY(-30px); opacity: 0; } to { transform: none; opacity: 1; } }
 .modal h3 { font-size: 1.1rem; }
 .modal label { font-size: 0.82rem; color: var(--muted); margin-bottom: -6px; }
 .modal input, .modal textarea {

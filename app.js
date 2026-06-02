@@ -520,7 +520,7 @@ function startLessonSession(lessonId) {
   const note = lim && ordered.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${ordered.length} ord – resten kommer nästa pass.`
     : "";
-  beginSession({ queue, dirMode, label: lesson.name, note });
+  beginSession({ queue, dirMode, label: lesson.name, note, kind: "lesson", lessonId, continueLimit: (lim && ordered.length > queue.length) ? lim : 0 });
 }
 
 function startDueSession() {
@@ -540,14 +540,15 @@ function startDueSession() {
   const note = lim && due.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${due.length} förfallna ord – resten kvar.`
     : "";
-  beginSession({ queue, dirMode, label: "Dags att öva", note });
+  beginSession({ queue, dirMode, label: "Dags att öva", note, kind: "due", continueLimit: (lim && due.length > queue.length) ? lim : 0 });
 }
 
-function beginSession({ queue, dirMode, label, note }) {
+function beginSession({ queue, dirMode, label, note, kind, lessonId, continueLimit }) {
   // nollställ ev. kvarvarande svep-feedback så den inte blinkar till vid sessionsstart
   feedbackEl.classList.remove("show");
   feedbackEl.textContent = "";
-  session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, note: note || "", graded: new Set() };
+  session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, note: note || "",
+              graded: new Set(), kind: kind || null, lessonId: lessonId || null, continueLimit: continueLimit || 0 };
   show("training");
   activeScreen = "training";
   updateAutospeakRow();
@@ -575,13 +576,30 @@ function loadCard() {
   updateProgress();
   updateStack();
   showSpeakSoon(300);
+  editCardBtn.classList.remove("hidden");
 }
 
 const DONE_LABELS = ["Grymt!", "Nice!", "Hell yeah!", "Snyggt!", "Kanon!", "Toppen!", "Bra jobbat!", "Yes!", "Så ska det se ut!", "Mästerligt!"];
 
 function finishSession() {
+  const cont = session ? { limit: session.continueLimit, kind: session.kind, lessonId: session.lessonId } : null;
   $("congrats-sub").textContent = (session && session.note) || `${session ? session.label : ""} – klar! 🎉`;
   $("congrats-done").textContent = DONE_LABELS[Math.floor(Math.random() * DONE_LABELS.length)];
+
+  // "Fortsätt med N till" om man kör i pass och det finns mer kvar
+  const contBtn = $("congrats-continue");
+  let showCont = false;
+  if (cont && cont.limit > 0) {
+    showCont = cont.kind === "due" ? dueCountForLessons(currentSubject.lessons) > 0 : true;
+  }
+  if (showCont) {
+    contBtn.textContent = `Fortsätt med ${cont.limit} till`;
+    contBtn.classList.remove("hidden");
+    contBtn.onclick = () => (cont.kind === "due" ? startDueSession() : startLessonSession(cont.lessonId));
+  } else {
+    contBtn.classList.add("hidden");
+  }
+
   session = null;
   show("congrats");
   activeScreen = "congrats";
@@ -745,6 +763,39 @@ if ("speechSynthesis" in window) {
   speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); updateSpeakBtn(); };
 }
 
+// ---- Redigera ordet direkt från kortet ----
+const editCardBtn = $("edit-card-btn");
+editCardBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+editCardBtn.addEventListener("click", (e) => { e.stopPropagation(); editCurrentCard(); });
+
+async function editCurrentCard() {
+  if (!session || !session.current) return;
+  const c = session.current;
+  // hitta lektionen ordet ligger i (i ett "Dags att öva"-pass kan korten komma från flera lektioner)
+  let lid = session.lessonId;
+  if (!lid) {
+    const les = currentSubject.lessons.find((l) => l.cards.some((x) => x.id === c.id));
+    lid = les && les.id;
+  }
+  if (!lid) return;
+  const res = await askWord(c.front, c.back);
+  if (!res) return;
+  // bevara inlärningen: flytta SRS-lådorna från gamla ordnyckeln till den nya
+  ["f2b", "b2f"].forEach((dir) => {
+    const oldK = srsKey(c, dir);
+    const newK = `${normPart(res.front)}|${normPart(res.back)}|${dir}`;
+    if (oldK !== newK && srs[oldK]) srs[newK] = srs[oldK];
+  });
+  saveSRS();
+  c.front = res.front;
+  c.back = res.back;
+  updateCard(currentSubject.id, lid, c.id, res.front, res.back);
+  // uppdatera visat kort direkt
+  const showFrontFirst = session.shownDir === "f2b";
+  cardFront.textContent = showFrontFirst ? c.front : c.back;
+  cardBack.textContent = showFrontFirst ? c.back : c.front;
+}
+
 // =========================================================================
 //  Swipe-mekanik (pointer)
 // =========================================================================
@@ -760,7 +811,7 @@ function setDrag(dx, dy) {
 function snapBack() {
   card.classList.add("snapping");
   card.style.transform = "";
-  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); }, { once: true });
+  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); editCardBtn.classList.remove("hidden"); }, { once: true });
 }
 
 function flyOut(grade) {
@@ -792,6 +843,7 @@ card.addEventListener("pointerdown", (e) => {
   dragging = true;
   didSwipe = false;
   speakBtn.classList.add("hidden"); // dölj direkt när man tar i kortet
+  editCardBtn.classList.add("hidden");
   card.setPointerCapture(e.pointerId);
 });
 
@@ -1405,7 +1457,7 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v28";
+const APP_VERSION = "v29";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
