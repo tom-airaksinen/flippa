@@ -24,6 +24,7 @@
 - [x] Antal nivåer? → **Svar:** 3 (Ämne → Lektion → Ord) (2026-05-30)
 - [ ] Behåller vi "skaka för att ångra" och tryck-för-flippa från fotbollsappen?
 - [ ] Ska lådan/styrkan visas i UI:t per ord?
+- [ ] Justera antal kort mitt i ett pass? → **Idé + prototyp:** kunna ändra hur många kort som är kvar medan man kör. Tre varianter i mockup: A) tappbar "kvar"-pill → popover med stegare + snabbval (+5/+10, Alla kvar, Avsluta nu) **(rekommenderad)**, B) egen ⚙-knapp med förval, C) inline-stegare `− 8 +`. "Fler" drar in nästa kort ur dagens pool; är poolen slut → erbjud "Kör ändå". Prototyp: `mockups/kort-per-pass.html` (live: https://tom-airaksinen.github.io/flashcards/mockups/kort-per-pass.html). (Diskuterad 2026-06-02)
 
 ## Innehållshantering
 - [x] CRUD från mobilen? → **Svar:** Ja – skapa/redigera/ta bort/döpa om ämnen, lektioner, ord (2026-05-30)
