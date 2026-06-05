@@ -550,3 +550,4 @@ body {
   cursor: pointer;
 }
 .modal input[type="file"] { color: var(--muted); font-size: 0.85rem; }
+.full-btn.danger { background: transparent; color: var(--fail); }

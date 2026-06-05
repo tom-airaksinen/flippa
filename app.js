@@ -47,6 +47,14 @@ function subjectLang(s) {
   if (!s) return "";
   return s.lang || LANG_GUESS[(s.name || "").trim().toLowerCase()] || "";
 }
+// Flagga-emoji per språk (tomt om inget språk)
+const LANG_FLAG = {
+  "it-IT": "🇮🇹", "de-DE": "🇩🇪", "fr-FR": "🇫🇷", "es-ES": "🇪🇸",
+  "en-GB": "🇬🇧", "pt-PT": "🇵🇹", "uk-UA": "🇺🇦",
+};
+function subjectFlag(s) {
+  return LANG_FLAG[subjectLang(s)] || "";
+}
 
 // =========================================================================
 //  SRS-lager (localStorage) – graderad Leitner
@@ -276,8 +284,9 @@ function renderSubjects() {
   list.innerHTML = content
     .map((s) => {
       const cardCount = s.lessons.reduce((n, l) => n + l.cards.length, 0);
+      const flag = subjectFlag(s);
       return `<div class="row" data-subject="${s.id}">
-        <span class="row-title">${esc(s.name)}</span>
+        <span class="row-title">${flag ? flag + " " : ""}${esc(s.name)}</span>
         <span class="row-meta">${s.lessons.length} lekt · ${cardCount} ord</span>
         <button class="row-edit" data-edit="${s.id}">✎</button>
       </div>`;
@@ -320,7 +329,7 @@ function renderLessons() {
   currentSubject = content.find((s) => s.id === currentSubject.id) || currentSubject;
   activeScreen = "lessons";
   show("lessons");
-  $("lessons-title").textContent = currentSubject.name;
+  $("lessons-title").textContent = (subjectFlag(currentSubject) ? subjectFlag(currentSubject) + " " : "") + currentSubject.name;
 
   const dueBtn = $("due-btn");
   const due = dueCountForLessons(currentSubject.lessons);
@@ -945,11 +954,12 @@ function askName(title, value = "", okLabel = "Spara") {
   });
 }
 
-function askSubject(title, name = "", lang = "") {
+function askSubject(title, name = "", lang = "", allowDelete = false) {
   return new Promise((resolve) => {
     const opts = LANG_OPTIONS.map(
       (o) => `<option value="${o.code}" ${o.code === lang ? "selected" : ""}>${esc(o.label)}</option>`
     ).join("");
+    const delBtn = allowDelete ? `<button class="full-btn danger" id="m-del">🗑 Ta bort ämne</button>` : "";
     const m = openModal(`
       <h3>${esc(title)}</h3>
       <label>Namn</label>
@@ -959,7 +969,7 @@ function askSubject(title, name = "", lang = "") {
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
-      </div>`);
+      </div>${delBtn}`);
     const nameI = m.querySelector("#m-name");
     nameI.focus();
     nameI.select();
@@ -970,6 +980,7 @@ function askSubject(title, name = "", lang = "") {
       closeModal();
       resolve(n ? { name: n, lang: l } : null);
     };
+    if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ delete: true }); };
     nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#m-ok").click(); });
   });
 }
@@ -1132,17 +1143,14 @@ function removeCard(sid, lid, cid) {
 async function editSubject(sid) {
   const s = content.find((x) => x.id === sid);
   if (!s) return;
-  const action = await actionSheet(s.name, [
-    { label: "✎ Redigera (namn & språk)", value: "rename" },
-    { label: "🗑 Ta bort ämne", value: "delete", danger: true },
-  ]);
-  if (action === "rename") {
-    const res = await askSubject("Redigera ämne", s.name, subjectLang(s));
-    if (res) updateSubject(sid, res.name, res.lang);
-  } else if (action === "delete") {
+  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true);
+  if (!res) return;
+  if (res.delete) {
     const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
+    return;
   }
+  updateSubject(sid, res.name, res.lang);
 }
 
 const editorSearch = $("editor-search");
@@ -1497,7 +1505,7 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v34";
+const APP_VERSION = "v35";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
