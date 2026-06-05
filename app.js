@@ -1505,7 +1505,7 @@ $("menu-btn").onclick = async () => {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v36";
+const APP_VERSION = "v37";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
@@ -1519,7 +1519,7 @@ if ("serviceWorker" in navigator) {
     location.reload();
   });
   navigator.serviceWorker
-    .register("sw.js")
+    .register("sw.js", { updateViaCache: "none" })
     .then((reg) => {
       reg.update();
       // Leta efter ny version när appen kommer i förgrunden + periodiskt
