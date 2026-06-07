@@ -325,11 +325,13 @@ body {
   to   { opacity: 1; transform: none; }
 }
 
-/* fly-in (shake-to-undo): kortet glider tillbaka in från samma håll det lämnade */
-.card.in-right { animation: in-right 0.36s ease-out; }
-.card.in-left  { animation: in-left 0.36s ease-out; }
-.card.in-up    { animation: in-up 0.36s ease-out; }
-.card.in-down  { animation: in-down 0.36s ease-out; }
+/* fly-in (shake-to-undo): kortet glider tillbaka in från samma håll det lämnade.
+   0,2s delay + långsam (0,7s) inglidning så man hinner se det efter skaket.
+   fill:both håller kortet utanför skärmen under delayen (ingen hoppighet). */
+.card.in-right { animation: in-right 0.7s ease-out 0.2s both; }
+.card.in-left  { animation: in-left 0.7s ease-out 0.2s both; }
+.card.in-up    { animation: in-up 0.7s ease-out 0.2s both; }
+.card.in-down  { animation: in-down 0.7s ease-out 0.2s both; }
 @keyframes in-right { from { transform: translateX(140%) rotate(18deg); }  to { transform: none; } }
 @keyframes in-left  { from { transform: translateX(-140%) rotate(-18deg); } to { transform: none; } }
 @keyframes in-up    { from { transform: translateY(-140%) scale(0.9); }     to { transform: none; } }
@@ -352,11 +354,11 @@ body {
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
 /* Tydligare, längre overlay för ångra-pilen */
-#swipe-feedback.undo-show { animation: undo-pop 0.9s ease-out; }
+#swipe-feedback.undo-show { animation: undo-pop 1.15s ease-out; }
 @keyframes undo-pop {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-35deg); }
-  20%  { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }
-  70%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
+  16%  { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }
+  78%  { opacity: 1; transform: translate(-50%, -50%) scale(1.15); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1.05); }
 }
 

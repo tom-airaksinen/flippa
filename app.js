@@ -762,7 +762,8 @@ function undoLastAnswer() {
   void card.offsetWidth;
   animating = true;
   card.classList.add(inClass);
-  setTimeout(() => { card.classList.remove(inClass); animating = false; }, 360);
+  // 0,2s delay + 0,7s inglidning = 0,9s; lite buffert innan vi släpper interaktion
+  setTimeout(() => { card.classList.remove(inClass); animating = false; }, 950);
 }
 
 function showUndoFeedback() {
@@ -1803,7 +1804,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v46";
+const APP_VERSION = "v47";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
