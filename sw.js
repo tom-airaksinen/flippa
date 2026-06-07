@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v50";
+const CACHE = "flashcards-v51";
 const ASSETS = [
   "./",
   "./index.html",
@@ -17,10 +17,14 @@ const ASSETS = [
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE).then(async (c) => {
+      // cache:"reload" tvingar nätverk och kringgår webbläsarens HTTP-cache. Annars kan
+      // en gammal app.js/style.css (GitHub Pages sätter max-age=600) hämtas ur disk-cachen
+      // och cachas under det NYA cache-namnet → man fastnar på gammal version trots ny SW.
+      const fresh = (u) => c.add(new Request(u, { cache: "reload" }));
       // Lokala filer MÅSTE cachas (annars är installationen meningslös)
-      await c.addAll(ASSETS.filter((u) => !u.startsWith("http")));
+      await Promise.all(ASSETS.filter((u) => !u.startsWith("http")).map(fresh));
       // CDN-filer (Firebase) cachas best-effort – får inte blockera uppdateringen
-      await Promise.allSettled(ASSETS.filter((u) => u.startsWith("http")).map((u) => c.add(u)));
+      await Promise.allSettled(ASSETS.filter((u) => u.startsWith("http")).map(fresh));
     }).then(() => self.skipWaiting())
   );
 });
