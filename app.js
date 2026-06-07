@@ -1595,9 +1595,16 @@ function hfLang(back) {
   return back ? (f2b ? "sv-SE" : foreign) : (f2b ? foreign : "sv-SE");
 }
 
+function hfStopListening() {
+  hfListening = false;
+  clearTimeout(hfTimeoutId);
+  if (hfRecognition) { try { hfRecognition.abort(); } catch (_) {} hfRecognition = null; }
+}
+
 function hfSpeakFront() {
   if (!handsfreeActive || !session || !session.current) return;
   clearTimeout(hfLoadCardTimer);
+  hfStopListening();
   hfStatusEl.textContent = "";
   speak(hfText(false), hfLang(false), () => {
     if (handsfreeActive) hfStartListening(true);
@@ -1607,6 +1614,7 @@ function hfSpeakFront() {
 function hfSpeakBack(thenGrade) {
   if (!handsfreeActive || !session || !session.current) return;
   clearTimeout(hfLoadCardTimer);
+  hfStopListening();
   card.classList.add("flipped");
   // "fail" (kan inte) och "hard" (hopplöst) får 2 s eftertänkpaus; övriga 400 ms iOS-buffert
   const pause = (thenGrade === "fail" || thenGrade === "hard") ? 2000 : 400;
@@ -1640,17 +1648,10 @@ function hfHandleTranscript(transcript) {
     hfStatusEl.textContent = cmd.word;
     setTimeout(() => { if (hfStatusEl.textContent === cmd.word) hfStatusEl.textContent = "lyssnar…"; }, 1500);
     if (cmd.grade === null) {
-      // "flippa": flip och läs upp baksidan
       hfSpeakBack(null);
     } else {
-      // Betygssättning — om kortet inte är flippat, visa/läs svaret först
-      if (card.classList.contains("flipped")) {
-        clearTimeout(hfLoadCardTimer);
-        showFeedback(cmd.grade);
-        flyOut(cmd.grade);
-      } else {
-        hfSpeakBack(cmd.grade);
-      }
+      // Läs alltid upp svaret innan betygssättning, oavsett om kortet är flippat
+      hfSpeakBack(cmd.grade);
     }
     return true;
   }
@@ -1681,18 +1682,14 @@ function hfStartListening(resetTimer) {
   hfRecognition = rec;
   rec.lang = "sv-SE";
   rec.continuous = false;
-  rec.interimResults = true;
+  rec.interimResults = false;
   rec.maxAlternatives = 3;
 
   rec.onresult = (e) => {
     for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (!e.results[i].isFinal) continue;
       for (let j = 0; j < e.results[i].length; j++) {
-        if (hfHandleTranscript(e.results[i][j].transcript)) {
-          hfListening = false;
-          clearTimeout(hfTimeoutId);
-          try { rec.stop(); } catch (_) {}
-          return;
-        }
+        if (hfHandleTranscript(e.results[i][j].transcript)) return;
       }
     }
   };
@@ -1723,7 +1720,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v42";
+const APP_VERSION = "v43";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
