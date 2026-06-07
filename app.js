@@ -512,6 +512,7 @@ const progressPill = $("progress-pill");
 const feedbackEl = $("swipe-feedback");
 
 let session = null; // { queue:[card], dirMode, current, shownDir }
+let undoStack = [];  // shake-to-undo: snapshots av state före varje svar i sessionen
 // Kort som redan visats i den pågående "Fortsätt"-kedjan (rundan). Nollställs vid ny
 // runda (när man startar från knappen, inte via Fortsätt) så att fel-svarade ord inte
 // kommer tillbaka förrän man tryckt Klar och börjar om.
@@ -599,6 +600,8 @@ function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, con
   feedbackEl.textContent = "";
   session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, note: note || "",
               graded: new Set(), kind: kind || null, lessonId: lessonId || null, forced: forced || false, continueLimit: continueLimit || 0 };
+  undoStack = []; // ny session → inget att ångra
+  requestMotionPermissionOnce(); // sker inom klick-gesten (krav på iOS)
   show("training");
   activeScreen = "training";
   updateAutospeakRow();
@@ -610,7 +613,7 @@ function updateProgress() {
   progressPill.textContent = `${session.queue.length} kvar`;
 }
 
-function loadCard() {
+function loadCard(forceDir) {
   if (!session || session.queue.length === 0) {
     finishSession();
     return;
@@ -622,7 +625,7 @@ function loadCard() {
   void cardInner.offsetWidth; // tvinga omritning så transition:none gäller
   cardInner.style.transition = "";
   const c = session.queue[0];
-  const dir = pickDir(session.dirMode);
+  const dir = forceDir || pickDir(session.dirMode);
   session.current = c;
   session.shownDir = dir;
   const showFrontFirst = dir === "f2b";
@@ -687,6 +690,17 @@ function launchConfetti() {
 function answer(grade) {
   const c = session.current;
   const dir = session.shownDir;
+  // Snapshot för shake-to-undo (innan någon mutation): kö, SRS-poster, graded-medlemskap.
+  const gradedKey = c.id + ":" + dir;
+  const otherDir0 = dir === "f2b" ? "b2f" : "f2b";
+  const k1 = srsKey(c, dir), k2 = srsKey(c, otherDir0);
+  undoStack.push({
+    card: c, dir, grade,
+    queue: session.queue.slice(),
+    gradedKey, gradedHadKey: session.graded.has(gradedKey),
+    srs: [[k1, srs[k1] ? { ...srs[k1] } : null], [k2, srs[k2] ? { ...srs[k2] } : null]],
+  });
+  if (undoStack.length > 40) undoStack.shift();
   // Endast första svaret per ord+riktning i sessionen räknas mot SRS.
   // Senare möten (efter felsvar) nöter ordet men ändrar inte lådan – så ett ord
   // man först bommade ligger kvar lågt och kommer oftare än ett man kunde direkt.
@@ -724,6 +738,71 @@ function showFeedback(grade) {
   feedbackEl.classList.remove("show");
   void feedbackEl.offsetWidth;
   feedbackEl.classList.add("show");
+}
+
+// =========================================================================
+//  Shake-to-undo – skaka telefonen för att ångra senaste svaret
+// =========================================================================
+function undoLastAnswer() {
+  if (!session || animating) return;
+  const snap = undoStack.pop();
+  if (!snap) return;
+  // Återställ SRS-poster (radera de som inte fanns före svaret)
+  snap.srs.forEach(([k, v]) => { if (v === null) delete srs[k]; else srs[k] = v; });
+  saveSRS();
+  // Återställ in-session "graded"-medlemskap
+  if (!snap.gradedHadKey) session.graded.delete(snap.gradedKey);
+  // Återställ kön (kopian hade det ångrade kortet först) och visa samma kort + riktning
+  session.queue = snap.queue.slice();
+  showUndoFeedback();
+  loadCard(snap.dir);
+  card.classList.remove("emerge");
+  void card.offsetWidth;
+  card.classList.add("emerge");
+}
+
+function showUndoFeedback() {
+  feedbackEl.textContent = "↩️";
+  feedbackEl.style.color = "#5b8cff";
+  feedbackEl.classList.remove("show");
+  void feedbackEl.offsetWidth;
+  feedbackEl.classList.add("show");
+}
+
+let motionReqDone = false;
+let motionListening = false;
+function enableShake() {
+  if (motionListening) return;
+  window.addEventListener("devicemotion", onMotion);
+  motionListening = true;
+}
+function requestMotionPermissionOnce() {
+  if (motionReqDone) { enableShake(); return; }
+  motionReqDone = true;
+  const DME = window.DeviceMotionEvent;
+  if (DME && typeof DME.requestPermission === "function") {
+    DME.requestPermission().then((res) => { if (res === "granted") enableShake(); }).catch(() => {});
+  } else {
+    enableShake(); // äldre iOS / Android: inget tillstånd krävs
+  }
+}
+
+let shakeLast = { x: 0, y: 0, z: 0, t: 0 };
+let lastShakeTrigger = 0;
+const SHAKE_THRESHOLD = 950; // empiriskt; högre = kräver kraftigare skak
+function onMotion(e) {
+  if (activeScreen !== "training") return;
+  const a = e.accelerationIncludingGravity;
+  if (!a) return;
+  const t = Date.now();
+  if (t - shakeLast.t < 100) return;
+  const dt = (t - shakeLast.t) || 1;
+  const speed = Math.abs((a.x || 0) + (a.y || 0) + (a.z || 0) - shakeLast.x - shakeLast.y - shakeLast.z) / dt * 10000;
+  shakeLast = { x: a.x || 0, y: a.y || 0, z: a.z || 0, t };
+  if (speed > SHAKE_THRESHOLD && t - lastShakeTrigger > 1200) {
+    lastShakeTrigger = t;
+    undoLastAnswer();
+  }
 }
 
 // =========================================================================
@@ -1720,7 +1799,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v44";
+const APP_VERSION = "v45";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

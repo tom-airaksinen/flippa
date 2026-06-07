@@ -210,11 +210,11 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
+  padding: 14px 22px 22px;
   min-height: 0;
   overflow: hidden;
 }
-.card-stack { width: 100%; max-width: 380px; aspect-ratio: 3 / 4; position: relative; max-height: 100%; }
+.card-stack { width: 100%; max-width: 372px; aspect-ratio: 3 / 4; position: relative; max-height: 100%; margin: auto; }
 
 /* Kort i högen bakom det aktiva – antal styrs av klass på .card-stack */
 .card-stack::before, .card-stack::after {
@@ -225,8 +225,8 @@ body {
   box-shadow: 0 8px 22px rgba(0,0,0,0.35);
   display: none;
 }
-.card-stack::before { background: #131c33; transform: rotate(-4deg) translateY(6px); z-index: 0; }
-.card-stack::after  { background: #1c2a4d; transform: rotate(3deg) translateY(3px); z-index: 1; }
+.card-stack::before { background: #131c33; transform: rotate(-2.5deg) translateY(4px); z-index: 0; }
+.card-stack::after  { background: #1c2a4d; transform: rotate(2deg) translateY(2px); z-index: 1; }
 /* 2+ kort kvar under: visa båda. 1 kvar: visa bara det närmaste. Sista: inga. */
 .card-stack.stack-2::before, .card-stack.stack-2::after { display: block; }
 .card-stack.stack-1::after { display: block; }
