@@ -169,7 +169,7 @@ function normalize(subjectsObj) {
           name: l.name,
           order: l.order ?? 0,
           cards: Object.entries(l.cards || {})
-            .map(([cid, c]) => ({ id: cid, front: c.front, back: c.back, order: c.order ?? 0 }))
+            .map(([cid, c]) => ({ id: cid, front: c.front, back: c.back, hint: c.hint ?? null, order: c.order ?? 0 }))
             .sort(byOrder),
         }))
         .sort(byOrder),
@@ -1841,7 +1841,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v60";
+const APP_VERSION = "v61";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
