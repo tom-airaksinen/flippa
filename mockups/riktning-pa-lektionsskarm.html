@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Mockup – riktning på lektionsskärmen</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-user-select: none; }
+  :root {
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8;
+    --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --easy:#f4c542;
+  }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:18px 14px 60px; }
+  h1 { font-size:1.2rem; margin-bottom:4px; }
+  .lead { color:var(--muted); font-size:.9rem; margin-bottom:22px; line-height:1.45; }
+  .variant { background:var(--surface); border-radius:16px; padding:16px; margin-bottom:22px; }
+  .variant h2 { font-size:1rem; margin-bottom:4px; }
+  .variant p { color:var(--muted); font-size:.83rem; line-height:1.45; margin-bottom:14px; }
+  .pro { color:var(--good); } .con { color:#e0915a; }
+
+  /* simulerad lektionsskärm */
+  .screen { background:var(--bg); border-radius:14px; padding:12px; }
+  .head { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+  .head .back { background:var(--surface-2); border:none; color:var(--text); width:34px; height:34px; border-radius:9px; font-size:1rem; flex:none; }
+  .head h3 { font-size:1.05rem; font-weight:700; flex:1; }
+  .head .icon { background:var(--surface-2); border:none; color:var(--text); width:34px; height:34px; border-radius:9px; font-size:1rem; flex:none; }
+  .duebtn { width:100%; background:var(--easy); color:#0d1426; border:none; border-radius:12px; padding:13px; font-weight:600; font-size:.95rem; margin:12px 0; }
+  .lessonrow { display:flex; align-items:center; background:var(--surface); border-radius:12px; padding:14px; margin-bottom:8px; }
+  .lessonrow .t { flex:1; font-weight:500; }
+  .lessonrow .m { color:var(--muted); font-size:.82rem; }
+
+  /* === gemensamt === */
+  select { font-family:inherit; }
+  .lbl { color:var(--muted); font-size:.72rem; display:block; margin-bottom:5px; letter-spacing:.02em; }
+
+  /* A — två dropdowns på en rad */
+  .rowA { display:flex; gap:10px; }
+  .rowA .cell { flex:1; background:var(--surface); border-radius:12px; padding:10px 12px; }
+  .rowA .cell.k { flex:0 0 34%; }
+  .rowA select { width:100%; background:var(--surface-2); color:var(--text); border:none; border-radius:9px; padding:9px; font-size:.9rem; }
+
+  /* B — tappbara pills + utfällbar väljare */
+  .rowB { display:flex; gap:10px; }
+  .rowB .pill { flex:1; display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--surface); color:var(--text); border:none; border-radius:12px; padding:12px 14px; font-size:.92rem; }
+  .rowB .pill.k { flex:0 0 32%; justify-content:center; gap:6px; }
+  .rowB .pill .cur { font-weight:600; }
+  .rowB .pill .car { color:var(--muted); font-size:.8rem; }
+  .chooser { margin-top:10px; background:var(--surface); border-radius:12px; padding:12px; display:none; }
+  .chooser.open { display:block; }
+  .chooser .lbl { margin-bottom:8px; }
+  .segs { display:flex; gap:8px; }
+  .segs button { flex:1; background:var(--surface-2); color:var(--text); border:none; border-radius:10px; padding:11px 6px; font-size:.85rem; }
+  .segs button.on { background:var(--accent); color:#fff; }
+
+  /* C — segmenterad riktning + kort-pill på en rad */
+  .rowC { display:flex; gap:10px; align-items:stretch; }
+  .seg3 { flex:1; display:flex; background:var(--surface); border-radius:12px; padding:4px; gap:4px; }
+  .seg3 button { flex:1; background:transparent; color:var(--muted); border:none; border-radius:9px; padding:9px 4px; font-size:.86rem; }
+  .seg3 button.on { background:var(--accent); color:#fff; font-weight:600; }
+  .kpill { flex:0 0 30%; background:var(--surface); color:var(--text); border:none; border-radius:12px; padding:10px; font-size:.9rem; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; }
+  .kpill .small { color:var(--muted); font-size:.66rem; }
+  .kpill .big { font-weight:700; font-size:1rem; }
+
+  .note { font-size:.74rem; color:var(--muted); margin-top:10px; line-height:1.4; }
+  .tag { display:inline-block; background:var(--surface-2); color:var(--muted); border-radius:6px; padding:1px 6px; font-size:.7rem; }
+</style>
+</head>
+<body>
+  <h1>Riktning + kort per pass på lektionsskärmen</h1>
+  <p class="lead">Idén: flytta riktningsväljaren (Från svenska / Till svenska / Blandat) från förhörsskärmen hit, och slå ihop den med "Kort per pass" på <b>en</b> rad ovanför lektionerna. Tre förslag – tryck runt, de är lite interaktiva. Säg vilken du gillar (eller en mix).</p>
+
+  <!-- ============ VARIANT A ============ -->
+  <div class="variant">
+    <h2>A — Två kompakta menyer på en rad</h2>
+    <p>Riktning till vänster, antal till höger. Nära nuvarande lösning (samma typ av menyer), minimal risk. <span class="pro">Tydligt och bekant.</span> <span class="con">Två dropdown-pilar = lite "formulär".</span></p>
+    <div class="screen">
+      <div class="head">
+        <button class="back">←</button>
+        <h3>🇮🇩 Bahasa Indonesia</h3>
+        <button class="icon">✎</button>
+        <button class="icon">＋</button>
+      </div>
+      <div class="rowA">
+        <div class="cell">
+          <span class="lbl">RIKTNING</span>
+          <select>
+            <option>Från svenska</option>
+            <option>Till svenska</option>
+            <option>Blandat</option>
+          </select>
+        </div>
+        <div class="cell k">
+          <span class="lbl">KORT / PASS</span>
+          <select>
+            <option>Alla</option><option>10</option><option>15</option>
+            <option selected>20</option><option>30</option><option>50</option>
+          </select>
+        </div>
+      </div>
+      <button class="duebtn">⏰ Dags att öva (5)</button>
+      <div class="lessonrow"><span class="t">Grundläggande ord/fraser</span><span class="m">30 ord</span></div>
+    </div>
+  </div>
+
+  <!-- ============ VARIANT B ============ -->
+  <div class="variant">
+    <h2>B — Pills som fäller ut val</h2>
+    <p>Två rena "pills" som visar nuvarande val. Tryck → en liten väljare fälls ut. <span class="pro">Ren rad, inga dropdown-pilar, val syns på begäran.</span> <span class="con">Ett extra tryck för att byta.</span></p>
+    <div class="screen">
+      <div class="head">
+        <button class="back">←</button>
+        <h3>🇮🇩 Bahasa Indonesia</h3>
+        <button class="icon">✎</button>
+        <button class="icon">＋</button>
+      </div>
+      <div class="rowB">
+        <button class="pill" id="bDir"><span><span class="lbl" style="margin:0">RIKTNING</span><span class="cur">Från svenska</span></span><span class="car">▾</span></button>
+        <button class="pill k" id="bKort"><span><span class="lbl" style="margin:0">KORT</span><span class="cur">20</span></span><span class="car">▾</span></button>
+      </div>
+      <div class="chooser" id="bDirChooser">
+        <span class="lbl">Riktning</span>
+        <div class="segs" data-group="bdir">
+          <button class="on">🇸🇪→🇮🇩<br>Från sv</button>
+          <button>🇮🇩→🇸🇪<br>Till sv</button>
+          <button>🔀<br>Blandat</button>
+        </div>
+      </div>
+      <div class="chooser" id="bKortChooser">
+        <span class="lbl">Kort per pass</span>
+        <div class="segs" data-group="bkort" style="flex-wrap:wrap">
+          <button>Alla</button><button>10</button><button>15</button>
+          <button class="on">20</button><button>30</button><button>50</button>
+        </div>
+      </div>
+      <button class="duebtn">⏰ Dags att öva (5)</button>
+      <div class="lessonrow"><span class="t">Grundläggande ord/fraser</span><span class="m">30 ord</span></div>
+    </div>
+  </div>
+
+  <!-- ============ VARIANT C ============ -->
+  <div class="variant">
+    <h2>C — Segmenterad riktning + kort-ruta</h2>
+    <p>Riktningen som tre direkttryckbara segment (med flaggor), antal som en kompakt ruta till höger. <span class="pro">Allt syns direkt, ett tryck för att byta riktning, modernt.</span> <span class="con">Flaggorna tar lite plats – funkar bäst med flaggspråk.</span></p>
+    <div class="screen">
+      <div class="head">
+        <button class="back">←</button>
+        <h3>🇮🇩 Bahasa Indonesia</h3>
+        <button class="icon">✎</button>
+        <button class="icon">＋</button>
+      </div>
+      <div class="rowC">
+        <div class="seg3" data-group="cdir">
+          <button class="on">🇸🇪→🇮🇩</button>
+          <button>🇮🇩→🇸🇪</button>
+          <button>🔀</button>
+        </div>
+        <button class="kpill" id="cKort"><span class="small">KORT</span><span class="big">20</span></button>
+      </div>
+      <p class="note">Tryck på <span class="tag">KORT 20</span> för att stega Alla → 10 → 15 → 20 → 30 → 50.</p>
+      <button class="duebtn">⏰ Dags att öva (5)</button>
+      <div class="lessonrow"><span class="t">Grundläggande ord/fraser</span><span class="m">30 ord</span></div>
+    </div>
+  </div>
+
+  <p class="lead" style="margin-top:6px">Notera: förhörsskärmen blir renare när väljaren flyttas hit – du väljer riktning &amp; längd <i>innan</i> du startar, och slipper en rad uppe i förhöret.</p>
+
+<script>
+  // Segment-grupper: klick markerar valt
+  document.querySelectorAll('.segs, .seg3').forEach(group => {
+    group.addEventListener('click', e => {
+      const btn = e.target.closest('button'); if (!btn) return;
+      group.querySelectorAll('button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      // spegla val tillbaka i pill (variant B)
+      const g = group.dataset.group;
+      if (g === 'bdir') { document.querySelector('#bDir .cur').textContent = btn.textContent.includes('Från') ? 'Från svenska' : btn.textContent.includes('Till') ? 'Till svenska' : 'Blandat'; }
+      if (g === 'bkort') { document.querySelector('#bKort .cur').textContent = btn.textContent.trim(); }
+    });
+  });
+  // Pills (B) fäller ut respektive väljare
+  const toggle = (chooser, other) => { document.getElementById(other).classList.remove('open'); document.getElementById(chooser).classList.toggle('open'); };
+  document.getElementById('bDir').onclick = () => toggle('bDirChooser','bKortChooser');
+  document.getElementById('bKort').onclick = () => toggle('bKortChooser','bDirChooser');
+  // Kort-stegare (C)
+  const steps = ['Alla','10','15','20','30','50']; let ci = 3;
+  document.getElementById('cKort').onclick = () => {
+    ci = (ci + 1) % steps.length;
+    document.querySelector('#cKort .big').textContent = steps[ci];
+  };
+</script>
+</body>
+</html>
