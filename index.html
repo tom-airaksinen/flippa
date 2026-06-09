@@ -35,17 +35,48 @@
       <button id="edit-subject" class="icon-btn" title="Redigera ämne">✎</button>
       <button id="add-lesson" class="icon-btn" title="Ny lektion">＋</button>
     </header>
-    <div class="settings-row">
-      <label for="session-limit">Kort per pass</label>
-      <select id="session-limit">
-        <option value="0">Alla</option>
-        <option value="10">10</option>
-        <option value="15">15</option>
-        <option value="20">20</option>
-        <option value="30">30</option>
-        <option value="50">50</option>
-      </select>
+    <!-- Riktning + kort per pass (väljs här, läses vid sessionsstart) -->
+    <div class="opt-row">
+      <button class="opt-pill" id="dir-pill" type="button" aria-haspopup="true">
+        <span class="opt-text"><span class="opt-lbl">RIKTNING</span><span class="opt-val" id="dir-val">Från svenska</span></span>
+        <span class="opt-car">▾</span>
+      </button>
+      <button class="opt-pill k" id="limit-pill" type="button" aria-haspopup="true">
+        <span class="opt-text"><span class="opt-lbl">KORT</span><span class="opt-val" id="limit-val">Alla</span></span>
+        <span class="opt-car">▾</span>
+      </button>
     </div>
+    <div class="opt-chooser hidden" id="dir-chooser">
+      <div class="opt-segs" id="dir-segs">
+        <button type="button" data-v="b2f">Från svenska</button>
+        <button type="button" data-v="f2b">Till svenska</button>
+        <button type="button" data-v="mixed">Blandat</button>
+      </div>
+    </div>
+    <div class="opt-chooser hidden" id="limit-chooser">
+      <div class="opt-segs wrap" id="limit-segs">
+        <button type="button" data-v="0">Alla</button>
+        <button type="button" data-v="10">10</button>
+        <button type="button" data-v="15">15</button>
+        <button type="button" data-v="20">20</button>
+        <button type="button" data-v="30">30</button>
+        <button type="button" data-v="50">50</button>
+      </div>
+    </div>
+    <!-- Dolda "backing stores": all befintlig läs-/spar-/import-logik använder dessa -->
+    <select id="dir-select" class="hidden">
+      <option value="b2f">Från svenska</option>
+      <option value="f2b">Till svenska</option>
+      <option value="mixed">Blandat</option>
+    </select>
+    <select id="session-limit" class="hidden">
+      <option value="0">Alla</option>
+      <option value="10">10</option>
+      <option value="15">15</option>
+      <option value="20">20</option>
+      <option value="30">30</option>
+      <option value="50">50</option>
+    </select>
     <button id="due-btn" class="primary-btn hidden"></button>
     <button id="translate-subject" class="primary-btn alt hidden">🔎 Slå upp ord</button>
     <div class="editor-toolbar">
@@ -83,11 +114,6 @@
   <section id="training-screen" class="screen hidden">
     <div id="train-bar">
       <button class="back-btn" data-back="lessons">←</button>
-      <select id="dir-select">
-        <option value="b2f">Från svenska</option>
-        <option value="f2b">Till svenska</option>
-        <option value="mixed">Blandat</option>
-      </select>
       <span id="progress-pill">0</span>
     </div>
 

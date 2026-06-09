@@ -131,24 +131,29 @@ body {
 .empty { color: var(--muted); padding: 24px 16px; text-align: center; }
 .version-tag { margin-top: auto; text-align: center; color: var(--muted); font-size: 0.7rem; opacity: 0.55; padding: 10px 0 16px; }
 
-.settings-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin: 0 16px 12px;
-  padding: 10px 14px;
-  background: var(--surface);
-  border-radius: 12px;
+/* Riktning + kort per pass – pills med utfällbar väljare (lektionsskärmen) */
+.opt-row { display: flex; gap: 10px; margin: 0 16px 10px; }
+.opt-pill {
+  flex: 1; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  background: var(--surface); color: var(--text); border: none; border-radius: 12px;
+  padding: 10px 14px; font-family: inherit; cursor: pointer; text-align: left;
 }
-.settings-row label { color: var(--muted); font-size: 0.9rem; }
-.settings-row select {
-  background: var(--surface-2);
-  color: var(--text);
-  border: none;
-  border-radius: 9px;
-  padding: 8px 12px;
-  font-size: 0.9rem;
+.opt-pill.k { flex: 0 0 32%; }
+.opt-pill:active { background: var(--surface-2); }
+.opt-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.opt-lbl { color: var(--muted); font-size: 0.66rem; letter-spacing: 0.04em; }
+.opt-val { font-size: 0.95rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.opt-car { color: var(--muted); font-size: 0.8rem; flex: none; }
+
+.opt-chooser { margin: 0 16px 10px; background: var(--surface); border-radius: 12px; padding: 10px; }
+.opt-segs { display: flex; gap: 8px; }
+.opt-segs.wrap { flex-wrap: wrap; }
+.opt-segs button {
+  flex: 1; background: var(--surface-2); color: var(--text); border: none; border-radius: 10px;
+  padding: 11px 8px; font-size: 0.88rem; font-family: inherit; cursor: pointer; white-space: nowrap;
 }
+.opt-segs.wrap button { flex: 1 0 26%; }
+.opt-segs button.on { background: var(--accent); color: #fff; font-weight: 600; }
 
 .primary-btn {
   margin: 4px 16px 12px;
@@ -191,16 +196,8 @@ body {
   gap: 10px;
   padding: 14px 16px 6px;
 }
-#dir-select {
-  flex: 1;
-  background: var(--surface);
-  color: var(--text);
-  border: none;
-  border-radius: 10px;
-  padding: 10px;
-  font-size: 0.9rem;
-}
 #progress-pill {
+  margin-left: auto; /* puttas till höger (riktningsväljaren som låg här är flyttad) */
   background: var(--surface);
   color: var(--muted);
   border-radius: 10px;

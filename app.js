@@ -328,6 +328,8 @@ function dueCountForLessons(lessons) {
 function renderLessons() {
   if (!currentSubject) return renderSubjects();
   stopHandsfree();
+  closeChoosers();
+  syncOptionPills();
   if (lessonDrag && lessonDrag.active) return; // rita inte om mitt i en drag-omordning
   // Plocka färsk referens (innehåll kan ha uppdaterats från Firebase)
   currentSubject = content.find((s) => s.id === currentSubject.id) || currentSubject;
@@ -531,6 +533,39 @@ sessionLimitSel.addEventListener("change", () => {
 function sessionLimit() {
   return parseInt(sessionLimitSel.value, 10) || 0; // 0 = alla
 }
+
+// ---- Riktning (kommer ihåg senaste valet) ----
+const DIR_KEY = "flashcards-dir";
+dirSelect.value = localStorage.getItem(DIR_KEY) || "b2f";
+dirSelect.addEventListener("change", () => localStorage.setItem(DIR_KEY, dirSelect.value));
+
+// ---- Alternativ-pills: riktning + kort per pass (lektionsskärmen) ----
+const dirPill = $("dir-pill"), limitPill = $("limit-pill");
+const dirChooser = $("dir-chooser"), limitChooser = $("limit-chooser");
+function limitLabel(v) { return v === "0" ? "Alla" : v; }
+function closeChoosers() { dirChooser.classList.add("hidden"); limitChooser.classList.add("hidden"); }
+function syncOptionPills() {
+  const dirOpt = dirSelect.options[dirSelect.selectedIndex];
+  $("dir-val").textContent = dirOpt ? dirOpt.text : "Från svenska";
+  $("limit-val").textContent = limitLabel(sessionLimitSel.value);
+  dirChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === dirSelect.value));
+  limitChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === sessionLimitSel.value));
+}
+dirPill.onclick = () => { limitChooser.classList.add("hidden"); dirChooser.classList.toggle("hidden"); };
+limitPill.onclick = () => { dirChooser.classList.add("hidden"); limitChooser.classList.toggle("hidden"); };
+$("dir-segs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  dirSelect.value = b.dataset.v;
+  localStorage.setItem(DIR_KEY, dirSelect.value);
+  syncOptionPills(); closeChoosers();
+});
+$("limit-segs").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  sessionLimitSel.value = b.dataset.v;
+  sessionLimitSel.dispatchEvent(new Event("change")); // sparar SESSION_LIMIT_KEY
+  syncOptionPills(); closeChoosers();
+});
+syncOptionPills();
 
 function pickDir(dirMode) {
   if (dirMode === "f2b") return "f2b";
@@ -1841,7 +1876,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v61";
+const APP_VERSION = "v62";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
