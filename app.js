@@ -22,6 +22,10 @@ const screens = {
 };
 
 // ---- App-state ----
+// OBS: CACHE_KEY måste vara initierad INNAN loadCachedContent() anropas här, annars
+// kastar den (const i TDZ) ett ReferenceError som try/catch sväljer → cachen blir
+// alltid tom och "visa cachat innehåll offline" fungerar inte.
+const CACHE_KEY = "flashcards-content-cache-v1";
 let content = loadCachedContent(); // [{id,name,order,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
 let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
@@ -113,6 +117,75 @@ function gradeCard(card, dir, grade) {
   saveSRS();
 }
 
+// Ett kort är "nytt" (aldrig tränat) när BÅDA riktningarna ligger i låda 0.
+function isNewCard(c) {
+  return getEntry(c, "f2b").box === 0 && getEntry(c, "b2f").box === 0;
+}
+
+// =========================================================================
+//  Daglig introduktion av nya ord (max 10/dag per ämne, proportionellt)
+// =========================================================================
+// "Dags att öva" tar in nya ord (låda 0) men släpper in högst 10 nya per dag
+// och ämne, slumpat proportionellt över lektionerna. Uppsättningen väljs en
+// gång per dag och persisteras (hård gräns – ingen påfyllning samma dag).
+const NEW_INTRO_KEY = "flippa-newintro-v1";
+const NEW_PER_DAY = 10;
+
+function todayStr() {
+  return new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD i lokal tid
+}
+
+// Hamilton/största-rest: fördela `total` platser proportionellt mot bucket-storlekar.
+function allocProportional(counts, total) {
+  const sum = counts.reduce((a, b) => a + b, 0);
+  if (sum <= total) return counts.slice(); // alla ryms
+  const ideal = counts.map((n) => (total * n) / sum);
+  const base = ideal.map(Math.floor);
+  let rest = total - base.reduce((a, b) => a + b, 0);
+  // dela ut återstoden till största bråkdelarna
+  const order = ideal
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac);
+  for (let k = 0; k < order.length && rest > 0; k++, rest--) base[order[k].i]++;
+  return base;
+}
+
+// Returnerar dagens valda nya kort (objekt) för ett ämne som FORTFARANDE är låda 0.
+// Väljer (och persisterar) uppsättningen första gången den efterfrågas en ny dag.
+function todaysNewCards(subject) {
+  if (!subject) return [];
+  let ledger;
+  try { ledger = JSON.parse(localStorage.getItem(NEW_INTRO_KEY) || "{}"); } catch { ledger = {}; }
+  const today = todayStr();
+  let entry = ledger[subject.id];
+  if (!entry || entry.date !== today) {
+    // Bygg buckets per lektion av nya kort och fördela proportionellt.
+    const buckets = subject.lessons.map((l) => l.cards.filter(isNewCard));
+    const counts = buckets.map((b) => b.length);
+    const totalNew = counts.reduce((a, b) => a + b, 0);
+    const alloc = allocProportional(counts, Math.min(NEW_PER_DAY, totalNew));
+    const ids = [];
+    buckets.forEach((cards, i) => {
+      const shuffled = cards
+        .map((c) => ({ c, r: Math.random() }))
+        .sort((a, b) => a.r - b.r)
+        .map((x) => x.c);
+      shuffled.slice(0, alloc[i]).forEach((c) => ids.push(c.id));
+    });
+    entry = { date: today, ids };
+    ledger[subject.id] = entry;
+    localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+  }
+  const idSet = new Set(entry.ids);
+  const out = [];
+  subject.lessons.forEach((l) =>
+    l.cards.forEach((c) => {
+      if (idSet.has(c.id) && isNewCard(c)) out.push(c); // ej graderat ännu
+    })
+  );
+  return out;
+}
+
 // Migrera gammal statistik (nycklad på kort-ID "cardId:dir") till ordnyckeln.
 // Idempotent: kör säkert flera ggr; behåller starkaste posten vid krock.
 const SRS_MIGRATED_KEY = "flippa-srs-keyed-by-word";
@@ -140,7 +213,7 @@ function migrateSrsKeys(contentArr) {
 // =========================================================================
 //  Datalager – Firebase + localStorage-cache
 // =========================================================================
-const CACHE_KEY = "flashcards-content-cache-v1";
+// (CACHE_KEY deklareras högre upp, före loadCachedContent()-anropet vid boot)
 
 function loadCachedContent() {
   try {
@@ -316,10 +389,13 @@ function openSubject(id) {
 
 function dueCountForLessons(lessons) {
   const now = Date.now();
+  // Dagens nya ord (låda 0) räknas också – men de väljs per ämne, så vi
+  // begränsar setet till de lektioner vi räknar på.
+  const newSet = new Set(todaysNewCards(currentSubject).map((c) => c.id));
   let n = 0;
   lessons.forEach((l) =>
     l.cards.forEach((c) => {
-      if (isDue(c, "f2b", now) || isDue(c, "b2f", now)) n++;
+      if (isDue(c, "f2b", now) || isDue(c, "b2f", now) || newSet.has(c.id)) n++;
     })
   );
   return n;
@@ -615,11 +691,18 @@ function startDueSession(continuing = false) {
   const now = Date.now();
   const dirMode = dirSelect.value;
   const due = [];
+  const inDue = new Set();
   currentSubject.lessons.forEach((l) =>
     l.cards.forEach((c) => {
-      if ((isDue(c, "f2b", now) || isDue(c, "b2f", now)) && !runSeen.has(c.id)) due.push(c);
+      if ((isDue(c, "f2b", now) || isDue(c, "b2f", now)) && !runSeen.has(c.id)) {
+        due.push(c); inDue.add(c.id);
+      }
     })
   );
+  // Lägg till dagens nya ord (låda 0, disjunkt från isDue-mängden).
+  todaysNewCards(currentSubject).forEach((c) => {
+    if (!inDue.has(c.id) && !runSeen.has(c.id)) { due.push(c); inDue.add(c.id); }
+  });
   if (!due.length) return;
   due.sort((a, b) => Math.min(getEntry(a, "f2b").due, getEntry(a, "b2f").due) -
     Math.min(getEntry(b, "f2b").due, getEntry(b, "b2f").due));
@@ -679,20 +762,46 @@ function loadCard(forceDir) {
 
 const DONE_LABELS = ["Grymt!", "Nice!", "Hell yeah!", "Snyggt!", "Kanon!", "Toppen!", "Bra jobbat!", "Yes!", "Så ska det se ut!", "Mästerligt!"];
 
+// Hur många kort återstår faktiskt för en "Fortsätt"-knapp (respekterar runSeen,
+// som vid fortsättning inte nollställs – fel-svarade visas inte förrän ny runda).
+function remainingForContinue(cont) {
+  const now = Date.now();
+  if (cont.kind === "due") {
+    const newSet = new Set(todaysNewCards(currentSubject).map((c) => c.id));
+    let n = 0;
+    currentSubject.lessons.forEach((l) =>
+      l.cards.forEach((c) => {
+        if (runSeen.has(c.id)) return;
+        if (isDue(c, "f2b", now) || isDue(c, "b2f", now) || newSet.has(c.id)) n++;
+      })
+    );
+    return n;
+  }
+  // lesson
+  const lesson = currentSubject.lessons.find((l) => l.id === cont.lessonId);
+  if (!lesson) return 0;
+  const dirMode = dirSelect.value;
+  const activeToday = (c) =>
+    dirMode === "f2b" ? getEntry(c, "f2b").due <= now
+    : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
+    : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
+  return lesson.cards.filter((c) => !runSeen.has(c.id) && (cont.forced || activeToday(c))).length;
+}
+
 function finishSession() {
   stopHandsfree();
   const cont = session ? { limit: session.continueLimit, kind: session.kind, lessonId: session.lessonId, forced: session.forced } : null;
   $("congrats-sub").textContent = (session && session.note) || `${session ? session.label : ""} – klar! 🎉`;
   $("congrats-done").textContent = DONE_LABELS[Math.floor(Math.random() * DONE_LABELS.length)];
 
-  // "Fortsätt med N till" om man kör i pass och det finns mer kvar
+  // "Fortsätt"-knapp om man kör i pass och det finns mer kvar. Texten anpassas:
+  // färre kvar än passlängden → "Ta de sista X direkt".
   const contBtn = $("congrats-continue");
-  let showCont = false;
-  if (cont && cont.limit > 0) {
-    showCont = cont.kind === "due" ? dueCountForLessons(currentSubject.lessons) > 0 : true;
-  }
-  if (showCont) {
-    contBtn.textContent = `Fortsätt med ${cont.limit} till`;
+  const remaining = cont && cont.limit > 0 ? remainingForContinue(cont) : 0;
+  if (remaining > 0) {
+    contBtn.textContent = remaining < cont.limit
+      ? `Ta de sista ${remaining} direkt`
+      : `Fortsätt med ${cont.limit} till`;
     contBtn.classList.remove("hidden");
     contBtn.onclick = () => (cont.kind === "due" ? startDueSession(true) : startLessonSession(cont.lessonId, cont.forced, true));
   } else {
@@ -1084,6 +1193,45 @@ function openModal(innerHTML) {
   return modalRoot.querySelector(".modal");
 }
 
+// Egen dropdown som matchar appens tema (ersätter native <select>).
+// items: [{value, label}], selected: value, onChange(value) (valfri).
+// Returnerar { el, value (get/set) } där `el` monteras i DOM.
+function buildSelect(items, selected, onChange) {
+  const el = document.createElement("div");
+  el.className = "cs";
+  let cur = items.some((i) => i.value === selected) ? selected : (items[0] && items[0].value);
+  const labelFor = (v) => (items.find((i) => i.value === v) || {}).label || "";
+  el.innerHTML = `
+    <button type="button" class="cs-btn"><span class="cs-cur">${esc(labelFor(cur))}</span><span class="cs-car">▾</span></button>
+    <div class="cs-list hidden">${items
+      .map((i) => `<button type="button" class="cs-opt ${i.value === cur ? "on" : ""}" data-v="${esc(i.value)}">${esc(i.label)}</button>`)
+      .join("")}</div>`;
+  const btn = el.querySelector(".cs-btn");
+  const list = el.querySelector(".cs-list");
+  const close = () => list.classList.add("hidden");
+  const apply = (v, fire) => {
+    cur = v;
+    el.querySelector(".cs-cur").textContent = labelFor(cur);
+    list.querySelectorAll(".cs-opt").forEach((o) => o.classList.toggle("on", o.dataset.v === cur));
+    if (fire && onChange) onChange(cur);
+  };
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    // stäng ev. andra öppna väljare i samma modal
+    el.closest(".modal")?.querySelectorAll(".cs-list").forEach((o) => { if (o !== list) o.classList.add("hidden"); });
+    list.classList.toggle("hidden");
+  });
+  list.querySelectorAll(".cs-opt").forEach((opt) => {
+    opt.addEventListener("click", (e) => { e.stopPropagation(); apply(opt.dataset.v, true); close(); });
+  });
+  // klick utanför stänger
+  setTimeout(() => {
+    const m = el.closest(".modal");
+    m && m.addEventListener("click", (e) => { if (!el.contains(e.target)) close(); });
+  }, 0);
+  return { el, get value() { return cur; }, set value(v) { apply(v, false); } };
+}
+
 function askName(title, value = "", okLabel = "Spara") {
   return new Promise((resolve) => {
     const m = openModal(`
@@ -1105,27 +1253,26 @@ function askName(title, value = "", okLabel = "Spara") {
 
 function askSubject(title, name = "", lang = "", allowDelete = false) {
   return new Promise((resolve) => {
-    const opts = LANG_OPTIONS.map(
-      (o) => `<option value="${o.code}" ${o.code === lang ? "selected" : ""}>${esc(o.label)}</option>`
-    ).join("");
     const delBtn = allowDelete ? `<button class="full-btn danger" id="m-del">🗑 Ta bort ämne</button>` : "";
     const m = openModal(`
       <h3>${esc(title)}</h3>
       <label>Namn</label>
       <input type="text" id="m-name" value="${esc(name)}" autocomplete="off" />
       <label>Språk (för uttal)</label>
-      <select id="m-lang">${opts}</select>
+      <div id="m-lang-mount"></div>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
       </div>${delBtn}`);
+    const langSel = buildSelect(LANG_OPTIONS.map((o) => ({ value: o.code, label: o.label })), lang);
+    m.querySelector("#m-lang-mount").appendChild(langSel.el);
     const nameI = m.querySelector("#m-name");
     nameI.focus();
     nameI.select();
     m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
     m.querySelector("#m-ok").onclick = () => {
       const n = nameI.value.trim();
-      const l = m.querySelector("#m-lang").value;
+      const l = langSel.value;
       closeModal();
       resolve(n ? { name: n, lang: l } : null);
     };
@@ -1480,9 +1627,9 @@ function openTranslate(defaultLessonId) {
   const foreignLabel = (LANG_OPTIONS.find((o) => o.code === fullLang) || {}).label || "Utländska";
   let dir = "sv2for";
 
-  const lessonOpts = currentSubject.lessons
-    .map((l) => `<option value="${l.id}" ${l.id === defaultLessonId ? "selected" : ""}>${esc(l.name)}</option>`)
-    .join("");
+  const lessonItems = currentSubject.lessons
+    .map((l) => ({ value: l.id, label: l.name }))
+    .concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
 
   const m = openModal(`
     <h3>Slå upp ord</h3>
@@ -1498,7 +1645,7 @@ function openTranslate(defaultLessonId) {
     <label id="t-dst-label">${esc(foreignLabel)}</label>
     <input type="text" id="t-dst" autocomplete="off" autocapitalize="none" autocorrect="off" placeholder="översättning (redigerbar)" />
     <label>Lägg till i</label>
-    <select id="t-lesson">${lessonOpts}<option value="__new__">➕ Ny lektion…</option></select>
+    <div id="t-lesson-mount"></div>
     <input type="text" id="t-newlesson" class="hidden" placeholder="Namn på ny lektion" autocomplete="off" />
     <div class="modal-actions">
       <button class="btn-secondary" id="m-cancel">Stäng</button>
@@ -1508,8 +1655,11 @@ function openTranslate(defaultLessonId) {
 
   const srcI = m.querySelector("#t-src");
   const dstI = m.querySelector("#t-dst");
-  const lessonSel = m.querySelector("#t-lesson");
   const newLessonI = m.querySelector("#t-newlesson");
+  const lessonSel = buildSelect(lessonItems, defaultLessonId, (v) => {
+    newLessonI.classList.toggle("hidden", v !== "__new__");
+  });
+  m.querySelector("#t-lesson-mount").appendChild(lessonSel.el);
   srcI.focus();
 
   if (!currentSubject.lessons.length) {
@@ -1525,8 +1675,6 @@ function openTranslate(defaultLessonId) {
     srcI.placeholder = sv ? "t.ex. blomkål" : "t.ex. cavolfiore";
   }
   m.querySelectorAll("#t-dir button").forEach((b) => (b.onclick = () => { dir = b.dataset.dir; applyDir(); srcI.focus(); }));
-
-  lessonSel.onchange = () => newLessonI.classList.toggle("hidden", lessonSel.value !== "__new__");
 
   async function lookup() {
     const text = srcI.value.trim();
@@ -1876,7 +2024,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v62";
+const APP_VERSION = "v63";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
