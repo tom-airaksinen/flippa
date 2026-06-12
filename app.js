@@ -752,7 +752,9 @@ function loadCard(forceDir) {
   const showFrontFirst = dir === "f2b";
   cardFront.textContent = showFrontFirst ? c.front : c.back;
   cardAnswer.textContent = showFrontFirst ? c.back : c.front;
-  cardHint.textContent = c.hint || ""; // minnesregel på svarssidan (tom = döljs)
+  // Minnesregeln är en svensk hjälp för det UTLÄNDSKA ordet → visa bara när svaret
+  // är utländskt (b2f). Kör man TILL svenska vore den en gratisledtråd – göm den.
+  cardHint.textContent = !showFrontFirst ? (c.hint || "") : "";
   updateProgress();
   updateStack();
   showSpeakSoon(300);
@@ -2024,7 +2026,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v63";
+const APP_VERSION = "v64";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
