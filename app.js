@@ -342,10 +342,56 @@ function seedIfEmpty() {
 // =========================================================================
 //  Navigation / rendering
 // =========================================================================
+// Skärm-djup styr glidriktningen: djupare = push (in från höger), grundare = pop.
+const SCREEN_DEPTH = { subjects: 0, lessons: 1, editor: 2, training: 2, congrats: 3 };
+const NAV_DUR = 220;
+const NAV_EASE = "cubic-bezier(.4,0,.2,1)";
+const prefersReducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
+let shownScreen = "subjects";
+let navCleanup = null; // avslutar pågående övergång
+
+function setOnlyScreen(screenName) {
+  Object.entries(screens).forEach(([name, el]) => el.classList.toggle("hidden", name !== screenName));
+}
+
 function show(screenName) {
-  Object.entries(screens).forEach(([name, el]) => {
-    el.classList.toggle("hidden", name !== screenName);
-  });
+  const from = shownScreen;
+  if (navCleanup) navCleanup(); // snabbspola ev. pågående glid innan nästa
+  const fromEl = screens[from];
+  // Ingen animation: samma skärm, okänd ursprungsskärm, reducerad rörelse, eller
+  // att ursprunget inte var synligt (t.ex. allra första renderingen).
+  if (screenName === from || !fromEl || prefersReducedMotion || fromEl.classList.contains("hidden")) {
+    setOnlyScreen(screenName);
+    shownScreen = screenName;
+    return;
+  }
+  const dir = (SCREEN_DEPTH[screenName] ?? 0) >= (SCREEN_DEPTH[from] ?? 0) ? 1 : -1;
+  const inEl = screens[screenName], outEl = fromEl;
+  inEl.classList.remove("hidden");
+  inEl.classList.add("nav-anim");
+  outEl.classList.add("nav-anim");
+  inEl.style.zIndex = "2"; outEl.style.zIndex = "1"; // inkommande ovanpå
+  inEl.style.transition = "none";
+  outEl.style.transition = "none";
+  inEl.style.transform = `translateX(${dir > 0 ? 100 : -100}%)`;
+  outEl.style.transform = "none";
+  void inEl.offsetWidth; // tvinga startläge
+  inEl.style.transition = `transform ${NAV_DUR}ms ${NAV_EASE}`;
+  outEl.style.transition = `transform ${NAV_DUR}ms ${NAV_EASE}`;
+  inEl.style.transform = "none";
+  outEl.style.transform = `translateX(${dir > 0 ? -28 : 28}%)`;
+  shownScreen = screenName;
+
+  const cleanup = () => {
+    navCleanup = null;
+    [inEl, outEl].forEach((el) => {
+      el.classList.remove("nav-anim");
+      el.style.transition = ""; el.style.transform = ""; el.style.zIndex = "";
+    });
+    setOnlyScreen(screenName);
+  };
+  navCleanup = cleanup;
+  setTimeout(() => { if (navCleanup === cleanup) cleanup(); }, NAV_DUR + 40);
 }
 
 let activeScreen = "subjects";
@@ -2080,7 +2126,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v69";
+const APP_VERSION = "v70";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
