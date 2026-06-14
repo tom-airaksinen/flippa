@@ -91,8 +91,18 @@ const LANG_FLAG = {
   "it-IT": "🇮🇹", "de-DE": "🇩🇪", "fr-FR": "🇫🇷", "es-ES": "🇪🇸",
   "en-GB": "🇬🇧", "pt-PT": "🇵🇹", "uk-UA": "🇺🇦", "id-ID": "🇮🇩",
 };
+// Flagga från språkkodens regiondel (t.ex. "ru-RU" → 🇷🇺) via regional indicator-
+// symboler, så alla språk med en landskod får flagga – inte bara en handplockad lista.
+function flagForLang(code) {
+  if (!code) return "";
+  if (LANG_FLAG[code]) return LANG_FLAG[code]; // ev. handplockad som säker override
+  const region = String(code).split("-").slice(1).find((p) => /^[A-Za-z]{2}$/.test(p));
+  if (!region) return "";
+  const R = region.toUpperCase();
+  return String.fromCodePoint(...[...R].map((c) => 0x1f1e6 + c.charCodeAt(0) - 65));
+}
 function subjectFlag(s) {
-  return LANG_FLAG[subjectLang(s)] || "";
+  return flagForLang(subjectLang(s));
 }
 
 // Svenskt språknamn för en BCP-47-kod (t.ex. "it-IT" → "Italienska") via Intl.
@@ -121,8 +131,11 @@ function langOptionsForPicker(selected) {
   if (!byBase.size) LANG_OPTIONS.forEach((o) => { if (o.code) byBase.set(o.code.slice(0, 2).toLowerCase(), o.code); });
   // Behåll nuvarande val exakt (så koden inte tyst ändras när man sparar)
   if (selected) byBase.set(selected.slice(0, 2).toLowerCase(), selected);
-  const items = [...byBase.values()].map((code) => ({ value: code, label: langLabel(code) }));
-  items.sort((a, b) => a.label.localeCompare(b.label, "sv"));
+  const items = [...byBase.values()].map((code) => {
+    const flag = flagForLang(code);
+    return { value: code, label: (flag ? flag + " " : "") + langLabel(code), sortKey: langLabel(code) };
+  });
+  items.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "sv"));
   return [{ value: "", label: "Inget / ej språk" }, ...items];
 }
 
@@ -2387,7 +2400,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v84";
+const APP_VERSION = "v85";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
