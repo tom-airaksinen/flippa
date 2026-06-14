@@ -1630,6 +1630,24 @@ async function doTranslate(text, fromCode, toCode) {
   return (d.responseData && d.responseData.translatedText) || "";
 }
 
+// Tvätta översättningens skiftläge så det matchar källtexten man skrev in:
+// "blomkål" → gement, "Goddag" → stor första bokstav, "BLOMKÅL" → VERSALT.
+function matchCase(src, target) {
+  const s = (src || "").trim();
+  const t = (target || "").trim();
+  if (!s || !t) return t;
+  const hasUpper = s !== s.toLowerCase();
+  const hasLower = s !== s.toUpperCase();
+  if (!hasUpper) return t.toLowerCase();      // allt gement
+  if (!hasLower) return t.toUpperCase();      // ALLT VERSALT
+  // inledande versal (mening/egennamn) → gement med stor första bokstav
+  if (s[0] === s[0].toUpperCase() && s[0] !== s[0].toLowerCase()) {
+    const low = t.toLowerCase();
+    return low.charAt(0).toUpperCase() + low.slice(1);
+  }
+  return t; // blandat skiftläge – lämna som tjänsten gav
+}
+
 function openTranslate(defaultLessonId) {
   if (!currentSubject) return;
   const fullLang = subjectLang(currentSubject);
@@ -1696,7 +1714,7 @@ function openTranslate(defaultLessonId) {
     const [from, to] = dir === "sv2for" ? ["sv", foreignCode] : [foreignCode, "sv"];
     dstI.value = "…";
     try {
-      dstI.value = await doTranslate(text, from, to);
+      dstI.value = matchCase(text, await doTranslate(text, from, to));
     } catch (e) {
       dstI.value = "";
       flash("Översättning misslyckades: " + e.message, 4000);
@@ -2038,7 +2056,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v66";
+const APP_VERSION = "v67";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
