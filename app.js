@@ -34,8 +34,9 @@ let currentLessonId = null;        // lektion öppen i editorn
 // Varje område har en ägare (owner). Vald profil filtrerar vilka områden som visas.
 // Lektioner ärver områdets ägare automatiskt. Lätt att utöka med fler profiler.
 const USERS = [
-  { id: "tom", name: "Tom" },
-  { id: "hedvig", name: "Hedvig" },
+  // lock = enkelt lösenordslås vid byte TILL profilen (ej riktig säkerhet – ligger i klienten)
+  { id: "tom", name: "Tom", lock: "phl1ppzter" },
+  { id: "hedvig", name: "Hedvig", lock: "horselove" },
   { id: "guest", name: "Gäst" },
 ];
 const USER_KEY = "flippa-user";
@@ -524,8 +525,15 @@ function renderSubjects() {
 
 // Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
 async function pickUser() {
-  const choice = await actionSheet("Vem är du?", USERS.map((u) => ({ label: u.name, value: u.id })));
-  if (choice) setUser(choice);
+  const choice = await actionSheet("Vem är du?", USERS.map((u) => ({ label: u.name + (u.lock ? " 🔒" : ""), value: u.id })));
+  if (!choice) return;
+  const u = USERS.find((x) => x.id === choice);
+  if (u && u.lock && choice !== currentUser) {
+    const pw = await askPassword(`Lösenord för ${u.name}`);
+    if (pw == null) return;                 // avbröt
+    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500); return; }
+  }
+  setUser(choice);
 }
 
 function openSubject(id) {
@@ -1511,6 +1519,24 @@ function buildSelect(items, selected, onChange) {
   return { el, get value() { return cur; }, set value(v) { apply(v, false); } };
 }
 
+function askPassword(title) {
+  return new Promise((resolve) => {
+    const m = openModal(`
+      <h3>${esc(title)}</h3>
+      <input type="password" id="m-input" autocomplete="off" autocapitalize="none" autocorrect="off" />
+      <div class="modal-actions">
+        <button class="btn-secondary" id="m-cancel">Avbryt</button>
+        <button class="btn-primary" id="m-ok">Lås upp</button>
+      </div>`);
+    const input = m.querySelector("#m-input");
+    input.focus();
+    const ok = () => { const v = input.value; closeModal(); resolve(v); };
+    m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
+    m.querySelector("#m-ok").onclick = ok;
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") ok(); });
+  });
+}
+
 function askName(title, value = "", okLabel = "Spara") {
   return new Promise((resolve) => {
     const m = openModal(`
@@ -2404,7 +2430,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v86";
+const APP_VERSION = "v87";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
