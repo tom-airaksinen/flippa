@@ -26,9 +26,42 @@ const screens = {
 // kastar den (const i TDZ) ett ReferenceError som try/catch sväljer → cachen blir
 // alltid tom och "visa cachat innehåll offline" fungerar inte.
 const CACHE_KEY = "flashcards-content-cache-v1";
-let content = loadCachedContent(); // [{id,name,order,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
+let content = loadCachedContent(); // [{id,name,order,owner,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
 let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
+
+// ---- Användare (lokal profilväljare – INTE inloggning/säkerhet) ----
+// Varje område har en ägare (owner). Vald profil filtrerar vilka områden som visas.
+// Lektioner ärver områdets ägare automatiskt. Lätt att utöka med fler profiler.
+const USERS = [
+  { id: "tom", name: "Tom" },
+  { id: "hedvig", name: "Hedvig" },
+  { id: "guest", name: "Gäst" },
+];
+const USER_KEY = "flippa-user";
+let currentUser = localStorage.getItem(USER_KEY) || null; // null = ingen vald (ny enhet)
+function userName(id) { return (USERS.find((u) => u.id === id) || {}).name || ""; }
+function setUser(id) {
+  currentUser = id;
+  if (id) localStorage.setItem(USER_KEY, id); else localStorage.removeItem(USER_KEY);
+  renderSubjects();
+}
+// Engångsfix: ge äldre områden (utan owner) en ägare efter namn. Skrivs till Firebase
+// via den inloggade klienten, så alla enheter ser samma ägarskap sen.
+const OWNER_MIGRATED_KEY = "flippa-owners-assigned-v1";
+function migrateOwners() {
+  if (localStorage.getItem(OWNER_MIGRATED_KEY)) return;
+  content.forEach((s) => {
+    if (s.owner) return;
+    const n = (s.name || "").trim().toLowerCase();
+    const owner = n === "spanska" ? "hedvig"
+      : (n === "bahasa indonesia" || n === "ukrainska") ? "guest"
+      : "tom";
+    s.owner = owner; // sätt lokalt direkt så filtret funkar innan Firebase ekar tillbaka
+    db.ref(`content/subjects/${s.id}/owner`).set(owner).catch(writeError);
+  });
+  localStorage.setItem(OWNER_MIGRATED_KEY, "1");
+}
 let seeding = false;
 
 // ---- Språk (för uttal) ----
@@ -244,6 +277,7 @@ function normalize(subjectsObj) {
       name: s.name,
       order: s.order ?? 0,
       lang: s.lang || null,
+      owner: s.owner || null,
       lessons: Object.entries(s.lessons || {})
         .map(([lid, l]) => ({
           id: lid,
@@ -301,6 +335,7 @@ function listenContent() {
         migrateSrsKeys(content);
         localStorage.setItem(SRS_MIGRATED_KEY, "1");
       }
+      migrateOwners(); // sätt ägare på äldre områden en gång (skrivs till Firebase)
       cacheContent(content);
       showStatus(null);
       renderCurrentScreen();
@@ -411,12 +446,23 @@ function renderCurrentScreen() {
 function renderSubjects() {
   activeScreen = "subjects";
   show("subjects");
+  // Profilväljaren högst upp speglar vald användare
+  const pill = $("user-pill");
+  pill.textContent = currentUser ? `👤 ${userName(currentUser)} ▾` : "👤 Vem är du? ▾";
   const list = $("subjects-list");
-  if (!content.length) {
-    list.innerHTML = `<p class="empty">Inget innehåll än.</p>`;
+
+  // Ingen profil vald (t.ex. ny enhet) → tomt läge
+  if (!currentUser) {
+    list.innerHTML = `<p class="empty">Vem är du? Välj högst upp 👆</p>`;
     return;
   }
-  list.innerHTML = content
+  // Bara den valda användarens områden
+  const mine = content.filter((s) => s.owner === currentUser);
+  if (!mine.length) {
+    list.innerHTML = `<p class="empty">Inga områden för ${esc(userName(currentUser))} än. Tryck ＋ för att skapa ett.</p>`;
+    return;
+  }
+  list.innerHTML = mine
     .map((s) => {
       const cardCount = s.lessons.reduce((n, l) => n + l.cards.length, 0);
       const flag = subjectFlag(s);
@@ -426,10 +472,16 @@ function renderSubjects() {
       </div>`;
     })
     .join("");
-  // Ingen penna här – namn/språk redigeras inne i området (✎ uppe på lektionsskärmen).
+  // Ingen penna här – namn/språk/ägare redigeras inne i området (✎ uppe på lektionsskärmen).
   list.querySelectorAll(".row").forEach((row) => {
     row.addEventListener("click", () => openSubject(row.dataset.subject));
   });
+}
+
+// Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
+async function pickUser() {
+  const choice = await actionSheet("Vem är du?", USERS.map((u) => ({ label: u.name, value: u.id })));
+  if (choice) setUser(choice);
 }
 
 function openSubject(id) {
@@ -1417,7 +1469,7 @@ function askName(title, value = "", okLabel = "Spara") {
   });
 }
 
-function askSubject(title, name = "", lang = "", allowDelete = false) {
+function askSubject(title, name = "", lang = "", allowDelete = false, owner = "") {
   return new Promise((resolve) => {
     const delBtn = allowDelete ? `<button class="full-btn danger" id="m-del">🗑 Ta bort ämne</button>` : "";
     const m = openModal(`
@@ -1426,12 +1478,16 @@ function askSubject(title, name = "", lang = "", allowDelete = false) {
       <input type="text" id="m-name" value="${esc(name)}" autocomplete="off" />
       <label>Språk (för uttal)</label>
       <div id="m-lang-mount"></div>
+      <label>Tillhör</label>
+      <div id="m-owner-mount"></div>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
       </div>${delBtn}`);
     const langSel = buildSelect(LANG_OPTIONS.map((o) => ({ value: o.code, label: o.label })), lang);
     m.querySelector("#m-lang-mount").appendChild(langSel.el);
+    const ownerSel = buildSelect(USERS.map((u) => ({ value: u.id, label: u.name })), owner || currentUser || USERS[0].id);
+    m.querySelector("#m-owner-mount").appendChild(ownerSel.el);
     const nameI = m.querySelector("#m-name");
     nameI.focus();
     nameI.select();
@@ -1439,8 +1495,9 @@ function askSubject(title, name = "", lang = "", allowDelete = false) {
     m.querySelector("#m-ok").onclick = () => {
       const n = nameI.value.trim();
       const l = langSel.value;
+      const o = ownerSel.value;
       closeModal();
-      resolve(n ? { name: n, lang: l } : null);
+      resolve(n ? { name: n, lang: l, owner: o } : null);
     };
     if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ delete: true }); };
     nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#m-ok").click(); });
@@ -1562,11 +1619,11 @@ function writeError(err) {
   flash("Fel: " + (err.code || err.message), 4000);
 }
 
-function addSubject(name, lang) {
-  db.ref("content/subjects").push({ name, order: Date.now(), createdAt: TS, lang: lang || null }).catch(writeError);
+function addSubject(name, lang, owner) {
+  db.ref("content/subjects").push({ name, order: Date.now(), createdAt: TS, lang: lang || null, owner: owner || null }).catch(writeError);
 }
-function updateSubject(sid, name, lang) {
-  db.ref(`content/subjects/${sid}`).update({ name, lang: lang || null }).catch(writeError);
+function updateSubject(sid, name, lang, owner) {
+  db.ref(`content/subjects/${sid}`).update({ name, lang: lang || null, owner: owner || null }).catch(writeError);
 }
 function removeSubject(sid) {
   db.ref(`content/subjects/${sid}`).remove().catch(writeError);
@@ -1608,14 +1665,14 @@ function removeCard(sid, lid, cid) {
 async function editSubject(sid) {
   const s = content.find((x) => x.id === sid);
   if (!s) return;
-  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true);
+  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true, s.owner || currentUser || "");
   if (!res) return;
   if (res.delete) {
     const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
     return;
   }
-  updateSubject(sid, res.name, res.lang);
+  updateSubject(sid, res.name, res.lang, res.owner);
 }
 
 const editorSearch = $("editor-search");
@@ -1736,9 +1793,11 @@ async function deleteWord(cid) {
 }
 
 // Header-knappar
+$("user-pill").onclick = pickUser;
 $("add-subject").onclick = async () => {
-  const res = await askSubject("Nytt ämne", "", "");
-  if (res) addSubject(res.name, res.lang);
+  if (!currentUser) { pickUser(); return; } // välj profil först
+  const res = await askSubject("Nytt ämne", "", "", false, currentUser);
+  if (res) addSubject(res.name, res.lang, res.owner);
 };
 $("add-lesson").onclick = async () => {
   if (!currentSubject) return;
@@ -2232,7 +2291,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v74";
+const APP_VERSION = "v75";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
