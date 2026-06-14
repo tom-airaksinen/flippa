@@ -1862,7 +1862,11 @@ function renderEditor() {
     ? sorted.filter((c) => c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter))
     : sorted;
   if (!cards.length) {
-    list.innerHTML = `<p class="empty">Inga träffar på "${esc(filter)}".</p>`;
+    const raw = (editorSearch.value || "").trim();
+    const canLookUp = !!subjectLang(currentSubject);
+    list.innerHTML = `<p class="empty">Inga träffar på "${esc(filter)}".</p>`
+      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add-editor">🔎 Slå upp &amp; lägg till</button></p>` : "");
+    if (canLookUp) $("lookup-add-editor").onclick = () => openTranslate(currentLessonId, raw);
     return;
   }
   list.innerHTML = cards
@@ -2400,7 +2404,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v85";
+const APP_VERSION = "v86";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
