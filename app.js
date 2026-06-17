@@ -909,6 +909,7 @@ function blurActiveInput() {
 //  Träningsstatistik (localStorage) – grund för streak/kalender/volym senare
 // =========================================================================
 const STATS_KEY = "flippa-stats-v1";
+const STATS_PERIOD_KEY = "flippa-stats-period"; // ihågkommet periodval i statistikvyn
 function getStats() {
   try { const a = JSON.parse(localStorage.getItem(STATS_KEY) || "[]"); return Array.isArray(a) ? a : []; }
   catch { return []; }
@@ -961,16 +962,12 @@ function openStats() {
     return;
   }
 
-  // nuvarande streak (tillåt att dagens inte är klar än → börja på gårdagen)
+  // nuvarande streak (tillåt att dagens inte är klar än → börja på gårdagen) – periodoberoende
   let cur = 0; { let d = new Date(today); if (!byDate[ymd(d)]) d = addD(d, -1); while (byDate[ymd(d)]) { cur++; d = addD(d, -1); } }
-  // längsta streak (sök 1 år bakåt)
+  // längsta streak (sök 1 år bakåt) – periodoberoende
   let longest = 0, run = 0; { let d = addD(today, -365); for (let i = 0; i <= 365; i++) { if (byDate[ymd(d)]) { run++; if (run > longest) longest = run; } else run = 0; d = addD(d, 1); } }
-  // kort senaste 30 dagarna
-  let c30 = 0; for (let i = 0; i < 30; i++) { const r = byDate[ymd(addD(today, -i))]; if (r) c30 += r.cards; }
-  // dagar övade denna månad
-  const dim = Object.keys(byDate).filter((k) => { const d = new Date(k); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); }).length;
 
-  // heatmap: 18 veckor, måndag överst, senaste veckan längst till höger
+  // heatmap: 18 veckor, måndag överst, senaste veckan längst till höger (alltid hela historiken)
   const end = addD(today, 6 - ((today.getDay() + 6) % 7)); // söndag i innevarande vecka
   let heat = "";
   for (let w = 17; w >= 0; w--) {
@@ -987,18 +984,47 @@ function openStats() {
     heat += `<div class="st-wk">${col}</div>`;
   }
 
+  // Periodvalet kommer ihåg sig tills man byter
+  const PERIODS = [{ v: "7", label: "7 dagar" }, { v: "30", label: "30 dagar" }, { v: "all", label: "Totalt" }];
+  let period = localStorage.getItem(STATS_PERIOD_KEY) || "30";
+  if (!PERIODS.some((p) => p.v === period)) period = "30";
+
+  function periodKpis(p) {
+    const cutoff = p === "all" ? "" : ymd(addD(today, -(parseInt(p, 10) - 1))); // YYYY-MM-DD; sträng-jämförelse funkar
+    const pRecs = recs.filter((r) => r.d && (p === "all" || r.d >= cutoff));
+    const pass = pRecs.length;
+    const kort = pRecs.reduce((a, r) => a + (r.cards || 0), 0);
+    const min = Math.round(pRecs.reduce((a, r) => a + (r.ms || 0), 0) / 60000);
+    const dagar = new Set(pRecs.map((r) => r.d)).size;
+    return { pass, kort, min, dagar };
+  }
+
   const m = openModal(`${head}
-    <div class="st-hero"><div class="st-big">${cur}<span class="st-u"> dagar</span></div><div class="st-cap">🔥 nuvarande streak</div></div>
-    <div class="st-row3">
-      <div class="st-b"><div class="st-v">${longest}</div><div class="st-l">LÄNGSTA STREAK</div></div>
-      <div class="st-b"><div class="st-v">${c30}</div><div class="st-l">KORT / 30 D</div></div>
-      <div class="st-b"><div class="st-v">${dim}</div><div class="st-l">DAGAR I MÅN</div></div>
-    </div>
+    <div class="opt-segs st-period" id="st-period">${PERIODS.map((p) => `<button type="button" data-v="${p.v}">${p.label}</button>`).join("")}</div>
+    <div class="st-hero"><div class="st-big">${cur}<span class="st-u"> dagar</span></div><div class="st-cap">🔥 nuvarande streak · längsta ${longest}</div></div>
+    <div class="st-grid" id="st-grid"></div>
     <div class="st-sec">SENASTE 18 VECKORNA</div>
     <div class="st-heatwrap"><div class="st-heat">${heat}</div></div>
     <div class="st-legend"><span>mindre</span><span class="st-d"></span><span class="st-d l1"></span><span class="st-d l2"></span><span class="st-d l3"></span><span class="st-d l4"></span><span>mer</span></div>
     <div class="modal-actions"><button class="btn-primary" id="m-ok">Stäng</button></div>`);
   m.querySelector("#m-ok").onclick = closeModal;
+
+  const segs = m.querySelector("#st-period");
+  const grid = m.querySelector("#st-grid");
+  const renderKpis = () => {
+    segs.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === period));
+    const k = periodKpis(period);
+    grid.innerHTML = `
+      <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
+      <div class="st-b"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div></div>
+      <div class="st-b"><div class="st-v">${k.min}</div><div class="st-l">MINUTER</div></div>
+      <div class="st-b"><div class="st-v">${k.dagar}</div><div class="st-l">DAGAR</div></div>`;
+  };
+  segs.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    period = b.dataset.v; localStorage.setItem(STATS_PERIOD_KEY, period); renderKpis();
+  });
+  renderKpis();
 }
 
 function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, continueLimit }) {
@@ -2559,7 +2585,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v90";
+const APP_VERSION = "v91";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
