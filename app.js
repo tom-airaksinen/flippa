@@ -735,6 +735,7 @@ function persistLessonOrder(orderedIds) {
 document.querySelectorAll("[data-back]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const target = btn.dataset.back;
+    if (activeScreen === "training") { commitSessionStats(); session = null; } // logga avbrutet pass
     if (target === "subjects") renderSubjects();
     else if (target === "lessons") renderLessons();
   });
@@ -904,13 +905,54 @@ function blurActiveInput() {
   if (el && typeof el.blur === "function" && (el.tagName === "INPUT" || el.tagName === "TEXTAREA")) el.blur();
 }
 
+// =========================================================================
+//  Träningsstatistik (localStorage) – grund för streak/kalender/volym senare
+// =========================================================================
+const STATS_KEY = "flippa-stats-v1";
+function getStats() {
+  try { const a = JSON.parse(localStorage.getItem(STATS_KEY) || "[]"); return Array.isArray(a) ? a : []; }
+  catch { return []; }
+}
+// Idempotent upsert per pass (nyckel = startedAt) – kan kallas flera ggr (slut,
+// utbackning, app göms) och uppdaterar samma post med senaste värden.
+function commitSessionStats() {
+  const s = session;
+  if (!s || !s.startedAt) return;
+  const reviews = s.reviewCount || 0;
+  if (reviews < 1) return; // inget övat → logga inte
+  const now = Date.now();
+  const rec = {
+    ts: s.startedAt,
+    d: new Date(s.startedAt).toLocaleDateString("sv-SE"), // YYYY-MM-DD (lokal) för kalender/streak
+    ms: Math.max(0, now - s.startedAt),
+    reviews,                                  // antal svar (svep) i passet
+    cards: s.cardSet ? s.cardSet.size : 0,    // unika kort som mötts
+    kind: s.kind || null,                     // "lesson" | "due"
+    subject: s.statsSubject || null,
+    user: s.statsUser || null,
+    dir: s.dirMode || null,
+  };
+  const arr = getStats();
+  const i = arr.findIndex((r) => r.ts === s.startedAt);
+  if (i >= 0) arr[i] = rec; else arr.push(rec);
+  if (arr.length > 5000) arr.splice(0, arr.length - 5000); // backstopp mot obegränsad tillväxt
+  localStorage.setItem(STATS_KEY, JSON.stringify(arr));
+}
+// Logga även om appen göms/stängs mitt i ett pass
+window.addEventListener("pagehide", commitSessionStats);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") commitSessionStats(); });
+
 function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, continueLimit }) {
+  commitSessionStats(); // logga ev. tidigare (avbrutet) pass innan nytt startar
   blurActiveInput();
   // nollställ ev. kvarvarande svep-feedback så den inte blinkar till vid sessionsstart
   feedbackEl.classList.remove("show");
   feedbackEl.textContent = "";
   session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, note: note || "",
-              graded: new Set(), kind: kind || null, lessonId: lessonId || null, forced: forced || false, continueLimit: continueLimit || 0 };
+              graded: new Set(), kind: kind || null, lessonId: lessonId || null, forced: forced || false, continueLimit: continueLimit || 0,
+              // träningsstatistik (loggas lokalt per pass)
+              startedAt: Date.now(), reviewCount: 0, cardSet: new Set(),
+              statsSubject: currentSubject ? currentSubject.name : null, statsUser: currentUser || null };
   undoStack = []; // ny session → inget att ångra
   requestMotionPermissionOnce(); // sker inom klick-gesten (krav på iOS)
   show("training");
@@ -989,6 +1031,7 @@ let lastSessionWasHF = false;
 
 function finishSession() {
   const wasHF = handsfreeActive;
+  commitSessionStats(); // logga passet innan vi släpper session-objektet
   stopHandsfree();
   const cont = session ? { limit: session.continueLimit, kind: session.kind, lessonId: session.lessonId, forced: session.forced } : null;
   $("congrats-sub").textContent = (session && session.note) || `${session ? session.label : ""} – klar! 🎉`;
@@ -1115,6 +1158,9 @@ function launchConfetti() {
 function answer(grade) {
   const c = session.current;
   const dir = session.shownDir;
+  // Statistik: räkna svar + unika kort i passet
+  session.reviewCount = (session.reviewCount || 0) + 1;
+  (session.cardSet || (session.cardSet = new Set())).add(c.id);
   // Snapshot för shake-to-undo (innan någon mutation): kö, SRS-poster, graded-medlemskap.
   const gradedKey = c.id + ":" + dir;
   const otherDir0 = dir === "f2b" ? "b2f" : "f2b";
@@ -2120,6 +2166,7 @@ function buildBackup() {
     srs: srs,
     sessionLimit: localStorage.getItem(SESSION_LIMIT_KEY) || "0",
     newPerDay: localStorage.getItem(NEW_PER_DAY_KEY) || "10",
+    stats: getStats(),
   }, null, 0);
 }
 
@@ -2195,6 +2242,12 @@ function openImport() {
       sessionLimitSel.value = String(obj.sessionLimit);
     }
     if (obj.newPerDay != null) localStorage.setItem(NEW_PER_DAY_KEY, String(obj.newPerDay));
+    if (Array.isArray(obj.stats)) { // slå ihop träningsstatistik (unik på ts), behåll båda
+      const merged = new Map(getStats().map((r) => [r.ts, r]));
+      obj.stats.forEach((r) => { if (r && r.ts != null) merged.set(r.ts, r); });
+      const arr = [...merged.values()].sort((a, b) => a.ts - b.ts);
+      localStorage.setItem(STATS_KEY, JSON.stringify(arr));
+    }
     closeModal();
     flash(`Importerade statistik för ${n} kort ✓`, 2500);
     renderCurrentScreen();
@@ -2446,7 +2499,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v88";
+const APP_VERSION = "v89";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
