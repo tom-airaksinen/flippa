@@ -1701,7 +1701,9 @@ function askName(title, value = "", okLabel = "Spara") {
   });
 }
 
-function askSubject(title, name = "", lang = "", allowDelete = false, owner = "") {
+function askSubject(title, name = "", lang = "", allowDelete = false) {
+  // Ägaren väljs INTE här – den ges av aktiv profil (nytt) resp. behålls (redigering),
+  // så man inte kan skapa eller flytta ett område åt en annan användare.
   return new Promise((resolve) => {
     const delBtn = allowDelete ? `<button class="full-btn danger" id="m-del">🗑 Ta bort ämne</button>` : "";
     const m = openModal(`
@@ -1710,16 +1712,12 @@ function askSubject(title, name = "", lang = "", allowDelete = false, owner = ""
       <input type="text" id="m-name" value="${esc(name)}" autocomplete="off" />
       <label>Språk (för uttal)</label>
       <div id="m-lang-mount"></div>
-      <label>Tillhör</label>
-      <div id="m-owner-mount"></div>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
       </div>${delBtn}`);
     const langSel = buildSelect(langOptionsForPicker(lang), lang);
     m.querySelector("#m-lang-mount").appendChild(langSel.el);
-    const ownerSel = buildSelect(USERS.map((u) => ({ value: u.id, label: u.name })), owner || currentUser || USERS[0].id);
-    m.querySelector("#m-owner-mount").appendChild(ownerSel.el);
     const nameI = m.querySelector("#m-name");
     nameI.focus();
     nameI.select();
@@ -1727,9 +1725,8 @@ function askSubject(title, name = "", lang = "", allowDelete = false, owner = ""
     m.querySelector("#m-ok").onclick = () => {
       const n = nameI.value.trim();
       const l = langSel.value;
-      const o = ownerSel.value;
       closeModal();
-      resolve(n ? { name: n, lang: l, owner: o } : null);
+      resolve(n ? { name: n, lang: l } : null);
     };
     if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ delete: true }); };
     nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#m-ok").click(); });
@@ -1932,14 +1929,14 @@ function removeCard(sid, lid, cid) {
 async function editSubject(sid) {
   const s = content.find((x) => x.id === sid);
   if (!s) return;
-  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true, s.owner || currentUser || "");
+  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true);
   if (!res) return;
   if (res.delete) {
     const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
     return;
   }
-  updateSubject(sid, res.name, res.lang, res.owner);
+  updateSubject(sid, res.name, res.lang, s.owner || currentUser); // behåll befintlig ägare
 }
 
 const editorSearch = $("editor-search");
@@ -2077,8 +2074,8 @@ async function deleteWord(cid) {
 $("user-pill").onclick = pickUser;
 $("add-subject").onclick = async () => {
   if (!currentUser) { pickUser(); return; } // välj profil först
-  const res = await askSubject("Nytt ämne", "", "", false, currentUser);
-  if (res) addSubject(res.name, res.lang, res.owner);
+  const res = await askSubject("Nytt ämne", "", "", false);
+  if (res) addSubject(res.name, res.lang, currentUser); // ägare = aktiv profil
 };
 $("add-lesson").onclick = async () => {
   if (!currentSubject) return;
@@ -2585,7 +2582,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v91";
+const APP_VERSION = "v92";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
