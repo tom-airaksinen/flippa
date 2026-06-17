@@ -121,7 +121,13 @@ body {
 /* ---- Listor ---- */
 /* flex:1 + min-height:0 → listan scrollar internt i den nu fixhöjda (100dvh) skärmen
    istället för att hela sidan växer/scrollar */
-.list { padding: 8px 16px 24px; overflow-y: auto; flex: 1; min-height: 0; }
+.list {
+  padding: 8px 16px 24px; overflow-y: auto; flex: 1; min-height: 0;
+  /* Mjuk uttoning mot bakgrunden i nederkanten så långa listor inte klipps abrupt.
+     Masken är förankrad till listans synliga botten → fadar bara när det finns mer nedanför. */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+}
 .row {
   display: flex;
   align-items: center;
