@@ -2054,10 +2054,15 @@ function renderEditor() {
     if (canLookUp) $("lookup-add-editor").onclick = () => openTranslate(currentLessonId, raw);
     return;
   }
+  // Lådbadgen visas bara vid de riktningsbaserade "svagast"-sorteringarna.
+  const showBox = editorSort === "weak-front" || editorSort === "weak-back";
   list.innerHTML = cards
     .map((c) => {
-      const box = strengthBox(c);
-      const badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 6 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
+      let badge = "";
+      if (showBox) {
+        const box = strengthBox(c);
+        badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 6 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
+      }
       return `<div class="word-row">
         <div class="word-texts" data-edit="${c.id}">
           <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
@@ -2621,7 +2626,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v103";
+const APP_VERSION = "v104";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
