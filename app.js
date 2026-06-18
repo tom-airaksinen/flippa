@@ -602,7 +602,7 @@ function renderLessons() {
   if (!lessonsToShow.length) {
     const raw = ($("lessons-search").value || "").trim();
     const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
-    list.innerHTML = `<p class="empty">Inga lektioner matchar "${esc(filter)}".</p>`
+    list.innerHTML = `<p class="empty">Inga lektioner matchar "${esc(raw)}".</p>`
       + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">🔎 Slå upp &amp; lägg till</button></p>` : "");
     if (canLookUp) $("lookup-add").onclick = () => openTranslate(null, raw);
     return;
@@ -2038,7 +2038,7 @@ function renderEditor() {
   if (!cards.length) {
     const raw = (editorSearch.value || "").trim();
     const canLookUp = !!subjectLang(currentSubject);
-    list.innerHTML = `<p class="empty">Inga träffar på "${esc(filter)}".</p>`
+    list.innerHTML = `<p class="empty">Inga träffar på "${esc(raw)}".</p>`
       + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add-editor">🔎 Slå upp &amp; lägg till</button></p>` : "");
     if (canLookUp) $("lookup-add-editor").onclick = () => openTranslate(currentLessonId, raw);
     return;
@@ -2607,7 +2607,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v99";
+const APP_VERSION = "v100";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
