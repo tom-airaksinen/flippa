@@ -2032,15 +2032,15 @@ function renderEditor() {
       <p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>
       <div class="ai-tip hidden" id="ai-tip">
         <p class="ai-tip-lead">Ge denna prompt till ChatGPT/Claude, kopiera sedan svaret och klistra in via ＋ Lägg till.</p>
-        <button class="ai-prompt-copy" id="ai-copy" type="button" title="Tryck för att kopiera prompten">
+        <div class="ai-prompt-copy" id="ai-copy" role="button" tabindex="0" title="Tryck för att kopiera (eller markera manuellt)">
           <span class="ai-cp-icon" id="ai-cp-icon">${COPY_ICON_SVG}</span>
           <span class="ai-cp-text">${esc(aiPrompt)}</span>
-        </button>
+        </div>
       </div>`;
     $("ai-help").onclick = () => $("ai-tip").classList.toggle("hidden");
-    // Kopiera redan vid nedtryck (inte vid release) så ingen tror att man måste
-    // long-pressa för att markera/kopiera manuellt. preventDefault stoppar markering/iOS-callout.
-    $("ai-copy").addEventListener("pointerdown", (e) => { e.preventDefault(); copyText(aiPrompt, $("ai-cp-icon")); });
+    // iOS tillåter clipboard-skrivning bara från ett riktigt tryck (click), inte
+    // pointerdown → kopiera vid klick. Texten är även markerbar som manuell reserv.
+    $("ai-copy").onclick = () => copyText(aiPrompt, $("ai-cp-icon"));
     return;
   }
   const sorted = sortedCards(lesson);
@@ -2628,7 +2628,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v105";
+const APP_VERSION = "v106";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

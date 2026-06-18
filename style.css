@@ -195,7 +195,8 @@ body {
   touch-action: manipulation;
 }
 .ai-prompt-copy:active { background: rgba(91, 140, 255, 0.18); }
-.ai-cp-text { display: block; font-size: 0.9rem; line-height: 1.45; }
+/* texten markeringsbar som manuell reserv (long-press → iOS Kopiera) */
+.ai-cp-text { display: block; font-size: 0.9rem; line-height: 1.45; -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 .ai-cp-icon { position: absolute; top: 10px; right: 10px; color: var(--muted); display: flex; }
 .ai-cp-icon svg { display: block; }
 
