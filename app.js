@@ -991,7 +991,7 @@ function openStats() {
   }
 
   // Periodvalet kommer ihåg sig tills man byter
-  const PERIODS = [{ v: "7", label: "7 dagar" }, { v: "30", label: "30 dagar" }, { v: "all", label: "Totalt" }];
+  const PERIODS = [{ v: "1", label: "Idag" }, { v: "7", label: "7 dagar" }, { v: "30", label: "30 dagar" }, { v: "all", label: "Totalt" }];
   let period = localStorage.getItem(STATS_PERIOD_KEY) || "30";
   if (!PERIODS.some((p) => p.v === period)) period = "30";
 
@@ -2599,7 +2599,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v96";
+const APP_VERSION = "v97";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
