@@ -1113,7 +1113,10 @@ function renderStats() {
     const k = periodKpis(period);
     grid.innerHTML = `
       <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
-      <div class="st-b"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div>${k.nya ? `<div class="st-sub">${k.nya} nya</div>` : ""}</div>
+      <div class="st-b st-split">
+        <div class="st-half"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div></div>
+        <div class="st-half nya"><div class="st-v">${k.nya}</div><div class="st-l">NYA</div></div>
+      </div>
       <div class="st-b"><div class="st-v">${k.min}</div><div class="st-l">MINUTER</div></div>
       <div class="st-b"><div class="st-v">${k.dagar}</div><div class="st-l">DAGAR</div></div>`;
   };
@@ -2847,7 +2850,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v122";
+const APP_VERSION = "v123";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
