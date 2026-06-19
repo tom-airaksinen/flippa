@@ -756,6 +756,9 @@ body {
   overflow-y: auto;
   animation: slideup 0.22s ease-out;
 }
+/* Barnen ska behålla sin höjd – annars krymper flex dem (t.ex. heatmapen) när
+   innehållet är högre än modalen. Modalen scrollar i stället. */
+.modal > * { flex-shrink: 0; }
 @media (min-width: 520px) {
   #modal-root { align-items: center; }
   .modal { border-radius: 20px; }
