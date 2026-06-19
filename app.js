@@ -1066,12 +1066,16 @@ function renderStats() {
   const ltSubjects = statsScope === "all" ? mine : (scopeSubject ? [scopeSubject] : []);
   ltSubjects.forEach((s) => s.lessons.forEach((l) => l.cards.forEach((c) => { ltCounts[boxOf(c)]++; })));
 
-  // "Nya ord" per period: datum då kort i scope studerades första gången (en gång per kort)
+  // "Nya ord": idag/7/30 bygger på stämplade förstagångsdatum (funkar bara framåt).
+  // "Totalt" räknar istället alla kort som lämnat låda 0 (= studerade minst en gång) –
+  // det går att läsa direkt ur SRS oavsett historik, så totalsiffran blir korrekt nu.
   const fsMap = loadFirstStudied();
   const seenK = new Set();
   const firstDates = [];
+  let studiedEver = 0;
   ltSubjects.forEach((s) => s.lessons.forEach((l) => l.cards.forEach((c) => {
     const k = cardKeyOf(c); if (seenK.has(k)) return; seenK.add(k);
+    if (!isNewCard(c)) studiedEver++;
     const d = fsMap[k]; if (d) firstDates.push(d);
   })));
   const ltMax = Math.max(1, ...ltCounts);
@@ -1091,9 +1095,9 @@ function renderStats() {
     const pass = pRecs.length;
     const kort = pRecs.reduce((a, r) => a + (r.cards || 0), 0);
     const min = Math.round(pRecs.reduce((a, r) => a + (r.ms || 0), 0) / 60000);
-    const dagar = new Set(pRecs.map((r) => r.d)).size;
-    const nya = firstDates.filter((d) => p === "all" || d >= cutoff).length;
-    return { pass, kort, min, dagar, nya };
+    // Totalt = alla kort ute ur låda 0 (livstid); fönster = stämplade datum inom perioden
+    const nya = p === "all" ? studiedEver : firstDates.filter((d) => d >= cutoff).length;
+    return { pass, kort, min, nya };
   }
 
   body.innerHTML = `
@@ -1113,12 +1117,9 @@ function renderStats() {
     const k = periodKpis(period);
     grid.innerHTML = `
       <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
-      <div class="st-b st-split">
-        <div class="st-half"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div></div>
-        <div class="st-half nya"><div class="st-v">${k.nya}</div><div class="st-l">NYA</div></div>
-      </div>
+      <div class="st-b"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div></div>
       <div class="st-b"><div class="st-v">${k.min}</div><div class="st-l">MINUTER</div></div>
-      <div class="st-b"><div class="st-v">${k.dagar}</div><div class="st-l">DAGAR</div></div>`;
+      <div class="st-b"><div class="st-v">${k.nya}</div><div class="st-l">NYA</div></div>`;
   };
   segs.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
@@ -2850,7 +2851,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v124";
+const APP_VERSION = "v125";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
