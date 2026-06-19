@@ -499,6 +499,7 @@ function setTab(tab) {
   activeTab = tab;
   $("screens").classList.toggle("hidden", tab !== "flippa");
   $("stats-screen").classList.toggle("hidden", tab !== "stats");
+  $("help-screen").classList.toggle("hidden", tab !== "help");
   if (tab === "stats") {
     // Default: ämnet man har aktivt i Flippa-fliken, annars Alla ämnen
     statsScope = currentSubject ? currentSubject.id : "all";
@@ -2754,7 +2755,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v115";
+const APP_VERSION = "v116";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

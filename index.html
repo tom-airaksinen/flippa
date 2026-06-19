@@ -190,6 +190,64 @@
 
   <!-- Statistik-fliken (fylls av renderStats) -->
   <section id="stats-screen" class="tab-view hidden"></section>
+
+  <!-- Hjälp-fliken (statiskt innehåll) -->
+  <section id="help-screen" class="tab-view hidden">
+    <header class="help-header">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg>
+      <h1>Hjälp</h1>
+    </header>
+    <div class="help-body">
+      <h2>Vad är Flippa?</h2>
+      <p>En glosapp med flippkort. Du svarar genom att svepa, och appen håller koll på vad du behöver repetera – så att du pluggar rätt ord vid rätt tillfälle i stället för allt om och om igen.</p>
+
+      <h2>Så svarar du (svep)</h2>
+      <ul class="help-swipes">
+        <li>👉 <b>Höger = Kan</b> – flyttar kortet en nivå upp.</li>
+        <li>👆 <b>Upp = Kan bra</b> – hoppar två nivåer upp (för det du kan riktigt säkert).</li>
+        <li>👈 <b>Vänster = Kan inte</b> – nollställer kortet och tar det igen senare i passet.</li>
+        <li>👇 <b>Ner = Hopplöst</b> – nollställer och drillar det igen snart i passet (läser även upp ev. minnesregel).</li>
+      </ul>
+      <p class="help-tip">Svarade du fel? <b>Skaka telefonen</b> för att ångra senaste svaret – det funkar även direkt efter att passet tagit slut.</p>
+
+      <h2>Leitner – så minns appen åt dig</h2>
+      <p>Varje ord ligger i en "låda". Ju högre låda, desto längre tills ordet dyker upp igen:</p>
+      <table class="help-table">
+        <tr><th>Låda</th><th>Repeteras om</th></tr>
+        <tr><td>Ny</td><td>aldrig tränat</td></tr>
+        <tr><td>1</td><td>1 dag</td></tr>
+        <tr><td>2</td><td>2 dagar</td></tr>
+        <tr><td>3</td><td>4 dagar</td></tr>
+        <tr><td>4</td><td>8 dagar</td></tr>
+        <tr><td>5</td><td>16 dagar</td></tr>
+        <tr><td>6</td><td>32 dagar</td></tr>
+      </table>
+      <p>Svarar du <b>Kan</b> flyttas ordet uppåt och får vänta längre; svarar du <b>Kan inte</b> eller <b>Hopplöst</b> åker det ner till låda 1 och kommer snart igen. Tanken: ord du kan stör dig sällan, ord du kämpar med nöts oftare.</p>
+      <p class="help-note">Bra att veta: varje ord tränas separat i varje riktning – du kan kunna det "från svenska" men inte "till svenska".</p>
+
+      <h2>Riktning</h2>
+      <p>Välj <b>Från svenska</b>, <b>Till svenska</b> eller <b>Blandat</b> överst på lektionslistan – det avgör vilket håll du ser frågan.</p>
+
+      <h2>Kort per pass & nya ord per dag</h2>
+      <p><b>Kort/pass</b> begränsar hur många kort ett pass innehåller. <b>Nya ord per dag</b> styr hur många helt nya ord som introduceras dagligen, så det inte blir för mycket på en gång (gäller från och med imorgon).</p>
+      <p class="help-tip">Tips: håll dig till <b>10 kort per pass</b> i början så det inte blir för mycket. Hellre flera korta pass oftare än ett enda långt.</p>
+
+      <h2>"Dags att öva"</h2>
+      <p>Knappen visar hur många ord som är mogna för repetition just nu (nya ord + de vars väntetid gått ut).</p>
+
+      <h2>Slå upp & AI-hjälp</h2>
+      <p>Du kan slå upp och lägga till ord automatiskt, eller be ChatGPT/Claude om förslag på ord till ett tema och klistra in dem.</p>
+
+      <h2>Uppläsning & Handsfree</h2>
+      <p>🔊 läser upp ordet. Med <b>Handsfree</b> svarar du med rösten utan att röra skärmen – säg <i>"kan"</i>, <i>"kan inte"</i>, <i>"bra"</i> eller <i>"hopplöst"</i>. Du kan även säga <i>"flippa"</i> för att vända kortet och <i>"ångra"</i> för att ta tillbaka senaste svaret.</p>
+
+      <h2>Statistik</h2>
+      <p>Statistik-fliken visar din streak, ett 18-veckors aktivitetsdiagram och hur dina ord fördelar sig över Leitner-lådorna – per ämne eller för alla ämnen.</p>
+
+      <h2>Sparas på din enhet</h2>
+      <p>Din träningsprogress sparas lokalt per enhet och profil. Innehållet (ämnen och ord) delas, men hur långt just du kommit ligger på din telefon.</p>
+    </div>
+  </section>
   </div><!-- /#app-main -->
 
   <!-- Bottenflikar -->
@@ -201,6 +259,10 @@
     <button class="tab-btn" data-tab="stats" type="button">
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg>
       <span>Statistik</span>
+    </button>
+    <button class="tab-btn" data-tab="help" type="button">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg>
+      <span>Hjälp</span>
     </button>
   </nav>
 

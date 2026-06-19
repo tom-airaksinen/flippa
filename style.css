@@ -81,16 +81,36 @@ body {
 .stats-scope { margin: 4px 0 6px; }
 .stats-scope .cs { width: 100%; }
 
+/* Hjälp-fliken */
+#help-screen {
+  padding: 8px 16px calc(40px + env(safe-area-inset-bottom));
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+}
+.help-header { display: flex; align-items: center; gap: 8px; padding: 8px 0 4px; }
+.help-header h1 { font-size: 1.4rem; margin: 0; }
+.help-body h2 { font-size: 0.98rem; margin: 20px 0 6px; }
+.help-body p { font-size: 0.86rem; line-height: 1.5; color: var(--muted); margin: 0 0 8px; }
+.help-body b { color: var(--text); }
+.help-note { font-size: 0.8rem !important; font-style: italic; }
+.help-swipes { list-style: none; padding: 0; margin: 0 0 8px; }
+.help-swipes li { font-size: 0.86rem; line-height: 1.55; color: var(--muted); margin-bottom: 5px; }
+.help-swipes b { color: var(--text); }
+.help-tip { background: var(--surface); border-radius: 10px; padding: 10px 12px; }
+.help-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 4px 0 10px; }
+.help-table th, .help-table td { border: 1px solid #243352; padding: 6px 10px; text-align: left; color: var(--muted); }
+.help-table th { color: var(--text); font-weight: 600; }
+
 /* Bottenflikar – diskret: samma bakgrund som sidan, bara en tunn avdelare */
 #tabbar {
-  flex: none; display: flex; justify-content: center; gap: 14px;
+  flex: none; display: flex; justify-content: center; gap: 8px;
   background: var(--bg); border-top: 1px solid #1c2742;
   padding-bottom: max(2px, calc(env(safe-area-inset-bottom) - 30px));
 }
 .tab-btn {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
   background: none; border: none; color: var(--muted);
-  padding: 6px 22px 4px; font-size: 0.62rem; font-weight: 600; font-family: inherit; cursor: pointer;
+  padding: 6px 16px 4px; font-size: 0.62rem; font-weight: 600; font-family: inherit; cursor: pointer;
   letter-spacing: 0.02em;
 }
 .tab-btn svg { display: block; }
