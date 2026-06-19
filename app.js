@@ -2190,16 +2190,72 @@ function renderEditor() {
         const box = strengthBox(c);
         badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 6 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
       }
-      return `<div class="word-row">
-        <div class="word-texts" data-edit="${c.id}">
-          <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
-          <div class="word-back">${esc(c.back)}</div>
+      return `<div class="word-row" data-id="${c.id}">
+        <button class="word-row-del" data-del="${c.id}" aria-label="Ta bort ord" title="Ta bort ord">🗑</button>
+        <div class="word-row-main">
+          <div class="word-texts">
+            <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
+            <div class="word-back">${esc(c.back)}</div>
+          </div>
+          ${badge}
         </div>
-        ${badge}
       </div>`;
     })
     .join("");
-  list.querySelectorAll(".word-texts").forEach((el) => { el.onclick = () => editWord(el.dataset.edit); });
+  list.querySelectorAll(".word-row").forEach((row) => attachSwipeDelete(row, row.dataset.id));
+}
+
+// Swipe-to-delete på ord i editorn: svep vänster på raden → röd papperskorg
+// glider fram (genväg till samma borttagning som i redigera-modalen). En liten
+// horisontell rörelse räknas som svep; ett tryck utan rörelse öppnar redigering.
+function attachSwipeDelete(row, cid) {
+  const main = row.querySelector(".word-row-main");
+  const OPEN = -72, OPEN_THRESH = 28, MOVE_SLOP = 8;
+  let startX = 0, startY = 0, dx = 0, dragging = false, decided = false, horizontal = false;
+  const isOpen = () => row.classList.contains("open");
+  const setX = (x) => { main.style.transform = `translateX(${x}px)`; };
+  const closeOthers = () => row.parentElement.querySelectorAll(".word-row.open").forEach((r) => {
+    if (r !== row) { r.classList.remove("open"); const m = r.querySelector(".word-row-main"); m.style.transition = "transform 0.2s"; m.style.transform = "translateX(0)"; }
+  });
+  const snap = (open) => {
+    main.style.transition = "transform 0.2s";
+    row.classList.toggle("open", open);
+    setX(open ? OPEN : 0);
+    if (open) closeOthers();
+  };
+  main.addEventListener("pointerdown", (e) => {
+    if (e.button != null && e.button > 0) return;
+    startX = e.clientX; startY = e.clientY; dx = isOpen() ? OPEN : 0;
+    dragging = true; decided = false; horizontal = false;
+    main.style.transition = "none";
+  });
+  main.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    const mx = e.clientX - startX, my = e.clientY - startY;
+    if (!decided) {
+      if (Math.abs(mx) < MOVE_SLOP && Math.abs(my) < MOVE_SLOP) return;
+      decided = true; horizontal = Math.abs(mx) > Math.abs(my);
+      if (horizontal) { try { main.setPointerCapture(e.pointerId); } catch (_) {} }
+    }
+    if (!horizontal) { dragging = false; return; } // vertikal → låt listan scrolla
+    e.preventDefault();
+    const base = isOpen() ? OPEN : 0;
+    dx = Math.max(-90, Math.min(0, base + mx));
+    setX(dx);
+  }, { passive: false });
+  const end = () => {
+    if (!dragging) return;
+    dragging = false;
+    if (!decided || !horizontal) { // tryck utan svep → redigera (eller stäng om öppen)
+      main.style.transition = "";
+      if (isOpen()) snap(false); else editWord(cid);
+      return;
+    }
+    snap(dx < OPEN_THRESH * -1); // tillräckligt långt vänster → öppna
+  };
+  main.addEventListener("pointerup", end);
+  main.addEventListener("pointercancel", () => { dragging = false; snap(isOpen()); });
+  row.querySelector(".word-row-del").addEventListener("click", () => deleteWord(cid));
 }
 
 async function editWord(cid) {
@@ -2757,7 +2813,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v118";
+const APP_VERSION = "v119";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
