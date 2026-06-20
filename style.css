@@ -474,7 +474,49 @@ body {
   animation: speak-fade 0.2s ease-out;
 }
 #hint-btn:active { background: var(--easy); }
+
+/* Jordglob: utforska ordet (betydelse + bilder) – nere till vänster på utländska sidan */
+#globe-btn {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  z-index: 10;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0,0,0,0.35);
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: speak-fade 0.2s ease-out;
+}
+#globe-btn:active { background: var(--accent); }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+
+/* Utforska-arket (Wikimedia: betydelse + bilder) */
+.xpl-search { display: flex; gap: 8px; align-items: center; }
+.xpl-search input { flex: 1; }
+.xpl-go {
+  flex: none; width: 44px; height: 44px; border-radius: 10px; border: 1px solid #2c3c63;
+  background: var(--surface-2); color: var(--text); font-size: 1.1rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.xpl-go:active { background: var(--accent); }
+.xpl-sec { color: var(--muted); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; margin: 16px 2px 6px; }
+.xpl-meaning { font-size: 0.9rem; line-height: 1.5; color: var(--text); }
+.xpl-meaning .xpl-src { color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em; display: block; margin-bottom: 4px; }
+.xpl-meaning .xpl-body { white-space: pre-wrap; }
+.xpl-muted { color: var(--muted); font-size: 0.85rem; }
+.xpl-imgs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.xpl-imgs img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--surface-2); cursor: pointer; }
+.xpl-more, .xpl-google {
+  width: 100%; padding: 11px; border: none; border-radius: 11px; font-size: 0.92rem; font-weight: 600;
+  font-family: inherit; cursor: pointer; margin-top: 10px;
+}
+.xpl-more { background: var(--surface-2); color: var(--text); }
+.xpl-google { background: var(--surface-2); color: var(--accent); display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 .card {
   position: relative;

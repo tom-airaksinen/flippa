@@ -1474,6 +1474,7 @@ function onMotion(e) {
 //  Uttal (Web Speech API)
 // =========================================================================
 const speakBtn = $("speak-btn");
+const globeBtn = $("globe-btn");
 
 // Autoläge: läs upp automatiskt varje gång den utländska sidan visas
 const AUTO_SPEAK_KEY = "flippa-autospeak";
@@ -1518,11 +1519,19 @@ function updateSpeakBtn() {
   speakBtn.classList.toggle("hidden", !ok);
 }
 
+// Jordgloben visas så fort den UTLÄNDSKA sidan syns (kräver ingen röst, till skillnad
+// mot högtalaren) – uppslag fungerar för alla språk.
+function updateGlobeBtn() {
+  globeBtn.classList.toggle("hidden", !(foreignVisible() && !!subjectLang(currentSubject)));
+}
+
 // Dölj knappen direkt och visa den först när animationen (flipp/emerge) är klar
 function showSpeakSoon(delay) {
   speakBtn.classList.add("hidden");
+  globeBtn.classList.add("hidden");
   setTimeout(() => {
     updateSpeakBtn();
+    updateGlobeBtn();
     // autoläge: läs upp så fort den utländska sidan blir synlig
     if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && hasVoiceFor(subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
@@ -1546,6 +1555,113 @@ function speakCurrent() {
 }
 speakBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 speakBtn.addEventListener("click", (e) => { e.stopPropagation(); speakCurrent(); });
+globeBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+globeBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (session && session.current) openExplore(session.current.front);
+});
+
+// =========================================================================
+//  Utforska ordet – betydelse (Wikipedia → Wiktionary) + bilder (Commons)
+//  Allt nyckellöst och CORS-öppet, direkt från klienten. Stör inte passet.
+// =========================================================================
+const IMG_PER_PAGE = 9;
+
+function wikiLang() {
+  return (subjectLang(currentSubject) || "en").slice(0, 2).toLowerCase();
+}
+
+// Wikipedia-sammanfattning (ren text); saknas artikel → Wiktionary-definition.
+async function fetchMeaning(lang, term) {
+  try {
+    const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(term)}`);
+    if (r.ok) {
+      const j = await r.json();
+      if (j.extract && j.type !== "disambiguation") {
+        return { source: "Wikipedia", text: j.extract, url: j.content_urls && j.content_urls.desktop && j.content_urls.desktop.page };
+      }
+    }
+  } catch (_) {}
+  try {
+    const r = await fetch(`https://${lang}.wiktionary.org/w/api.php?action=query&prop=extracts&explaintext=1&redirects=1&titles=${encodeURIComponent(term)}&format=json&origin=*`);
+    const j = await r.json();
+    const pages = (j.query && j.query.pages) || {};
+    const p = Object.values(pages)[0];
+    if (p && p.extract) {
+      const text = p.extract.replace(/\n{3,}/g, "\n\n").trim().slice(0, 700);
+      return { source: "Wiktionary", text, url: `https://${lang}.wiktionary.org/wiki/${encodeURIComponent(term)}` };
+    }
+  } catch (_) {}
+  return null;
+}
+
+// Bildsök på Wikimedia Commons (filnamnrymd), thumbnails + offset för "ladda fler".
+async function fetchCommonsImages(term, offset) {
+  const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrnamespace=6&gsrlimit=${IMG_PER_PAGE}&gsroffset=${offset}&prop=imageinfo&iiprop=url&iiurlwidth=240&format=json&origin=*`;
+  const j = await (await fetch(url)).json();
+  const pages = (j.query && j.query.pages) ? Object.values(j.query.pages) : [];
+  return pages
+    .sort((a, b) => (a.index || 0) - (b.index || 0))
+    .map((p) => p.imageinfo && p.imageinfo[0])
+    .filter((ii) => ii && ii.thumburl)
+    .map((ii) => ({ thumb: ii.thumburl, full: ii.url }));
+}
+
+function openExplore(term) {
+  const lang = wikiLang();
+  const m = openModal(`
+    <div class="modal-head"><h3>Utforska</h3></div>
+    <div class="xpl-search">
+      <input type="text" id="xpl-q" value="${esc(term)}" autocomplete="off" autocapitalize="none" autocorrect="off" />
+      <button class="xpl-go" id="xpl-go" title="Sök om" aria-label="Sök om">🔄</button>
+    </div>
+    <div class="xpl-sec">BETYDELSE</div>
+    <div class="xpl-meaning" id="xpl-meaning"></div>
+    <div class="xpl-sec">BILDER</div>
+    <div class="xpl-imgs" id="xpl-imgs"></div>
+    <button class="xpl-more hidden" id="xpl-more">Ladda fler bilder</button>
+    <button class="xpl-google" id="xpl-google">🔎 Öppna på Google</button>
+    <div class="modal-actions"><button class="btn-primary" id="m-ok">Stäng</button></div>`);
+  m.querySelector("#m-ok").onclick = closeModal;
+
+  const meaningEl = m.querySelector("#xpl-meaning");
+  const imgsEl = m.querySelector("#xpl-imgs");
+  const moreBtn = m.querySelector("#xpl-more");
+  const qInput = m.querySelector("#xpl-q");
+  let imgOffset = 0;
+
+  const loadMeaning = async (q) => {
+    meaningEl.innerHTML = `<span class="xpl-muted">Laddar…</span>`;
+    const r = await fetchMeaning(lang, q);
+    if (!r) { meaningEl.innerHTML = `<span class="xpl-muted">Ingen betydelse hittades. Prova Google nedan.</span>`; return; }
+    meaningEl.innerHTML = `<span class="xpl-src">${esc(r.source)}</span><span class="xpl-body">${esc(r.text)}</span>`;
+  };
+
+  const loadImages = async (q, append) => {
+    if (!append) { imgsEl.innerHTML = `<span class="xpl-muted">Laddar bilder…</span>`; imgOffset = 0; }
+    let imgs = [];
+    try { imgs = await fetchCommonsImages(q, imgOffset); } catch (_) {}
+    if (!append) imgsEl.innerHTML = "";
+    if (!append && !imgs.length) { imgsEl.innerHTML = `<span class="xpl-muted">Inga bilder hittades.</span>`; moreBtn.classList.add("hidden"); return; }
+    imgs.forEach((im) => {
+      const el = document.createElement("img");
+      el.src = im.thumb; el.loading = "lazy";
+      el.onclick = () => window.open(im.full, "_blank");
+      imgsEl.appendChild(el);
+    });
+    imgOffset += IMG_PER_PAGE;
+    moreBtn.classList.toggle("hidden", imgs.length < IMG_PER_PAGE);
+  };
+
+  const run = (q) => { const t = (q || "").trim(); if (!t) return; loadMeaning(t); loadImages(t, false); };
+
+  m.querySelector("#xpl-go").onclick = () => run(qInput.value);
+  qInput.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); run(qInput.value); } });
+  moreBtn.onclick = () => loadImages(qInput.value.trim(), true);
+  m.querySelector("#xpl-google").onclick = () => window.open(`https://www.google.com/search?q=${encodeURIComponent(qInput.value.trim() + " meaning")}`, "_blank");
+
+  run(term);
+}
 
 // Glödlampan: visas på prompt-sidan när man kör Från svenska (b2f) och kortet har en
 // minnesregel. Tryck → visar BARA regeln (ledtråd) utan att avslöja svaret.
@@ -1636,7 +1752,7 @@ function setDrag(dx, dy) {
 function snapBack() {
   card.classList.add("snapping");
   card.style.transform = "";
-  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); editCardBtn.classList.remove("hidden"); updateHintBtn(); }, { once: true });
+  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); updateGlobeBtn(); editCardBtn.classList.remove("hidden"); updateHintBtn(); }, { once: true });
 }
 
 function flyOut(grade) {
@@ -1669,6 +1785,7 @@ card.addEventListener("pointerdown", (e) => {
   dragging = true;
   didSwipe = false;
   speakBtn.classList.add("hidden"); // dölj direkt när man tar i kortet
+  globeBtn.classList.add("hidden");
   editCardBtn.classList.add("hidden");
   hintBtn.classList.add("hidden");
   card.setPointerCapture(e.pointerId);
@@ -2851,7 +2968,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v125";
+const APP_VERSION = "v126";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
