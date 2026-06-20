@@ -2107,8 +2107,8 @@ function confirmDuplicates(subject, cards) {
     }
     const m = openModal(`<h3>${title}</h3>${body}
       <div class="modal-actions">
-        <button class="btn-secondary" id="dup-skip">Hoppa över</button>
-        <button class="btn-primary" id="dup-add">Lägg till igen</button>
+        <button class="btn-primary" id="dup-skip">Hoppa över</button>
+        <button class="btn-secondary" id="dup-add">Lägg till igen</button>
       </div>`);
     modalRoot.querySelector(".modal-backdrop").addEventListener("click", () => resolve(null));
     m.querySelector("#dup-skip").onclick = () => { closeModal(); resolve(nonDups); };
