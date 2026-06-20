@@ -233,7 +233,7 @@ function markFirstStudied(card) {
 // =========================================================================
 const UNITS_KEY = "flippa-units-v1";          // mängder per vecka: user → subject → datum → [cardKey|dir]
 const UNITCOUNT_KEY = "flippa-unitcount-v1";  // långsiktigt: user → subject → datum → antal (för heatmap)
-const DAILY_GOAL = 150;
+const DAILY_GOAL = 5; // TILLFÄLLIGT sänkt för test – ändra tillbaka till 150
 const WEEKLY_GOAL = 1000;
 function loadLS(key) { try { return JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch { return {}; } }
 function unitUser() { return currentUser || "guest"; }
@@ -1300,8 +1300,8 @@ function finishSession() {
     const gp = getUnitProgress(currentSubject.id);
     const dayDone = gp.dayCount >= DAILY_GOAL, weekDone = gp.weekCount >= WEEKLY_GOAL;
     goalsEl.innerHTML =
-      `<div class="cg-goal ${dayDone ? "done" : ""}">💪 ${dayDone ? `150 olika ord idag! ✓` : `${gp.dayCount} / ${DAILY_GOAL} olika ord idag`}</div>` +
-      `<div class="cg-goal ${weekDone ? "done" : ""}">🏆 ${weekDone ? `1000 ord denna vecka! ✓` : `${gp.weekCount} / ${WEEKLY_GOAL} denna vecka`}</div>`;
+      `<div class="cg-goal ${dayDone ? "done" : ""}">💪 ${dayDone ? `${DAILY_GOAL} olika ord idag! ✓` : `${gp.dayCount} / ${DAILY_GOAL} olika ord idag`}</div>` +
+      `<div class="cg-goal ${weekDone ? "done" : ""}">🏆 ${weekDone ? `${WEEKLY_GOAL} ord denna vecka! ✓` : `${gp.weekCount} / ${WEEKLY_GOAL} denna vecka`}</div>`;
   } else {
     goalsEl.innerHTML = "";
   }
@@ -1433,8 +1433,8 @@ function answer(grade) {
   // Flipp-mål: distinkt ord+riktning per dag/vecka → firande vid milstolpe
   const flip = recordUnitFlip(c, dir);
   if (flip) {
-    if (flip.crossedWeek) toast("🏆 1000 ord denna vecka!", 4000);
-    else if (flip.crossedDay) toast("💪 150 olika ord idag!", 4000);
+    if (flip.crossedWeek) toast(`🏆 ${WEEKLY_GOAL} ord denna vecka!`, 4000);
+    else if (flip.crossedDay) toast(`💪 ${DAILY_GOAL} olika ord idag!`, 4000);
   }
   // Snapshot för shake-to-undo (innan någon mutation): kö, SRS-poster, graded-medlemskap.
   const gradedKey = c.id + ":" + dir;
@@ -3091,7 +3091,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v132";
+const APP_VERSION = "v133";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
