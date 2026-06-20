@@ -1048,7 +1048,7 @@ function renderStats() {
       const c = byDate[ymd(d)] ? byDate[ymd(d)].cards : 0;
       let cls = "st-d";
       if (d > today) cls += " fut";
-      else if (c) cls += c >= 33 ? " l4" : c >= 22 ? " l3" : c >= 12 ? " l2" : " l1";
+      else if (c) cls += c >= 52 ? " l4" : c >= 32 ? " l3" : c >= 12 ? " l2" : " l1";
       if (ymd(d) === ymd(today)) cls += " today";
       col += `<div class="${cls}"></div>`;
     }
@@ -2993,7 +2993,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v128";
+const APP_VERSION = "v129";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
