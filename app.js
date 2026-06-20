@@ -582,6 +582,7 @@ let statsScope = null; // ämnes-id eller "all"
 
 function setTab(tab) {
   activeTab = tab;
+  closeChoosers(); // stäng ev. öppen väljare vid flikbyte
   $("screens").classList.toggle("hidden", tab !== "flippa");
   $("stats-screen").classList.toggle("hidden", tab !== "stats");
   $("help-screen").classList.toggle("hidden", tab !== "help");
@@ -855,6 +856,7 @@ function persistLessonOrder(orderedIds) {
 document.querySelectorAll("[data-back]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const target = btn.dataset.back;
+    closeChoosers(); // stäng ev. öppen väljare när man backar
     if (activeScreen === "training") { commitSessionStats(); session = null; } // logga avbrutet pass
     if (target === "subjects") renderSubjects();
     else if (target === "lessons") renderLessons();
@@ -909,7 +911,19 @@ dirSelect.addEventListener("change", () => localStorage.setItem(DIR_KEY, dirSele
 const dirPill = $("dir-pill"), limitPill = $("limit-pill");
 const dirChooser = $("dir-chooser"), limitChooser = $("limit-chooser");
 function limitLabel(v) { return v === "0" ? "Alla" : v; }
-function closeChoosers() { dirChooser.classList.add("hidden"); limitChooser.classList.add("hidden"); }
+function closeChoosers() {
+  dirChooser.classList.remove("open");
+  limitChooser.classList.remove("open");
+  $("opt-backdrop").classList.remove("show");
+}
+function toggleChooser(which) {
+  const open = which === "dir" ? dirChooser : limitChooser;
+  const other = which === "dir" ? limitChooser : dirChooser;
+  other.classList.remove("open");
+  const willOpen = !open.classList.contains("open");
+  open.classList.toggle("open", willOpen);
+  $("opt-backdrop").classList.toggle("show", willOpen);
+}
 function syncOptionPills() {
   const dirOpt = dirSelect.options[dirSelect.selectedIndex];
   $("dir-val").textContent = dirOpt ? dirOpt.text : "Från svenska";
@@ -919,8 +933,9 @@ function syncOptionPills() {
   const npd = String(newPerDay());
   $("newperday-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === npd));
 }
-dirPill.onclick = () => { limitChooser.classList.add("hidden"); dirChooser.classList.toggle("hidden"); };
-limitPill.onclick = () => { dirChooser.classList.add("hidden"); limitChooser.classList.toggle("hidden"); };
+dirPill.onclick = () => toggleChooser("dir");
+limitPill.onclick = () => toggleChooser("limit");
+$("opt-backdrop").onclick = closeChoosers;
 $("dir-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   dirSelect.value = b.dataset.v;
@@ -1201,6 +1216,7 @@ function renderStats() {
 
 function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, continueLimit }) {
   commitSessionStats(); // logga ev. tidigare (avbrutet) pass innan nytt startar
+  closeChoosers(); // stäng ev. öppen riktnings-/kortväljare så popover/bakgrund inte ligger kvar
   blurActiveInput();
   // nollställ ev. kvarvarande svep-feedback så den inte blinkar till vid sessionsstart
   feedbackEl.classList.remove("show");
@@ -3131,7 +3147,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v138";
+const APP_VERSION = "v139";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

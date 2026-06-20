@@ -41,43 +41,48 @@
       <button id="edit-subject" class="icon-btn" title="Redigera ämne">✎</button>
       <button id="add-lesson" class="icon-btn" title="Ny lektion">＋</button>
     </header>
-    <!-- Riktning + kort per pass (väljs här, läses vid sessionsstart) -->
-    <div class="opt-row">
-      <button class="opt-pill" id="dir-pill" type="button" aria-haspopup="true">
-        <span class="opt-text"><span class="opt-lbl">RIKTNING</span><span class="opt-val" id="dir-val">Från svenska</span></span>
-        <span class="opt-car">▾</span>
-      </button>
-      <button class="opt-pill k" id="limit-pill" type="button" aria-haspopup="true">
-        <span class="opt-text"><span class="opt-lbl">KORT/PASS</span><span class="opt-val" id="limit-val">Alla</span></span>
-        <span class="opt-car">▾</span>
-      </button>
-    </div>
-    <div class="opt-chooser hidden" id="dir-chooser">
-      <div class="opt-segs" id="dir-segs">
-        <button type="button" data-v="b2f">Från svenska</button>
-        <button type="button" data-v="f2b">Till svenska</button>
-        <button type="button" data-v="mixed">Blandat</button>
+    <!-- Bakgrund som mörkar/blurrar resten när en väljare är öppen -->
+    <div id="opt-backdrop" class="opt-backdrop"></div>
+    <!-- Riktning + kort per pass (väljs här, läses vid sessionsstart). Väljarna
+         glider fram som popover ovanpå listan (ankrade under pillerna). -->
+    <div class="opt-wrap">
+      <div class="opt-row">
+        <button class="opt-pill" id="dir-pill" type="button" aria-haspopup="true">
+          <span class="opt-text"><span class="opt-lbl">RIKTNING</span><span class="opt-val" id="dir-val">Från svenska</span></span>
+          <span class="opt-car">▾</span>
+        </button>
+        <button class="opt-pill k" id="limit-pill" type="button" aria-haspopup="true">
+          <span class="opt-text"><span class="opt-lbl">KORT/PASS</span><span class="opt-val" id="limit-val">Alla</span></span>
+          <span class="opt-car">▾</span>
+        </button>
       </div>
-    </div>
-    <div class="opt-chooser hidden" id="limit-chooser">
-      <div class="opt-segs wrap" id="limit-segs">
-        <button type="button" data-v="0">Alla</button>
-        <button type="button" data-v="10">10</button>
-        <button type="button" data-v="15">15</button>
-        <button type="button" data-v="20">20</button>
-        <button type="button" data-v="30">30</button>
-        <button type="button" data-v="50">50</button>
+      <div class="opt-chooser" id="dir-chooser">
+        <div class="opt-segs" id="dir-segs">
+          <button type="button" data-v="b2f">Från svenska</button>
+          <button type="button" data-v="f2b">Till svenska</button>
+          <button type="button" data-v="mixed">Blandat</button>
+        </div>
       </div>
-      <div class="opt-sub">Nya kort per dag</div>
-      <div class="opt-segs wrap" id="newperday-segs">
-        <button type="button" data-v="0">0</button>
-        <button type="button" data-v="5">5</button>
-        <button type="button" data-v="10">10</button>
-        <button type="button" data-v="15">15</button>
-        <button type="button" data-v="20">20</button>
-        <button type="button" data-v="30">30</button>
+      <div class="opt-chooser k" id="limit-chooser">
+        <div class="opt-segs wrap" id="limit-segs">
+          <button type="button" data-v="0">Alla</button>
+          <button type="button" data-v="10">10</button>
+          <button type="button" data-v="15">15</button>
+          <button type="button" data-v="20">20</button>
+          <button type="button" data-v="30">30</button>
+          <button type="button" data-v="50">50</button>
+        </div>
+        <div class="opt-sub">Nya kort per dag</div>
+        <div class="opt-segs wrap" id="newperday-segs">
+          <button type="button" data-v="0">0</button>
+          <button type="button" data-v="5">5</button>
+          <button type="button" data-v="10">10</button>
+          <button type="button" data-v="15">15</button>
+          <button type="button" data-v="20">20</button>
+          <button type="button" data-v="30">30</button>
+        </div>
+        <p class="opt-note">Antal nya kort börjar gälla från och med imorgon</p>
       </div>
-      <p class="opt-note">Antal nya kort börjar gälla från och med imorgon</p>
     </div>
     <!-- Dolda "backing stores": all befintlig läs-/spar-/import-logik använder dessa -->
     <select id="dir-select" class="hidden">
