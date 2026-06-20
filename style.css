@@ -71,6 +71,7 @@ body {
 
 /* Statistik-fliken */
 #stats-screen {
+  position: relative;
   padding: 8px 16px calc(40px + env(safe-area-inset-bottom));
   /* Samma mjuka uttoning i nederkanten som listorna har */
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
@@ -80,6 +81,26 @@ body {
 .stats-header h1 { font-size: 1.4rem; margin: 0; }
 .stats-scope { margin: 4px 0 6px; }
 .stats-scope .cs { width: 100%; }
+
+/* Mörk/blurrad bakgrund för popover-väljare (samma som lektionsskärmen) */
+.cs-backdrop {
+  position: absolute; inset: 0; z-index: 20;
+  background: rgba(5,8,16,0.72);
+  -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
+  opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
+}
+.cs-backdrop.show { opacity: 1; pointer-events: auto; }
+/* Overlay-läge: listan flyter ovanpå innehållet (ankrad popover) i stället för inline */
+.cs-overlay { position: relative; z-index: 30; }
+.cs-overlay .cs-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 31;
+  max-height: 320px; margin-top: 0; padding: 6px; border-width: 1px;
+  box-shadow: 0 18px 44px rgba(0,0,0,0.55);
+  transform: translateY(-10px) scale(0.98); transform-origin: top center;
+  opacity: 0; pointer-events: none; overflow-y: auto;
+  transition: transform 0.24s cubic-bezier(.2,.85,.3,1), opacity 0.18s ease;
+}
+.cs-overlay .cs-list.open { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
 
 /* Hjälp-fliken */
 #help-screen {
@@ -370,7 +391,7 @@ body {
 /* Mörk + lätt blurrad bakgrund som lägger valen i fokus */
 .opt-backdrop {
   position: absolute; inset: 0; z-index: 20;
-  background: rgba(7,11,22,0.5);
+  background: rgba(5,8,16,0.72);
   -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px);
   opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
 }

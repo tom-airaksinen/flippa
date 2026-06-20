@@ -1090,18 +1090,22 @@ function renderStats() {
   const scopeSubject = statsScope === "all" ? null : mine.find((s) => s.id === statsScope);
   const subjName = scopeSubject ? scopeSubject.name : null;
 
-  // Skal: rubrik + ämnesväljare + kropp (alltid synliga, även utan data)
+  // Skal: rubrik + ämnesväljare + kropp (alltid synliga, även utan data).
+  // Ämnesväljaren är en popover med mörk/blurrad bakgrund – samma som lektionsskärmen.
   host.innerHTML = `
+    <div class="cs-backdrop" id="st-cs-backdrop"></div>
     <header class="stats-header">${STATS_BARS_ICON}<h1>Statistik</h1></header>
-    <div class="stats-scope" id="st-scope"></div>
+    <div class="stats-scope cs-overlay" id="st-scope"></div>
     <div id="st-body"></div>`;
 
+  const backdrop = $("st-cs-backdrop");
   const items = [{ value: "all", label: "Alla ämnen" }].concat(
     mine.map((s) => { const f = subjectFlag(s); return { value: s.id, label: (f ? f + " " : "") + s.name }; }));
-  const sel = buildSelect(items, statsScope, (v) => { statsScope = v; renderStats(); });
+  const sel = buildSelect(items, statsScope, (v) => { statsScope = v; renderStats(); },
+    { onToggle: (open) => backdrop.classList.toggle("show", open) });
   $("st-scope").appendChild(sel.el);
-  // Klick utanför väljaren stänger den (buildSelect:s egen logik letar efter .modal)
-  host.onclick = (e) => { if (!e.target.closest(".cs")) host.querySelectorAll(".cs-list").forEach((o) => o.classList.remove("open")); };
+  // Tryck på bakgrunden stänger väljaren
+  backdrop.onclick = () => { host.querySelectorAll(".cs-list").forEach((o) => o.classList.remove("open")); backdrop.classList.remove("show"); };
 
   const body = $("st-body");
   const recs = getStats().filter((r) => r && (!currentUser || r.user === currentUser) && (statsScope === "all" || r.subject === subjName));
@@ -1986,7 +1990,8 @@ function openModal(innerHTML) {
 // Egen dropdown som matchar appens tema (ersätter native <select>).
 // items: [{value, label}], selected: value, onChange(value) (valfri).
 // Returnerar { el, value (get/set) } där `el` monteras i DOM.
-function buildSelect(items, selected, onChange) {
+function buildSelect(items, selected, onChange, opts = {}) {
+  const onToggle = opts.onToggle; // (isOpen) – för ev. backdrop
   const el = document.createElement("div");
   el.className = "cs";
   let cur = items.some((i) => i.value === selected) ? selected : (items[0] && items[0].value);
@@ -1998,7 +2003,7 @@ function buildSelect(items, selected, onChange) {
       .join("")}</div>`;
   const btn = el.querySelector(".cs-btn");
   const list = el.querySelector(".cs-list");
-  const close = () => list.classList.remove("open");
+  const close = () => { list.classList.remove("open"); if (onToggle) onToggle(false); };
   const apply = (v, fire) => {
     cur = v;
     el.querySelector(".cs-cur").textContent = labelFor(cur);
@@ -2010,6 +2015,7 @@ function buildSelect(items, selected, onChange) {
     // stäng ev. andra öppna väljare i samma modal
     el.closest(".modal")?.querySelectorAll(".cs-list").forEach((o) => { if (o !== list) o.classList.remove("open"); });
     list.classList.toggle("open");
+    if (onToggle) onToggle(list.classList.contains("open"));
   });
   list.querySelectorAll(".cs-opt").forEach((opt) => {
     opt.addEventListener("click", (e) => { e.stopPropagation(); apply(opt.dataset.v, true); close(); });
@@ -3147,7 +3153,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v140";
+const APP_VERSION = "v141";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
