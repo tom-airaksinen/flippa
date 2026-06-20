@@ -1571,6 +1571,30 @@ function wikiLang() {
   return (subjectLang(currentSubject) || "en").slice(0, 2).toLowerCase();
 }
 
+// Nivå 1-lemmatisering: ta bort inledande artikel så man söker på grundordet
+// ("La tempesta" → "tempesta"). Hanterar även eliderade former ("l'acqua" → "acqua").
+const ARTICLES = {
+  it: ["il", "lo", "la", "i", "gli", "le", "un", "uno", "una"],
+  fr: ["le", "la", "les", "un", "une", "des"],
+  es: ["el", "la", "los", "las", "un", "una", "unos", "unas"],
+  de: ["der", "die", "das", "den", "dem", "des", "ein", "eine", "einen", "einem", "eines", "einer"],
+  en: ["the", "a", "an"],
+  pt: ["o", "a", "os", "as", "um", "uma", "uns", "umas"],
+};
+const ELISIONS = { it: ["l", "un", "d", "dell", "all", "nell", "sull"], fr: ["l", "d", "j", "qu", "n", "s", "t", "m"], es: [], en: [] };
+
+function stripArticle(term, lang) {
+  let t = (term || "").trim();
+  // Eliderad artikel först: "l'acqua", "un'amica", "d'arte" → ta bort prefixet före apostrofen
+  const elide = ELISIONS[lang] || [];
+  t = t.replace(/^([a-zàâäéèêëïîôöùûüçñ]{1,4})['’]\s*/i, (m, p) => elide.includes(p.toLowerCase()) ? "" : m);
+  // Hel inledande artikel + mellanslag: "La tempesta" → "tempesta" (men inte om hela ordet ÄR artikeln)
+  const arts = ARTICLES[lang] || [];
+  const parts = t.split(/\s+/);
+  if (parts.length > 1 && arts.includes(parts[0].toLowerCase())) t = parts.slice(1).join(" ");
+  return t.trim() || (term || "").trim();
+}
+
 // Wikipedia-sammanfattning (ren text); saknas artikel → Wiktionary-definition.
 async function fetchMeaning(lang, term) {
   try {
@@ -1609,10 +1633,11 @@ async function fetchCommonsImages(term, offset) {
 
 function openExplore(term) {
   const lang = wikiLang();
+  const initial = stripArticle(term, lang); // sök på grundordet (utan artikel)
   const m = openModal(`
     <div class="modal-head"><h3>Utforska</h3></div>
     <div class="xpl-search">
-      <input type="text" id="xpl-q" value="${esc(term)}" autocomplete="off" autocapitalize="none" autocorrect="off" />
+      <input type="text" id="xpl-q" value="${esc(initial)}" autocomplete="off" autocapitalize="none" autocorrect="off" />
       <button class="xpl-go" id="xpl-go" title="Sök om" aria-label="Sök om">🔄</button>
     </div>
     <div class="xpl-sec">BETYDELSE</div>
@@ -1660,7 +1685,7 @@ function openExplore(term) {
   moreBtn.onclick = () => loadImages(qInput.value.trim(), true);
   m.querySelector("#xpl-google").onclick = () => window.open(`https://www.google.com/search?q=${encodeURIComponent(qInput.value.trim() + " meaning")}`, "_blank");
 
-  run(term);
+  run(initial);
 }
 
 // Glödlampan: visas på prompt-sidan när man kör Från svenska (b2f) och kortet har en
@@ -2968,7 +2993,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v127";
+const APP_VERSION = "v128";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
