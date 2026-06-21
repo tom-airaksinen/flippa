@@ -454,11 +454,13 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   padding: 4px;
   margin: 10px 0 12px;
 }
-/* Den blå highlighten – ett enda element som glider i sidled till valt segment */
+/* Den blå highlighten – ett enda element som glider i sidled till valt segment.
+   Vi animerar vänster- OCH högerkanten (left/right) med samma easing så båda
+   kanterna rör sig samtidigt (i stället för transform+width som snäpper ena kanten). */
 .st-period-thumb {
-  position: absolute; top: 0; left: 0; z-index: 0;
+  position: absolute; top: 4px; bottom: 4px; left: 4px; right: 4px; z-index: 0;
   border-radius: 8px; background: var(--accent);
-  transition: transform 0.25s cubic-bezier(.4,0,.2,1), width 0.25s cubic-bezier(.4,0,.2,1), height 0.25s ease;
+  transition: left 0.28s cubic-bezier(.4,0,.2,1), right 0.28s cubic-bezier(.4,0,.2,1);
 }
 .st-period button {
   position: relative; z-index: 1; /* texten ovanpå thumben */

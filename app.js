@@ -1242,14 +1242,19 @@ function renderStats() {
   const grid = body.querySelector("#st-grid");
   const thumb = body.querySelector("#st-period-thumb");
   let thumbInit = false;
-  // Flytta den blå highlighten (thumb) till valt segment – glider i sidled
+  // Flytta highlighten till valt segment genom att sätta vänster/höger-inset.
+  // Båda kanterna animeras med samma easing → de rör sig samtidigt (ingen snäpp).
   const moveThumb = () => {
     const on = segs.querySelector("button.on");
     if (!on) return;
+    const tr = segs.getBoundingClientRect();
+    const r = on.getBoundingClientRect();
+    const cs = getComputedStyle(segs);
+    const bl = parseFloat(cs.borderLeftWidth) || 0;
+    const br = parseFloat(cs.borderRightWidth) || 0;
     if (!thumbInit) thumb.style.transition = "none"; // ingen glidning vid första render
-    thumb.style.width = on.offsetWidth + "px";
-    thumb.style.height = on.offsetHeight + "px";
-    thumb.style.transform = `translate(${on.offsetLeft}px, ${on.offsetTop}px)`;
+    thumb.style.left = (r.left - tr.left - bl) + "px";
+    thumb.style.right = (tr.right - r.right - br) + "px";
     if (!thumbInit) { void thumb.offsetWidth; thumb.style.transition = ""; thumbInit = true; }
   };
   const renderKpis = () => {
@@ -3204,7 +3209,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v145";
+const APP_VERSION = "v146";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
