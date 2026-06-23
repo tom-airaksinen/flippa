@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Konfetti – 2 varianter</title>
+<style>
+  :root{
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#eaf0fb;
+    --muted:#9aa3b2; --accent:#5b8cff; --easy:#8fbf5a; --gold:#ffd24a; --fire:#ff8a3d; --fail:#e05a4f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#070b16;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:24px 16px 60px}
+  h1{font-size:1.3rem;margin:0 0 4px}
+  .lede{color:var(--muted);font-size:.9rem;margin:0 0 18px;line-height:1.5;max-width:640px}
+  .playall{appearance:none;border:none;background:var(--accent);color:#fff;font:inherit;font-weight:700;
+    padding:10px 16px;border-radius:10px;cursor:pointer;margin-bottom:26px}
+  .grid{display:flex;flex-wrap:wrap;gap:30px}
+  .col{flex:1 1 300px;max-width:340px}
+  .cap{margin:12px 2px 0}
+  .cap b{display:block;font-size:.98rem}
+  .cap span{color:var(--muted);font-size:.82rem;line-height:1.45;display:block;margin-top:3px}
+  .replay{appearance:none;margin-top:10px;border:1px solid #2c3c63;background:var(--surface-2);
+    color:var(--text);font:inherit;font-size:.8rem;padding:7px 12px;border-radius:9px;cursor:pointer}
+
+  .phone{position:relative;height:540px;border-radius:30px;overflow:hidden;background:var(--bg);
+    border:1px solid #1c2742;box-shadow:0 12px 34px rgba(0,0,0,.45);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
+  .layer{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+
+  /* enkel klar-skärm-bakgrund (kontext) */
+  .party{font-size:2.6rem;margin-bottom:-4px;z-index:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.4))}
+  .ring{position:relative;width:180px;height:180px;z-index:1}
+  .ring-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring-center .pep{font-size:1.6rem;font-weight:900}
+  .ring-center .sub{color:var(--muted);font-size:.66rem;letter-spacing:.09em;text-transform:uppercase;margin-top:5px}
+  .frac{color:var(--muted);font-size:.78rem;margin-top:14px;z-index:1}
+  .klar{margin-top:16px;background:var(--easy);color:#0d1426;border:none;border-radius:12px;
+    padding:12px 0;width:200px;font-weight:700;font-family:inherit;font-size:.95rem;z-index:1}
+
+  /* konfetti-bitar */
+  .conf{position:absolute;width:9px;height:9px;border-radius:2px;top:-24px}
+  /* faller förbi och tas bort */
+  @keyframes fall-pass{
+    0%{transform:translate(0,-24px) rotate(0);opacity:0}
+    8%{opacity:1}
+    100%{transform:translate(var(--dx),560px) rotate(var(--rot));opacity:1}
+  }
+  /* faller och fastnar (stannar kvar) */
+  @keyframes fall-stick{
+    0%{transform:translate(0,-24px) rotate(0);opacity:0}
+    8%{opacity:1}
+    70%{transform:translate(calc(var(--dx)*.8),var(--settle)) rotate(calc(var(--rot)*.85));opacity:1}
+    82%{transform:translate(var(--dx),calc(var(--settle) + 10px)) rotate(var(--rot));}
+    100%{transform:translate(var(--dx),var(--settle)) rotate(var(--rot));opacity:.92}
+  }
+
+  /* guldpartiklar / stjärnor (variant B – stannar kvar, tindrar) */
+  .spark{position:absolute;color:var(--gold);font-size:11px;line-height:1;opacity:.85;
+    text-shadow:0 0 6px rgba(255,210,74,.6);animation:twinkle 2.4s ease-in-out infinite}
+  .dot{position:absolute;width:4px;height:4px;border-radius:50%;background:var(--gold);
+    box-shadow:0 0 6px rgba(255,210,74,.7);animation:twinkle 2.8s ease-in-out infinite}
+  @keyframes twinkle{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:.95;transform:scale(1.15)}}
+</style>
+</head>
+<body>
+<h1>🎉 Konfetti – 2 varianter</h1>
+<p class="lede">Båda startar med fallande konfetti (som idag). Skillnaden är vad som blir kvar efteråt. Tryck <b>Spela upp</b> för att se igen.</p>
+<button class="playall" onclick="playAll()">▶ Spela upp båda</button>
+
+<div class="grid">
+  <!-- VARIANT A -->
+  <div class="col">
+    <div class="phone">
+      <div class="layer" id="layerA"></div>
+      <div class="party">🎉</div>
+      <div class="ring"><svg viewBox="0 0 180 180" width="180" height="180">
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#1f2c4d" stroke-width="12"/>
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#8fbf5a" stroke-width="12" stroke-linecap="round"
+          stroke-dasharray="490" stroke-dashoffset="90" transform="rotate(-90 90 90)"/>
+      </svg><div class="ring-center"><div class="pep">Grymt!</div><div class="sub">Passet klart</div></div></div>
+      <div class="frac">38 / 42 kort</div>
+      <button class="klar">Klar</button>
+    </div>
+    <div class="cap"><b>A · Konfetti som fastnar</b><span>Samma fallande konfetti, men ca en tredjedel “landar” på vägen och blir kvar (med en liten studs). Resten faller förbi. Slutbilden liknar det vi har nu.</span></div>
+    <button class="replay" onclick="playA()">↻ Spela upp</button>
+  </div>
+
+  <!-- VARIANT B -->
+  <div class="col">
+    <div class="phone">
+      <div class="layer" id="sparkB"></div>
+      <div class="layer" id="layerB"></div>
+      <div class="party">🎉</div>
+      <div class="ring"><svg viewBox="0 0 180 180" width="180" height="180">
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#1f2c4d" stroke-width="12"/>
+        <circle cx="90" cy="90" r="78" fill="none" stroke="#8fbf5a" stroke-width="12" stroke-linecap="round"
+          stroke-dasharray="490" stroke-dashoffset="90" transform="rotate(-90 90 90)"/>
+      </svg><div class="ring-center"><div class="pep">Grymt!</div><div class="sub">Passet klart</div></div></div>
+      <div class="frac">38 / 42 kort</div>
+      <button class="klar">Klar</button>
+    </div>
+    <div class="cap"><b>B · Guldstjärnor stannar</b><span>All konfetti flyger förbi (inget fastnar) – men ett lager små guldpartiklar/stjärnor blir kvar och tindrar lågmält i bakgrunden.</span></div>
+    <button class="replay" onclick="playB()">↻ Spela upp</button>
+  </div>
+</div>
+
+<script>
+  const COLS=['#5b8cff','#8fbf5a','#ffd24a','#ff8a3d','#e05a4f','#b06bf0','#fff'];
+  const rnd=(a,b)=>a+Math.random()*(b-a);
+
+  function spawnConfetti(layer, {stickRatio=0}={}){
+    layer.querySelectorAll('.conf').forEach(e=>e.remove());
+    const N=54;
+    for(let i=0;i<N;i++){
+      const c=document.createElement('div'); c.className='conf';
+      c.style.left=rnd(2,96)+'%';
+      c.style.background=COLS[i%COLS.length];
+      c.style.setProperty('--dx', rnd(-60,60).toFixed(0)+'px');
+      c.style.setProperty('--rot', rnd(360,1080).toFixed(0)+'deg');
+      const dur=rnd(1.5,2.8), delay=rnd(0,0.7);
+      const stick = Math.random()<stickRatio;
+      if(stick){
+        c.style.setProperty('--settle', rnd(70,430).toFixed(0)+'px');
+        c.style.animation=`fall-stick ${dur}s cubic-bezier(.3,.7,.4,1) ${delay}s forwards`;
+      } else {
+        c.style.animation=`fall-pass ${dur}s linear ${delay}s forwards`;
+        setTimeout(()=>c.remove(), (dur+delay)*1000+50);
+      }
+      layer.appendChild(c);
+    }
+  }
+
+  function buildSparkles(layer){
+    if(layer.childElementCount) return; // bygg en gång
+    for(let i=0;i<10;i++){
+      const s=document.createElement('div'); s.className='spark'; s.textContent='✦';
+      s.style.left=rnd(4,94)+'%'; s.style.top=rnd(4,60)+'%';
+      s.style.fontSize=rnd(8,15).toFixed(0)+'px';
+      s.style.animationDelay=rnd(0,2.4).toFixed(2)+'s';
+      layer.appendChild(s);
+    }
+    for(let i=0;i<14;i++){
+      const d=document.createElement('div'); d.className='dot';
+      d.style.left=rnd(3,96)+'%'; d.style.top=rnd(3,62)+'%';
+      d.style.animationDelay=rnd(0,2.8).toFixed(2)+'s';
+      layer.appendChild(d);
+    }
+  }
+
+  function playA(){ spawnConfetti(document.getElementById('layerA'), {stickRatio:0.32}); }
+  function playB(){ buildSparkles(document.getElementById('sparkB')); spawnConfetti(document.getElementById('layerB'), {stickRatio:0}); }
+  function playAll(){ playA(); playB(); }
+  window.addEventListener('load', ()=>setTimeout(playAll,300));
+</script>
+</body>
+</html>
