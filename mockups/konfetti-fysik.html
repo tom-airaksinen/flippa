@@ -11,8 +11,9 @@
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:24px 16px 60px}
   h1{font-size:1.3rem;margin:0 0 4px}
   .lede{color:var(--muted);font-size:.9rem;margin:0 0 18px;line-height:1.5;max-width:640px}
-  .replay{appearance:none;border:none;background:var(--accent);color:#fff;font:inherit;font-weight:700;
-    padding:10px 16px;border-radius:10px;cursor:pointer;margin-bottom:24px}
+  .playall{appearance:none;border:none;background:var(--accent);color:#fff;font:inherit;font-weight:700;
+    padding:10px 16px;border-radius:10px;cursor:pointer;margin-bottom:26px}
+  .variant{margin-bottom:34px}
   .phone{position:relative;width:330px;height:560px;border-radius:30px;overflow:hidden;background:var(--bg);
     border:1px solid #1c2742;box-shadow:0 12px 34px rgba(0,0,0,.45);
     display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px}
@@ -26,37 +27,64 @@
     padding:14px 0;width:210px;font-weight:700;font-family:inherit;font-size:1rem;z-index:1}
   canvas.physics{position:absolute;inset:0;z-index:5;pointer-events:none}
   .cap{margin:12px 2px 0;max-width:330px}
-  .cap span{color:var(--muted);font-size:.84rem;line-height:1.5}
+  .cap b{display:block;font-size:.98rem}
+  .cap span{color:var(--muted);font-size:.84rem;line-height:1.5;display:block;margin-top:3px}
+  .replay{appearance:none;margin-top:10px;border:1px solid #2c3c63;background:var(--surface-2);
+    color:var(--text);font:inherit;font-size:.8rem;padding:7px 12px;border-radius:9px;cursor:pointer}
 </style>
 </head>
 <body>
-<h1>🎉 Konfetti med fysik – studsar på ringen</h1>
-<p class="lede">Hedvigs idé: konfettin faller, <b>studsar mot ringen</b> och deflekteras bort, och en del landar och blir liggande <b>ovanpå Klar-knappen</b>. Riktig partikelsimulering (gravitation + cirkel-kollision). Tryck Spela upp.</p>
-<button class="replay" onclick="run()">▶ Spela upp</button>
+<h1>🎉 Konfetti med fysik</h1>
+<p class="lede">Hedvigs idé: konfettin faller, <b>studsar mot ringen</b> och deflekteras bort; en del landar och blir liggande ovanpå Klar-knappen. Variant 2 studsar dessutom mot skärmkanterna (sidor + golv). Riktig partikelsimulering. Tryck Spela upp.</p>
+<button class="playall" onclick="playAll()">▶ Spela upp båda</button>
 
-<div class="phone" id="phone">
-  <canvas class="physics"></canvas>
-  <div class="party">🎉</div>
-  <div class="ring">
-    <svg viewBox="0 0 188 188" width="188" height="188">
-      <circle cx="94" cy="94" r="80" fill="none" stroke="#1f2c4d" stroke-width="13"/>
-      <circle cx="94" cy="94" r="80" fill="none" stroke="#8fbf5a" stroke-width="13" stroke-linecap="round"
-        stroke-dasharray="503" stroke-dashoffset="95" transform="rotate(-90 94 94)"/>
-    </svg>
-    <div class="ring-center"><div class="pep">Grymt!</div><div class="sub">Passet klart</div></div>
+<!-- VARIANT 1 -->
+<div class="variant">
+  <div class="phone" id="phone1">
+    <canvas class="physics"></canvas>
+    <div class="party">🎉</div>
+    <div class="ring">
+      <svg viewBox="0 0 188 188" width="188" height="188">
+        <circle cx="94" cy="94" r="80" fill="none" stroke="#1f2c4d" stroke-width="13"/>
+        <circle cx="94" cy="94" r="80" fill="none" stroke="#8fbf5a" stroke-width="13" stroke-linecap="round"
+          stroke-dasharray="503" stroke-dashoffset="95" transform="rotate(-90 94 94)"/>
+      </svg>
+      <div class="ring-center"><div class="pep">Grymt!</div><div class="sub">Passet klart</div></div>
+    </div>
+    <div class="frac">38 / 42 kort</div>
+    <button class="klar">Klar</button>
   </div>
-  <div class="frac">38 / 42 kort</div>
-  <button class="klar">Klar</button>
+  <div class="cap"><b>1 · Studsar på ringen</b><span>Studsar mot ringen och deflekteras bort; bitar som hamnar på Klar-knappen blir kvar. Övriga faller förbi nederkanten.</span></div>
+  <button class="replay" onclick="runSim('phone1',{walls:false})">↻ Spela upp</button>
 </div>
-<div class="cap"><span>Konfettin studsar på ringen (behandlas som en solid cirkel), deflekteras åt sidorna, och bitar som hamnar på Klar-knappen lägger sig och blir kvar. Övriga faller förbi.</span></div>
+
+<!-- VARIANT 2 -->
+<div class="variant">
+  <div class="phone" id="phone2">
+    <canvas class="physics"></canvas>
+    <div class="party">🎉</div>
+    <div class="ring">
+      <svg viewBox="0 0 188 188" width="188" height="188">
+        <circle cx="94" cy="94" r="80" fill="none" stroke="#1f2c4d" stroke-width="13"/>
+        <circle cx="94" cy="94" r="80" fill="none" stroke="#8fbf5a" stroke-width="13" stroke-linecap="round"
+          stroke-dasharray="503" stroke-dashoffset="95" transform="rotate(-90 94 94)"/>
+      </svg>
+      <div class="ring-center"><div class="pep">Grymt!</div><div class="sub">Passet klart</div></div>
+    </div>
+    <div class="frac">38 / 42 kort</div>
+    <button class="klar">Klar</button>
+  </div>
+  <div class="cap"><b>2 · Studsar även mot skärmkanterna</b><span>Som variant 1, men konfettin studsar också mot sidorna och golvet – en sluten studsande “låda” där bitarna till slut lägger sig i en hög nedtill.</span></div>
+  <button class="replay" onclick="runSim('phone2',{walls:true})">↻ Spela upp</button>
+</div>
 
 <script>
 const COLS=['#5b8cff','#8fbf5a','#ffd24a','#ff8a3d','#e05a4f','#b06bf0','#fff'];
 const rnd=(a,b)=>a+Math.random()*(b-a);
-let rafId=null;
+const rafIds={};
 
-function run(){
-  const phone=document.getElementById('phone');
+function runSim(phoneId, {walls=false}={}){
+  const phone=document.getElementById(phoneId);
   const canvas=phone.querySelector('canvas.physics');
   const dpr=Math.min(2, window.devicePixelRatio||1);
   const W=phone.clientWidth, H=phone.clientHeight;
@@ -67,7 +95,7 @@ function run(){
   const rr=phone.querySelector('.ring').getBoundingClientRect();
   const br=phone.querySelector('.klar').getBoundingClientRect();
   const cx=rr.left-pr.left+rr.width/2, cy=rr.top-pr.top+rr.height/2;
-  const R=rr.width/2 - 2;                 // ringen som solid cirkel
+  const R=rr.width/2 - 2;
   const btn={top:br.top-pr.top, left:br.left-pr.left, right:br.right-pr.left};
 
   let parts=[];
@@ -76,7 +104,7 @@ function run(){
       w:rnd(6,11), h:rnd(5,9), rot:rnd(0,6.28), vr:rnd(-0.25,0.25),
       col:COLS[i%COLS.length], rest:false, dead:false });
   }
-  const G=0.17, REST=0.55, AIR=0.994, FLOOR=H+14;
+  const G=0.17, REST=0.55, AIR=0.994, FLOOR=H+14, M=5;
   let frames=0;
 
   function step(){
@@ -95,12 +123,21 @@ function run(){
           p.vx=(p.vx-2*vn*nx)*REST; p.vy=(p.vy-2*vn*ny)*REST;
           p.vr+=rnd(-0.2,0.2);
         }
+        // studs mot skärmkanterna (variant 2)
+        if(walls){
+          if(p.x < M){ p.x=M; p.vx=Math.abs(p.vx)*REST; }
+          else if(p.x > W-M){ p.x=W-M; p.vx=-Math.abs(p.vx)*REST; }
+          if(p.y + p.h/2 > H-2){
+            p.y=H-2-p.h/2; p.vy=-Math.abs(p.vy)*REST; p.vx*=0.7;
+            if(Math.abs(p.vy)<0.7){ p.vy=0; p.vx*=0.5; if(Math.abs(p.vx)<0.25) p.rest=true; }
+          }
+        }
         // landa ovanpå Klar-knappen
         if(p.vy>0 && p.x>btn.left-3 && p.x<btn.right+3 && (p.y+p.h/2)>=btn.top && p.y<btn.top+16){
           p.y=btn.top-p.h/2; p.vy=-p.vy*0.28; p.vx*=0.55;
           if(Math.abs(p.vy)<0.7){ p.vy=0; p.vx*=0.4; if(Math.abs(p.vx)<0.25){ p.rest=true; p.y=btn.top-p.h/2; } }
         }
-        if(p.y-12>FLOOR) p.dead=true;
+        if(!walls && p.y-12>FLOOR) p.dead=true;
         if(!p.dead) moving++;
       }
       if(!p.dead){
@@ -109,11 +146,12 @@ function run(){
       }
     }
     parts=parts.filter(p=>!p.dead);
-    if(parts.length && (moving>0 && frames<900)) rafId=requestAnimationFrame(step);
+    if(parts.length && moving>0 && frames<900) rafIds[phoneId]=requestAnimationFrame(step);
   }
-  cancelAnimationFrame(rafId); step();
+  cancelAnimationFrame(rafIds[phoneId]); step();
 }
-window.addEventListener('load', ()=>setTimeout(run,300));
+function playAll(){ runSim('phone1',{walls:false}); runSim('phone2',{walls:true}); }
+window.addEventListener('load', ()=>setTimeout(playAll,300));
 </script>
 </body>
 </html>
