@@ -891,6 +891,44 @@ document.querySelectorAll("[data-back]").forEach((btn) => {
   });
 });
 
+// Svep höger för att gå tillbaka (lektion → ämne, ämne → huvudskärm). Ignorerar
+// vertikala svep (scroll) och vänster-svep (radera-svep). Navigerar direkt och
+// sväljer den efterföljande klicken så att radens klick (öppna/starta) inte triggas.
+let swipeNavGuard = false;
+document.addEventListener("click", (e) => {
+  if (swipeNavGuard) { e.stopPropagation(); e.preventDefault(); }
+}, true);
+function enableBackSwipe(screenEl) {
+  let sx = 0, sy = 0, tracking = false, decided = false, horiz = false;
+  screenEl.addEventListener("pointerdown", (e) => {
+    if (e.button != null && e.button > 0) return;
+    sx = e.clientX; sy = e.clientY; tracking = true; decided = false; horiz = false;
+  });
+  screenEl.addEventListener("pointermove", (e) => {
+    if (!tracking || decided) return;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    decided = true;
+    horiz = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.3; // tydligt höger-svep
+    if (!horiz) tracking = false; // vertikalt/vänster → lämna (scroll / radera-svep)
+  });
+  const end = (e) => {
+    const ok = tracking && horiz && (e.clientX - sx) > 70;
+    tracking = false;
+    if (!ok) return;
+    swipeNavGuard = true;                              // svälj efterföljande klick
+    setTimeout(() => { swipeNavGuard = false; }, 400);
+    const target = screenEl.querySelector(".back-btn") && screenEl.querySelector(".back-btn").dataset.back;
+    closeChoosers();
+    if (target === "subjects") renderSubjects();
+    else if (target === "lessons") renderLessons();
+  };
+  screenEl.addEventListener("pointerup", end);
+  screenEl.addEventListener("pointercancel", () => { tracking = false; });
+}
+enableBackSwipe($("lessons-screen")); // ämne → huvudskärm
+enableBackSwipe($("editor-screen"));  // lektion → ämne
+
 $("congrats-done").addEventListener("click", () => renderLessons());
 
 function esc(s) {
@@ -2778,10 +2816,13 @@ function attachSwipeDelete(row, cid) {
     const mx = e.clientX - startX, my = e.clientY - startY;
     if (!decided) {
       if (Math.abs(mx) < MOVE_SLOP && Math.abs(my) < MOVE_SLOP) return;
-      decided = true; horizontal = Math.abs(mx) > Math.abs(my);
+      decided = true;
+      // Engagera bara på vänster-svep (öppna papperskorgen) eller när redan öppen.
+      // Höger-svep från stängt läge lämnas → bakåt-svep-gesten får hantera det.
+      horizontal = Math.abs(mx) > Math.abs(my) && (isOpen() || mx < 0);
       if (horizontal) { row.classList.add("revealing"); try { main.setPointerCapture(e.pointerId); } catch (_) {} }
     }
-    if (!horizontal) { dragging = false; return; } // vertikal → låt listan scrolla
+    if (!horizontal) { dragging = false; return; } // vertikal/höger → låt scroll/bakåt-svep ske
     e.preventDefault();
     const base = isOpen() ? OPEN : 0;
     dx = Math.max(-90, Math.min(0, base + mx));
@@ -3357,7 +3398,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v157";
+const APP_VERSION = "v158";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
