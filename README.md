@@ -3,7 +3,7 @@
 Generisk glosapp med spaced repetition. Mobil-först PWA, installerbar på hemskärmen.
 Ren HTML/CSS/JS – inga ramverk eller byggsteg. Innehåll i Firebase, statistik lokalt.
 
-**Live:** https://tom-airaksinen.github.io/flashcards/
+**Live:** https://tom-airaksinen.github.io/flippa/
 
 ## Funktioner
 
