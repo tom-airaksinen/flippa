@@ -3381,7 +3381,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v160";
+const APP_VERSION = "v161";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
@@ -3409,11 +3409,15 @@ if ("serviceWorker" in navigator) {
 
 boot();
 
-// Fejda ut splashen när appen bootat (minsta visningstid så den inte bara blinkar)
+// Splash: visa minst SPLASH_MIN_MS (mätt från sidstart) och fejda sedan ut.
+// Ändra SPLASH_MIN_MS för annan visningstid.
+const SPLASH_MIN_MS = 2000;
 (function () {
   const splash = document.getElementById("splash");
   if (!splash) return;
+  const t0 = performance.now();
   const hide = () => { splash.classList.add("hide"); setTimeout(() => splash.remove(), 500); };
-  if (document.readyState === "complete") setTimeout(hide, 750);
-  else window.addEventListener("load", () => setTimeout(hide, 450));
+  const schedule = () => setTimeout(hide, Math.max(0, SPLASH_MIN_MS - (performance.now() - t0)));
+  if (document.readyState === "complete") schedule();
+  else window.addEventListener("load", schedule);
 })();
