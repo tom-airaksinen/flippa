@@ -1275,7 +1275,7 @@ function renderStats() {
   }
 
   body.innerHTML = `
-    <div class="st-hero"><div class="st-big">${cur}<span class="st-u"> dagar</span></div><div class="st-cap">🔥 nuvarande streak · längsta ${longest}</div></div>
+    <div class="st-hero"><div class="st-big ${byDate[ymd(today)] ? "" : "pending"}">${cur}<span class="st-u"> dagar</span></div><div class="st-cap">🔥 nuvarande streak · längsta ${longest}</div></div>
     <div class="opt-segs st-period" id="st-period"><span class="st-period-thumb" id="st-period-thumb"></span>${PERIODS.map((p) => `<button type="button" data-v="${p.v}">${p.label}</button>`).join("")}</div>
     <div class="st-grid" id="st-grid"></div>
     <div class="st-sec">SENASTE 18 VECKORNA</div>

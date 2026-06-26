@@ -378,6 +378,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .icon-btn svg { display: block; }
 .st-hero { text-align: center; padding: 6px 0 14px; }
 .st-big { font-size: 3.2rem; font-weight: 800; color: var(--fire, #ff8a3d); line-height: 1; }
+/* Grå (som "dagar") tills man pluggat idag och utökat streaken → då orange */
+.st-big.pending { color: var(--muted); }
 .st-big .st-u { font-size: 1rem; color: var(--muted); font-weight: 600; }
 .st-cap { color: var(--muted); font-size: 0.85rem; margin-top: 4px; }
 .st-row3 { display: flex; gap: 10px; }
