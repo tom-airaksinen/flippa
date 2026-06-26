@@ -151,6 +151,10 @@ let srs = JSON.parse(localStorage.getItem(SRS_KEY) || "{}");
 const BOX_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32 };
 const MAX_BOX = 6;
 const DAY_MS = 24 * 60 * 60 * 1000;
+// Snäpp en tidsstämpel till lokal midnatt (00:00 i enhetens tidszon). Används för
+// förfallodatum så att "förfallna idag" blir tillgängliga från morgonen, inte vid
+// klockslaget man råkade plugga.
+function startOfLocalDay(ts) { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
 
 function saveSRS() {
   localStorage.setItem(SRS_KEY, JSON.stringify(srs));
@@ -199,7 +203,7 @@ function gradeCard(card, dir, grade) {
     // kan = +1 låda, kan väldigt bra = +2. Nytt ord + "kan" → låda 1 = tidigast imorgon.
     const step = grade === "easy" ? 2 : 1;
     e.box = Math.min(MAX_BOX, (e.box || 0) + step);
-    e.due = now + BOX_INTERVALS[e.box] * DAY_MS;
+    e.due = startOfLocalDay(now + BOX_INTERVALS[e.box] * DAY_MS); // förfaller vid lokal midnatt
   }
   e.lastSeen = now;
   saveSRS();
@@ -1659,7 +1663,7 @@ function answer(grade) {
       const oe = getEntry(c, otherDir);
       const now = Date.now();
       if (oe.box >= 1 && oe.due <= now) {
-        oe.due = now + BOX_INTERVALS[oe.box] * DAY_MS;
+        oe.due = startOfLocalDay(now + BOX_INTERVALS[oe.box] * DAY_MS); // lokal midnatt
         saveSRS();
       }
     }
@@ -3382,7 +3386,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v162";
+const APP_VERSION = "v163";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
