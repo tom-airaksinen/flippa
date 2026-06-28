@@ -23,6 +23,8 @@ input, textarea {
   --good: #5bbf72;
   --fail: #e05a4f;
   --easy: #f4c542;
+  --fire: #ff8a3d;
+  --gold: #f4c542;
 }
 
 html, body {
@@ -413,6 +415,19 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .lt-bar.b1 { background: #e05a4f; } .lt-bar.b2 { background: #e0915a; } .lt-bar.b3 { background: #f4c542; }
 .lt-bar.b4 { background: #8fbf5a; } .lt-bar.b5 { background: #5bbf72; } .lt-bar.b6 { background: #5b8cff; }
 .lt-lbl { font-size: 0.6rem; color: var(--muted); }
+
+/* Prestationer – brickrad (rimmar med PASS/KORT-rutan) */
+.st-achv { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.st-ach { background: var(--surface-2); border-radius: 14px; padding: 12px 4px 10px; text-align: center; }
+.st-ach .ach-ico { font-size: 1.5rem; line-height: 1; }
+.st-ach .ach-num { font-size: 1.5rem; font-weight: 800; margin-top: 5px; }
+.st-ach .ach-thr { font-size: 0.74rem; font-weight: 700; color: var(--text); margin-top: 4px; }
+.st-ach .ach-unit { font-size: 0.6rem; color: var(--muted); letter-spacing: 0.02em; }
+.st-ach.on .ach-num { color: var(--fire); }
+.st-ach.gold .ach-num { color: var(--gold); }
+.st-ach.zero { opacity: 0.42; }
+.st-ach.zero .ach-ico { filter: grayscale(1); }
+.st-ach.zero .ach-num { color: var(--muted); }
 .version-tag { margin-top: auto; text-align: center; color: var(--muted); font-size: 0.7rem; opacity: 0.55; padding: 10px 0 16px; }
 
 /* Riktning + kort per pass – pills med utfällbar väljare (lektionsskärmen) */

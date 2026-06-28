@@ -278,6 +278,8 @@ function recordUnitFlip(card, dir) {
   Object.keys(cs).forEach((d) => { if (d < cutoff) delete cs[d]; });
   localStorage.setItem(UNITCOUNT_KEY, JSON.stringify(counts));
 
+  recordAchv(user, sid, dayCount, weekCount); // livstidshistorik för prestationer
+
   return { dayCount, weekCount, crossedDay: isNew && dayCount === DAILY_GOAL, crossedWeek: isNew && weekCount === WEEKLY_GOAL };
 }
 
@@ -296,6 +298,72 @@ function goalDaysForScope(subjects) {
   subjects.forEach((s) => { const cs = cu[s.id] || {}; Object.keys(cs).forEach((d) => { perDay[d] = (perDay[d] || 0) + cs[d]; }); });
   const set = new Set(); Object.keys(perDay).forEach((d) => { if (perDay[d] >= DAILY_GOAL) set.add(d); });
   return set;
+}
+
+// =========================================================================
+//  Prestationer (livstid): antal dagar med 100+/150+/250+ ord, veckor med 1000+
+// =========================================================================
+// Livstidshistorik som INTE rensas (unitcount rensas ~140 dagar). user → subject →
+// { d:{datum:maxdagssiffra}, w:{ISO-vecka:maxveckosiffra} }. Skrivs vid varje flipp.
+const ACHV_KEY = "flippa-achv-v1";
+const ACHV_BACKFILL_KEY = "flippa-achv-backfilled-v1";
+const ACHV_DAY_TIERS = [100, 150, 250];
+
+// ISO-veckonyckel "ÅÅÅÅ-Www" (måndagsstart, torsdagen avgör år/vecka)
+function isoWeekKey(date) {
+  const dt = new Date(date); dt.setHours(12, 0, 0, 0);
+  dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7) + 3); // torsdagen i veckan
+  const firstThu = new Date(dt.getFullYear(), 0, 4);
+  firstThu.setDate(firstThu.getDate() - ((firstThu.getDay() + 6) % 7) + 3);
+  const week = 1 + Math.round((dt - firstThu) / (7 * 86400000));
+  return `${dt.getFullYear()}-W${String(week).padStart(2, "0")}`;
+}
+
+function achvSlot(achv, user, sid) {
+  const a = ((achv[user] || (achv[user] = {}))[sid] || (achv[user][sid] = { d: {}, w: {} }));
+  if (!a.d) a.d = {}; if (!a.w) a.w = {};
+  return a;
+}
+
+// Uppdatera livstidshistoriken (max per dag/vecka) – anropas i recordUnitFlip
+function recordAchv(user, sid, dayCount, weekCount) {
+  const achv = loadLS(ACHV_KEY);
+  const a = achvSlot(achv, user, sid);
+  const today = todayStr();
+  a.d[today] = Math.max(a.d[today] || 0, dayCount);
+  const wk = isoWeekKey(new Date());
+  a.w[wk] = Math.max(a.w[wk] || 0, weekCount);
+  localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
+}
+
+// Engångs: så in befintliga dagssiffror (unitcount, ~140 dagar) i livstidshistoriken
+// så att räknarna inte börjar på noll. Veckor kan inte återskapas exakt → börjar tomt.
+function backfillAchvOnce() {
+  if (localStorage.getItem(ACHV_BACKFILL_KEY)) return;
+  const counts = loadLS(UNITCOUNT_KEY);
+  const achv = loadLS(ACHV_KEY);
+  Object.keys(counts).forEach((user) => Object.keys(counts[user]).forEach((sid) => {
+    const a = achvSlot(achv, user, sid), cs = counts[user][sid];
+    Object.keys(cs).forEach((d) => { a.d[d] = Math.max(a.d[d] || 0, cs[d]); });
+  }));
+  localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
+  localStorage.setItem(ACHV_BACKFILL_KEY, "1");
+}
+
+// Räkna prestationer för en scope (summerar per-ämnessiffror per dag/vecka)
+function getAchievements(subjects) {
+  const achv = loadLS(ACHV_KEY)[unitUser()] || {};
+  const perDay = {}, perWeek = {};
+  subjects.forEach((s) => {
+    const a = achv[s.id] || {}, ad = a.d || {}, aw = a.w || {};
+    Object.keys(ad).forEach((d) => { perDay[d] = (perDay[d] || 0) + ad[d]; });
+    Object.keys(aw).forEach((w) => { perWeek[w] = (perWeek[w] || 0) + aw[w]; });
+  });
+  const dayVals = Object.values(perDay), weekVals = Object.values(perWeek);
+  return {
+    days: ACHV_DAY_TIERS.map((t) => dayVals.filter((v) => v >= t).length),
+    weeks: weekVals.filter((v) => v >= WEEKLY_GOAL).length,
+  };
 }
 
 // =========================================================================
@@ -443,6 +511,7 @@ function showStatus(msg) {
 }
 
 function boot() {
+  backfillAchvOnce(); // så in befintlig dagshistorik i prestationsräknarna en gång
   // Visa cachat innehåll direkt (funkar offline)
   if (content.length) renderSubjects();
   else showStatus("Ansluter …");
@@ -1258,6 +1327,17 @@ function renderStats() {
     `<div class="lt-col"><div class="lt-num">${n || ""}</div><div class="lt-bar b${i}" style="height:${n ? Math.max(6, Math.round(n / ltMax * 100)) : 0}%"></div><div class="lt-lbl">${LT_LABELS[i]}</div></div>`
   ).join("");
 
+  // Prestationer (livstid) – följer vald scope, precis som heatmap & Leitner
+  const ach = getAchievements(ltSubjects);
+  const achTiles = [
+    { ico: "💪", n: ach.days[0], thr: "100+", unit: "dagar" },
+    { ico: "⚡️", n: ach.days[1], thr: "150+", unit: "dagar" },
+    { ico: "🥇", n: ach.days[2], thr: "250+", unit: "dagar" },
+    { ico: "🏆", n: ach.weeks, thr: "1000+", unit: "veckor", gold: true },
+  ].map((t) =>
+    `<div class="st-ach ${t.n ? (t.gold ? "gold" : "on") : "zero"}"><div class="ach-ico">${t.ico}</div><div class="ach-num">${t.n}</div><div class="ach-thr">${t.thr}</div><div class="ach-unit">${t.unit}</div></div>`
+  ).join("");
+
   // Periodvalet kommer ihåg sig tills man byter
   const PERIODS = [{ v: "1", label: "Idag" }, { v: "7", label: "7 dagar" }, { v: "30", label: "30 dagar" }, { v: "all", label: "Totalt" }];
   let period = localStorage.getItem(STATS_PERIOD_KEY) || "30";
@@ -1282,7 +1362,9 @@ function renderStats() {
     <div class="st-heatwrap"><div class="st-heat">${heat}</div></div>
     <div class="st-legend"><span>mindre</span><span class="st-d"></span><span class="st-d l1"></span><span class="st-d l2"></span><span class="st-d l3"></span><span class="st-d l4"></span><span>mer</span></div>
     <div class="st-sec">LEITNER · ${ltTotal} kort</div>
-    <div class="st-leitner">${leitner}</div>`;
+    <div class="st-leitner">${leitner}</div>
+    <div class="st-sec">PRESTATIONER</div>
+    <div class="st-achv">${achTiles}</div>`;
 
   const segs = body.querySelector("#st-period");
   const grid = body.querySelector("#st-grid");
@@ -3447,7 +3529,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v165";
+const APP_VERSION = "v166";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
