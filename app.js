@@ -801,7 +801,7 @@ function openSubject(id) {
   renderLessons();
 }
 
-function dueCountForLessons(lessons) {
+function dueCountForLessons(lessons, starredOnly) {
   const now = Date.now();
   const dirMode = dirSelect.value; // räkna i vald riktning (matchar vad passet ger)
   // Dagens nya ord (låda 0) räknas också – men de väljs per ämne, så vi
@@ -810,7 +810,7 @@ function dueCountForLessons(lessons) {
   let n = 0;
   lessons.forEach((l) =>
     l.cards.forEach((c) => {
-      if (isDueNow(c, dirMode, now) || newSet.has(c.id)) n++;
+      if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && (!starredOnly || isFav(c))) n++;
     })
   );
   return n;
@@ -829,9 +829,10 @@ function renderLessons() {
   $("lessons-title").textContent = (subjectFlag(currentSubject) ? subjectFlag(currentSubject) + " " : "") + currentSubject.name;
 
   const dueBtn = $("due-btn");
-  const due = dueCountForLessons(activeLessons(currentSubject)); // matchar passet: pausade räknas inte
+  const focus = onlyStarred();
+  const due = dueCountForLessons(activeLessons(currentSubject), focus); // matchar passet: pausade (och ev. ostjärnade) räknas inte
   if (due > 0) {
-    dueBtn.textContent = `⏰ Dags att öva (${due})`;
+    dueBtn.textContent = focus ? `⭐ Stjärnord att öva (${due})` : `⏰ Dags att öva (${due})`;
     dueBtn.classList.remove("hidden");
     dueBtn.onclick = startDueSession;
   } else {
@@ -1087,6 +1088,17 @@ function sessionLimit() {
   return parseInt(sessionLimitSel.value, 10) || 0; // 0 = alla
 }
 
+// ---- Fokuspass: bara stjärnmärkta ord (förfallna) i "Dags att öva" ----
+const ONLY_STARRED_KEY = "flippa-only-starred";
+function onlyStarred() { return localStorage.getItem(ONLY_STARRED_KEY) === "1"; }
+const onlyStarredToggle = $("only-starred-toggle");
+onlyStarredToggle.checked = onlyStarred();
+onlyStarredToggle.addEventListener("change", () => {
+  localStorage.setItem(ONLY_STARRED_KEY, onlyStarredToggle.checked ? "1" : "0");
+  syncOptionPills();
+  if (activeScreen === "lessons") renderLessons(); // uppdatera due-knappens antal/etikett
+});
+
 // ---- Riktning (kommer ihåg senaste valet) ----
 const DIR_KEY = "flashcards-dir";
 dirSelect.value = localStorage.getItem(DIR_KEY) || "b2f";
@@ -1112,7 +1124,8 @@ function toggleChooser(which) {
 function syncOptionPills() {
   const dirOpt = dirSelect.options[dirSelect.selectedIndex];
   $("dir-val").textContent = dirOpt ? dirOpt.text : "Från svenska";
-  $("limit-val").textContent = limitLabel(sessionLimitSel.value);
+  $("limit-val").textContent = limitLabel(sessionLimitSel.value) + (onlyStarred() ? " ⭐" : "");
+  if (onlyStarredToggle.checked !== onlyStarred()) onlyStarredToggle.checked = onlyStarred();
   dirChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === dirSelect.value));
   $("limit-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === sessionLimitSel.value));
   const npd = String(newPerDay());
@@ -1216,6 +1229,10 @@ function startDueSession(continuing = false) {
   todaysNewCards(currentSubject).forEach((c) => {
     if (!inDue.has(c.id) && !runSeen.has(c.id)) { due.push(c); inDue.add(c.id); }
   });
+  // Fokuspass: behåll bara stjärnmärkta ord (nya ord begränsas ändå av nyord-kvoten ovan)
+  if (onlyStarred()) {
+    for (let i = due.length - 1; i >= 0; i--) if (!isFav(due[i])) due.splice(i, 1);
+  }
   if (!due.length) return;
   due.sort((a, b) => Math.min(getEntry(a, "f2b").due, getEntry(a, "b2f").due) -
     Math.min(getEntry(b, "f2b").due, getEntry(b, "b2f").due));
@@ -1497,7 +1514,6 @@ function loadCard(forceDir) {
   updateStack();
   showSpeakSoon(300);
   editCardBtn.classList.remove("hidden");
-  updateStarBtn();
   updateHintBtn();
   if (handsfreeActive) { clearTimeout(hfLoadCardTimer); hfLoadCardTimer = setTimeout(() => { if (handsfreeActive) hfSpeakFront(); }, 400); }
 }
@@ -1948,9 +1964,11 @@ function updateGlobeBtn() {
 function showSpeakSoon(delay) {
   speakBtn.classList.add("hidden");
   globeBtn.classList.add("hidden");
+  starBtn.classList.add("hidden");
   setTimeout(() => {
     updateSpeakBtn();
     updateGlobeBtn();
+    updateStarBtn();
     // autoläge: läs upp så fort den utländska sidan blir synlig
     if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && hasVoiceFor(subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
@@ -2154,7 +2172,8 @@ editCardBtn.addEventListener("click", (e) => { e.stopPropagation(); editCurrentC
 // ---- Stjärnmärk ordet direkt från kortet (favorit, per profil) ----
 const starBtn = $("star-btn");
 function updateStarBtn() {
-  if (!session || !session.current) { starBtn.classList.add("hidden"); return; }
+  // Visas bara när den utländska sidan syns (nere till höger på kortet)
+  if (!session || !session.current || !foreignVisible()) { starBtn.classList.add("hidden"); return; }
   const fav = isFav(session.current);
   starBtn.textContent = fav ? "★" : "☆";
   starBtn.classList.toggle("on", fav);
@@ -3617,7 +3636,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v168";
+const APP_VERSION = "v169";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
