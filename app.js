@@ -1539,7 +1539,7 @@ function renderStats() {
     const unika = localStorage.getItem(KORT_MODE_KEY) === "unika";
     grid.innerHTML = `
       <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
-      <div class="st-b st-b-tap" id="kpi-kort"><div class="st-v">${unika ? k.unika : k.kort}</div><div class="st-l">${unika ? "UNIKA" : "KORT"} <span class="st-swap">⇄</span></div></div>
+      <div class="st-b st-b-tap" id="kpi-kort"><div class="st-v">${unika ? k.unika : k.kort}</div><div class="st-l">${unika ? "UNIKA" : "KORT"}</div></div>
       <div class="st-b"><div class="st-v">${k.min}</div><div class="st-l">MINUTER</div></div>
       <div class="st-b"><div class="st-v">${k.nya}</div><div class="st-l">NYA</div></div>`;
   };
@@ -3910,7 +3910,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v179";
+const APP_VERSION = "v180";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
