@@ -1108,10 +1108,15 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .row-edit:active { background: var(--accent); color: #fff; }
 
 /* Pausad lektion: nedtonad rad + en diskret pausikon direkt efter namnet (ej knapp) */
-.row.paused .row-title, .row.paused .row-meta { opacity: 0.5; }
 .row.paused .row-title { display: flex; align-items: center; gap: 5px; }
 .row.paused .row-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .lesson-paused-ico { flex: none; color: var(--muted); font-size: 0.8rem; line-height: 1; }
+/* Rosa-temat behåller nuvarande dämpning tills det granskats */
+:root.theme-rosa .row.paused .row-title, :root.theme-rosa .row.paused .row-meta { opacity: 0.5; }
+/* Blått tema: tydligare skillnad – mörkare kort + dämpat (mörkare) namn */
+:root:not(.theme-rosa) .row.paused { background: var(--bg); }
+:root:not(.theme-rosa) .row.paused .row-name { color: var(--muted); }
+:root:not(.theme-rosa) .row.paused .row-meta { opacity: 0.6; }
 /* Pausväljaren inne i lektionen: blir en tydlig play-knapp (accent) när lektionen är pausad */
 #toggle-pause.paused { color: var(--accent); }
 
