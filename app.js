@@ -1900,6 +1900,7 @@ function onMotion(e) {
 //  Uttal (Web Speech API)
 // =========================================================================
 const speakBtn = $("speak-btn");
+const globeBtn = $("globe-btn"); // hemlig, osynlig genväg nere till vänster → Slå upp (samma som menyn)
 
 // Autoläge: läs upp automatiskt varje gång den utländska sidan visas
 const AUTO_SPEAK_KEY = "flippa-autospeak";
@@ -1949,6 +1950,7 @@ function updateSpeakBtn() {
 function showSpeakSoon(delay) {
   speakBtn.classList.add("hidden");
   cardMenuBtn.classList.add("hidden");
+  globeBtn.classList.add("hidden");
   closeCardMenu();
   setTimeout(() => {
     updateSpeakBtn();
@@ -2166,11 +2168,19 @@ function openCardMenu() {
   cardMenu.classList.remove("hidden");
   cardMenuOpen = true;
 }
-// Visas bara när den utländska sidan syns (uppe till vänster på kortet)
+// Visas bara när den utländska sidan syns (uppe till vänster på kortet).
+// Den osynliga globknappen nere till vänster följer med (samma villkor).
 function updateCardMenuBtn() {
-  if (!session || !session.current || !foreignVisible()) { cardMenuBtn.classList.add("hidden"); closeCardMenu(); return; }
-  cardMenuBtn.classList.remove("hidden");
+  const show = !!(session && session.current && foreignVisible());
+  cardMenuBtn.classList.toggle("hidden", !show);
+  globeBtn.classList.toggle("hidden", !show);
+  if (!show) closeCardMenu();
 }
+globeBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+globeBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (session && session.current) googleAiExplore(session.current.front);
+});
 cardMenuBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 cardMenuBtn.addEventListener("click", (e) => { e.stopPropagation(); cardMenuOpen ? closeCardMenu() : openCardMenu(); });
 cardMenu.addEventListener("pointerdown", (e) => e.stopPropagation());
@@ -2281,6 +2291,7 @@ card.addEventListener("pointerdown", (e) => {
   didSwipe = false;
   speakBtn.classList.add("hidden"); // dölj direkt när man tar i kortet
   cardMenuBtn.classList.add("hidden");
+  globeBtn.classList.add("hidden");
   closeCardMenu();
   hintBtn.classList.add("hidden");
   card.setPointerCapture(e.pointerId);
@@ -3795,7 +3806,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v173";
+const APP_VERSION = "v174";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
