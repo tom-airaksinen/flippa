@@ -1,0 +1,186 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rosa tema – mockup</title>
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;background:#0c0710;color:#f2f4f8;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:26px 12px 60px}
+  .lead{max-width:900px;margin:0 auto 24px;color:#c79bb3;font-size:.92rem;line-height:1.55;text-align:center}
+  .lead b{color:#fff}
+  .cols{display:flex;gap:34px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:18px;align-items:center}
+  .col h2{margin:0 0 2px;font-size:1.05rem;font-weight:800}
+  .col .sw{display:flex;gap:6px;margin-bottom:4px}
+  .col .sw i{width:18px;height:18px;border-radius:50%;display:inline-block;border:1px solid #ffffff22}
+
+  /* ---------- theme variables ---------- */
+  .t-soft{
+    --bg:#fff0f6; --surface:#ffffff; --surface-2:#ffd9e9; --line:#ffc2dd;
+    --text:#4a2236; --muted:#b07088; --accent:#ff4d97; --due:#ff85bd; --due-tx:#4a2236;
+    --good:#52b96a; --fail:#e0608a; --gold:#f4b73f; --fire:#ff5fa8;
+  }
+  .t-dark{
+    --bg:#1e0f1b; --surface:#2c1626; --surface-2:#3a1d31; --line:#4a2740;
+    --text:#fde7f1; --muted:#c896ad; --accent:#ff5fa8; --due:#ff5fa8; --due-tx:#2a0f1f;
+    --good:#5bbf72; --fail:#ff7a9c; --gold:#ffd24a; --fire:#ff8fc0;
+  }
+
+  /* ---------- phone shell ---------- */
+  .phone{width:330px;background:var(--bg);color:var(--text);border-radius:30px;padding:14px 14px 0;
+    box-shadow:0 16px 44px rgba(0,0,0,.5);border:1px solid #ffffff14;overflow:hidden;height:600px;position:relative;display:flex;flex-direction:column}
+  .cap{font-size:.7rem;color:var(--muted);text-align:center;margin:8px 0}
+
+  /* header */
+  .hd{display:flex;align-items:center;gap:8px;padding:4px 2px 12px}
+  .hd .t{flex:1;font-size:1.3rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ic{width:34px;height:34px;border-radius:9px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1rem;flex:none;color:var(--text)}
+
+  /* pills */
+  .pills{display:flex;gap:8px;margin-bottom:10px}
+  .pill{flex:1;background:var(--surface);border-radius:12px;padding:9px 12px;display:flex;justify-content:space-between;align-items:center}
+  .pill .l{font-size:.6rem;letter-spacing:.04em;color:var(--muted)}
+  .pill .v{font-size:.92rem;font-weight:700}
+  .pill .c{color:var(--muted)}
+
+  /* due button */
+  .due{background:var(--due);color:var(--due-tx);border-radius:14px;padding:15px;text-align:center;font-weight:800;font-size:1.05rem;margin-bottom:10px}
+  .search{background:var(--surface);border-radius:12px;padding:11px 13px;color:var(--muted);font-size:.9rem;margin-bottom:12px}
+
+  /* rows */
+  .row{background:var(--surface);border-radius:12px;padding:13px 14px;margin-bottom:9px;display:flex;align-items:center;gap:8px}
+  .row .nm{flex:1;font-weight:700;font-size:1rem}
+  .row .meta{display:flex;gap:6px;align-items:center;font-size:.8rem;color:var(--muted)}
+  .tag{border-radius:999px;padding:2px 8px;font-size:.72rem;font-weight:700}
+  .tag.due{background:var(--due);color:var(--due-tx)}
+  .tag.new{background:var(--accent);color:#fff}
+  .row .chev{color:var(--muted)}
+  .row.paused .nm,.row.paused .meta{opacity:.5}
+  .pico{color:var(--muted);font-size:.75rem}
+
+  /* tabbar */
+  .tab{margin-top:auto;display:flex;justify-content:space-around;padding:10px 0 14px;border-top:1px solid var(--line)}
+  .tab span{font-size:.62rem;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px}
+  .tab span.on{color:var(--accent)}
+  .tab b{font-size:1.05rem;font-weight:400}
+
+  /* training */
+  .tbar{display:flex;justify-content:space-between;align-items:center;padding:2px 2px 10px}
+  .kvar{background:var(--surface);border-radius:9px;padding:5px 10px;font-size:.8rem;color:var(--muted)}
+  .card{flex:1;background:var(--surface);border-radius:18px;position:relative;display:flex;align-items:center;justify-content:center;margin-bottom:12px;min-height:0}
+  .card .word{font-size:1.9rem;font-weight:800}
+  .cmenu{position:absolute;top:12px;left:12px;width:38px;height:38px;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#fff}
+  .t-soft .cmenu{background:rgba(255,77,151,.18);color:var(--accent)}
+  .spk{position:absolute;top:12px;right:12px;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.18);display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+  .t-soft .spk{background:rgba(255,77,151,.14)}
+  .auto{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;margin-bottom:8px}
+  .toggle{width:42px;height:25px;border-radius:25px;background:var(--good);position:relative}
+  .toggle::after{content:"";position:absolute;top:3px;right:3px;width:19px;height:19px;border-radius:50%;background:#fff}
+  .hf{background:var(--surface);border-radius:12px;padding:13px;text-align:center;font-weight:700;margin-bottom:12px}
+  .grades{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 16px;font-size:.78rem;color:var(--muted);padding-bottom:14px}
+
+  /* stats */
+  .hero{text-align:center;margin:6px 0 14px}
+  .hero .big{font-size:3rem;font-weight:800;color:var(--fire);line-height:1}
+  .hero .big u{font-size:1rem;color:var(--muted);font-weight:600;text-decoration:none}
+  .hero .cap2{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .seg{display:flex;background:var(--surface);border-radius:11px;padding:3px;margin-bottom:12px}
+  .seg b{flex:1;text-align:center;font-size:.78rem;font-weight:600;color:var(--muted);padding:7px 0;border-radius:9px}
+  .seg b.on{background:var(--accent);color:#fff}
+  .kgrid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px;margin-bottom:14px}
+  .kb{background:var(--surface-2);border-radius:11px;padding:9px 4px;text-align:center}
+  .kb .kv{font-size:1.15rem;font-weight:800}
+  .kb .kl{font-size:.55rem;color:var(--muted);letter-spacing:.03em;margin-top:2px}
+  .sec{font-size:.66rem;font-weight:700;letter-spacing:.04em;color:var(--muted);margin:8px 2px 7px}
+  .heat{display:flex;gap:4px}
+  .heat .wk{display:flex;flex-direction:column;gap:4px;flex:1}
+  .heat .d{height:11px;border-radius:3px;background:var(--surface-2)}
+  .heat .d.l2{background:color-mix(in srgb,var(--accent) 40%,var(--surface-2))}
+  .heat .d.l4{background:var(--accent)}
+  .heat .d.g{background:var(--gold)}
+  .lt{display:flex;align-items:flex-end;gap:5px;height:60px;margin-bottom:6px}
+  .lt .c{flex:1;border-radius:4px 4px 0 0;background:var(--accent)}
+  .achv{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:7px}
+  .ach{background:var(--surface-2);border-radius:13px;padding:10px 3px 8px;text-align:center}
+  .ach .i{font-size:1.3rem}
+  .ach .n{font-size:1.25rem;font-weight:800;color:var(--fire);margin-top:3px}
+  .ach.gold .n{color:var(--gold)}
+  .ach .thr{font-size:.68rem;font-weight:700;margin-top:2px}
+  .ach .u{font-size:.55rem;color:var(--muted)}
+  .scroll{overflow:hidden;display:flex;flex-direction:column}
+</style>
+
+<div class="lead">
+  <b>Rosa tema – två varianter.</b> Samma tre skärmar (lektionslista, förhör, statistik) i en
+  <b>mjuk ljusrosa</b> respektive en <b>mörk med rosa accenter</b>. Temat skulle gälla bara för Hedvigs profil.
+  Säg vilken hon gillar – eller en mix – så bygger jag in den.
+</div>
+
+<div class="cols" id="cols"></div>
+
+<script>
+  // Bygg samma tre skärmar för båda teman utan att duplicera markup för hand.
+  const lessons = `
+    <div class="hd"><span class="t">🇮🇹 Italienska</span><span class="ic">✎</span><span class="ic">⬆️</span><span class="ic">＋</span></div>
+    <div class="scroll">
+      <div class="pills">
+        <div class="pill"><span><span class="l">RIKTNING</span><br><span class="v">Från svenska</span></span><span class="c">▾</span></div>
+        <div class="pill"><span><span class="l">KORT/PASS</span><br><span class="v">10</span></span><span class="c">▾</span></div>
+      </div>
+      <div class="due">⏰ Dags att öva (12)</div>
+      <div class="search">Sök i alla lektioner…</div>
+      <div class="row"><span class="nm">Transport</span><span class="meta"><span class="tag due">3 dags</span>24 ord</span><span class="chev">›</span></div>
+      <div class="row"><span class="nm">Mat och dryck</span><span class="meta"><span class="tag new">5 nya</span>30 ord</span><span class="chev">›</span></div>
+      <div class="row"><span class="nm">Familj och vänner</span><span class="meta"><span class="tag due">2 dags</span>18 ord</span><span class="chev">›</span></div>
+      <div class="row paused"><span class="nm">På apoteket</span> <span class="pico">⏸</span><span class="meta" style="margin-left:auto">12 ord</span><span class="chev">›</span></div>
+    </div>
+    <div class="tab"><span class="on"><b>🗂️</b>Flippa</span><span><b>📊</b>Statistik</span><span><b>❔</b>Hjälp</span></div>`;
+
+  const training = `
+    <div class="tbar"><span class="ic">←</span><span class="kvar">8 kvar</span></div>
+    <div class="card">
+      <div class="cmenu">⋯</div><div class="spk">🔊</div>
+      <div class="word">la spiaggia</div>
+    </div>
+    <div class="auto"><span>🔊 Automatisk uppläsning</span><span class="toggle"></span></div>
+    <div class="hf">🎙 Handsfree</div>
+    <div class="grades"><span>👈 kan inte</span><span>👆 kan bra</span><span>kan 👉</span><span>👇 hopplöst</span></div>`;
+
+  const stats = `
+    <div class="hd"><span class="ic">📊</span><span class="t">Statistik</span></div>
+    <div class="scroll">
+      <div class="hero"><div class="big">12<u> dagar</u></div><div class="cap2">🔥 nuvarande streak · längsta 18</div></div>
+      <div class="seg"><b>Idag</b><b class="on">7 dagar</b><b>30 dagar</b><b>Totalt</b></div>
+      <div class="kgrid">
+        <div class="kb"><div class="kv">5</div><div class="kl">PASS</div></div>
+        <div class="kb"><div class="kv">84</div><div class="kl">KORT</div></div>
+        <div class="kb"><div class="kv">14</div><div class="kl">MINUTER</div></div>
+        <div class="kb"><div class="kv">6</div><div class="kl">NYA</div></div>
+      </div>
+      <div class="sec">SENASTE VECKORNA</div>
+      <div class="heat">
+        ${Array.from({length:9}).map((_,i)=>`<div class="wk">${Array.from({length:5}).map((_,j)=>{const c=(i+j)%4;return `<div class="d ${i>6&&j<2?'g':c===3?'l4':c===2?'l2':''}"></div>`}).join('')}</div>`).join('')}
+      </div>
+      <div class="sec">LEITNER · 1 220 kort</div>
+      <div class="lt">${[90,55,40,30,20,14].map(h=>`<div class="c" style="height:${h}%"></div>`).join('')}</div>
+      <div class="sec">PRESTATIONER</div>
+      <div class="achv">
+        <div class="ach"><div class="i">💪</div><div class="n">12</div><div class="thr">100+</div><div class="u">dagar</div></div>
+        <div class="ach"><div class="i">⚡️</div><div class="n">5</div><div class="thr">150+</div><div class="u">dagar</div></div>
+        <div class="ach"><div class="i">🥇</div><div class="n">1</div><div class="thr">250+</div><div class="u">dagar</div></div>
+        <div class="ach gold"><div class="i">🏆</div><div class="n">2</div><div class="thr">1000+</div><div class="u">veckor</div></div>
+      </div>
+    </div>`;
+
+  const themes = [
+    {cls:'t-soft', name:'Mjuk rosa (ljus)', sw:['#ff4d97','#ff85bd','#ffd9e9','#fff0f6']},
+    {cls:'t-dark', name:'Mörk med rosa accenter', sw:['#ff5fa8','#3a1d31','#2c1626','#1e0f1b']},
+  ];
+  const screens = [['Lektionslistan',lessons],['Förhör',training],['Statistik',stats]];
+  document.getElementById('cols').innerHTML = themes.map(t=>`
+    <div class="col">
+      <h2>${t.name}</h2>
+      <div class="sw">${t.sw.map(c=>`<i style="background:${c}"></i>`).join('')}</div>
+      ${screens.map(([cap,html])=>`<div class="cap">${cap}</div><div class="phone ${t.cls}">${html}</div>`).join('')}
+    </div>`).join('');
+</script>
