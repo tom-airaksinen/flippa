@@ -418,6 +418,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .st-b { flex: 1; text-align: center; background: var(--surface-2); border-radius: 12px; padding: 11px 6px; }
 .st-b .st-v { font-size: 1.25rem; font-weight: 700; }
 .st-b .st-l { color: var(--muted); font-size: 0.62rem; margin-top: 3px; letter-spacing: 0.03em; }
+.st-b-tap { cursor: pointer; }
+.st-b-tap:active { background: var(--surface); }
+.st-swap { opacity: 0.7; font-size: 0.7em; }
 .st-sec { color: var(--muted); font-size: 0.7rem; font-weight: 600; letter-spacing: 0.03em; margin: 18px 2px 6px; }
 /* Lite utrymme runt om så dagens 2px-ring (box-shadow) inte klipps av behållaren */
 .st-heatwrap { overflow-x: auto; padding: 3px 3px 4px; }

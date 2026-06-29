@@ -328,6 +328,19 @@ function goalDaysForScope(subjects) {
   return set;
 }
 
+// Unika kort (distinkta ord+riktning per dag, summerat) inom en period & scope –
+// samma mått som dagsmålet räknar mot. cutoff "" = allt. Källa: unitcount (~140 dgr).
+const KORT_MODE_KEY = "flippa-kort-mode"; // "kort" (svep/repetitioner) | "unika"
+function uniqueUnitsInPeriod(subjects, cutoff) {
+  const cu = loadLS(UNITCOUNT_KEY)[unitUser()] || {};
+  let n = 0;
+  subjects.forEach((s) => {
+    const cs = cu[s.id] || {};
+    Object.keys(cs).forEach((d) => { if (!cutoff || d >= cutoff) n += cs[d]; });
+  });
+  return n;
+}
+
 // =========================================================================
 //  Prestationer (livstid): antal dagar med 100+/150+/250+ ord, veckor med 1000+
 // =========================================================================
@@ -1480,10 +1493,11 @@ function renderStats() {
     const pRecs = recs.filter((r) => r.d && (p === "all" || r.d >= cutoff));
     const pass = pRecs.length;
     const kort = pRecs.reduce((a, r) => a + (r.cards || 0), 0);
+    const unika = uniqueUnitsInPeriod(ltSubjects, cutoff); // distinkta ord+riktning (= dagsmålets mått)
     const min = Math.round(pRecs.reduce((a, r) => a + (r.ms || 0), 0) / 60000);
     // Totalt = alla kort ute ur låda 0 (livstid); fönster = stämplade datum inom perioden
     const nya = p === "all" ? studiedEver : firstDates.filter((d) => d >= cutoff).length;
-    return { pass, kort, min, nya };
+    return { pass, kort, unika, min, nya };
   }
 
   body.innerHTML = `
@@ -1522,15 +1536,23 @@ function renderStats() {
     segs.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === period));
     moveThumb();
     const k = periodKpis(period);
+    const unika = localStorage.getItem(KORT_MODE_KEY) === "unika";
     grid.innerHTML = `
       <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
-      <div class="st-b"><div class="st-v">${k.kort}</div><div class="st-l">KORT</div></div>
+      <div class="st-b st-b-tap" id="kpi-kort"><div class="st-v">${unika ? k.unika : k.kort}</div><div class="st-l">${unika ? "UNIKA" : "KORT"} <span class="st-swap">⇄</span></div></div>
       <div class="st-b"><div class="st-v">${k.min}</div><div class="st-l">MINUTER</div></div>
       <div class="st-b"><div class="st-v">${k.nya}</div><div class="st-l">NYA</div></div>`;
   };
   segs.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
     period = b.dataset.v; localStorage.setItem(STATS_PERIOD_KEY, period); renderKpis();
+  });
+  // Tryck på KORT-rutan → växla mellan svep/repetitioner och unika kort (kommer ihåg läget)
+  grid.addEventListener("click", (e) => {
+    if (!e.target.closest("#kpi-kort")) return;
+    const cur = localStorage.getItem(KORT_MODE_KEY) === "unika" ? "unika" : "kort";
+    localStorage.setItem(KORT_MODE_KEY, cur === "unika" ? "kort" : "unika");
+    renderKpis();
   });
   renderKpis();
 }
@@ -3888,7 +3910,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v178";
+const APP_VERSION = "v179";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
