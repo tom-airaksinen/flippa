@@ -3311,6 +3311,151 @@ $("translate-subject").onclick = () => openTranslate(null);
 $("translate-words").onclick = () => openTranslate(currentLessonId);
 
 // =========================================================================
+//  CSV-import → lektioner (sektion;italienska;svenska;favorit;minnesregel)
+// =========================================================================
+// Tecken-för-tecken-parser som klarar citerade fält (med ; eller , inuti) och "" som escape.
+function parseCsvRecords(text, delim) {
+  const rows = [];
+  let row = [], field = "", inQ = false;
+  text = text.replace(/^﻿/, "").replace(/\r\n?/g, "\n");
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (inQ) {
+      if (ch === '"') { if (text[i + 1] === '"') { field += '"'; i++; } else inQ = false; }
+      else field += ch;
+    } else if (ch === '"') inQ = true;
+    else if (ch === delim) { row.push(field); field = ""; }
+    else if (ch === "\n") { row.push(field); rows.push(row); row = []; field = ""; }
+    else field += ch;
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+function detectDelim(text) {
+  const firstLine = (text.replace(/^﻿/, "").split("\n")[0] || "");
+  return (firstLine.split(";").length - 1) >= (firstLine.split(",").length - 1) ? ";" : ",";
+}
+
+const FAV_FALSEY = new Set(["", "0", "nej", "no", "false", "n"]);
+// Läs alla valda filer → lista av {sektion, front, back, fav, hint}
+function readCsvFiles(files) {
+  return Promise.all([...files].map((f) => f.text())).then((texts) => {
+    const out = [];
+    texts.forEach((text) => {
+      const delim = detectDelim(text);
+      const rows = parseCsvRecords(text, delim);
+      rows.forEach((r, i) => {
+        const sektion = (r[0] || "").trim();
+        const front = (r[1] || "").trim();
+        const back = (r[2] || "").trim();
+        if (i === 0 && sektion.toLowerCase() === "sektion") return; // rubrikrad
+        if (!sektion || !front || !back) return;
+        const fav = !FAV_FALSEY.has((r[3] || "").trim().toLowerCase());
+        const hint = (r[4] || "").trim();
+        out.push({ sektion, front, back, fav, hint });
+      });
+    });
+    return out;
+  });
+}
+
+// Bygg importplan: gruppera per sektion, slå ihop med befintlig lektion (samma namn),
+// hoppa över ord som redan finns i ämnet eller som dubbleras i samma lektion.
+function buildImportPlan(subject, records) {
+  const byName = new Map(); // gemener lektionsnamn -> befintlig lektion
+  const existingFronts = new Set(); // normaliserade front i hela ämnet
+  subject.lessons.forEach((l) => {
+    byName.set(l.name.trim().toLowerCase(), l);
+    l.cards.forEach((c) => existingFronts.add(normPart(c.front)));
+  });
+  const sections = new Map(); // sektionsnamn -> { name, existing, cards:[], seen:Set }
+  let skipped = 0;
+  records.forEach((rec) => {
+    let s = sections.get(rec.sektion);
+    if (!s) {
+      const ex = byName.get(rec.sektion.toLowerCase()) || null;
+      s = { name: rec.sektion, existing: ex, cards: [], seen: new Set() };
+      sections.set(rec.sektion, s);
+    }
+    const k = normPart(rec.front);
+    if (existingFronts.has(k) || s.seen.has(k)) { skipped++; return; } // redan i ämnet / dubbel i samma import-lektion
+    s.seen.add(k);
+    s.cards.push(rec);
+  });
+  const list = [...sections.values()].filter((s) => s.cards.length);
+  const newCount = list.filter((s) => !s.existing).length;
+  const mergeCount = list.filter((s) => s.existing).length;
+  const wordCount = list.reduce((n, s) => n + s.cards.length, 0);
+  return { list, newCount, mergeCount, wordCount, skipped };
+}
+
+function commitImport(subject, plan) {
+  const sid = subject.id;
+  const updates = {};
+  const order0 = Date.now();
+  const newLessonIds = [];
+  const favKeys = [];
+  plan.list.forEach((s, si) => {
+    let lid = s.existing && s.existing.id;
+    if (!lid) {
+      lid = db.ref(`content/subjects/${sid}/lessons`).push().key;
+      updates[`content/subjects/${sid}/lessons/${lid}/name`] = s.name;
+      updates[`content/subjects/${sid}/lessons/${lid}/order`] = order0 + si;
+      updates[`content/subjects/${sid}/lessons/${lid}/createdAt`] = TS;
+      newLessonIds.push(lid);
+    }
+    s.cards.forEach((rec, ci) => {
+      const ck = db.ref(`content/subjects/${sid}/lessons/${lid}/cards`).push().key;
+      updates[`content/subjects/${sid}/lessons/${lid}/cards/${ck}`] = {
+        front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS,
+      };
+      if (rec.fav) favKeys.push(`${normPart(rec.front)}|${normPart(rec.back)}`);
+    });
+  });
+  // Stjärnmärken (personligt) + nya lektioner pausade (personligt) – innan skrivningen ekar tillbaka
+  favKeys.forEach((k) => setFavKey(k, true));
+  newLessonIds.forEach((lid) => setLessonPaused(lid, true));
+  return db.ref().update(updates);
+}
+
+async function startCsvImport(files) {
+  if (!files || !files.length) return;
+  const subject = freshSubject();
+  if (!subject) return;
+  let records;
+  try { records = await readCsvFiles(files); }
+  catch (e) { toast("Kunde inte läsa filen: " + e.message, 4000); return; }
+  if (!records.length) { toast("Hittade inga giltiga rader (sektion;italienska;svenska)", 4000); return; }
+  const plan = buildImportPlan(subject, records);
+  if (!plan.wordCount) { toast("Inget nytt att importera – allt fanns redan", 4000); return; }
+
+  const sample = plan.list.slice(0, 8).map((s) =>
+    `<li>${esc(s.name)} <span class="dup-lesson">(${s.cards.length}${s.existing ? ", befintlig" : ""})</span></li>`).join("");
+  const more = plan.list.length > 8 ? `<li class="dup-lesson">…och ${plan.list.length - 8} till</li>` : "";
+  const m = openModal(`
+    <h3>Importera CSV</h3>
+    <p class="modal-hint"><b>${plan.wordCount}</b> ord i <b>${plan.list.length}</b> lektioner
+      (${plan.newCount} nya, ${plan.mergeCount} befintliga)${plan.skipped ? ` · ${plan.skipped} dubbletter hoppas över` : ""}.
+      Nya lektioner importeras <b>pausade</b>.</p>
+    <ul class="dup-list">${sample}${more}</ul>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="imp-cancel">Avbryt</button>
+      <button class="btn-primary" id="imp-go">Importera</button>
+    </div>`);
+  m.querySelector("#imp-cancel").onclick = closeModal;
+  m.querySelector("#imp-go").onclick = () => {
+    closeModal();
+    commitImport(subject, plan)
+      .then(() => flash(`Importerade ${plan.wordCount} ord i ${plan.list.length} lektioner ✓`, 3000))
+      .catch((e) => { writeError(e); toast("Importen misslyckades: " + (e.code || e.message), 5000); });
+  };
+}
+
+$("import-csv").onclick = () => { const inp = $("csv-file"); inp.value = ""; inp.click(); };
+$("csv-file").addEventListener("change", (e) => { startCsvImport(e.target.files); });
+
+// =========================================================================
 //  Backup: exportera / importera SRS-statistik (localStorage)
 // =========================================================================
 function buildBackup() {
@@ -3654,7 +3799,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v171";
+const APP_VERSION = "v172";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

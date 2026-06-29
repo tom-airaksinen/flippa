@@ -45,8 +45,10 @@
       <button class="back-btn" data-back="subjects">←</button>
       <h1 id="lessons-title"></h1>
       <button id="edit-subject" class="icon-btn" title="Redigera ämne">✎</button>
+      <button id="import-csv" class="icon-btn" title="Importera CSV">⬆️</button>
       <button id="add-lesson" class="icon-btn" title="Ny lektion">＋</button>
     </header>
+    <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" multiple class="hidden" />
     <!-- Bakgrund som mörkar/blurrar resten när en väljare är öppen -->
     <div id="opt-backdrop" class="opt-backdrop"></div>
     <!-- Riktning + kort per pass (väljs här, läses vid sessionsstart). Väljarna
