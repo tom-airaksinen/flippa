@@ -1987,8 +1987,18 @@ speakBtn.addEventListener("click", (e) => { e.stopPropagation(); speakCurrent();
 globeBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
-  if (session && session.current) openExplore(session.current.front);
+  if (session && session.current) googleAiExplore(session.current.front);
+  // OBS: openExplore() (Wiktionary/Wikipedia + bilder) finns kvar oförändrad – testar
+  // tills vidare en direkt Google AI-sökning istället. Byt tillbaka raden ovan vid behov.
 });
+
+// Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
+function googleAiExplore(term) {
+  const label = subjectLang(currentSubject) ? langLabel(subjectLang(currentSubject)).toLowerCase() : "";
+  const onLang = label ? ` på ${label}` : "";
+  const q = `Kan du berätta om "${term}"${onLang} - vilka andra närliggande ord finns och vad är skillnaden? Kan du illustrera med foton/bilder?`;
+  window.open(`https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`, "_blank");
+}
 
 // =========================================================================
 //  Utforska ordet – betydelse (Wikipedia → Wiktionary) + bilder (Commons)
@@ -3644,7 +3654,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v170";
+const APP_VERSION = "v171";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
