@@ -415,7 +415,7 @@ function openLevelsModal() {
     `<label class="lvl-row"><span>${icos[i]} Nivå ${i + 1}</span><input type="number" inputmode="numeric" min="1" id="lvl-d${i}" value="${lv.days[i]}" autocomplete="off" /></label>`).join("");
   const m = openModal(`
     <h3>Ändra nivåer</h3>
-    <p class="modal-hint">Antal ord (kort + riktning) som krävs för varje nivå. Gäller bara din profil och styr prestationsbrickorna, firande-toaster och Klar-skärmen.</p>
+    <p class="modal-hint">Antal kort som krävs för varje nivå. (Övar du samma kort åt samma håll flera gånger räknas det bara som ett.)</p>
     <div class="lvl-sec">PER DAG</div>
     ${dayRows}
     <div class="lvl-sec">PER VECKA</div>
@@ -2086,7 +2086,7 @@ speakBtn.addEventListener("click", (e) => { e.stopPropagation(); speakCurrent();
 function googleAiExplore(term) {
   const label = subjectLang(currentSubject) ? langLabel(subjectLang(currentSubject)).toLowerCase() : "";
   const onLang = label ? ` på ${label}` : "";
-  const q = `Kan du berätta om "${term}"${onLang} - vilka andra närliggande ord finns och vad är skillnaden? Kan du illustrera med foton/bilder?`;
+  const q = `Kan du berätta om "${term}"${onLang} - vad är etymologin och vilka andra närliggande ord finns och vad är skillnaden? Kan du illustrera med foton/bilder?`;
   window.open(`https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`, "_blank");
 }
 
