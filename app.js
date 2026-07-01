@@ -319,15 +319,6 @@ function getUnitProgress(sid) {
   return { dayCount, weekCount: wk.size };
 }
 
-// Dagar som nått 150 inom en scope (lista av ämnen) – summerar per-ämnessiffror
-function goalDaysForScope(subjects) {
-  const cu = loadLS(UNITCOUNT_KEY)[unitUser()] || {};
-  const perDay = {};
-  subjects.forEach((s) => { const cs = cu[s.id] || {}; Object.keys(cs).forEach((d) => { perDay[d] = (perDay[d] || 0) + cs[d]; }); });
-  const set = new Set(); Object.keys(perDay).forEach((d) => { if (perDay[d] >= dailyGoal()) set.add(d); });
-  return set;
-}
-
 // Unika kort (distinkta ord+riktning per dag, summerat) inom en period & scope –
 // samma mått som dagsmålet räknar mot. cutoff "" = allt. Källa: unitcount (~140 dgr).
 const KORT_MODE_KEY = "flippa-kort-mode"; // "kort" (svep/repetitioner) | "unika"
@@ -1409,8 +1400,6 @@ function renderStats() {
 
   // heatmap: 18 veckor, måndag överst, senaste veckan längst till höger (alltid hela historiken)
   const end = addD(today, 6 - ((today.getDay() + 6) % 7)); // söndag i innevarande vecka
-  // Dagar som nått 150 distinkta ord (inom vald scope) – guldmarkeras
-  const goalSet = goalDaysForScope(statsScope === "all" ? mine : (scopeSubject ? [scopeSubject] : []));
   // Dynamisk färgskala: kvartiler av de aktiva dagarna i de 18 visade veckorna, så
   // skalan anpassar sig efter hur mycket man faktiskt pluggar (i st. för fasta nivåer).
   const winVals = [];
@@ -1435,7 +1424,6 @@ function renderStats() {
       if (d > today) cls += " fut";
       else if (c) cls += heatLevel(c);
       if (ymd(d) === ymd(today)) cls += " today";
-      if (goalSet.has(ymd(d)) && d <= today) cls += " goal";
       col += `<div class="${cls}"></div>`;
     }
     heat += `<div class="st-wk">${col}</div>`;
@@ -3922,7 +3910,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v183";
+const APP_VERSION = "v184";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
