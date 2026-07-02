@@ -900,7 +900,7 @@ function renderLessons() {
   if (due > 0) {
     dueBtn.textContent = focus ? `⭐ Stjärnord att öva (${due})` : `⏰ Dags att öva (${due})`;
     dueBtn.classList.remove("hidden");
-    dueBtn.onclick = startDueSession;
+    dueBtn.onclick = () => startDueSession(); // ej (event) → continuing=false → runSeen nollställs (ny runda)
   } else {
     dueBtn.classList.add("hidden");
   }
@@ -3910,7 +3910,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v184";
+const APP_VERSION = "v185";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
