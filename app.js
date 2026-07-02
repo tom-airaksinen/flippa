@@ -98,6 +98,8 @@ function subjectLang(s) {
 const LANG_FLAG = {
   "it-IT": "🇮🇹", "de-DE": "🇩🇪", "fr-FR": "🇫🇷", "es-ES": "🇪🇸",
   "en-GB": "🇬🇧", "pt-PT": "🇵🇹", "uk-UA": "🇺🇦", "id-ID": "🇮🇩",
+  // Franska varianter → franska flaggan (annars ger t.ex. fr-CA 🇨🇦 via regionkoden)
+  "fr-CA": "🇫🇷", "fr-BE": "🇫🇷", "fr-CH": "🇫🇷",
 };
 // Flagga från språkkodens regiondel (t.ex. "ru-RU" → 🇷🇺) via regional indicator-
 // symboler, så alla språk med en landskod får flagga – inte bara en handplockad lista.
@@ -3910,7 +3912,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v185";
+const APP_VERSION = "v186";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
