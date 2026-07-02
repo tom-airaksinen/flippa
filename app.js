@@ -2715,8 +2715,8 @@ function askWord(front, back, hint, opts = {}) {
       m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
       if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ _delete: true }); };
       if (explore) m.querySelector("#m-globe").onclick = () => {
-        const v = vals(); // behåll ev. ändringar – återöppna med samma värden när Utforska stängs
-        openExplore(v.f || f, () => open(v.f, v.b, v.h));
+        const v = vals();
+        googleAiExplore(v.f || f); // Google AI (samma som kortets Slå upp); redigeringsrutan ligger kvar bakom
       };
       m.querySelector("#m-ok").onclick = () => {
         const v = vals();
@@ -3912,7 +3912,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v186";
+const APP_VERSION = "v187";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
