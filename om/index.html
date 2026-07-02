@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flippa – lär dig glosor med swipe</title>
+<meta name="description" content="Flippa – en enkel app för att plugga glosor med swipe och smart repetition. Slå upp ord, fyll på med AI, följ din streak.">
+<style>
+  :root{
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --easy:#f4c542; --good:#5bbf72; --fire:#ff8a3d; --line:#2c3c63;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;line-height:1.55}
+  a{color:inherit}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px}
+  .btn{display:inline-block;background:var(--accent);color:#fff;font-weight:700;text-decoration:none;
+    padding:13px 26px;border-radius:14px;font-size:1.05rem}
+  .btn:active{opacity:.9}
+
+  /* Phone-frame runt skärmdumpar */
+  .phone{width:250px;flex:none;background:#05070d;border:1px solid #26324f;border-radius:30px;
+    padding:8px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .phone img{width:100%;display:block;border-radius:23px}
+  .phone.sm{width:210px}
+
+  /* Hero */
+  header.hero{padding:64px 0 40px;text-align:center}
+  .logo{width:76px;height:76px;border-radius:18px;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .hero h1{font-size:2.6rem;font-weight:800;margin:16px 0 6px;letter-spacing:.01em}
+  .hero .tag{font-size:1.2rem;color:var(--muted);max-width:560px;margin:0 auto 26px}
+  .hero-media{display:flex;justify-content:center;gap:22px;margin-top:38px;flex-wrap:wrap}
+
+  /* Feature-sektioner */
+  .feat{display:flex;align-items:center;gap:48px;padding:46px 0;border-top:1px solid var(--line)}
+  .feat:nth-child(even){flex-direction:row-reverse}
+  .feat .txt{flex:1;min-width:0}
+  .feat h2{font-size:1.5rem;margin:0 0 10px}
+  .feat p{color:var(--muted);font-size:1.05rem;margin:0}
+  .feat .kicker{color:var(--accent);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px}
+
+  /* Kom igång */
+  .steps{border-top:1px solid var(--line);padding:46px 0}
+  .steps h2{font-size:1.6rem;text-align:center;margin:0 0 28px}
+  .step-row{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+  .step{background:var(--surface);border-radius:16px;padding:20px;flex:1;min-width:220px;max-width:300px}
+  .step .n{width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;
+    display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .step h3{margin:0 0 6px;font-size:1.1rem}
+  .step p{margin:0;color:var(--muted);font-size:.95rem}
+
+  /* Mer-punkter */
+  .more{border-top:1px solid var(--line);padding:46px 0}
+  .more h2{font-size:1.6rem;text-align:center;margin:0 0 24px}
+  .more-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+  .more-item{background:var(--surface);border-radius:14px;padding:16px 18px}
+  .more-item b{display:block;margin-bottom:3px}
+  .more-item span{color:var(--muted);font-size:.92rem}
+
+  .cta{text-align:center;padding:56px 0 20px;border-top:1px solid var(--line)}
+  .cta h2{font-size:1.7rem;margin:0 0 20px}
+  footer{color:var(--muted);font-size:.85rem;text-align:center;padding:30px 0 60px;line-height:1.7}
+
+  @media (max-width:720px){
+    .feat{flex-direction:column!important;gap:24px;text-align:center}
+    .hero h1{font-size:2.1rem}
+    .phone{width:230px}
+  }
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="wrap">
+    <img class="logo" src="../icon-192.png" alt="Flippa">
+    <h1>Flippa</h1>
+    <p class="tag">Lär dig glosor med <b>swipe</b> och smart repetition – och fyll på med ord i samma app.</p>
+    <a class="btn" href="../">Öppna appen</a>
+    <div class="hero-media">
+      <div class="phone"><img src="img/card-menu.png" alt="Ett kort i förhörsläge med menyn öppen"></div>
+      <div class="phone"><img src="img/stats.png" alt="Statistik med streak och prestationer"></div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/lessons.png" alt="Lektionslistan med Dags att öva"></div>
+    <div class="txt">
+      <div class="kicker">Repetera lagom</div>
+      <h2>Appen håller reda på vad du ska öva</h2>
+      <p>Dina ord delas upp i lektioner, och "Dags att öva" samlar precis det som är dags idag enligt en Leitner-baserad repetitionsmodell. Du behöver inte planera – bara öppna och köra.</p>
+    </div>
+  </section>
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/card-menu.png" alt="Kort med swipe-gester och meny"></div>
+    <div class="txt">
+      <div class="kicker">Snabbt & taktilt</div>
+      <h2>Svep för att svara</h2>
+      <p>Vänd på kortet och svep: <b>kan inte</b>, <b>kan</b> eller <b>kan väldigt bra</b>. Appen skjuter fram nästa repetition automatiskt. I lilla ⋯-menyn finns Redigera, Stjärnmärk och Slå upp – och uppläsning/handsfree finns ett tryck bort.</p>
+    </div>
+  </section>
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/explore.png" alt="Slå upp: betydelse och bilder"></div>
+    <div class="txt">
+      <div class="kicker">Förstå ordet</div>
+      <h2>Slå upp – betydelse & bilder direkt</h2>
+      <p>Osäker på vad ett ord betyder eller hur det ser ut? "Slå upp" hämtar en förklaring och bilder utan att du lämnar passet – perfekt för att skilja närliggande ord åt.</p>
+    </div>
+  </section>
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/lookup-add.png" alt="Sök utan träff och lägg till"></div>
+    <div class="txt">
+      <div class="kicker">Noll friktion</div>
+      <h2>Sök & lägg till på studs</h2>
+      <p>Söker du efter ett ord som inte finns? Då kan du slå upp översättningen och lägga till glosan direkt därifrån – innehållet växer medan du använder appen.</p>
+    </div>
+  </section>
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/ai-prompt.png" alt="AI-prompt för att fylla på ord"></div>
+    <div class="txt">
+      <div class="kicker">Kom igång snabbt</div>
+      <h2>Fyll på med AI eller import</h2>
+      <p>En tom lektion ger dig en färdig prompt att klistra in i valfri AI – kopiera svaret och lägg in orden. Eller importera färdiga listor som CSV. Från noll till hundra ord på minuter.</p>
+    </div>
+  </section>
+
+  <section class="feat">
+    <div class="phone sm"><img src="img/stats.png" alt="Statistik, streak och prestationer"></div>
+    <div class="txt">
+      <div class="kicker">Håll ångan uppe</div>
+      <h2>Streak, heatmap & prestationer</h2>
+      <p>Se din streak, en heatmap som anpassar sig efter hur mycket du faktiskt pluggar, och prestationsbrickor för dagar och veckor. Nivåerna kan du ställa in själv.</p>
+    </div>
+  </section>
+
+  <section class="steps">
+    <h2>Kom igång på en minut</h2>
+    <div class="step-row">
+      <div class="step"><div class="n">1</div><h3>Skapa ett ämne</h3><p>Välj språk – flagga och uppläsning sätts automatiskt.</p></div>
+      <div class="step"><div class="n">2</div><h3>Fyll på ord</h3><p>Slå upp & lägg till, klistra in via AI-prompten, eller importera en CSV.</p></div>
+      <div class="step"><div class="n">3</div><h3>Börja swipa</h3><p>Kör "Dags att öva" – appen sköter repetitionen åt dig.</p></div>
+    </div>
+  </section>
+
+  <section class="more">
+    <h2>Dessutom</h2>
+    <div class="more-grid">
+      <div class="more-item"><b>🎙 Handsfree</b><span>Appen läser upp ordet och lyssnar på ditt svar.</span></div>
+      <div class="more-item"><b>👤 Profiler & teman</b><span>Egen profil per person, med eget färgtema.</span></div>
+      <div class="more-item"><b>📴 Funkar offline</b><span>Installeras som app och funkar utan nät.</span></div>
+      <div class="more-item"><b>⏸ Pausa & fokusera</b><span>Pausa lektioner och kör bara stjärnmärkta ord.</span></div>
+      <div class="more-item"><b>🌍 Alla språk</b><span>Artikel på utländska sidan hjälper dig lära genus.</span></div>
+      <div class="more-item"><b>⭐ Favoriter</b><span>Stjärnmärk viktiga ord och fokusträna dem.</span></div>
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2>Redo att testa?</h2>
+    <a class="btn" href="../">Öppna Flippa</a>
+  </section>
+</main>
+
+<footer>
+  Flippa är ett litet familjeprojekt. Innehåll synkas via Firebase; din träningsstatistik ligger lokalt på din enhet.<br>
+  <a href="../">flippa.tomairaksinen.se</a>
+</footer>
+</body>
+</html>
