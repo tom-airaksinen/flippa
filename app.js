@@ -813,6 +813,7 @@ function renderCurrentScreen() {
 }
 
 function renderSubjects() {
+  if (rowDrag && rowDrag.active) return; // rita inte om mitt i en drag-omordning
   activeScreen = "subjects";
   show("subjects");
   // Profilväljaren högst upp speglar vald användare
@@ -846,7 +847,11 @@ function renderSubjects() {
     .join("");
   // Ingen penna här – namn/språk/ägare redigeras inne i området (✎ uppe på lektionsskärmen).
   list.querySelectorAll(".row").forEach((row) => {
-    row.addEventListener("click", () => openSubject(row.dataset.subject));
+    row.addEventListener("click", () => {
+      if (suppressSubjectClick) return; // precis avslutat en drag-omordning
+      openSubject(row.dataset.subject);
+    });
+    row.addEventListener("pointerdown", (e) => onRowPointerDown(e, row, list, subjectDragCfg));
   });
 }
 
@@ -889,7 +894,7 @@ function renderLessons() {
   stopHandsfree();
   closeChoosers();
   syncOptionPills();
-  if (lessonDrag && lessonDrag.active) return; // rita inte om mitt i en drag-omordning
+  if (rowDrag && rowDrag.active) return; // rita inte om mitt i en drag-omordning
   // Plocka färsk referens (innehåll kan ha uppdaterats från Firebase)
   currentSubject = content.find((s) => s.id === currentSubject.id) || currentSubject;
   activeScreen = "lessons";
@@ -952,7 +957,7 @@ function renderLessons() {
       if (suppressLessonClick) return; // precis avslutat en drag-omordning
       startLessonSession(row.dataset.lesson); // pausad lektion går fortfarande att öva manuellt
     });
-    row.addEventListener("pointerdown", (e) => onLessonPointerDown(e, row, list));
+    row.addEventListener("pointerdown", (e) => onRowPointerDown(e, row, list, lessonDragCfg));
   });
   list.querySelectorAll(".row-edit").forEach((btn) => {
     btn.addEventListener("click", (e) => {
@@ -962,38 +967,41 @@ function renderLessons() {
   });
 }
 
-// ---- Drag & drop-ordning av lektioner (långtryck) ----
-let lessonDrag = null;
+// ---- Drag & drop-omordning av rader (långtryck) – lektioner och ämnen ----
+// Generisk motor: raderna som ligger i listEl dras om; en liten cfg avgör
+// vilka id:n som omordnas, hur ordningen sparas och vilken klick-spärr som sätts.
+let rowDrag = null;
 let suppressLessonClick = false;
+let suppressSubjectClick = false;
 
-function onLessonPointerDown(e, row, listEl) {
+function onRowPointerDown(e, row, listEl, cfg) {
   if (e.target.closest(".row-edit")) return;
   if (e.button != null && e.button > 0) return;
-  const state = { row, listEl, pointerId: e.pointerId, startY: e.clientY, active: false };
-  lessonDrag = state;
-  state.moveHandler = (ev) => onLessonPointerMove(ev, state);
-  state.upHandler = (ev) => onLessonPointerUp(ev, state);
+  const state = { row, listEl, cfg, pointerId: e.pointerId, startY: e.clientY, active: false };
+  rowDrag = state;
+  state.moveHandler = (ev) => onRowPointerMove(ev, state);
+  state.upHandler = (ev) => onRowPointerUp(ev, state);
   window.addEventListener("pointermove", state.moveHandler, { passive: false });
   window.addEventListener("pointerup", state.upHandler);
   window.addEventListener("pointercancel", state.upHandler);
-  state.holdTimer = setTimeout(() => beginLessonDrag(state), 420);
+  state.holdTimer = setTimeout(() => beginRowDrag(state), 420);
 }
 
-function cleanupLessonDrag(state) {
+function cleanupRowDrag(state) {
   clearTimeout(state.holdTimer);
   window.removeEventListener("pointermove", state.moveHandler);
   window.removeEventListener("pointerup", state.upHandler);
   window.removeEventListener("pointercancel", state.upHandler);
   if (state.touchBlocker) document.removeEventListener("touchmove", state.touchBlocker);
-  if (lessonDrag === state) lessonDrag = null;
+  if (rowDrag === state) rowDrag = null;
 }
 
-function beginLessonDrag(state) {
+function beginRowDrag(state) {
   const rows = [...state.listEl.querySelectorAll(".row")];
   state.rows = rows;
   state.rects = rows.map((r) => r.getBoundingClientRect());
   state.index = rows.indexOf(state.row);
-  if (state.index < 0) { cleanupLessonDrag(state); return; }
+  if (state.index < 0) { cleanupRowDrag(state); return; }
   state.gap = state.rects[0].height + 10;
   state.targetIndex = state.index;
   state.active = true;
@@ -1004,9 +1012,9 @@ function beginLessonDrag(state) {
   if (navigator.vibrate) navigator.vibrate(12);
 }
 
-function onLessonPointerMove(ev, state) {
+function onRowPointerMove(ev, state) {
   if (!state.active) {
-    if (Math.abs(ev.clientY - state.startY) > 8) cleanupLessonDrag(state); // rörde sig = scroll, avbryt
+    if (Math.abs(ev.clientY - state.startY) > 8) cleanupRowDrag(state); // rörde sig = scroll, avbryt
     return;
   }
   ev.preventDefault();
@@ -1028,23 +1036,34 @@ function onLessonPointerMove(ev, state) {
   });
 }
 
-function onLessonPointerUp(ev, state) {
-  if (!state.active) { cleanupLessonDrag(state); return; }
+function onRowPointerUp(ev, state) {
+  if (!state.active) { cleanupRowDrag(state); return; }
   const fromIndex = state.index;
   const toIndex = state.targetIndex;
   state.rows.forEach((r) => (r.style.transform = ""));
   state.row.classList.remove("dragging");
   state.active = false;
-  cleanupLessonDrag(state);
-  suppressLessonClick = true;
-  setTimeout(() => (suppressLessonClick = false), 350);
+  cleanupRowDrag(state);
+  state.cfg.setSuppress(true);
+  setTimeout(() => state.cfg.setSuppress(false), 350);
   if (fromIndex !== toIndex) {
-    const ids = currentSubject.lessons.map((l) => l.id);
+    const ids = state.cfg.getIds();
     const [moved] = ids.splice(fromIndex, 1);
     ids.splice(toIndex, 0, moved);
-    persistLessonOrder(ids);
+    state.cfg.persist(ids);
   }
 }
+
+const lessonDragCfg = {
+  getIds: () => currentSubject.lessons.map((l) => l.id),
+  persist: persistLessonOrder,
+  setSuppress: (v) => { suppressLessonClick = v; },
+};
+const subjectDragCfg = {
+  getIds: () => content.filter((s) => s.owner === currentUser).map((s) => s.id),
+  persist: persistSubjectOrder,
+  setSuppress: (v) => { suppressSubjectClick = v; },
+};
 
 function persistLessonOrder(orderedIds) {
   const subj = content.find((s) => s.id === currentSubject.id) || currentSubject;
@@ -1058,6 +1077,18 @@ function persistLessonOrder(orderedIds) {
   const updates = {};
   orderedIds.forEach((id, i) => (updates[`${id}/order`] = i));
   db.ref(`content/subjects/${subj.id}/lessons`).update(updates).catch(writeError);
+}
+
+function persistSubjectOrder(orderedIds) {
+  orderedIds.forEach((id, i) => {
+    const s = content.find((x) => x.id === id);
+    if (s) s.order = i;
+  });
+  content.sort(byOrder);
+  renderSubjects(); // optimistisk omritning
+  const updates = {};
+  orderedIds.forEach((id, i) => (updates[`${id}/order`] = i));
+  db.ref("content/subjects").update(updates).catch(writeError);
 }
 
 // Back-knappar
@@ -3912,7 +3943,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v187";
+const APP_VERSION = "v188";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
