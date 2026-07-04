@@ -2301,17 +2301,16 @@ const fanScrim = document.createElement("div"); fanScrim.className = "fan-scrim"
 // radiell gradient-glow som fyllning (som i prototypen), inte en platt enfärg.
 const SVGNS = "http://www.w3.org/2000/svg";
 const fanBg = document.createElementNS(SVGNS, "svg"); fanBg.setAttribute("class", "fan-bg");
-// Centrerad ÄKTA cirkel (userSpaceOnUse, cx/cy/r sätts i placeFan) som prototypen –
-// mjuk glow mitt i kupolen, inte en bred ellips förankrad i botten.
+// Centrerad ELLIPS (objectBoundingBox → glowen sträcks till kupolens 2:1-form, som
+// prototypens closest-side utan "circle") – mjukare/mindre stel än en äkta cirkel.
 fanBg.innerHTML =
-  '<defs><radialGradient id="fan-grad" gradientUnits="userSpaceOnUse">' +
+  '<defs><radialGradient id="fan-grad" cx="50%" cy="50%" r="55%">' +
   '<stop offset="0%" stop-color="#5b8cff" stop-opacity="0.20"/>' +
   '<stop offset="72%" stop-color="#5b8cff" stop-opacity="0.06"/>' +
   '<stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/>' +
   '</radialGradient></defs>' +
   '<path fill="url(#fan-grad)" stroke="rgba(91,140,255,0.34)" stroke-width="1"/>';
 const fanArc = fanBg.querySelector("path");
-const fanGrad = fanBg.querySelector("radialGradient");
 cardStack.appendChild(fanBg);
 // Ordning vänster→höger i bågen: Bildsök (vänster) … Slå upp (höger). Inga dubbletter
 // av Lyssna/Ledtråd – de bor i den kontextuella knappen bredvid ⋯.
@@ -2347,8 +2346,7 @@ function placeFan(){
   fanBg.style.width = (2*D)+"px"; fanBg.style.height = D+"px"; fanBg.style.left = (fanOrigin.x-D)+"px"; fanBg.style.top = (fanOrigin.y-D)+"px";
   fanBg.setAttribute("viewBox", `0 0 ${2*D} ${D}`);
   fanArc.setAttribute("d", `M0 ${D} A ${D} ${D} 0 0 1 ${2*D} ${D}`); // öppen båge → ingen bottenlinje
-  // Gradienten: centrerad cirkel mitt i kupolen (som prototypens closest-side).
-  fanGrad.setAttribute("cx", D); fanGrad.setAttribute("cy", D * 0.5); fanGrad.setAttribute("r", D * 0.5);
+  // Gradienten är objectBoundingBox (ellips) → behöver inte sättas per D.
 }
 function openFan(){
   if(!session || !session.current) return;
@@ -4080,7 +4078,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v206";
+const APP_VERSION = "v207";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
