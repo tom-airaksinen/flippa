@@ -11,280 +11,253 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0;background:#070b15;color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:26px 14px 80px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:26px 14px 90px;
     -webkit-user-select:none;user-select:none;touch-action:manipulation}
   h1{font-size:1.35rem;margin:0 0 4px;text-align:center}
-  .sub{color:var(--muted);text-align:center;margin:0 auto 26px;max-width:680px;font-size:.92rem}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 26px;max-width:700px;font-size:.92rem}
   .grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
-  .col{width:340px}
+  .col{width:346px}
   .col h2{font-size:1.05rem;margin:0 0 2px}
-  .col .desc{color:var(--muted);font-size:.85rem;margin:0 0 12px;min-height:66px}
+  .col .desc{color:var(--muted);font-size:.85rem;margin:0 0 12px;min-height:64px}
 
-  .stage{position:relative;height:430px;background:var(--bg);border:1px solid #26324f;border-radius:22px;overflow:hidden;
-    display:flex;align-items:flex-end;justify-content:center}
-  .stage .word{position:absolute;top:44%;left:0;right:0;text-align:center;transform:translateY(-50%);font-size:1.6rem;font-weight:700}
-  .stage .hint{position:absolute;top:14px;left:0;right:0;text-align:center;color:var(--muted);font-size:.78rem;padding:0 16px}
-  .readout{position:absolute;top:44px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.95rem;min-height:20px}
+  .stage{position:relative;height:440px;background:var(--bg);border:1px solid #26324f;border-radius:22px;overflow:hidden;touch-action:none}
+  .stage .word{position:absolute;top:24%;left:0;right:0;text-align:center;font-size:1.5rem;font-weight:700}
+  .stage .hint{position:absolute;top:38%;left:0;right:0;text-align:center;color:var(--muted);font-size:.78rem;padding:0 24px}
+  .readout{position:absolute;top:14px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.95rem;min-height:20px}
 
-  .trigger{position:relative;margin-bottom:20px;width:64px;height:44px;border-radius:14px;border:1px solid var(--line);
-    background:var(--surface-2);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;z-index:2;
+  .trigger{position:absolute;width:60px;height:44px;border-radius:14px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;z-index:5;
     display:flex;align-items:center;justify-content:center;touch-action:none}
-  .trigger.armed{background:var(--accent);color:#fff}
+  .trigger.armed{background:var(--accent);color:#fff;border-color:var(--accent)}
+  /* Utlösarens placering per mönster */
+  .stage.pos-center .trigger{left:50%;top:56%;transform:translate(-50%,-50%)}
+  .stage.pos-bottom  .trigger{left:50%;bottom:18px;transform:translateX(-50%)}
+  .stage.pos-none    .trigger{display:none}
 
-  /* Radiella/arc-optioner */
-  .opt{position:absolute;min-width:96px;padding:9px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
-    color:var(--text);font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:7px;justify-content:center;
-    transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;transition:transform .14s cubic-bezier(.2,.8,.2,1),opacity .12s,background .1s,border-color .1s;
-    white-space:nowrap;z-index:3;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  /* Bakgrund som binder ihop valen */
+  .menu-bg{position:absolute;z-index:2;opacity:0;transition:opacity .16s, transform .16s;pointer-events:none;
+    background:radial-gradient(closest-side, rgba(91,140,255,.14), rgba(91,140,255,.05) 70%, transparent);
+    border:1px solid rgba(91,140,255,.22)}
+  .menu-open .menu-bg{opacity:1}
+  .menu-bg.ring{border-radius:50%}
+  .menu-bg.dome{border-radius:999px 999px 0 0;border-bottom:none}
+
+  .opt{position:absolute;padding:8px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;justify-content:center;
+    transform:translate(-50%,-50%) scale(.55);opacity:0;pointer-events:none;
+    transition:transform .15s cubic-bezier(.2,.85,.25,1),opacity .12s,background .1s,border-color .1s;
+    white-space:nowrap;z-index:4;box-shadow:0 8px 20px rgba(0,0,0,.45)}
   .menu-open .opt{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:translate(-50%,-50%) scale(1.12)}
+  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:translate(-50%,-50%) scale(1.14)}
   .opt .ic{font-size:1rem}
-  .opt.a-edit .ic,.opt.a-star .ic{filter:none}
 
   /* Vertikal scrub-lista */
-  .vlist{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;z-index:3;
+  .vlist{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;z-index:4;
     opacity:0;pointer-events:none;transition:opacity .12s}
   .menu-open .vlist{opacity:1}
-  .vitem{min-width:150px;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+  .vitem{min-width:158px;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
     color:var(--text);font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 16px rgba(0,0,0,.4);
     transition:background .1s,border-color .1s,transform .1s}
   .vitem.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.04)}
 
-  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.68rem;color:var(--muted);padding:2px 9px;margin-left:6px}
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.66rem;color:var(--muted);padding:2px 9px;margin-left:6px}
   .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.8rem;color:var(--muted)}
   .pros li{margin:3px 0;padding-left:16px;position:relative}
   .pros li.good::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
   .pros li.bad::before{content:"–";position:absolute;left:0;color:var(--fail);font-weight:700}
-  .howto{font-size:.78rem;color:var(--muted);margin:8px 2px 0}
-  .howto b{color:var(--text)}
   .count{display:flex;gap:6px;justify-content:center;margin:10px 0 0}
   .count button{background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer}
   .count button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-  .tip{max-width:700px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:.88rem;color:var(--muted)}
+  .tip{max-width:720px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:.88rem;color:var(--muted)}
   .tip b{color:var(--text)}
 </style>
 </head>
 <body>
 <h1>Gestmenyer – snabb, tydlig, "marking menu"</h1>
-<p class="sub">Ersätter ⋯-menyn. <b>Långtryck</b> på knappen → valen dyker upp <b>runt</b> fingret (inte under). Fortsätt hålla och <b>glid</b> till ett val, <b>släpp</b> för att välja. Eller <b>tryck</b> en gång → menyn stannar → tryck på ett val. Prova med musen: håll nere, dra, släpp.</p>
+<p class="sub"><b>Håll</b> på knappen → valen dyker upp <b>runt</b> fingret. Fortsätt hålla och <b>glid</b> till ett val, <b>släpp</b> för att välja. Eller <b>tryck</b> en gång → menyn stannar → tryck på ett val (eller på ⋯ igen för att stänga). Glid tillbaka till mitten och släpp = stäng. Prova med musen: håll, dra, släpp.</p>
 
 <div class="grid">
 
-  <!-- A: Marking menu (kompass) -->
   <div class="col">
     <h2>A · Marking menu (kompass) <span class="tag">riktning = muskelminne</span></h2>
-    <p class="desc">Valen på fasta väderstreck runt knappen. Glid <b>vänster = Bildsök</b>, <b>höger = Slå upp</b>, upp/ner för de andra. Powerusern lär sig riktningen och kan "flicka" åt rätt håll utan att ens titta.</p>
-    <div class="stage" data-menu="radial" data-layout="compass">
-      <div class="word">gelato</div>
-      <div class="readout"></div>
+    <p class="desc">Valen på väderstreck runt knappen, på en ring. Glid <b>vänster = Bildsök</b>, <b>höger = Slå upp</b>. Powerusern flickar åt rätt håll utan att titta.</p>
+    <div class="stage pos-center" data-menu="radial" data-layout="compass">
+      <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros">
-      <li class="good">Blixtsnabbt när riktningen sitter (flick + släpp)</li>
-      <li class="good">Self-revealing: håll kvar så visas allt</li>
-      <li class="bad">Blir trångt med väldigt många val (max ~8)</li>
-    </ul>
+    <ul class="pros"><li class="good">Blixtsnabbt när riktningen sitter</li><li class="good">Ringen binder ihop valen visuellt</li><li class="bad">Blir trångt över ~8 val</li></ul>
   </div>
 
-  <!-- B: Arc-solfjäder ovanför fingret -->
   <div class="col">
-    <h2>B · Solfjäder ovanför fingret <span class="tag">ingen skymd av tummen</span></h2>
-    <p class="desc">Valen slår ut i en båge <b>ovanför</b> tryckpunkten, så tummen inte skymmer dem (bra när knappen sitter i nederkant). Glid längs bågen, släpp på valet.</p>
-    <div class="stage" data-menu="radial" data-layout="arc">
-      <div class="word">gelato</div>
-      <div class="readout"></div>
+    <h2>B · Solfjäder ovanför fingret <span class="tag">tummen skymmer inte</span></h2>
+    <p class="desc">Valen i en båge <b>ovanför</b> tryckpunkten, på en halvcirkel. Vartannat val ligger lite längre ut så inget krockar. Glid längs bågen, släpp.</p>
+    <div class="stage pos-bottom" data-menu="radial" data-layout="arc">
+      <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros">
-      <li class="good">Etiketter syns alltid (tummen är under)</li>
-      <li class="good">Skalar snyggt – bågen bara vidgas</li>
-      <li class="bad">Mindre "ren" riktning än kompassen</li>
-    </ul>
+    <ul class="pros"><li class="good">Etiketter syns (tummen är under)</li><li class="good">Skalar – bågen vidgas</li><li class="bad">Mindre ren riktning än kompassen</li></ul>
   </div>
 
-  <!-- C: Vertikal scrub-lista -->
   <div class="col">
     <h2>C · Scrub-lista <span class="tag">skalar till många val</span></h2>
-    <p class="desc">Långtryck → en lista poppar upp ovanför fingret. Glid upp/ner för att markera, släpp för att välja. Mest lik iOS långtrycks-meny; klarast och skalar till hur många val som helst (scrollbar).</p>
-    <div class="stage" data-menu="vlist">
-      <div class="word">gelato</div>
-      <div class="readout"></div>
+    <p class="desc">Håll → lista poppar upp ovanför fingret. Glid upp/ner, släpp för att välja. Klarast och skalar till hur många val som helst.</p>
+    <div class="stage pos-bottom" data-menu="vlist">
+      <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros">
-      <li class="good">Tydligast; funkar med många val</li>
-      <li class="good">Bekant gest (iOS-känsla)</li>
-      <li class="bad">Inget riktnings-muskelminne på samma sätt</li>
-    </ul>
+    <ul class="pros"><li class="good">Tydligast; funkar med många val</li><li class="good">Bekant iOS-gest</li><li class="bad">Inget riktnings-muskelminne</li></ul>
+  </div>
+
+  <div class="col">
+    <h2>D · Håll var som helst <span class="tag">ingen knapp att träffa</span></h2>
+    <p class="desc">Bygger på B, men du <b>långtrycker var som helst på kortet</b> – bågen dyker upp vid fingret. Snabbt svep besvarar kortet som vanligt (krockar ej), bara ett <b>håll</b> öppnar menyn.</p>
+    <div class="stage pos-none" data-menu="radial" data-layout="arc" data-anywhere="1">
+      <div class="readout"></div><div class="word">gelato</div>
+      <div class="hint">Håll (långtryck) var som helst här → båge vid fingret.<br>Snabbt drag = "svep" (öppnar inte menyn).</div>
+    </div>
+    <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
+    <ul class="pros"><li class="good">Inget litet mål att pricka – håll bara</li><li class="good">Samma riktnings-muskelminne som B</li><li class="bad">Kräver långtryck (kort fördröjning)</li></ul>
   </div>
 
 </div>
 
 <div class="tip">
-  <b>Gemensamt för alla tre:</b> både <b>tryck-tryck</b> (öppna, sen välja) och <b>tryck-håll-glid-släpp</b> fungerar samma meny – nybörjaren tittar och pekar, powerusern gör en snabb gest. Inget osynligt: knappen syns, och menyn visar alltid vad som finns. Antalet val är inte låst (testa 4 vs 6-knappen). En idé för framtiden: samma riktnings-gest funkar även direkt på <b>kortet</b> (utan att träffa en liten knapp) när man lärt sig den.
+  <b>Gemensamt:</b> både <b>tryck-tryck</b> och <b>håll-glid-släpp</b> i samma meny. Stäng genom att trycka ⋯ igen, glida till mitten och släppa, eller trycka utanför. Inget dolt – knappen syns och menyn visar alltid vad som finns. Antalet val är inte låst (4/6). D visar hur samma gest kan sitta direkt på kortet för en poweruser.
 </div>
 
 <script>
-const ITEMS4 = [
-  { key:'edit',  label:'Redigera',  ic:'✎' },
-  { key:'star',  label:'Stjärnmärk',ic:'☆' },
-  { key:'look',  label:'Slå upp',   ic:'🌐' },
-  { key:'img',   label:'Bildsök',   ic:'🖼' },
-];
-const ITEMS6 = ITEMS4.concat([
-  { key:'move', label:'Flytta',  ic:'↔' },
-  { key:'del',  label:'Ta bort', ic:'🗑' },
-]);
-// Ordning så att Bildsök hamnar vänster och Slå upp höger i kompass/arc
-const COMPASS_ORDER = ['img','look','edit','star','move','del']; // vänster, höger, upp, ner, ...
+const SRC = {
+  edit:{label:'Redigera',ic:'✎'}, star:{label:'Stjärna',ic:'☆'},
+  look:{label:'Slå upp',ic:'🌐'}, img:{label:'Bildsök',ic:'🖼'},
+  move:{label:'Flytta',ic:'↔'},  del:{label:'Ta bort',ic:'🗑'},
+};
+// Vänster→höger-logik: img=vänster, look=höger, edit=upp, star=ner
+const ORDER = ['img','look','edit','star','move','del'];
+function items(n){ return ORDER.slice(0,n).map(k=>({key:k,...SRC[k]})); }
 
-function angleForCompass(i, n) {
-  // 0=upp, 90=höger, 180=ner, 270=vänster. Lägg ut jämnt men börja så att
-  // index 0 (Bildsök) = vänster (270), index 1 (Slå upp) = höger (90).
-  const preferred = [270, 90, 0, 180, 315, 45, 135, 225];
-  return preferred[i] ?? (i * 360 / n);
+// Vinklar (0=upp, medurs). Kompass: fasta väderstreck. Arc: båge ovanför.
+function anglesCompass(n){
+  const map4 = {img:270, look:90, edit:0, star:180};
+  if (n===4) return items(4).map(it=>map4[it.key]);
+  // 6: jämnt runt, men behåll vänster/höger för img/look
+  return [270,90,330,30,210,150].slice(0,n);
 }
-function angleForArc(i, n) {
-  // Båge ovanför: sprid mellan -78° och +78° (från upp)
-  if (n === 1) return 0;
-  const span = 156, start = -78;
-  return start + span * (i / (n - 1));
+function anglesArc(n){
+  const span = Math.min(170, 40*(n-1)+40), start=-span/2;
+  return Array.from({length:n},(_,i)=> n===1?0 : start + span*i/(n-1));
 }
 
-function radialStage(stage, layout) {
+function radialStage(stage, layout){
+  const anywhere = stage.dataset.anywhere === '1';
   const trigger = stage.querySelector('.trigger');
   const readout = stage.querySelector('.readout');
-  let n = 4, items = ITEMS4, opts = [], open = false, origin = null, moved = false, hot = -1, tapMode = false;
+  let n=4, its=[], opts=[], open=false, moved=false, hot=-1, tapMode=false, pressing=false, origin=null, holdTimer=null, sx=0, sy=0;
 
-  function ordered() {
-    const src = (n === 4 ? ITEMS4 : ITEMS6);
-    return COMPASS_ORDER.map(k => src.find(x => x.key === k)).filter(Boolean);
-  }
-  function build() {
-    opts.forEach(o => o.remove());
-    opts = [];
-    items = ordered();
-    items.forEach((it, i) => {
-      const el = document.createElement('div');
-      el.className = 'opt a-' + it.key;
-      el.innerHTML = `<span class="ic">${it.ic}</span>${it.label}`;
-      el.dataset.i = i;
-      el.addEventListener('click', (e) => { e.stopPropagation(); select(i); });
-      stage.appendChild(el);
-      opts.push(el);
+  const bg = document.createElement('div'); bg.className='menu-bg '+(layout==='arc'?'dome':'ring'); stage.appendChild(bg);
+
+  function build(){
+    opts.forEach(o=>o.remove()); opts=[]; its=items(n);
+    its.forEach((it,i)=>{
+      const el=document.createElement('div'); el.className='opt'; el.dataset.i=i;
+      el.innerHTML=`<span class="ic">${it.ic}</span>${it.label}`;
+      el.addEventListener('click',(e)=>{e.stopPropagation(); if(tapMode) select(i);});
+      stage.appendChild(el); opts.push(el);
     });
   }
-  function place() {
-    const tr = trigger.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-    origin = { x: tr.left + tr.width/2 - sr.left, y: tr.top + tr.height/2 - sr.top };
-    const R = layout === 'arc' ? 116 : 104;
-    opts.forEach((el, i) => {
-      const deg = layout === 'arc' ? angleForArc(i, items.length) : angleForCompass(i, items.length);
-      const rad = deg * Math.PI/180;
-      const x = origin.x + R * Math.sin(rad);
-      const y = origin.y - R * Math.cos(rad);
-      el.style.left = x + 'px';
-      el.style.top = y + 'px';
+  function layoutAt(ox,oy){
+    origin={x:ox,y:oy};
+    const angs = layout==='arc'?anglesArc(its.length):anglesCompass(its.length);
+    const baseR = layout==='arc' ? 120 : 104;
+    opts.forEach((el,i)=>{
+      // vartannat val längre ut i bågen → undviker överlapp
+      const R = layout==='arc' ? baseR + ((i%2)?62:0) : baseR;
+      const rad = angs[i]*Math.PI/180;
+      el.style.left=(ox + R*Math.sin(rad))+'px';
+      el.style.top =(oy - R*Math.cos(rad))+'px';
     });
+    // bakgrund
+    if(layout==='arc'){ const R=baseR+70; bg.style.width=(2*R)+'px'; bg.style.height=R+'px'; bg.style.left=(ox-R)+'px'; bg.style.top=(oy-R)+'px'; }
+    else { const R=baseR+34; bg.style.width=bg.style.height=(2*R)+'px'; bg.style.left=(ox-R)+'px'; bg.style.top=(oy-R)+'px'; }
   }
-  function openMenu() { place(); stage.classList.add('menu-open'); trigger.classList.add('armed'); open = true; }
-  function closeMenu() { stage.classList.remove('menu-open'); trigger.classList.remove('armed'); open = false; tapMode = false; setHot(-1); }
-  function setHot(i) { hot = i; opts.forEach((el, k) => el.classList.toggle('hot', k === i)); }
-  function nearest(px, py) {
-    const dx = px - origin.x, dy = py - origin.y;
-    const dist = Math.hypot(dx, dy);
-    if (dist < 34) return -1; // nära mitten = inget val
-    let ang = Math.atan2(dx, -dy) * 180/Math.PI; if (ang < 0) ang += 360;
-    let best = -1, bestd = 999;
-    items.forEach((it, i) => {
-      let a = layout === 'arc' ? angleForArc(i, items.length) : angleForCompass(i, items.length);
-      if (a < 0) a += 360;
-      let d = Math.abs(((ang - a + 540) % 360) - 180);
-      if (d < bestd) { bestd = d; best = i; }
-    });
-    return bestd < (layout === 'arc' ? 26 : 46) ? best : -1;
+  function openAt(ox,oy){ layoutAt(ox,oy); stage.classList.add('menu-open'); if(trigger)trigger.classList.add('armed'); open=true; }
+  function closeMenu(){ stage.classList.remove('menu-open'); if(trigger)trigger.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
+  function setHot(i){ hot=i; opts.forEach((el,k)=>el.classList.toggle('hot',k===i)); }
+  function nearest(px,py){
+    const dx=px-origin.x, dy=py-origin.y, dist=Math.hypot(dx,dy);
+    if(dist<38) return -1;
+    let ang=Math.atan2(dx,-dy)*180/Math.PI; if(ang<0)ang+=360;
+    const angs = layout==='arc'?anglesArc(its.length):anglesCompass(its.length);
+    let best=-1,bd=999;
+    angs.forEach((a,i)=>{ a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;} });
+    return bd<(layout==='arc'?24:46)?best:-1;
   }
-  function select(i) {
-    if (i < 0 || i >= items.length) return;
-    readout.textContent = 'Valde: ' + items[i].label;
-    opts[i].classList.add('hot');
-    setTimeout(closeMenu, 130);
+  function select(i){ if(i<0||i>=its.length)return; readout.textContent='Valde: '+its[i].label; opts[i].classList.add('hot'); setTimeout(closeMenu,140); }
+
+  function down(clientX,clientY,pid){
+    const sr=stage.getBoundingClientRect(); sx=clientX; sy=clientY; moved=false;
+    if(open){ // andra tryck / tryck ⋯ igen → stäng
+      closeMenu(); return;
+    }
+    if(anywhere){
+      holdTimer=setTimeout(()=>{ if(!moved){ openAt(clientX-sr.left, clientY-sr.top); pressing=true; setHot(-1);} }, 300);
+    } else {
+      const tr=trigger.getBoundingClientRect();
+      openAt(tr.left+tr.width/2-sr.left, tr.top+tr.height/2-sr.top); pressing=true; setHot(-1);
+    }
+  }
+  function move(clientX,clientY){
+    if(Math.hypot(clientX-sx,clientY-sy)>8) moved=true;
+    if(anywhere && !open){ if(moved) clearTimeout(holdTimer); return; } // snabbt drag = svep → ingen meny
+    if(!open||!pressing) return;
+    const sr=stage.getBoundingClientRect();
+    setHot(nearest(clientX-sr.left, clientY-sr.top));
+  }
+  function up(){
+    clearTimeout(holdTimer);
+    if(!open) return;
+    if(pressing && moved){ if(hot>=0) select(hot); else closeMenu(); } // glid: välj, annars (mitten) stäng
+    else if(pressing){ pressing=false; tapMode=true; }                 // rent tapp → låt stå för tapp-val
   }
 
-  trigger.addEventListener('pointerdown', (e) => {
-    e.preventDefault(); trigger.setPointerCapture(e.pointerId);
-    moved = false; openMenu(); setHot(-1);
-    origin = origin; // set in place()
-    trigger._sx = e.clientX; trigger._sy = e.clientY;
-  });
-  trigger.addEventListener('pointermove', (e) => {
-    if (!open) return;
-    if (Math.hypot(e.clientX - trigger._sx, e.clientY - trigger._sy) > 8) moved = true;
-    const sr = stage.getBoundingClientRect();
-    setHot(nearest(e.clientX - sr.left, e.clientY - sr.top));
-  });
-  trigger.addEventListener('pointerup', (e) => {
-    if (!open) return;
-    if (moved) { select(hot); }        // drog → välj det markerade (släpp-att-välja / flick)
-    else { tapMode = true; }           // bara tapp → låt menyn stå kvar för tapp-val
-  });
-  // Tapp utanför → stäng
-  stage.addEventListener('click', (e) => { if (open && tapMode && e.target === stage) closeMenu(); });
+  const host = anywhere ? stage : trigger;
+  host.addEventListener('pointerdown',(e)=>{ e.preventDefault(); host.setPointerCapture(e.pointerId); down(e.clientX,e.clientY,e.pointerId); });
+  host.addEventListener('pointermove',(e)=>move(e.clientX,e.clientY));
+  host.addEventListener('pointerup',up);
+  host.addEventListener('pointercancel',()=>{clearTimeout(holdTimer); if(pressing&&!tapMode)closeMenu();});
+  // tapp utanför (i tapMode) → stäng
+  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word')||e.target.classList.contains('hint'))) closeMenu(); });
 
-  stage.querySelectorAll('.count button, .col .count button');
-  const countBtns = stage.parentElement.querySelectorAll('.count button');
-  countBtns.forEach(btn => btn.addEventListener('click', () => {
-    countBtns.forEach(b => b.classList.toggle('on', b === btn));
-    n = parseInt(btn.dataset.n, 10); closeMenu(); build();
-  }));
+  const countBtns=stage.parentElement.querySelectorAll('.count button');
+  countBtns.forEach(b=>b.addEventListener('click',()=>{countBtns.forEach(x=>x.classList.toggle('on',x===b)); n=parseInt(b.dataset.n,10); closeMenu(); build();}));
   build();
 }
 
-function vlistStage(stage) {
-  const trigger = stage.querySelector('.trigger');
-  const readout = stage.querySelector('.readout');
-  let n = 4, items = [], open = false, moved = false, hot = -1, tapMode = false;
-  const wrap = document.createElement('div'); wrap.className = 'vlist'; stage.appendChild(wrap);
-  let vitems = [];
-  function build() {
-    wrap.innerHTML = '';
-    items = (n === 4 ? ITEMS4 : ITEMS6);
-    vitems = items.map((it, i) => {
-      const el = document.createElement('div');
-      el.className = 'vitem'; el.innerHTML = `<span>${it.ic}</span> ${it.label}`;
-      el.addEventListener('click', (e) => { e.stopPropagation(); select(i); });
-      wrap.appendChild(el); return el;
-    });
-  }
-  function place() {
-    const tr = trigger.getBoundingClientRect(), sr = stage.getBoundingClientRect();
-    wrap.style.bottom = (sr.bottom - tr.top + 12) + 'px';
-  }
+function vlistStage(stage){
+  const trigger=stage.querySelector('.trigger'), readout=stage.querySelector('.readout');
+  let n=4,its=[],vitems=[],open=false,moved=false,hot=-1,tapMode=false,pressing=false,sy=0;
+  const wrap=document.createElement('div'); wrap.className='vlist'; stage.appendChild(wrap);
+  function build(){ wrap.innerHTML=''; its=items(n); vitems=its.map((it,i)=>{const el=document.createElement('div');el.className='vitem';el.innerHTML=`<span>${it.ic}</span> ${it.label}`;el.addEventListener('click',(e)=>{e.stopPropagation(); if(tapMode)select(i);}); wrap.appendChild(el); return el;}); }
+  function place(){ const tr=trigger.getBoundingClientRect(), sr=stage.getBoundingClientRect(); wrap.style.bottom=(sr.bottom-tr.top+12)+'px'; }
   function openMenu(){ place(); stage.classList.add('menu-open'); trigger.classList.add('armed'); open=true; }
-  function closeMenu(){ stage.classList.remove('menu-open'); trigger.classList.remove('armed'); open=false; tapMode=false; setHot(-1); }
+  function closeMenu(){ stage.classList.remove('menu-open'); trigger.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
   function setHot(i){ hot=i; vitems.forEach((el,k)=>el.classList.toggle('hot',k===i)); }
-  function nearestByY(py){
-    let best=-1,bestd=1e9;
-    vitems.forEach((el,i)=>{ const r=el.getBoundingClientRect(); const c=r.top+r.height/2; const d=Math.abs(py-c); if(d<bestd){bestd=d;best=i;} });
-    return bestd<40?best:-1;
-  }
-  function select(i){ if(i<0)return; readout.textContent='Valde: '+items[i].label; vitems[i].classList.add('hot'); setTimeout(closeMenu,130); }
-
-  trigger.addEventListener('pointerdown',(e)=>{ e.preventDefault(); trigger.setPointerCapture(e.pointerId); moved=false; openMenu(); setHot(-1); trigger._sy=e.clientY; });
-  trigger.addEventListener('pointermove',(e)=>{ if(!open)return; if(Math.abs(e.clientY-trigger._sy)>8)moved=true; setHot(nearestByY(e.clientY)); });
-  trigger.addEventListener('pointerup',()=>{ if(!open)return; if(moved)select(hot); else tapMode=true; });
-  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&e.target===stage)closeMenu(); });
-  const countBtns = stage.parentElement.querySelectorAll('.count button');
-  countBtns.forEach(btn=>btn.addEventListener('click',()=>{ countBtns.forEach(b=>b.classList.toggle('on',b===btn)); n=parseInt(btn.dataset.n,10); closeMenu(); build(); }));
+  function nearestY(py){ let best=-1,bd=1e9; vitems.forEach((el,i)=>{const r=el.getBoundingClientRect();const c=r.top+r.height/2;const d=Math.abs(py-c); if(d<bd){bd=d;best=i;}}); return bd<40?best:-1; }
+  function select(i){ if(i<0)return; readout.textContent='Valde: '+its[i].label; vitems[i].classList.add('hot'); setTimeout(closeMenu,140); }
+  trigger.addEventListener('pointerdown',(e)=>{e.preventDefault(); trigger.setPointerCapture(e.pointerId); if(open){closeMenu();return;} moved=false; openMenu(); pressing=true; setHot(-1); sy=e.clientY;});
+  trigger.addEventListener('pointermove',(e)=>{ if(!open||!pressing)return; if(Math.abs(e.clientY-sy)>8)moved=true; setHot(nearestY(e.clientY)); });
+  trigger.addEventListener('pointerup',()=>{ if(!open)return; if(pressing&&moved){ if(hot>=0)select(hot); else closeMenu(); } else if(pressing){pressing=false; tapMode=true;} });
+  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word'))) closeMenu(); });
+  const countBtns=stage.parentElement.querySelectorAll('.count button');
+  countBtns.forEach(b=>b.addEventListener('click',()=>{countBtns.forEach(x=>x.classList.toggle('on',x===b)); n=parseInt(b.dataset.n,10); closeMenu(); build();}));
   build();
 }
 
-document.querySelectorAll('.stage').forEach(st => {
-  if (st.dataset.menu === 'radial') radialStage(st, st.dataset.layout);
-  else if (st.dataset.menu === 'vlist') vlistStage(st);
+document.querySelectorAll('.stage').forEach(st=>{
+  if(st.dataset.menu==='radial') radialStage(st, st.dataset.layout);
+  else if(st.dataset.menu==='vlist') vlistStage(st);
 });
 </script>
 </body>
