@@ -639,132 +639,54 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .card-stack.stack-2::before, .card-stack.stack-2::after { display: block; }
 .card-stack.stack-1::after { display: block; }
 
-#speak-btn {
-  position: absolute;
-  top: 12px; right: 12px;
-  z-index: 10;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0,0,0,0.35);
-  color: #fff;
-  font-size: 1.3rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-  animation: speak-fade 0.2s ease-out;
+/* ---- Handlingskluster i nederkant på kortet: 🔊/💡 + ⋯-fjäder ---- */
+.card-actions {
+  position: absolute; left: 0; right: 0; bottom: 14px; z-index: 14;
+  display: flex; align-items: center; justify-content: center; gap: 14px;
 }
-#speak-btn:active { background: var(--accent); }
-
-/* "…"-meny uppe till vänster (utländska sidan): Redigera / Stjärnmärk / Slå upp */
-#card-menu-btn {
-  position: absolute;
-  top: 12px; left: 12px;
-  z-index: 11;
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0,0,0,0.35);
-  color: #fff;
-  font-size: 1.5rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-  animation: speak-fade 0.2s ease-out;
-}
-#card-menu-btn:active { background: var(--accent); }
-#speak-btn.auto { background: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(91,140,255,0.45); }
-
-.card-menu {
-  position: absolute;
-  top: 58px; left: 12px;
-  z-index: 12;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 6px;
-  min-width: 184px;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
-  display: flex; flex-direction: column; gap: 2px;
-}
-.card-menu-item {
-  display: flex; align-items: center; gap: 12px;
-  width: 100%;
-  background: none; border: none; cursor: pointer;
-  color: var(--text);
-  font-size: 0.95rem;
-  text-align: left;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-.card-menu-item:active { background: var(--surface-2); }
-.cmi-ico {
-  flex: none; width: 22px; height: 22px;
+.card-actions.hidden { display: none; }
+.ca-btn {
+  width: 46px; height: 46px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.4); color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  font-size: 1.15rem; line-height: 1; color: var(--muted);
+  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
+  -webkit-user-select: none; user-select: none; animation: speak-fade 0.2s ease-out;
 }
-.cmi-ico.on { color: var(--gold); }
+.ca-btn.more { font-size: 1.5rem; }
+.ca-btn:active { background: var(--accent); }
+.ca-btn.armed { background: var(--accent); color: #fff; }
+.ca-btn.ctx.auto { background: var(--accent); box-shadow: 0 0 0 3px rgba(91,140,255,0.45); } /* autouppläsning på */
+.ca-btn.hidden { display: none; }
+/* Svenska sidan: ⋯ absolut centrerad; 💡 som satellit till vänster (utan att flytta ⋯). */
+.card-actions.solo #more-btn { position: absolute; left: 50%; transform: translateX(-50%); }
+.card-actions.solo #ctx-btn  { position: absolute; left: 50%; transform: translateX(calc(-50% - 40px)); }
 
-/* Glödlampa: visa BARA minnesregeln (ledtråd) utan att avslöja svaret */
-#hint-btn {
-  position: absolute;
-  bottom: 12px; right: 12px;
-  z-index: 10;
-  width: 46px; height: 46px;
-  border-radius: 50%;
-  border: none;
-  background: rgba(0,0,0,0.35);
-  color: #fff;
-  font-size: 1.3rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  backdrop-filter: blur(4px);
-  animation: speak-fade 0.2s ease-out;
+/* Fjädermeny – scrim + halvcirkel + val (val/scrim/bg skapas i JS) */
+.fan-scrim {
+  position: absolute; inset: 0; z-index: 12; background: rgba(4,7,13,.5);
+  opacity: 0; transition: opacity .16s; pointer-events: none;
 }
-#hint-btn:active { background: var(--easy); }
-
-/* Jordglob: utforska ordet (betydelse + bilder) – nere till vänster på utländska sidan.
-   Osynlig men fortfarande tryckbar (för utvärdering): hitytan finns kvar, inget syns. */
-#globe-btn {
-  position: absolute;
-  bottom: 8px; left: 8px;
-  z-index: 10;
-  width: 52px; height: 52px;
-  border: none;
-  background: transparent;
-  color: transparent;
-  cursor: pointer;
-  opacity: 0;
-  animation: none;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none; /* långtryck ska inte visa iOS-callout */
-  -webkit-user-select: none; user-select: none;
-  touch-action: manipulation;
+.fan-open .fan-scrim { opacity: 1; pointer-events: auto; }
+.fan-bg {
+  position: absolute; z-index: 13; opacity: 0; transition: opacity .16s; pointer-events: none;
+  border-radius: 999px 999px 0 0; border-bottom: none;
+  background: radial-gradient(closest-side, rgba(91,140,255,.20), rgba(91,140,255,.06) 72%, transparent);
+  border: 1px solid rgba(91,140,255,.34);
 }
-/* Långtrycket har nått tröskeln → "släpp för bildsök"-markör. SEPARAT element
-   (rör aldrig knappen man håller på – annars slutar iOS avfyra click) och
-   placerad OVANFÖR tummen så den syns. */
-#globe-hint {
-  position: absolute;
-  bottom: 68px; left: 6px;
-  z-index: 11;
-  pointer-events: none;
-  font-size: 26px;
-  padding: 5px 8px;
-  background: rgba(20, 22, 30, .72);
-  border-radius: 12px;
-  opacity: 0;
-  transform: translateY(6px) scale(.9);
-  transition: opacity .12s ease, transform .12s ease;
+.fan-open .fan-bg { opacity: 1; }
+.fan-opt {
+  position: absolute; z-index: 15; padding: 6px 7px; border-radius: 12px;
+  background: var(--surface); border: 1px solid var(--line); color: var(--text);
+  font-size: .66rem; font-weight: 600; min-width: 52px;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; justify-content: center; white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(0,0,0,.5); transform: translate(-50%,-50%) scale(.55); opacity: 0; pointer-events: none;
+  transition: transform .15s cubic-bezier(.2,.85,.25,1), opacity .12s, background .1s, border-color .1s;
 }
-#globe-hint.show { opacity: 1; transform: translateY(0) scale(1); }
+.fan-open .fan-opt { opacity: 1; transform: translate(-50%,-50%) scale(1); pointer-events: auto; }
+.fan-opt.hot { background: var(--accent); border-color: var(--accent); color: #fff; transform: translate(-50%,-50%) scale(1.16); }
+.fan-opt .ic { font-size: 1.05rem; line-height: 1; }
+.fan-opt .ic.on { color: var(--gold); }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
 /* Utforska-arket (Wikimedia: betydelse + bilder) */

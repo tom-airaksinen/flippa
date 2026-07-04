@@ -1168,7 +1168,6 @@ const cardFrontText = $("card-front-text");
 const cardFrontHint = $("card-front-hint");
 const cardAnswer = $("card-answer");
 const cardHint = $("card-hint");
-const hintBtn = $("hint-btn");
 const dirSelect = $("dir-select");
 const progressPill = $("progress-pill");
 const feedbackEl = $("swipe-feedback");
@@ -1639,8 +1638,7 @@ function loadCard(forceDir) {
   cardFrontHint.textContent = ""; cardFrontHint.classList.add("hidden"); // ny ledtråd döljs tills lampan trycks
   updateProgress();
   updateStack();
-  showSpeakSoon(300);
-  updateHintBtn();
+  showSpeakSoon(300); // döljer klustret och visar rätt läge efter kortbytet
   if (handsfreeActive) { clearTimeout(hfLoadCardTimer); hfLoadCardTimer = setTimeout(() => { if (handsfreeActive) hfSpeakFront(); }, 400); }
 }
 
@@ -2058,8 +2056,9 @@ function onMotion(e) {
 // =========================================================================
 //  Uttal (Web Speech API)
 // =========================================================================
-const speakBtn = $("speak-btn");
-const globeBtn = $("globe-btn"); // hemlig, osynlig genväg nere till vänster → Slå upp (samma som menyn)
+const cardActions = $("card-actions");
+const ctxBtn = $("ctx-btn");   // kontextuell: 🔊 (utländska) / 💡 (svenska med minnesregel)
+const moreBtn = $("more-btn"); // ⋯ → fjädermeny
 
 // Autoläge: läs upp automatiskt varje gång den utländska sidan visas
 const AUTO_SPEAK_KEY = "flippa-autospeak";
@@ -2098,22 +2097,14 @@ function hasVoiceFor(lang) {
   return voices.some((v) => v.lang.replace("_", "-").slice(0, 2) === p);
 }
 
-function updateSpeakBtn() {
-  const lang = subjectLang(currentSubject);
-  const ok = !!lang && foreignVisible() && hasVoiceFor(lang);
-  speakBtn.classList.toggle("hidden", !ok);
-}
+function updateSpeakBtn() { updateCardActions(); } // alias – klustret sköter allt
 
-// Jordgloben visas så fort den UTLÄNDSKA sidan syns (kräver ingen röst, till skillnad
-// Dölj knappen direkt och visa den först när animationen (flipp/emerge) är klar
+// Dölj klustret direkt och visa det först när animationen (flipp/emerge) är klar.
 function showSpeakSoon(delay) {
-  speakBtn.classList.add("hidden");
-  cardMenuBtn.classList.add("hidden");
-  globeBtn.classList.add("hidden");
-  closeCardMenu();
+  cardActions.classList.add("hidden");
+  closeFan();
   setTimeout(() => {
-    updateSpeakBtn();
-    updateCardMenuBtn();
+    updateCardActions();
     // autoläge: läs upp så fort den utländska sidan blir synlig
     if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && hasVoiceFor(subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
@@ -2135,8 +2126,6 @@ function updateStack() {
 function speakCurrent() {
   if (session && session.current) speak(session.current.front, subjectLang(currentSubject));
 }
-speakBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
-speakBtn.addEventListener("click", (e) => { e.stopPropagation(); speakCurrent(); });
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
@@ -2283,21 +2272,7 @@ function openExplore(term, onClose) {
 
 // Glödlampan: visas på prompt-sidan när man kör Från svenska (b2f) och kortet har en
 // minnesregel. Tryck → visar BARA regeln (ledtråd) utan att avslöja svaret.
-function updateHintBtn() {
-  const c = session && session.current;
-  const ok = activeScreen === "training" && !!(c && c.hint) && session && session.shownDir === "b2f"
-    && !card.classList.contains("flipped") && cardFrontHint.classList.contains("hidden");
-  hintBtn.classList.toggle("hidden", !ok);
-}
-hintBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
-hintBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const c = session && session.current;
-  if (!c || !c.hint) return;
-  cardFrontHint.textContent = c.hint;
-  cardFrontHint.classList.remove("hidden");
-  updateHintBtn(); // regeln syns nu → dölj lampan
-});
+function updateHintBtn() { updateCardActions(); } // alias – klustret sköter allt
 
 // Toggle "Automatisk uppläsning" längst ner – styr autoSpeak
 const autospeakRow = $("autospeak-row");
@@ -2319,90 +2294,106 @@ if ("speechSynthesis" in window) {
   speechSynthesis.onvoiceschanged = () => { speechSynthesis.getVoices(); updateSpeakBtn(); };
 }
 
-// ---- "…"-meny på utländska sidan: Redigera / Stjärnmärk / Slå upp ----
-const cardMenuBtn = $("card-menu-btn");
-const cardMenu = $("card-menu");
-let cardMenuOpen = false;
-function closeCardMenu() { cardMenuOpen = false; cardMenu.classList.add("hidden"); }
-function openCardMenu() {
-  if (!session || !session.current) return;
-  const fav = isFav(session.current);
-  $("cmi-star-ico").textContent = fav ? "★" : "☆";
-  $("cmi-star-ico").classList.toggle("on", fav);
-  $("cmi-star-lbl").textContent = fav ? "Stjärnmärkt" : "Stjärnmärk";
-  cardMenu.classList.remove("hidden");
-  cardMenuOpen = true;
+// ---- Handlingskluster i nederkant: kontextuell (🔊/💡) + ⋯-fjädermeny ----
+// Fjäderns element skapas en gång och läggs i card-stack (samma koordinatsystem).
+const fanScrim = document.createElement("div"); fanScrim.className = "fan-scrim"; cardStack.appendChild(fanScrim);
+const fanBg = document.createElement("div"); fanBg.className = "fan-bg"; cardStack.appendChild(fanBg);
+// Ordning vänster→höger i bågen: Bildsök (vänster) … Slå upp (höger). Inga dubbletter
+// av Lyssna/Ledtråd – de bor i den kontextuella knappen bredvid ⋯.
+const FAN_ITEMS = [
+  { key: "image",  ic: "🖼", label: "Bildsök" },
+  { key: "edit",   ic: "✎",  label: "Redigera" },
+  { key: "star",   ic: "☆",  label: "Stjärna" },
+  { key: "lookup", ic: "🌐", label: "Slå upp" },
+];
+const fanOpts = FAN_ITEMS.map((it, i) => {
+  const el = document.createElement("div"); el.className = "fan-opt"; el.dataset.key = it.key;
+  el.innerHTML = `<span class="ic">${it.ic}</span>${it.label}`;
+  el.addEventListener("click", (e) => { e.stopPropagation(); if (fanTapMode) selectFan(i); });
+  cardStack.appendChild(el); return el;
+});
+
+const FAN_SPAN = 156;
+function fanAngles(n){ const s = -FAN_SPAN/2; return Array.from({length:n}, (_,i)=> n===1?0 : s + FAN_SPAN*i/(n-1)); }
+function fanRadius(n){ if(n<2) return 112; const g = FAN_SPAN/(n-1); return Math.max(104, Math.min(140, 84/(2*Math.sin(g/2*Math.PI/180)))); }
+
+let fanOpen = false, fanMoved = false, fanHot = -1, fanTapMode = false, fanPressing = false, fanOrigin = null, fanSX = 0, fanSY = 0;
+
+function placeFan(){
+  const sr = cardStack.getBoundingClientRect(), br = moreBtn.getBoundingClientRect();
+  // Ankra horisontellt i kortets mitt (symmetrisk fjäder som ryms), vertikalt vid ⋯.
+  fanOrigin = { x: sr.width/2, y: br.top + br.height/2 - sr.top };
+  const angs = fanAngles(FAN_ITEMS.length), R = fanRadius(FAN_ITEMS.length);
+  fanOpts.forEach((el,i)=>{ const rad = angs[i]*Math.PI/180; el.style.left = (fanOrigin.x + R*Math.sin(rad))+"px"; el.style.top = (fanOrigin.y - R*Math.cos(rad))+"px"; });
+  const D = R + 58; fanBg.style.width = (2*D)+"px"; fanBg.style.height = D+"px"; fanBg.style.left = (fanOrigin.x-D)+"px"; fanBg.style.top = (fanOrigin.y-D)+"px";
 }
-// ⋯-menyn (uppe till vänster) visas på BÅDA sidor av kortet. Den osynliga
-// globgenvägen nere till vänster behålls bara på den utländska sidan.
-function updateCardMenuBtn() {
+function openFan(){
+  if(!session || !session.current) return;
+  const fav = isFav(session.current), si = FAN_ITEMS.findIndex(x=>x.key==="star"), ico = fanOpts[si].querySelector(".ic");
+  ico.textContent = fav ? "★" : "☆"; ico.classList.toggle("on", fav); fanOpts[si].lastChild.textContent = fav ? "Stjärnmärkt" : "Stjärna";
+  placeFan(); cardStack.classList.add("fan-open"); moreBtn.classList.add("armed"); fanOpen = true;
+}
+function closeFan(){ if(!cardStack) return; cardStack.classList.remove("fan-open"); if(moreBtn) moreBtn.classList.remove("armed"); fanOpen = false; fanTapMode = false; fanPressing = false; setFanHot(-1); }
+function setFanHot(i){ fanHot = i; fanOpts.forEach((el,k)=>el.classList.toggle("hot", k===i)); }
+function nearestFan(px,py){
+  const dx = px-fanOrigin.x, dy = py-fanOrigin.y; if(Math.hypot(dx,dy) < 36) return -1;
+  let ang = Math.atan2(dx,-dy)*180/Math.PI; if(ang<0) ang+=360; const angs = fanAngles(FAN_ITEMS.length); let best=-1, bd=999;
+  angs.forEach((a,i)=>{ a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;} }); return bd<26?best:-1;
+}
+function selectFan(i){
+  if(i<0 || i>=FAN_ITEMS.length) return;
+  const key = FAN_ITEMS[i].key; closeFan();
+  if(!session || !session.current) return;
+  if(key==="edit") editCurrentCard();
+  else if(key==="star"){ const on = toggleFav(session.current); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
+  else if(key==="lookup") googleAiExplore(session.current.front);
+  else if(key==="image") googleImageSearch(session.current.front);
+}
+
+moreBtn.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); e.preventDefault(); moreBtn.setPointerCapture(e.pointerId);
+  fanSX = e.clientX; fanSY = e.clientY; fanMoved = false;
+  if(fanOpen){ closeFan(); return; } // andra trycket / tryck ⋯ igen → stäng
+  openFan(); fanPressing = true; setFanHot(-1);
+});
+moreBtn.addEventListener("pointermove",(e)=>{ if(!fanOpen || !fanPressing) return;
+  if(Math.hypot(e.clientX-fanSX, e.clientY-fanSY) > 8) fanMoved = true;
+  const sr = cardStack.getBoundingClientRect(); setFanHot(nearestFan(e.clientX-sr.left, e.clientY-sr.top));
+});
+moreBtn.addEventListener("pointerup",()=>{ if(!fanOpen) return;
+  if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot); else closeFan(); } // glid: välj, annars (mitten) stäng
+  else if(fanPressing){ fanPressing = false; fanTapMode = true; }                    // rent tapp → låt stå för tapp-val
+});
+moreBtn.addEventListener("pointercancel",()=>{ if(fanPressing && !fanTapMode) closeFan(); });
+fanScrim.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); });
+fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeFan(); });
+
+// Kontextuell knapp: 🔊 (uttala) på utländska sidan, 💡 (ledtråd) på svenska med minnesregel.
+ctxBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
+ctxBtn.addEventListener("click",(e)=>{
+  e.stopPropagation();
+  const act = ctxBtn.dataset.act;
+  if(act==="speak") speakCurrent();
+  else if(act==="hint"){ const c = session && session.current; if(c && c.hint){ cardFrontHint.textContent = c.hint; cardFrontHint.classList.remove("hidden"); updateCardActions(); } }
+});
+
+// Visar/gömmer klustret, väljer rätt kontextuell knapp, och solo-läge (⋯ centrerad) på svenska sidan.
+function updateCardActions(){
   const hasCard = !!(session && session.current);
-  cardMenuBtn.classList.toggle("hidden", !hasCard);
-  globeBtn.classList.toggle("hidden", !(hasCard && foreignVisible()));
-  if (!hasCard) closeCardMenu();
+  cardActions.classList.toggle("hidden", !hasCard);
+  if(!hasCard){ closeFan(); return; }
+  const foreign = foreignVisible(), lang = subjectLang(currentSubject), c = session.current;
+  let ctx = null;
+  if(foreign){ if(lang && hasVoiceFor(lang)) ctx = { ic:"🔊", act:"speak", label:"Uttala" }; }
+  else if(c.hint && cardFrontHint.classList.contains("hidden")) ctx = { ic:"💡", act:"hint", label:"Visa ledtråd" };
+  if(ctx){ ctxBtn.classList.remove("hidden"); ctxBtn.textContent = ctx.ic; ctxBtn.dataset.act = ctx.act; ctxBtn.setAttribute("aria-label", ctx.label);
+    ctxBtn.classList.toggle("auto", ctx.act==="speak" && autoSpeak && !handsfreeActive); }
+  else { ctxBtn.classList.add("hidden"); ctxBtn.dataset.act = ""; }
+  // Svenska sidan → ⋯ absolut centrerad (solo). Utländska → paret centrerat som enhet.
+  cardActions.classList.toggle("solo", !foreign);
 }
-// Enkeltapp = Slå upp. Långtryck (~0,45 s) = Bildsök. Dubbeltapp går inte på mobil:
-// första tappet skulle öppna en flik och stjäla fokus, så andra tappet aldrig når
-// kortet – och en fördröjd window.open popup-blockas på iOS. Långtryck löser det:
-// inget öppnas förrän man släpper (click), så öppningen sker alltid i gesten.
-const GLOBE_HOLD_MS = 450;
-const globeHint = $("globe-hint");
-let globeDownT = 0, globeHoldTimer = null, globeImgOpened = false;
-const disarmGlobe = () => { clearTimeout(globeHoldTimer); globeHint.classList.remove("show"); };
-globeBtn.addEventListener("pointerdown", (e) => {
-  e.stopPropagation();
-  globeDownT = Date.now();
-  globeImgOpened = false;
-  clearTimeout(globeHoldTimer);
-  globeHint.classList.remove("show");
-  // Vid tröskeln: visa "släpp för bildsök"-markören (separat element – rör INTE
-  // knappen man håller, annars slutar iOS avfyra click → inget öppnas vid släpp),
-  // puffa haptiskt där det stöds, och försök öppna direkt. På iOS popup-blockas
-  // timer-öppningen → då öppnas bildsöket i stället vid släpp (click nedan).
-  globeHoldTimer = setTimeout(() => {
-    if (!session || !session.current) return;
-    globeHint.classList.add("show");
-    if (navigator.vibrate) navigator.vibrate(15);
-    globeImgOpened = !!googleImageSearch(session.current.front);
-  }, GLOBE_HOLD_MS);
-});
-["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
-  globeBtn.addEventListener(ev, disarmGlobe));
-globeBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  globeHint.classList.remove("show");
-  if (!session || !session.current) return;
-  const held = Date.now() - globeDownT >= GLOBE_HOLD_MS;
-  if (held) { if (!globeImgOpened) googleImageSearch(session.current.front); } // ej öppnad på tröskeln (blockerad) → öppna nu vid släpp
-  else googleAiExplore(session.current.front);
-  globeImgOpened = false;
-});
-cardMenuBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
-let cardMenuLastTap = 0;
-cardMenuBtn.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const now = Date.now();
-  if (now - cardMenuLastTap < 300) { // dubbeltapp → rakt in i redigeraläge
-    cardMenuLastTap = 0;
-    closeCardMenu();
-    editCurrentCard();
-    return;
-  }
-  cardMenuLastTap = now;
-  cardMenuOpen ? closeCardMenu() : openCardMenu();
-});
-cardMenu.addEventListener("pointerdown", (e) => e.stopPropagation());
-cardMenu.addEventListener("click", (e) => {
-  e.stopPropagation();
-  const item = e.target.closest(".card-menu-item"); if (!item) return;
-  const act = item.dataset.act;
-  closeCardMenu();
-  if (!session || !session.current) return;
-  if (act === "edit") editCurrentCard();
-  else if (act === "star") { const on = toggleFav(session.current); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
-  else if (act === "lookup") googleAiExplore(session.current.front);
-  else if (act === "image") googleImageSearch(session.current.front);
-});
+// Bakåtkompatibla alias (kvarvarande anrop)
+function updateCardMenuBtn() { updateCardActions(); }
+function closeCardMenu() { closeFan(); }
 
 async function editCurrentCard() {
   if (!session || !session.current) return;
@@ -2465,7 +2456,7 @@ function setDrag(dx, dy) {
 function snapBack() {
   card.classList.add("snapping");
   card.style.transform = "";
-  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateSpeakBtn(); updateCardMenuBtn(); updateHintBtn(); }, { once: true });
+  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateCardActions(); }, { once: true });
 }
 
 function flyOut(grade) {
@@ -2486,10 +2477,9 @@ function flyOut(grade) {
 
 card.addEventListener("click", () => {
   if (didSwipe || animating) return;
-  if (cardMenuOpen) { closeCardMenu(); return; } // ett tryck utanför menyn stänger den (utan att vända kortet)
+  if (fanOpen) { closeFan(); return; } // ett tryck utanför fjädern stänger den (utan att vända kortet)
   card.classList.toggle("flipped");
-  showSpeakSoon(460);
-  updateHintBtn(); // dölj lampan när svaret visas, visa igen om man vänder tillbaka
+  showSpeakSoon(460); // döljer klustret och visar rätt läge (inkl. ledtråd) efter flippen
 });
 
 card.addEventListener("pointerdown", (e) => {
@@ -2498,11 +2488,8 @@ card.addEventListener("pointerdown", (e) => {
   startY = e.clientY;
   dragging = true;
   didSwipe = false;
-  speakBtn.classList.add("hidden"); // dölj direkt när man tar i kortet
-  cardMenuBtn.classList.add("hidden");
-  globeBtn.classList.add("hidden");
-  closeCardMenu();
-  hintBtn.classList.add("hidden");
+  cardActions.classList.add("hidden"); // dölj klustret direkt när man tar i kortet
+  closeFan();
   card.setPointerCapture(e.pointerId);
 });
 
@@ -4058,7 +4045,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v201";
+const APP_VERSION = "v202";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
