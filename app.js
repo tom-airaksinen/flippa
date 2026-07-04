@@ -263,6 +263,13 @@ function levels() {
 function dayTiers() { return levels().days; }
 function dailyGoal() { return levels().days[0]; } // lägsta dagsnivån = "dagens mål"
 function weeklyGoal() { return levels().week; }
+// Emoji per dagsnivå (nivå 1/2/3). Både nivåinställningen och Klar-skärmen läser dessa.
+const DAY_TIER_ICONS = ["💪", "⚡️", "🥇"];
+// Ikonen för antal kort idag = högsta uppnådda dagsnivå (💪 → ⚡️ → 🥇).
+function dayTierIcon(count) {
+  const t = dayTiers();
+  return count >= t[2] ? DAY_TIER_ICONS[2] : count >= t[1] ? DAY_TIER_ICONS[1] : DAY_TIER_ICONS[0];
+}
 function saveLevels(days, week) {
   const o = loadLS(LEVELS_KEY);
   o[unitUser()] = { days, week };
@@ -403,7 +410,7 @@ function getAchievements(subjects) {
 // räknas bara om mot de nya trösklarna – ingen data går förlorad.
 function openLevelsModal() {
   const lv = levels();
-  const icos = ["💪", "⚡️", "🥇"];
+  const icos = DAY_TIER_ICONS;
   const dayRows = [0, 1, 2].map((i) =>
     `<label class="lvl-row"><span>${icos[i]} Nivå ${i + 1}</span><input type="number" inputmode="numeric" min="1" id="lvl-d${i}" value="${lv.days[i]}" autocomplete="off" /></label>`).join("");
   const m = openModal(`
@@ -1691,7 +1698,7 @@ function finishSession() {
     const dayDone = gp.dayCount >= dailyGoal(), weekDone = gp.weekCount >= weeklyGoal();
     if (dayDone || weekDone) {
       goalsEl.innerHTML =
-        `<div class="cg-goal ${dayDone ? "done" : ""}"><div class="cg-ico">💪</div><div class="cg-num">${dayDone ? `${gp.dayCount} ✓` : `${gp.dayCount} / ${dailyGoal()}`}</div><div class="cg-lbl">kort idag</div></div>` +
+        `<div class="cg-goal ${dayDone ? "done" : ""}"><div class="cg-ico">${dayDone ? dayTierIcon(gp.dayCount) : "💪"}</div><div class="cg-num">${dayDone ? `${gp.dayCount} ✓` : `${gp.dayCount} / ${dailyGoal()}`}</div><div class="cg-lbl">kort idag</div></div>` +
         `<div class="cg-goal ${weekDone ? "done" : ""}"><div class="cg-ico">🏆</div><div class="cg-num">${weekDone ? `${gp.weekCount} ✓` : `${gp.weekCount} / ${weeklyGoal()}`}</div><div class="cg-lbl">denna vecka</div></div>`;
     } else {
       goalsEl.innerHTML = "";
@@ -1932,6 +1939,13 @@ function answer(grade) {
   session.queue.shift();
   if (grade === "fail") session.queue.push(c);
   else if (grade === "hard") session.queue.splice(Math.min(3, session.queue.length), 0, c);
+  // Autouppspelning: svepte man direkt från svenska sidan (b2f, utan att flippa)
+  // hann man aldrig se/höra det utländska ordet – läs upp det nu så uttalet alltid
+  // ges. Nästa kort i b2f visar svenska (ingen autospeak) så inget krockar.
+  if (autoSpeak && !handsfreeActive && dir === "b2f" && !card.classList.contains("flipped")
+      && hasVoiceFor(subjectLang(currentSubject))) {
+    speak(c.front, subjectLang(currentSubject));
+  }
   loadCard();
 }
 
@@ -2104,12 +2118,17 @@ speakBtn.addEventListener("click", (e) => { e.stopPropagation(); speakCurrent();
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
-function googleAiExplore(term) {
+function googleAiExploreUrl(term) {
   const label = subjectLang(currentSubject) ? langLabel(subjectLang(currentSubject)).toLowerCase() : "";
   const onLang = label ? ` på ${label}` : "";
   const q = `Kan du berätta om "${term}"${onLang} - vad är etymologin och vilka andra närliggande ord finns och vad är skillnaden? Kan du illustrera med foton/bilder?`;
-  window.open(`https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`, "_blank");
+  return `https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`;
 }
+function googleAiExplore(term) { return window.open(googleAiExploreUrl(term), "_blank"); }
+
+// Google bildsökning (udm=2) på det utländska ordet – ren bildträff, inget prompt-krafs.
+function googleImageSearchUrl(term) { return `https://www.google.com/search?udm=2&q=${encodeURIComponent(term)}`; }
+function googleImageSearch(term) { return window.open(googleImageSearchUrl(term), "_blank"); }
 
 // =========================================================================
 //  Utforska ordet – betydelse (Wikipedia → Wiktionary) + bilder (Commons)
@@ -2300,9 +2319,23 @@ function updateCardMenuBtn() {
   if (!hasCard) closeCardMenu();
 }
 globeBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+// Enkeltapp = Slå upp (direkt, i gesten). Dubbeltapp = Bildsök: andra tappet
+// gör om den redan öppnade Slå upp-fliken till en Google bildsökning (ingen extra
+// flik, och navigeringen sker i användargesten så popup-blockare släpper igenom).
+let globeLastTap = 0, globeWin = null;
 globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
-  if (session && session.current) googleAiExplore(session.current.front);
+  if (!session || !session.current) return;
+  const term = session.current.front;
+  const now = Date.now();
+  if (now - globeLastTap < 350 && globeWin) {
+    globeLastTap = 0;
+    try { globeWin.location = googleImageSearchUrl(term); } catch (_) { window.open(googleImageSearchUrl(term), "_blank"); }
+    globeWin = null;
+    return;
+  }
+  globeLastTap = now;
+  globeWin = googleAiExplore(term);
 });
 cardMenuBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 let cardMenuLastTap = 0;
@@ -2328,6 +2361,7 @@ cardMenu.addEventListener("click", (e) => {
   if (act === "edit") editCurrentCard();
   else if (act === "star") { const on = toggleFav(session.current); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   else if (act === "lookup") googleAiExplore(session.current.front);
+  else if (act === "image") googleImageSearch(session.current.front);
 });
 
 async function editCurrentCard() {
@@ -3943,7 +3977,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v188";
+const APP_VERSION = "v189";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
