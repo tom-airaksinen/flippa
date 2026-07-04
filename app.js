@@ -2340,20 +2340,22 @@ function updateCardMenuBtn() {
 // kortet – och en fördröjd window.open popup-blockas på iOS. Långtryck löser det:
 // inget öppnas förrän man släpper (click), så öppningen sker alltid i gesten.
 const GLOBE_HOLD_MS = 450;
+const globeHint = $("globe-hint");
 let globeDownT = 0, globeHoldTimer = null, globeImgOpened = false;
-const disarmGlobe = () => { clearTimeout(globeHoldTimer); globeBtn.classList.remove("arming"); };
+const disarmGlobe = () => { clearTimeout(globeHoldTimer); globeHint.classList.remove("show"); };
 globeBtn.addEventListener("pointerdown", (e) => {
   e.stopPropagation();
   globeDownT = Date.now();
   globeImgOpened = false;
   clearTimeout(globeHoldTimer);
-  globeBtn.classList.remove("arming");
-  // Vid tröskeln: visa en visuell "släpp för bildsök"-markör (iOS Safari saknar
-  // Vibration-API), puffa haptiskt där det stöds, och FÖRSÖK öppna direkt. På iOS
-  // popup-blockas timer-öppningen → då öppnas bildsöket i stället vid släpp (click).
+  globeHint.classList.remove("show");
+  // Vid tröskeln: visa "släpp för bildsök"-markören (separat element – rör INTE
+  // knappen man håller, annars slutar iOS avfyra click → inget öppnas vid släpp),
+  // puffa haptiskt där det stöds, och försök öppna direkt. På iOS popup-blockas
+  // timer-öppningen → då öppnas bildsöket i stället vid släpp (click nedan).
   globeHoldTimer = setTimeout(() => {
     if (!session || !session.current) return;
-    globeBtn.classList.add("arming");
+    globeHint.classList.add("show");
     if (navigator.vibrate) navigator.vibrate(15);
     globeImgOpened = !!googleImageSearch(session.current.front);
   }, GLOBE_HOLD_MS);
@@ -2362,7 +2364,7 @@ globeBtn.addEventListener("pointerdown", (e) => {
   globeBtn.addEventListener(ev, disarmGlobe));
 globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
-  globeBtn.classList.remove("arming");
+  globeHint.classList.remove("show");
   if (!session || !session.current) return;
   const held = Date.now() - globeDownT >= GLOBE_HOLD_MS;
   if (held) { if (!globeImgOpened) googleImageSearch(session.current.front); } // ej öppnad på tröskeln (blockerad) → öppna nu vid släpp
@@ -4004,7 +4006,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v193";
+const APP_VERSION = "v194";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

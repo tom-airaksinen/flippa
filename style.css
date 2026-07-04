@@ -747,17 +747,24 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-touch-callout: none; /* långtryck ska inte visa iOS-callout */
   -webkit-user-select: none; user-select: none;
   touch-action: manipulation;
-  transition: opacity .12s ease;
 }
-/* Långtrycket har nått tröskeln → visa "släpp för bildsök"-markör (ersätter
-   vibration, som iOS Safari inte stöder). */
-#globe-btn.arming {
-  opacity: 1;
-  background: rgba(20, 22, 30, .6);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
+/* Långtrycket har nått tröskeln → "släpp för bildsök"-markör. SEPARAT element
+   (rör aldrig knappen man håller på – annars slutar iOS avfyra click) och
+   placerad OVANFÖR tummen så den syns. */
+#globe-hint {
+  position: absolute;
+  bottom: 68px; left: 6px;
+  z-index: 11;
+  pointer-events: none;
+  font-size: 26px;
+  padding: 5px 8px;
+  background: rgba(20, 22, 30, .72);
+  border-radius: 12px;
+  opacity: 0;
+  transform: translateY(6px) scale(.9);
+  transition: opacity .12s ease, transform .12s ease;
 }
-#globe-btn.arming::after { content: "🖼"; font-size: 22px; line-height: 1; }
+#globe-hint.show { opacity: 1; transform: translateY(0) scale(1); }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
 /* Utforska-arket (Wikimedia: betydelse + bilder) */
