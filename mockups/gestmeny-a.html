@@ -137,14 +137,30 @@ function setHot(i){ hot=i; opts.forEach((el,k)=>el.classList.toggle('hot',k===i)
 function nearest(px,py){ const dx=px-origin.x,dy=py-origin.y; if(Math.hypot(dx,dy)<38)return -1;
   let ang=Math.atan2(dx,-dy)*180/Math.PI; if(ang<0)ang+=360; const angs=angles(its.length); let best=-1,bd=999;
   angs.forEach((a,i)=>{a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;}}); return bd<24?best:-1; }
-function select(i){ if(i<0)return; readout.textContent='Valde: '+its[i].label; opts[i].classList.add('hot'); setTimeout(closeMenu,150); }
+function select(i){
+  if(i<0)return;
+  const label=its[i].label, term='gelato';
+  // C1-test: glid (eller tapp) till Bildsök/Slå upp navigerar SAMMA flik via
+  // location.href (kräver ingen gest-behörighet → borde funka från ett glid på iOS).
+  // C1 (Bildsök): samma flik via location.href – borde funka från glid.
+  if(label==='Bildsök'){ readout.textContent='→ Bildsök (samma flik)…'; location.href='https://www.google.com/search?udm=2&q='+encodeURIComponent(term); return; }
+  // C4 (Slå upp): window.open (ny flik) från touchend – testar om iOS släpper igenom.
+  if(label==='Slå upp'){ const w=window.open('https://www.google.com/search?udm=50&q='+encodeURIComponent('Kan du berätta om "'+term+'" på italienska – etymologi och närliggande ord?'),'_blank');
+    readout.textContent = w ? '→ Slå upp (ny flik) ✓' : 'Slå upp blockerad (C4 ✗)'; setTimeout(closeMenu,150); return; }
+  readout.textContent='Valde: '+label; opts[i].classList.add('hot'); setTimeout(closeMenu,150);
+}
 function flash(t){ readout.textContent=t; setTimeout(()=>{ if(readout.textContent===t) readout.textContent=''; }, 1600); }
 
 morebtn.addEventListener('pointerdown',(e)=>{ e.preventDefault(); morebtn.setPointerCapture(e.pointerId); sx=e.clientX; sy=e.clientY; moved=false;
   if(open){ closeMenu(); return; } openMenu(); pressing=true; setHot(-1); });
 morebtn.addEventListener('pointermove',(e)=>{ if(!open||!pressing)return; if(Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true;
   const sr=stage.getBoundingClientRect(); setHot(nearest(e.clientX-sr.left,e.clientY-sr.top)); });
-morebtn.addEventListener('pointerup',()=>{ if(!open)return; if(pressing&&moved){ if(hot>=0)select(hot); else closeMenu(); } else if(pressing){pressing=false; tapMode=true;} });
+// Släpp via touchend (så C4:s window.open för Slå upp körs i touchend, som iOS
+// oftast godkänner) + pointerup som desktop-fallback. Guard mot dubbel.
+let relGuard=false;
+function doRelease(){ if(!open)return; if(pressing&&moved){ if(hot>=0)select(hot); else closeMenu(); } else if(pressing){pressing=false; tapMode=true;} }
+morebtn.addEventListener('touchend',(e)=>{ if(!open)return; e.preventDefault(); relGuard=true; doRelease(); });
+morebtn.addEventListener('pointerup',()=>{ if(relGuard){relGuard=false;return;} doRelease(); });
 stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('menu-scrim')||e.target.closest('.cardwrap'))) closeMenu(); });
 
 renderSide();
