@@ -192,16 +192,41 @@
       </label>
     </div>
 
-    <button id="handsfree-btn" class="hf-btn">🎙 Handsfree<span id="hf-status" class="hf-status"></span></button>
+    <!-- Lägesväxel: diskret handtag som fäller upp Svep | Handsfree (beta). Default: Svep. -->
+    <div id="mode-switch" class="mode-switch">
+      <button id="mode-handle" class="mode-handle" aria-expanded="false">
+        <span class="chev">⌃</span> <span id="mode-handle-lbl">Läge: Svep</span>
+      </button>
+      <div id="mode-slide" class="mode-slide">
+        <div id="mode-seg" class="mode-seg">
+          <div class="mode-thumb"></div>
+          <button class="mode-opt on" data-mode="swipe">👆 Svep</button>
+          <button class="mode-opt" data-mode="hf">🎙 Handsfree <span class="beta">beta</span></button>
+        </div>
+      </div>
+    </div>
 
     <footer class="train-footer">
-      <div class="hint-row">
-        <span>👈 kan inte</span>
-        <span>👆 kan bra</span>
-        <span>kan 👉</span>
+      <div class="cues-swipe">
+        <div class="hint-row">
+          <span>👈 kan inte</span>
+          <span>👆 kan bra</span>
+          <span>kan 👉</span>
+        </div>
+        <div class="hint-row hint-down">
+          <span>👇 hopplöst</span>
+        </div>
       </div>
-      <div class="hint-row hint-down">
-        <span>👇 hopplöst</span>
+      <div class="cues-hf hidden">
+        <div class="hf-listen-head"><span class="hf-dot"></span> <span id="hf-status">Lyssnar…</span></div>
+        <div class="hf-chips">
+          <span class="hf-chip grade-fail">"kan inte"</span>
+          <span class="hf-chip grade-good">"kan"</span>
+          <span class="hf-chip grade-easy">"kan bra"</span>
+          <span class="hf-chip grade-hard">"hopplöst"</span>
+          <span class="hf-chip">"flippa"</span>
+          <span class="hf-chip">"ångra"</span>
+        </div>
       </div>
     </footer>
   </section>

@@ -1780,7 +1780,7 @@ function undoFromCongrats() {
   if (resumeHF) {
     // Återuppta handsfree: loadCard (i undoLastAnswer) läser då upp kortet och lyssnar.
     handsfreeActive = true;
-    hfBtn.classList.add("active");
+    setModeUI(true);
     if ("wakeLock" in navigator) navigator.wakeLock.request("screen").then((l) => { hfWakeLock = l; }).catch(() => {});
   }
   // Sista svarets fly-out kan ha lämnat animating=true en kort stund; på Klar-skärmen
@@ -3785,12 +3785,51 @@ let hfTimeoutId = null;
 let hfLoadCardTimer = null;
 let hfWakeLock = null;
 
-const hfBtn = $("handsfree-btn");
 const hfStatusEl = $("hf-status");
 
-hfBtn.addEventListener("click", () => {
-  if (handsfreeActive) stopHandsfree();
-  else startHandsfree();
+// ---- Lägesväxel: dolt handtag → Svep | Handsfree (beta). Footern speglar läget. ----
+const modeHandle = $("mode-handle");
+const modeHandleLbl = $("mode-handle-lbl");
+const modeSlide = $("mode-slide");
+const modeSeg = $("mode-seg");
+const cuesSwipe = document.querySelector(".cues-swipe");
+const cuesHf = document.querySelector(".cues-hf");
+
+// Synka hela UI:t mot om handsfree är aktivt (anropas när HF startar/stoppar –
+// även externt, t.ex. när passet tar slut → tillbaka till svep-läge automatiskt).
+function setModeUI(hf) {
+  modeSeg.classList.toggle("hf", hf);
+  modeSeg.querySelectorAll(".mode-opt").forEach((o) => o.classList.toggle("on", (o.dataset.mode === "hf") === hf));
+  cuesSwipe.classList.toggle("hidden", hf);
+  cuesHf.classList.toggle("hidden", !hf);
+  modeHandleLbl.textContent = "Läge: " + (hf ? "Handsfree" : "Svep");
+  if (!hf) hfStatusEl.textContent = "Lyssnar…"; // återställ inför nästa gång
+}
+
+function closeModeSlide() {
+  modeSlide.classList.remove("open");
+  modeHandle.setAttribute("aria-expanded", "false");
+}
+
+// Handtaget fäller upp/ihop segmentväxeln (håller låg profil tills man vill byta).
+modeHandle.addEventListener("click", () => {
+  const open = modeSlide.classList.toggle("open");
+  modeHandle.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+// Segmentvalet driver läget. HF sätts bara om mikrofonen faktiskt gick att få
+// (startHandsfree → setModeUI(true) vid lyckat läge; misslyckas → vi står kvar på Svep).
+modeSeg.querySelectorAll(".mode-opt").forEach((opt) => {
+  opt.addEventListener("click", async () => {
+    if (opt.dataset.mode === "hf") {
+      if (!handsfreeActive) await startHandsfree();
+    } else if (handsfreeActive) {
+      stopHandsfree();
+    } else {
+      setModeUI(false);
+    }
+    closeModeSlide();
+  });
 });
 
 let hfMicGranted = false;
@@ -3821,7 +3860,7 @@ async function startHandsfree() {
     if (!session || !session.current) return; // sessionen kan ha hunnit avslutas under await
   }
   handsfreeActive = true;
-  hfBtn.classList.add("active");
+  setModeUI(true);
   // Snäpp tillbaka till framsidan om kortet råkar vara flippat
   if (card.classList.contains("flipped")) {
     cardInner.style.transition = "none";
@@ -3839,7 +3878,7 @@ function stopHandsfree() {
   if (!handsfreeActive) return;
   handsfreeActive = false;
   hfListening = false;
-  hfBtn.classList.remove("active");
+  setModeUI(false);
   hfStatusEl.textContent = "";
   clearTimeout(hfTimeoutId);
   clearTimeout(hfLoadCardTimer);
@@ -4012,7 +4051,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v195";
+const APP_VERSION = "v196";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
