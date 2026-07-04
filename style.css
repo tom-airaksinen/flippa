@@ -660,7 +660,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .ca-btn.hidden { display: none; }
 /* Svenska sidan: ⋯ centrerad (ensam flex-barn eftersom 💡 lyfts ut som absolut
    satellit → ⋯ hamnar dead center med rätt vertikalläge, inget hopp). */
-.card-actions.solo #ctx-btn { position: absolute; top: 50%; left: 50%; transform: translate(calc(-50% - 40px), -50%); }
+.card-actions.solo #ctx-btn { position: absolute; top: 50%; left: 50%; transform: translate(calc(-50% - 60px), -50%); }
 
 /* Fjädermeny – scrim + halvcirkel + val (val/scrim/bg skapas i JS) */
 .fan-scrim {
@@ -677,11 +677,14 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   background: var(--surface); border: 1px solid var(--line); color: var(--text);
   font-size: .66rem; font-weight: 600; min-width: 52px;
   display: flex; flex-direction: column; align-items: center; gap: 2px; justify-content: center; white-space: nowrap;
-  box-shadow: 0 8px 20px rgba(0,0,0,.5); transform: translate(-50%,-50%) scale(.55); opacity: 0; pointer-events: none;
-  transition: transform .15s cubic-bezier(.2,.85,.25,1), opacity .12s, background .1s, border-color .1s;
+  box-shadow: 0 8px 20px rgba(0,0,0,.5);
+  /* Endast opacity för visa/dölj – ingen scale-transform (den kunde fastna och få
+     valen att plötsligt krympa). Positionerings-translate är konstant. */
+  transform: translate(-50%,-50%); opacity: 0; pointer-events: none;
+  transition: opacity .13s ease, background .1s, border-color .1s, box-shadow .1s;
 }
-.fan-open .fan-opt { opacity: 1; transform: translate(-50%,-50%) scale(1); pointer-events: auto; }
-.fan-opt.hot { background: var(--accent); border-color: var(--accent); color: #fff; transform: translate(-50%,-50%) scale(1.16); }
+.fan-open .fan-opt { opacity: 1; pointer-events: auto; }
+.fan-opt.hot { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 0 0 3px rgba(91,140,255,.45), 0 8px 20px rgba(0,0,0,.5); }
 /* Fast ikonruta så alla val får exakt samma storlek (ingen storleksskiftning). */
 .fan-opt .ic { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; line-height: 1; }
 .fan-opt .ic svg { display: block; }
