@@ -908,6 +908,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 /* Svep-tipsen är avsiktligt diskreta; handsfree-orden (cues-hf) hålls läsbara. */
 .cues-swipe { opacity: 0.4; }
+/* Reservera samma höjd för båda lägena så inget hoppar när man byter till
+   handsfree (orden tar mer plats än svep-tipsen). Ger även luft ner mot
+   lägesväljaren i svep-läget. */
+.cues-swipe, .cues-hf { min-height: 90px; box-sizing: border-box; }
 .train-footer .hint-row { display: flex; justify-content: space-around; }
 .train-footer .hint-down { justify-content: center; }
 
@@ -933,7 +937,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* ---- Handsfree ---- */
 /* ---- Lägesväxel: dolt handtag → Svep | Handsfree (beta). Ligger längst ner,
    segmentet fälls UPP (över handtaget). ---- */
-.mode-switch { margin: 4px 16px calc(10px + env(safe-area-inset-bottom)); }
+.mode-switch { margin: 8px 16px calc(6px + env(safe-area-inset-bottom)); }
 .mode-handle {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 7px; border-radius: 10px;
