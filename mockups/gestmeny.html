@@ -7,7 +7,7 @@
 <style>
   :root{
     --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
-    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --line:#2c3c63;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63;
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
   body{margin:0;background:#070b15;color:var(--text);
@@ -21,44 +21,58 @@
   .col .desc{color:var(--muted);font-size:.85rem;margin:0 0 12px;min-height:64px}
 
   .stage{position:relative;height:440px;background:var(--bg);border:1px solid #26324f;border-radius:22px;overflow:hidden;touch-action:none}
-  .stage .word{position:absolute;top:24%;left:0;right:0;text-align:center;font-size:1.5rem;font-weight:700}
-  .stage .hint{position:absolute;top:38%;left:0;right:0;text-align:center;color:var(--muted);font-size:.78rem;padding:0 24px}
-  .readout{position:absolute;top:14px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.95rem;min-height:20px}
+  .stage .word{position:absolute;top:26%;left:0;right:0;text-align:center;font-size:1.5rem;font-weight:700}
+  .stage .hint{position:absolute;top:40%;left:0;right:0;text-align:center;color:var(--muted);font-size:.78rem;padding:0 24px}
+  .readout{position:absolute;top:14px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.95rem;min-height:20px;z-index:6}
 
   .trigger{position:absolute;width:60px;height:44px;border-radius:14px;border:1px solid var(--line);
-    background:var(--surface-2);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;z-index:5;
+    background:var(--surface-2);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;z-index:6;
     display:flex;align-items:center;justify-content:center;touch-action:none}
   .trigger.armed{background:var(--accent);color:#fff;border-color:var(--accent)}
-  /* Utlösarens placering per mönster */
   .stage.pos-center .trigger{left:50%;top:56%;transform:translate(-50%,-50%)}
   .stage.pos-bottom  .trigger{left:50%;bottom:18px;transform:translateX(-50%)}
   .stage.pos-none    .trigger{display:none}
 
-  /* Bakgrund som binder ihop valen */
-  .menu-bg{position:absolute;z-index:2;opacity:0;transition:opacity .16s, transform .16s;pointer-events:none;
-    background:radial-gradient(closest-side, rgba(91,140,255,.14), rgba(91,140,255,.05) 70%, transparent);
-    border:1px solid rgba(91,140,255,.22)}
+  /* Mörk scrim bakom menyn så valen lyfts fram */
+  .menu-scrim{position:absolute;inset:0;background:rgba(4,7,13,.55);opacity:0;transition:opacity .16s;pointer-events:none;z-index:2}
+  .menu-open .menu-scrim{opacity:1}
+  /* Ring/halvcirkel som binder ihop valen */
+  .menu-bg{position:absolute;z-index:3;opacity:0;transition:opacity .16s;pointer-events:none;
+    background:radial-gradient(closest-side, rgba(91,140,255,.20), rgba(91,140,255,.06) 72%, transparent);
+    border:1px solid rgba(91,140,255,.34)}
   .menu-open .menu-bg{opacity:1}
   .menu-bg.ring{border-radius:50%}
   .menu-bg.dome{border-radius:999px 999px 0 0;border-bottom:none}
 
-  .opt{position:absolute;padding:8px 11px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
-    color:var(--text);font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:6px;justify-content:center;
-    transform:translate(-50%,-50%) scale(.55);opacity:0;pointer-events:none;
+  /* Kompakta val (ikon över etikett) → ryms jämnt även med 6 */
+  .opt{position:absolute;padding:6px 7px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-size:.66rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;justify-content:center;
+    min-width:52px;transform:translate(-50%,-50%) scale(.55);opacity:0;pointer-events:none;
     transition:transform .15s cubic-bezier(.2,.85,.25,1),opacity .12s,background .1s,border-color .1s;
-    white-space:nowrap;z-index:4;box-shadow:0 8px 20px rgba(0,0,0,.45)}
+    white-space:nowrap;z-index:5;box-shadow:0 8px 20px rgba(0,0,0,.5)}
   .menu-open .opt{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:translate(-50%,-50%) scale(1.14)}
-  .opt .ic{font-size:1rem}
+  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:translate(-50%,-50%) scale(1.16)}
+  .opt .ic{font-size:1rem;line-height:1}
 
   /* Vertikal scrub-lista */
-  .vlist{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;z-index:4;
+  .vlist{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;z-index:5;
     opacity:0;pointer-events:none;transition:opacity .12s}
   .menu-open .vlist{opacity:1}
   .vitem{min-width:158px;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
-    color:var(--text);font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 16px rgba(0,0,0,.4);
+    color:var(--text);font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 16px rgba(0,0,0,.5);
     transition:background .1s,border-color .1s,transform .1s}
   .vitem.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.04)}
+
+  /* D: kort som animerar vid svep */
+  .dcard{position:absolute;left:50%;top:30%;width:160px;height:100px;transform:translate(-50%,-50%);
+    border-radius:16px;background:var(--surface);display:flex;align-items:center;justify-content:center;
+    font-size:1.5rem;font-weight:700;box-shadow:0 10px 26px rgba(0,0,0,.45);transition:transform .3s ease,opacity .3s;z-index:4}
+  .dcard.fly-left {transform:translate(-280px,-50%) rotate(-18deg);opacity:0}
+  .dcard.fly-right{transform:translate(200px,-50%) rotate(18deg);opacity:0}
+  .dcard.fly-up   {transform:translate(-50%,-240px) rotate(-5deg);opacity:0}
+  .dcard.fly-down {transform:translate(-50%,150px) rotate(5deg);opacity:0}
+  .dbadge{position:absolute;top:12%;left:0;right:0;text-align:center;font-weight:800;font-size:1.05rem;opacity:0;transition:opacity .1s;z-index:6}
+  .dbadge.show{opacity:1}
 
   .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.66rem;color:var(--muted);padding:2px 9px;margin-left:6px}
   .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.8rem;color:var(--muted)}
@@ -74,58 +88,60 @@
 </head>
 <body>
 <h1>Gestmenyer – snabb, tydlig, "marking menu"</h1>
-<p class="sub"><b>Håll</b> på knappen → valen dyker upp <b>runt</b> fingret. Fortsätt hålla och <b>glid</b> till ett val, <b>släpp</b> för att välja. Eller <b>tryck</b> en gång → menyn stannar → tryck på ett val (eller på ⋯ igen för att stänga). Glid tillbaka till mitten och släpp = stäng. Prova med musen: håll, dra, släpp.</p>
+<p class="sub"><b>Håll</b> på knappen → valen dyker upp <b>runt/ovanför</b> fingret. Fortsätt hålla och <b>glid</b> till ett val, <b>släpp</b>. Eller <b>tryck</b> → menyn stannar → tryck på ett val (⋯ igen = stäng). Glid till mitten och släpp = stäng.</p>
 
 <div class="grid">
 
   <div class="col">
-    <h2>A · Marking menu (kompass) <span class="tag">riktning = muskelminne</span></h2>
-    <p class="desc">Valen på väderstreck runt knappen, på en ring. Glid <b>vänster = Bildsök</b>, <b>höger = Slå upp</b>. Powerusern flickar åt rätt håll utan att titta.</p>
+    <h2>A · Kompass <span class="tag">skyms av handen – för referens</span></h2>
+    <p class="desc">Val runt hela knappen. Bra riktnings-muskelminne, men (som du såg) skyms de nedre valen av handen. Därför lutar vi åt B/D där allt ligger ovanför.</p>
     <div class="stage pos-center" data-menu="radial" data-layout="compass">
       <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros"><li class="good">Blixtsnabbt när riktningen sitter</li><li class="good">Ringen binder ihop valen visuellt</li><li class="bad">Blir trångt över ~8 val</li></ul>
+    <ul class="pros"><li class="good">Ren riktning</li><li class="bad">Nedre val skyms av handen</li></ul>
   </div>
 
   <div class="col">
-    <h2>B · Solfjäder ovanför fingret <span class="tag">tummen skymmer inte</span></h2>
-    <p class="desc">Valen i en båge <b>ovanför</b> tryckpunkten, på en halvcirkel. Vartannat val ligger lite längre ut så inget krockar. Glid längs bågen, släpp.</p>
+    <h2>B · Solfjäder ovanför fingret <span class="tag">jämnt utspridd båge</span></h2>
+    <p class="desc">Valen jämnt utspridda på en ren halvcirkel ovanför knappen (tummen skymmer inget). <b>Vänster = Bildsök, höger = Slå upp.</b></p>
     <div class="stage pos-bottom" data-menu="radial" data-layout="arc">
       <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros"><li class="good">Etiketter syns (tummen är under)</li><li class="good">Skalar – bågen vidgas</li><li class="bad">Mindre ren riktning än kompassen</li></ul>
+    <ul class="pros"><li class="good">Jämnt utspritt, allt syns</li><li class="good">Skalar – bågen vidgas</li></ul>
   </div>
 
   <div class="col">
     <h2>C · Scrub-lista <span class="tag">skalar till många val</span></h2>
-    <p class="desc">Håll → lista poppar upp ovanför fingret. Glid upp/ner, släpp för att välja. Klarast och skalar till hur många val som helst.</p>
+    <p class="desc">Håll → lista poppar upp ovanför fingret. Glid upp/ner, släpp. Klarast och skalar till hur många val som helst.</p>
     <div class="stage pos-bottom" data-menu="vlist">
       <div class="readout"></div><div class="word">gelato</div>
       <button class="trigger">⋯</button>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros"><li class="good">Tydligast; funkar med många val</li><li class="good">Bekant iOS-gest</li><li class="bad">Inget riktnings-muskelminne</li></ul>
+    <ul class="pros"><li class="good">Tydligast; många val</li><li class="good">Bekant iOS-gest</li></ul>
   </div>
 
   <div class="col">
-    <h2>D · Håll var som helst <span class="tag">ingen knapp att träffa</span></h2>
-    <p class="desc">Bygger på B, men du <b>långtrycker var som helst på kortet</b> – bågen dyker upp vid fingret. Snabbt svep besvarar kortet som vanligt (krockar ej), bara ett <b>håll</b> öppnar menyn.</p>
+    <h2>D · Håll var som helst <span class="tag">svep funkar fortfarande</span></h2>
+    <p class="desc">Långtryck <b>var som helst på kortet</b> → bågen vid fingret. Ett <b>snabbt svep animerar kortet</b> precis som i appen (vänster/höger/upp/ner) – prova, så ser du att svep och långtryck inte krockar.</p>
     <div class="stage pos-none" data-menu="radial" data-layout="arc" data-anywhere="1">
-      <div class="readout"></div><div class="word">gelato</div>
-      <div class="hint">Håll (långtryck) var som helst här → båge vid fingret.<br>Snabbt drag = "svep" (öppnar inte menyn).</div>
+      <div class="readout"></div>
+      <div class="dbadge"></div>
+      <div class="dcard">gelato</div>
+      <div class="hint" style="top:auto;bottom:14px">Svep = besvara kortet · Håll = meny</div>
     </div>
     <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
-    <ul class="pros"><li class="good">Inget litet mål att pricka – håll bara</li><li class="good">Samma riktnings-muskelminne som B</li><li class="bad">Kräver långtryck (kort fördröjning)</li></ul>
+    <ul class="pros"><li class="good">Ingen liten knapp att pricka</li><li class="good">Svep besvarar som vanligt</li></ul>
   </div>
 
 </div>
 
 <div class="tip">
-  <b>Gemensamt:</b> både <b>tryck-tryck</b> och <b>håll-glid-släpp</b> i samma meny. Stäng genom att trycka ⋯ igen, glida till mitten och släppa, eller trycka utanför. Inget dolt – knappen syns och menyn visar alltid vad som finns. Antalet val är inte låst (4/6). D visar hur samma gest kan sitta direkt på kortet för en poweruser.
+  <b>Din slutsats stämmer:</b> knapp i nederkant + val ovanför (B/D) undviker att handen skymmer. B är nu jämnt utspridd på en ren båge, bakgrunden mörkad för att lyfta valen. I D ser du att ett snabbt <b>svep</b> animerar kortet (besvarar), medan ett <b>håll</b> öppnar menyn – de krockar inte.
 </div>
 
 <script>
@@ -134,29 +150,35 @@ const SRC = {
   look:{label:'Slå upp',ic:'🌐'}, img:{label:'Bildsök',ic:'🖼'},
   move:{label:'Flytta',ic:'↔'},  del:{label:'Ta bort',ic:'🗑'},
 };
-// Vänster→höger-logik: img=vänster, look=höger, edit=upp, star=ner
 const ORDER = ['img','look','edit','star','move','del'];
 function items(n){ return ORDER.slice(0,n).map(k=>({key:k,...SRC[k]})); }
 
-// Vinklar (0=upp, medurs). Kompass: fasta väderstreck. Arc: båge ovanför.
 function anglesCompass(n){
   const map4 = {img:270, look:90, edit:0, star:180};
   if (n===4) return items(4).map(it=>map4[it.key]);
-  // 6: jämnt runt, men behåll vänster/höger för img/look
   return [270,90,330,30,210,150].slice(0,n);
 }
-function anglesArc(n){
-  const span = Math.min(170, 40*(n-1)+40), start=-span/2;
-  return Array.from({length:n},(_,i)=> n===1?0 : start + span*i/(n-1));
+// Fler val → vidare båge (dippar lite nedåt på sidorna, aldrig under fingret) så
+// de ryms jämnt utan att överlappa eller klippas i kanten.
+function arcSpan(n){ return n>=6 ? 196 : 156; }
+function anglesArc(n){ const span=arcSpan(n), start=-span/2; return Array.from({length:n},(_,i)=> n===1?0 : start + span*i/(n-1)); }
+function arcRadius(n){
+  if(n<2) return 116;
+  const gap = arcSpan(n)/(n-1);
+  const need = 84 / (2*Math.sin(gap/2*Math.PI/180)); // 84 ≈ bredaste val + luft
+  return Math.max(104, Math.min(142, need));
 }
 
 function radialStage(stage, layout){
   const anywhere = stage.dataset.anywhere === '1';
   const trigger = stage.querySelector('.trigger');
   const readout = stage.querySelector('.readout');
+  const dcard = stage.querySelector('.dcard');
+  const dbadge = stage.querySelector('.dbadge');
   let n=4, its=[], opts=[], open=false, moved=false, hot=-1, tapMode=false, pressing=false, origin=null, holdTimer=null, sx=0, sy=0;
 
-  const bg = document.createElement('div'); bg.className='menu-bg '+(layout==='arc'?'dome':'ring'); stage.appendChild(bg);
+  const scrim=document.createElement('div'); scrim.className='menu-scrim'; stage.appendChild(scrim);
+  const bg=document.createElement('div'); bg.className='menu-bg '+(layout==='arc'?'dome':'ring'); stage.appendChild(bg);
 
   function build(){
     opts.forEach(o=>o.remove()); opts=[]; its=items(n);
@@ -169,18 +191,16 @@ function radialStage(stage, layout){
   }
   function layoutAt(ox,oy){
     origin={x:ox,y:oy};
-    const angs = layout==='arc'?anglesArc(its.length):anglesCompass(its.length);
-    const baseR = layout==='arc' ? 120 : 104;
+    const arc = layout==='arc';
+    const angs = arc?anglesArc(its.length):anglesCompass(its.length);
+    const R = arc ? arcRadius(its.length) : 104;
     opts.forEach((el,i)=>{
-      // vartannat val längre ut i bågen → undviker överlapp
-      const R = layout==='arc' ? baseR + ((i%2)?62:0) : baseR;
       const rad = angs[i]*Math.PI/180;
       el.style.left=(ox + R*Math.sin(rad))+'px';
       el.style.top =(oy - R*Math.cos(rad))+'px';
     });
-    // bakgrund
-    if(layout==='arc'){ const R=baseR+70; bg.style.width=(2*R)+'px'; bg.style.height=R+'px'; bg.style.left=(ox-R)+'px'; bg.style.top=(oy-R)+'px'; }
-    else { const R=baseR+34; bg.style.width=bg.style.height=(2*R)+'px'; bg.style.left=(ox-R)+'px'; bg.style.top=(oy-R)+'px'; }
+    if(arc){ const D=R+64; bg.style.width=(2*D)+'px'; bg.style.height=D+'px'; bg.style.left=(ox-D)+'px'; bg.style.top=(oy-D)+'px'; }
+    else { const D=R+34; bg.style.width=bg.style.height=(2*D)+'px'; bg.style.left=(ox-D)+'px'; bg.style.top=(oy-D)+'px'; }
   }
   function openAt(ox,oy){ layoutAt(ox,oy); stage.classList.add('menu-open'); if(trigger)trigger.classList.add('armed'); open=true; }
   function closeMenu(){ stage.classList.remove('menu-open'); if(trigger)trigger.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
@@ -196,39 +216,50 @@ function radialStage(stage, layout){
   }
   function select(i){ if(i<0||i>=its.length)return; readout.textContent='Valde: '+its[i].label; opts[i].classList.add('hot'); setTimeout(closeMenu,140); }
 
-  function down(clientX,clientY,pid){
-    const sr=stage.getBoundingClientRect(); sx=clientX; sy=clientY; moved=false;
-    if(open){ // andra tryck / tryck ⋯ igen → stäng
-      closeMenu(); return;
-    }
+  function animateSwipe(dx,dy){
+    if(!dcard) return;
+    let cls,label,color;
+    if(Math.abs(dx)>Math.abs(dy)){ if(dx<0){cls='fly-left';label='👈 kan inte';color='var(--fail)';} else {cls='fly-right';label='kan 👉';color='var(--good)';} }
+    else { if(dy<0){cls='fly-up';label='👆 kan bra';color='var(--easy)';} else {cls='fly-down';label='👇 hopplöst';color='var(--fire)';} }
+    dbadge.textContent=label; dbadge.style.color=color; dbadge.classList.add('show');
+    dcard.classList.add(cls);
+    setTimeout(()=>{ dcard.style.transition='none'; dcard.classList.remove(cls); void dcard.offsetWidth; dcard.style.transition=''; dbadge.classList.remove('show'); }, 330);
+  }
+
+  function down(cx,cy){
+    const sr=stage.getBoundingClientRect(); sx=cx; sy=cy; moved=false;
+    if(open){ closeMenu(); return; }
     if(anywhere){
-      holdTimer=setTimeout(()=>{ if(!moved){ openAt(clientX-sr.left, clientY-sr.top); pressing=true; setHot(-1);} }, 300);
+      holdTimer=setTimeout(()=>{ if(!moved){ openAt(cx-sr.left, cy-sr.top); pressing=true; setHot(-1);} }, 300);
     } else {
       const tr=trigger.getBoundingClientRect();
       openAt(tr.left+tr.width/2-sr.left, tr.top+tr.height/2-sr.top); pressing=true; setHot(-1);
     }
   }
-  function move(clientX,clientY){
-    if(Math.hypot(clientX-sx,clientY-sy)>8) moved=true;
-    if(anywhere && !open){ if(moved) clearTimeout(holdTimer); return; } // snabbt drag = svep → ingen meny
+  function move(cx,cy){
+    if(Math.hypot(cx-sx,cy-sy)>8) moved=true;
+    if(anywhere && !open){ if(moved) clearTimeout(holdTimer); return; }
     if(!open||!pressing) return;
     const sr=stage.getBoundingClientRect();
-    setHot(nearest(clientX-sr.left, clientY-sr.top));
+    setHot(nearest(cx-sr.left, cy-sr.top));
   }
-  function up(){
+  function up(cx,cy){
     clearTimeout(holdTimer);
-    if(!open) return;
-    if(pressing && moved){ if(hot>=0) select(hot); else closeMenu(); } // glid: välj, annars (mitten) stäng
-    else if(pressing){ pressing=false; tapMode=true; }                 // rent tapp → låt stå för tapp-val
+    if(!open){
+      // ingen meny öppnades → var det ett svep? (bara D har kort att animera)
+      if(anywhere && moved && Math.hypot(cx-sx,cy-sy)>46) animateSwipe(cx-sx, cy-sy);
+      return;
+    }
+    if(pressing && moved){ if(hot>=0) select(hot); else closeMenu(); }
+    else if(pressing){ pressing=false; tapMode=true; }
   }
 
   const host = anywhere ? stage : trigger;
-  host.addEventListener('pointerdown',(e)=>{ e.preventDefault(); host.setPointerCapture(e.pointerId); down(e.clientX,e.clientY,e.pointerId); });
+  host.addEventListener('pointerdown',(e)=>{ e.preventDefault(); host.setPointerCapture(e.pointerId); down(e.clientX,e.clientY); });
   host.addEventListener('pointermove',(e)=>move(e.clientX,e.clientY));
-  host.addEventListener('pointerup',up);
+  host.addEventListener('pointerup',(e)=>up(e.clientX,e.clientY));
   host.addEventListener('pointercancel',()=>{clearTimeout(holdTimer); if(pressing&&!tapMode)closeMenu();});
-  // tapp utanför (i tapMode) → stäng
-  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word')||e.target.classList.contains('hint'))) closeMenu(); });
+  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word')||e.target.classList.contains('hint')||e.target.classList.contains('menu-scrim'))) closeMenu(); });
 
   const countBtns=stage.parentElement.querySelectorAll('.count button');
   countBtns.forEach(b=>b.addEventListener('click',()=>{countBtns.forEach(x=>x.classList.toggle('on',x===b)); n=parseInt(b.dataset.n,10); closeMenu(); build();}));
@@ -238,6 +269,7 @@ function radialStage(stage, layout){
 function vlistStage(stage){
   const trigger=stage.querySelector('.trigger'), readout=stage.querySelector('.readout');
   let n=4,its=[],vitems=[],open=false,moved=false,hot=-1,tapMode=false,pressing=false,sy=0;
+  const scrim=document.createElement('div'); scrim.className='menu-scrim'; stage.appendChild(scrim);
   const wrap=document.createElement('div'); wrap.className='vlist'; stage.appendChild(wrap);
   function build(){ wrap.innerHTML=''; its=items(n); vitems=its.map((it,i)=>{const el=document.createElement('div');el.className='vitem';el.innerHTML=`<span>${it.ic}</span> ${it.label}`;el.addEventListener('click',(e)=>{e.stopPropagation(); if(tapMode)select(i);}); wrap.appendChild(el); return el;}); }
   function place(){ const tr=trigger.getBoundingClientRect(), sr=stage.getBoundingClientRect(); wrap.style.bottom=(sr.bottom-tr.top+12)+'px'; }
@@ -249,7 +281,7 @@ function vlistStage(stage){
   trigger.addEventListener('pointerdown',(e)=>{e.preventDefault(); trigger.setPointerCapture(e.pointerId); if(open){closeMenu();return;} moved=false; openMenu(); pressing=true; setHot(-1); sy=e.clientY;});
   trigger.addEventListener('pointermove',(e)=>{ if(!open||!pressing)return; if(Math.abs(e.clientY-sy)>8)moved=true; setHot(nearestY(e.clientY)); });
   trigger.addEventListener('pointerup',()=>{ if(!open)return; if(pressing&&moved){ if(hot>=0)select(hot); else closeMenu(); } else if(pressing){pressing=false; tapMode=true;} });
-  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word'))) closeMenu(); });
+  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&(e.target===stage||e.target.classList.contains('word')||e.target.classList.contains('menu-scrim'))) closeMenu(); });
   const countBtns=stage.parentElement.querySelectorAll('.count button');
   countBtns.forEach(b=>b.addEventListener('click',()=>{countBtns.forEach(x=>x.classList.toggle('on',x===b)); n=parseInt(b.dataset.n,10); closeMenu(); build();}));
   build();
