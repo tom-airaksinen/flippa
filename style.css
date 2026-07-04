@@ -747,7 +747,17 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-touch-callout: none; /* långtryck ska inte visa iOS-callout */
   -webkit-user-select: none; user-select: none;
   touch-action: manipulation;
+  transition: opacity .12s ease;
 }
+/* Långtrycket har nått tröskeln → visa "släpp för bildsök"-markör (ersätter
+   vibration, som iOS Safari inte stöder). */
+#globe-btn.arming {
+  opacity: 1;
+  background: rgba(20, 22, 30, .6);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+#globe-btn.arming::after { content: "🖼"; font-size: 22px; line-height: 1; }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
 /* Utforska-arket (Wikimedia: betydelse + bilder) */

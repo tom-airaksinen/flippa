@@ -2341,28 +2341,31 @@ function updateCardMenuBtn() {
 // inget öppnas förrän man släpper (click), så öppningen sker alltid i gesten.
 const GLOBE_HOLD_MS = 450;
 let globeDownT = 0, globeHoldTimer = null, globeImgOpened = false;
+const disarmGlobe = () => { clearTimeout(globeHoldTimer); globeBtn.classList.remove("arming"); };
 globeBtn.addEventListener("pointerdown", (e) => {
   e.stopPropagation();
   globeDownT = Date.now();
   globeImgOpened = false;
   clearTimeout(globeHoldTimer);
-  // När långtrycket når tröskeln: puffa haptiskt OCH försök öppna bildsök direkt –
-  // så den triggas medan man håller, inte först vid släpp. Lyckas window.open (ej
-  // popup-blockad) markerar vi det så släpp-klicket inte öppnar igen. Blir den
-  // blockad (kan ske på iOS från en timer) faller vi tillbaka på att öppna vid släpp.
+  globeBtn.classList.remove("arming");
+  // Vid tröskeln: visa en visuell "släpp för bildsök"-markör (iOS Safari saknar
+  // Vibration-API), puffa haptiskt där det stöds, och FÖRSÖK öppna direkt. På iOS
+  // popup-blockas timer-öppningen → då öppnas bildsöket i stället vid släpp (click).
   globeHoldTimer = setTimeout(() => {
     if (!session || !session.current) return;
+    globeBtn.classList.add("arming");
     if (navigator.vibrate) navigator.vibrate(15);
     globeImgOpened = !!googleImageSearch(session.current.front);
   }, GLOBE_HOLD_MS);
 });
 ["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
-  globeBtn.addEventListener(ev, () => clearTimeout(globeHoldTimer)));
+  globeBtn.addEventListener(ev, disarmGlobe));
 globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
+  globeBtn.classList.remove("arming");
   if (!session || !session.current) return;
   const held = Date.now() - globeDownT >= GLOBE_HOLD_MS;
-  if (held) { if (!globeImgOpened) googleImageSearch(session.current.front); } // ej öppnad på tröskeln (blockerad) → öppna nu
+  if (held) { if (!globeImgOpened) googleImageSearch(session.current.front); } // ej öppnad på tröskeln (blockerad) → öppna nu vid släpp
   else googleAiExplore(session.current.front);
   globeImgOpened = false;
 });
@@ -3792,27 +3795,22 @@ let hfMicGranted = false;
 
 async function startHandsfree() {
   if (!session || !session.current) return;
-  // Be om mikrofon DIREKT (inom klick-gesten), INNAN något läses upp. Annars dök
-  // behörighetsdialogen upp först när vi började lyssna – appen sa "lyssnar…" fast
-  // dialogen blockade, och man trodde att den hörde en. Aktivera knappen först när
-  // åtkomst är klar, så inget låtsas lyssna under dialogen.
+  // iOS låser talsyntesen tills den körts i en användargest. Lås upp TTS synkront HÄR,
+  // i tryck-gesten, med ett tyst uttalande (görs alltid, även om getUserMedia saknas).
+  if ("speechSynthesis" in window) {
+    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
+  }
+  // Förhandsbevilja mikrofonen om det går (vanlig Safari/Android). Men GE INTE UPP om
+  // det failar: i en hemskärms-PWA på iOS är getUserMedia ofta begränsad medan
+  // taligenkänningen ändå funkar. Låt då SpeechRecognition begära mikrofonen själv –
+  // dess onerror visar "Mikrofon ej tillåten" om den verkligen nekas.
   if (!hfMicGranted && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-    // iOS låser talsyntesen tills den körts i en användargest. getUserMedia nedan är
-    // async, så EFTER await är vi utanför gesten → första ordet lästes inte upp (men
-    // funkade gång 2, då åtkomst redan fanns och ingen await behövdes). Lås därför upp
-    // TTS synkront HÄR, i tryck-gesten, med ett tyst uttalande innan vi väntar.
-    if ("speechSynthesis" in window) {
-      try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
-    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop()); // behöver inte strömmen – taligenkänningen sköter sin egen
       hfMicGranted = true;
-    } catch (_) {
-      flash("Mikrofonåtkomst nekades – handsfree behöver mikrofonen.", 4000);
-      return;
-    }
-    if (!session || !session.current) return; // sessionen kan ha hunnit avslutas
+    } catch (_) { /* fortsätt ändå – SpeechRecognition sköter behörigheten */ }
+    if (!session || !session.current) return; // sessionen kan ha hunnit avslutas under await
   }
   handsfreeActive = true;
   hfBtn.classList.add("active");
@@ -4006,7 +4004,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v192";
+const APP_VERSION = "v193";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
