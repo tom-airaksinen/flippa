@@ -2301,14 +2301,17 @@ const fanScrim = document.createElement("div"); fanScrim.className = "fan-scrim"
 // radiell gradient-glow som fyllning (som i prototypen), inte en platt enfärg.
 const SVGNS = "http://www.w3.org/2000/svg";
 const fanBg = document.createElementNS(SVGNS, "svg"); fanBg.setAttribute("class", "fan-bg");
+// Centrerad ÄKTA cirkel (userSpaceOnUse, cx/cy/r sätts i placeFan) som prototypen –
+// mjuk glow mitt i kupolen, inte en bred ellips förankrad i botten.
 fanBg.innerHTML =
-  '<defs><radialGradient id="fan-grad" cx="50%" cy="100%" r="88%">' +
-  '<stop offset="0%" stop-color="#5b8cff" stop-opacity="0.34"/>' +
-  '<stop offset="58%" stop-color="#5b8cff" stop-opacity="0.11"/>' +
+  '<defs><radialGradient id="fan-grad" gradientUnits="userSpaceOnUse">' +
+  '<stop offset="0%" stop-color="#5b8cff" stop-opacity="0.20"/>' +
+  '<stop offset="72%" stop-color="#5b8cff" stop-opacity="0.06"/>' +
   '<stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/>' +
   '</radialGradient></defs>' +
   '<path fill="url(#fan-grad)" stroke="rgba(91,140,255,0.34)" stroke-width="1"/>';
 const fanArc = fanBg.querySelector("path");
+const fanGrad = fanBg.querySelector("radialGradient");
 cardStack.appendChild(fanBg);
 // Ordning vänster→höger i bågen: Bildsök (vänster) … Slå upp (höger). Inga dubbletter
 // av Lyssna/Ledtråd – de bor i den kontextuella knappen bredvid ⋯.
@@ -2344,6 +2347,8 @@ function placeFan(){
   fanBg.style.width = (2*D)+"px"; fanBg.style.height = D+"px"; fanBg.style.left = (fanOrigin.x-D)+"px"; fanBg.style.top = (fanOrigin.y-D)+"px";
   fanBg.setAttribute("viewBox", `0 0 ${2*D} ${D}`);
   fanArc.setAttribute("d", `M0 ${D} A ${D} ${D} 0 0 1 ${2*D} ${D}`); // öppen båge → ingen bottenlinje
+  // Gradienten: centrerad cirkel mitt i kupolen (som prototypens closest-side).
+  fanGrad.setAttribute("cx", D); fanGrad.setAttribute("cy", D * 0.5); fanGrad.setAttribute("r", D * 0.5);
 }
 function openFan(){
   if(!session || !session.current) return;
@@ -2361,16 +2366,18 @@ function nearestFan(px,py){
 function selectFan(i, viaTap){
   if(i<0 || i>=FAN_ITEMS.length) return;
   const key = FAN_ITEMS[i].key, c = session && session.current;
-  const isWeb = (key==="lookup" || key==="image");
-  // iOS öppnar bara webbvyer (Slå upp/Bildsök) från ett TAPP, aldrig från ett glid
-  // (svep). Vid glid till dem: håll menyn öppen med valet markerat → ett tapp öppnar.
-  if(isWeb && !viaTap){ setFanHot(i); fanTapMode = true; fanPressing = false; return; }
+  // Bildsök (C1): navigera SAMMA flik via location.href → funkar även från ett glid
+  // på iOS (till skillnad från window.open, som bara får öppna ny flik från ett tapp).
+  // Lämnar appen tillfälligt; bakåt tar dig tillbaka.
+  if(key==="image"){ setFanHot(-1); if(c) location.href = googleImageSearchUrl(c.front); return; }
+  // Slå upp: window.open (ny flik) kan bara öppnas från ett TAPP på iOS → glid
+  // markerar valet, ett tapp öppnar det.
+  if(key==="lookup" && !viaTap){ setFanHot(i); fanTapMode = true; fanPressing = false; return; }
   setFanHot(-1);
   if(c){
     if(key==="edit") editCurrentCard();
     else if(key==="star"){ const on = toggleFav(c); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
     else if(key==="lookup") googleAiExplore(c.front);
-    else if(key==="image") googleImageSearch(c.front);
   }
   closeFan();
 }
@@ -4077,7 +4084,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v204";
+const APP_VERSION = "v205";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
