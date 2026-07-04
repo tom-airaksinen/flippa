@@ -2340,13 +2340,21 @@ function updateCardMenuBtn() {
 // kortet – och en fördröjd window.open popup-blockas på iOS. Långtryck löser det:
 // inget öppnas förrän man släpper (click), så öppningen sker alltid i gesten.
 const GLOBE_HOLD_MS = 450;
-let globeDownT = 0, globeHoldTimer = null;
+let globeDownT = 0, globeHoldTimer = null, globeImgOpened = false;
 globeBtn.addEventListener("pointerdown", (e) => {
   e.stopPropagation();
   globeDownT = Date.now();
+  globeImgOpened = false;
   clearTimeout(globeHoldTimer);
-  // Haptisk puff när långtrycket registrerats → "släpp för bildsök".
-  globeHoldTimer = setTimeout(() => { if (navigator.vibrate) navigator.vibrate(15); }, GLOBE_HOLD_MS);
+  // När långtrycket når tröskeln: puffa haptiskt OCH försök öppna bildsök direkt –
+  // så den triggas medan man håller, inte först vid släpp. Lyckas window.open (ej
+  // popup-blockad) markerar vi det så släpp-klicket inte öppnar igen. Blir den
+  // blockad (kan ske på iOS från en timer) faller vi tillbaka på att öppna vid släpp.
+  globeHoldTimer = setTimeout(() => {
+    if (!session || !session.current) return;
+    if (navigator.vibrate) navigator.vibrate(15);
+    globeImgOpened = !!googleImageSearch(session.current.front);
+  }, GLOBE_HOLD_MS);
 });
 ["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
   globeBtn.addEventListener(ev, () => clearTimeout(globeHoldTimer)));
@@ -2354,8 +2362,9 @@ globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   if (!session || !session.current) return;
   const held = Date.now() - globeDownT >= GLOBE_HOLD_MS;
-  if (held) googleImageSearch(session.current.front);
+  if (held) { if (!globeImgOpened) googleImageSearch(session.current.front); } // ej öppnad på tröskeln (blockerad) → öppna nu
   else googleAiExplore(session.current.front);
+  globeImgOpened = false;
 });
 cardMenuBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 let cardMenuLastTap = 0;
@@ -3997,7 +4006,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v191";
+const APP_VERSION = "v192";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
