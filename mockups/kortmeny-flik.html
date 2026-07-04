@@ -45,7 +45,9 @@
     font-size:1.3rem;font-weight:700;padding-bottom:6px}
   .tab.grip{width:120px;height:26px;border-radius:120px 120px 0 0;background:rgba(91,140,255,.10);border:1px solid rgba(91,140,255,.34);border-bottom:none}
   .tab.grip::before{content:"";width:34px;height:4px;border-radius:3px;background:var(--muted);margin-top:6px}
-  .tab.armed.valj,.tab.armed.dots{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab.clean{width:88px;height:28px;border-radius:120px 120px 0 0;background:var(--surface-2);border:1px solid var(--line);border-bottom:none;
+    font-size:1.3rem;font-weight:700;padding-bottom:6px}
+  .tab.armed.valj,.tab.armed.dots,.tab.armed.clean{background:var(--accent);color:#fff;border-color:var(--accent)}
   .tab.armed.grip{background:rgba(91,140,255,.30)}
 
   /* Fjädermeny (marking menu) */
@@ -61,6 +63,19 @@
   .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 0 3px rgba(91,140,255,.45),0 8px 20px rgba(0,0,0,.5)}
   .opt .ic{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
   .opt .ic svg{display:block}
+  /* D · ramfria val – signalera markering med storlek + accentfärg i stället för ruta */
+  .opt.clean{background:none;border:none;box-shadow:none;padding:2px;min-width:0;color:var(--muted);
+    transition:transform .14s ease,color .14s ease,opacity .13s ease}
+  .opt.clean .ic{transition:transform .14s ease,filter .14s ease}
+  .opt.clean.hot{background:none;border:none;box-shadow:none;color:var(--accent);font-weight:800;
+    transform:translate(-50%,-50%) scale(1.28);text-shadow:0 0 12px rgba(91,140,255,.45)}
+  .opt.clean.hot .ic{filter:drop-shadow(0 0 7px rgba(91,140,255,.7))}
+
+  /* När menyn är uppe: tona ner allt under kortet så fokus hamnar på menyn */
+  .screen.focus-menu .autospeak,
+  .screen.focus-menu .footer,
+  .screen.focus-menu .mode{opacity:0;pointer-events:none;transition:opacity .2s ease}
+  .autospeak,.footer,.mode{transition:opacity .2s ease}
 
   /* Realistisk nederkant */
   .autospeak{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;color:var(--text);font-size:.9rem}
@@ -104,10 +119,16 @@
     <div class="phone"><div class="screen" data-tab="grip"></div></div>
     <ul class="pros"><li class="good">Inbjuder till drag-gesten</li><li class="good">Ren, modern look</li></ul>
   </div>
+  <div class="col">
+    <h2>D · "…" ramfri <span class="tag">renast</span></h2>
+    <p class="desc">Som B, men valen har inga rutor. Det markerade valet <b>växer och blir accentfärgat</b> i stället – ikonen får ett mjukt sken.</p>
+    <div class="phone"><div class="screen" data-tab="clean"></div></div>
+    <ul class="pros"><li class="good">Renast, minst visuellt brus</li><li class="good">Tydlig markering utan ruta</li></ul>
+  </div>
 </div>
 
 <div class="tip">
-  <b>Gemensamt:</b> håll på fliken → fjädern fälls upp över kortet (Bildsök vänster, Slå upp höger, Redigera/Stjärna upp), glid + släpp eller tapp-tapp. 🔊 (uttala) uppe till höger, 💡 (ledtråd) nere till höger – i hörnen som förr. Allt annat (Automatisk uppläsning, svep-tips, Läge-knapp) är med för att ge rätt helhetskänsla.
+  <b>Gemensamt:</b> håll på fliken → fjädern fälls upp över kortet (Bildsök vänster, Slå upp höger, Redigera/Stjärna upp), glid + släpp eller tapp-tapp. 🔊 (uttala) uppe till höger, 💡 (ledtråd) nere till höger – i hörnen som förr. <b>När menyn är uppe tonas allt under kortet (Automatisk uppläsning, svep-tips, Läge-knapp) ned</b> så fokus hamnar på menyn. D visar det ramfria alternativet där markering sker med storlek + färg.
 </div>
 
 <script>
@@ -118,7 +139,7 @@ const SPAN=156;
 const angles=n=>{const s=-SPAN/2;return Array.from({length:n},(_,i)=>n===1?0:s+SPAN*i/(n-1));};
 const radius=n=>{if(n<2)return 112;const g=SPAN/(n-1);return Math.max(104,Math.min(140,84/(2*Math.sin(g/2*Math.PI/180))));};
 
-const TAB_LABEL={valj:'VÄLJ',dots:'⋯',grip:''};
+const TAB_LABEL={valj:'VÄLJ',dots:'⋯',grip:'',clean:'⋯'};
 
 function buildScreen(screen){
   const variant=screen.dataset.tab;
@@ -150,7 +171,7 @@ function buildScreen(screen){
   const bg=document.createElementNS(NS,'svg'); bg.setAttribute('class','bg');
   bg.innerHTML='<defs><radialGradient id="g-'+variant+'" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#5b8cff" stop-opacity=".20"/><stop offset="72%" stop-color="#5b8cff" stop-opacity=".06"/><stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/></radialGradient></defs><path fill="url(#g-'+variant+')" stroke="rgba(91,140,255,.34)" stroke-width="1"/>';
   const arc=bg.querySelector('path'); card.appendChild(bg);
-  const opts=ITEMS.map((it,i)=>{const el=document.createElement('div');el.className='opt';el.dataset.i=i;
+  const opts=ITEMS.map((it,i)=>{const el=document.createElement('div');el.className='opt'+(variant==='clean'?' clean':'');el.dataset.i=i;
     el.innerHTML=`<span class="ic">${it.ic}</span>${it.label}`; el.addEventListener('click',(e)=>{e.stopPropagation(); if(tapMode)select(i);}); card.appendChild(el); return el;});
 
   let open=false,moved=false,hot=-1,tapMode=false,pressing=false,origin=null,sx=0,sy=0,relGuard=false;
@@ -162,8 +183,8 @@ function buildScreen(screen){
     const D=R+52; bg.style.width=(2*D)+'px'; bg.style.height=D+'px'; bg.style.left=(origin.x-D)+'px'; bg.style.top=(origin.y-D)+'px';
     bg.setAttribute('viewBox',`0 0 ${2*D} ${D}`); arc.setAttribute('d',`M0 ${D} A ${D} ${D} 0 0 1 ${2*D} ${D}`);
   }
-  function openMenu(){ place(); card.classList.add('menu-open'); tab.classList.add('armed'); open=true; }
-  function closeMenu(){ card.classList.remove('menu-open'); tab.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
+  function openMenu(){ place(); card.classList.add('menu-open'); screen.classList.add('focus-menu'); tab.classList.add('armed'); open=true; }
+  function closeMenu(){ card.classList.remove('menu-open'); screen.classList.remove('focus-menu'); tab.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
   function setHot(i){ hot=i; opts.forEach((el,k)=>el.classList.toggle('hot',k===i)); }
   function nearest(px,py){ const dx=px-origin.x,dy=py-origin.y; if(Math.hypot(dx,dy)<34)return -1;
     let ang=Math.atan2(dx,-dy)*180/Math.PI; if(ang<0)ang+=360; const angs=angles(ITEMS.length); let best=-1,bd=999;
