@@ -1730,9 +1730,16 @@ function finishSession() {
   lastSessionWasHF = wasHF;
   session = null;
 
-  // Hint om att man kan ta tillbaka sista svaret (skaka alltid; röst om handsfree).
+  // Hint om röst-/skakkommandon (skaka-ångra alltid; röst om handsfree).
   const undoHint = $("congrats-undo-hint");
-  if (undoStack.length) {
+  const canUndo = undoStack.length > 0;
+  if (wasHF && remaining > 0) {
+    // Handsfree med "Fortsätt": lyft fram röstkommandot (det var det som saknades).
+    undoHint.textContent = canUndo
+      ? 'Säg "fortsätt" för fler – eller "ångra" om sista blev fel.'
+      : 'Säg "fortsätt" för fler.';
+    undoHint.classList.remove("hidden");
+  } else if (canUndo) {
     undoHint.textContent = wasHF
       ? 'Fel på sista? Säg "ångra" eller skaka telefonen.'
       : "Fel på sista? Skaka telefonen för att ta tillbaka.";
@@ -1782,11 +1789,14 @@ function undoFromCongrats() {
   return undoLastAnswer();
 }
 
-// Liten röstlyssnare på Klar-skärmen (handsfree): bara kommandot "ångra".
+// Liten röstlyssnare på Klar-skärmen (handsfree): kommandona "ångra" och "fortsätt".
 let congratsRec = null, congratsListening = false, congratsListenTimer = null;
 function startCongratsListen() {
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR || !undoStack.length) return;
+  const contBtn = $("congrats-continue");
+  const canContinue = !contBtn.classList.contains("hidden");
+  // Lyssna om det finns något att göra med rösten: ångra sista ELLER fortsätta passet.
+  if (!SR || (!undoStack.length && !canContinue)) return;
   congratsListening = true;
   clearTimeout(congratsListenTimer);
   congratsListenTimer = setTimeout(stopCongratsListen, 25000); // håll inte mikrofonen för evigt
@@ -1800,6 +1810,13 @@ function startCongratsListen() {
         if (!e.results[i].isFinal) continue;
         for (let j = 0; j < e.results[i].length; j++) {
           const t = e.results[i][j].transcript.toLowerCase();
+          // "fortsätt" → kör vidare med nästa omgång (samma som knappen). Stoppa
+          // lyssnaren först så mikrofonen är fri när handsfree återupptas.
+          if ((t.includes("fortsätt") || t.includes("fortsatt")) && !contBtn.classList.contains("hidden")) {
+            stopCongratsListen();
+            contBtn.click();
+            return;
+          }
           if (t.includes("ångra") || t.includes("ongra")) { undoFromCongrats(); return; }
         }
       }
@@ -3977,7 +3994,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v189";
+const APP_VERSION = "v190";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
