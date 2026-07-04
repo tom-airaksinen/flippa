@@ -937,7 +937,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* ---- Handsfree ---- */
 /* ---- Lägesväxel: dolt handtag → Svep | Handsfree (beta). Ligger längst ner,
    segmentet fälls UPP (över handtaget). ---- */
-.mode-switch { margin: 8px 16px calc(6px + env(safe-area-inset-bottom)); }
+.mode-switch { margin: 18px 16px calc(6px + env(safe-area-inset-bottom)); }
 .mode-handle {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 7px; border-radius: 10px;

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – prototyp: gestmenyer (marking menu)</title>
+<style>
+  :root{
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --line:#2c3c63;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:26px 14px 80px;
+    -webkit-user-select:none;user-select:none;touch-action:manipulation}
+  h1{font-size:1.35rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 26px;max-width:680px;font-size:.92rem}
+  .grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
+  .col{width:340px}
+  .col h2{font-size:1.05rem;margin:0 0 2px}
+  .col .desc{color:var(--muted);font-size:.85rem;margin:0 0 12px;min-height:66px}
+
+  .stage{position:relative;height:430px;background:var(--bg);border:1px solid #26324f;border-radius:22px;overflow:hidden;
+    display:flex;align-items:flex-end;justify-content:center}
+  .stage .word{position:absolute;top:44%;left:0;right:0;text-align:center;transform:translateY(-50%);font-size:1.6rem;font-weight:700}
+  .stage .hint{position:absolute;top:14px;left:0;right:0;text-align:center;color:var(--muted);font-size:.78rem;padding:0 16px}
+  .readout{position:absolute;top:44px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.95rem;min-height:20px}
+
+  .trigger{position:relative;margin-bottom:20px;width:64px;height:44px;border-radius:14px;border:1px solid var(--line);
+    background:var(--surface-2);color:var(--text);font-size:1.3rem;font-weight:700;cursor:pointer;z-index:2;
+    display:flex;align-items:center;justify-content:center;touch-action:none}
+  .trigger.armed{background:var(--accent);color:#fff}
+
+  /* Radiella/arc-optioner */
+  .opt{position:absolute;min-width:96px;padding:9px 12px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-size:.86rem;font-weight:600;display:flex;align-items:center;gap:7px;justify-content:center;
+    transform:translate(-50%,-50%) scale(.6);opacity:0;pointer-events:none;transition:transform .14s cubic-bezier(.2,.8,.2,1),opacity .12s,background .1s,border-color .1s;
+    white-space:nowrap;z-index:3;box-shadow:0 8px 20px rgba(0,0,0,.4)}
+  .menu-open .opt{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:translate(-50%,-50%) scale(1.12)}
+  .opt .ic{font-size:1rem}
+  .opt.a-edit .ic,.opt.a-star .ic{filter:none}
+
+  /* Vertikal scrub-lista */
+  .vlist{position:absolute;left:50%;transform:translateX(-50%);display:flex;flex-direction:column-reverse;gap:6px;z-index:3;
+    opacity:0;pointer-events:none;transition:opacity .12s}
+  .menu-open .vlist{opacity:1}
+  .vitem{min-width:150px;padding:11px 14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);
+    color:var(--text);font-size:.9rem;font-weight:600;display:flex;align-items:center;gap:9px;box-shadow:0 6px 16px rgba(0,0,0,.4);
+    transition:background .1s,border-color .1s,transform .1s}
+  .vitem.hot{background:var(--accent);border-color:var(--accent);color:#fff;transform:scale(1.04)}
+
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.68rem;color:var(--muted);padding:2px 9px;margin-left:6px}
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.8rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:16px;position:relative}
+  .pros li.good::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
+  .pros li.bad::before{content:"–";position:absolute;left:0;color:var(--fail);font-weight:700}
+  .howto{font-size:.78rem;color:var(--muted);margin:8px 2px 0}
+  .howto b{color:var(--text)}
+  .count{display:flex;gap:6px;justify-content:center;margin:10px 0 0}
+  .count button{background:var(--surface);border:1px solid var(--line);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.78rem;cursor:pointer}
+  .count button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .tip{max-width:700px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Gestmenyer – snabb, tydlig, "marking menu"</h1>
+<p class="sub">Ersätter ⋯-menyn. <b>Långtryck</b> på knappen → valen dyker upp <b>runt</b> fingret (inte under). Fortsätt hålla och <b>glid</b> till ett val, <b>släpp</b> för att välja. Eller <b>tryck</b> en gång → menyn stannar → tryck på ett val. Prova med musen: håll nere, dra, släpp.</p>
+
+<div class="grid">
+
+  <!-- A: Marking menu (kompass) -->
+  <div class="col">
+    <h2>A · Marking menu (kompass) <span class="tag">riktning = muskelminne</span></h2>
+    <p class="desc">Valen på fasta väderstreck runt knappen. Glid <b>vänster = Bildsök</b>, <b>höger = Slå upp</b>, upp/ner för de andra. Powerusern lär sig riktningen och kan "flicka" åt rätt håll utan att ens titta.</p>
+    <div class="stage" data-menu="radial" data-layout="compass">
+      <div class="word">gelato</div>
+      <div class="readout"></div>
+      <button class="trigger">⋯</button>
+    </div>
+    <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
+    <ul class="pros">
+      <li class="good">Blixtsnabbt när riktningen sitter (flick + släpp)</li>
+      <li class="good">Self-revealing: håll kvar så visas allt</li>
+      <li class="bad">Blir trångt med väldigt många val (max ~8)</li>
+    </ul>
+  </div>
+
+  <!-- B: Arc-solfjäder ovanför fingret -->
+  <div class="col">
+    <h2>B · Solfjäder ovanför fingret <span class="tag">ingen skymd av tummen</span></h2>
+    <p class="desc">Valen slår ut i en båge <b>ovanför</b> tryckpunkten, så tummen inte skymmer dem (bra när knappen sitter i nederkant). Glid längs bågen, släpp på valet.</p>
+    <div class="stage" data-menu="radial" data-layout="arc">
+      <div class="word">gelato</div>
+      <div class="readout"></div>
+      <button class="trigger">⋯</button>
+    </div>
+    <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
+    <ul class="pros">
+      <li class="good">Etiketter syns alltid (tummen är under)</li>
+      <li class="good">Skalar snyggt – bågen bara vidgas</li>
+      <li class="bad">Mindre "ren" riktning än kompassen</li>
+    </ul>
+  </div>
+
+  <!-- C: Vertikal scrub-lista -->
+  <div class="col">
+    <h2>C · Scrub-lista <span class="tag">skalar till många val</span></h2>
+    <p class="desc">Långtryck → en lista poppar upp ovanför fingret. Glid upp/ner för att markera, släpp för att välja. Mest lik iOS långtrycks-meny; klarast och skalar till hur många val som helst (scrollbar).</p>
+    <div class="stage" data-menu="vlist">
+      <div class="word">gelato</div>
+      <div class="readout"></div>
+      <button class="trigger">⋯</button>
+    </div>
+    <div class="count"><button data-n="4" class="on">4 val</button><button data-n="6">6 val</button></div>
+    <ul class="pros">
+      <li class="good">Tydligast; funkar med många val</li>
+      <li class="good">Bekant gest (iOS-känsla)</li>
+      <li class="bad">Inget riktnings-muskelminne på samma sätt</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Gemensamt för alla tre:</b> både <b>tryck-tryck</b> (öppna, sen välja) och <b>tryck-håll-glid-släpp</b> fungerar samma meny – nybörjaren tittar och pekar, powerusern gör en snabb gest. Inget osynligt: knappen syns, och menyn visar alltid vad som finns. Antalet val är inte låst (testa 4 vs 6-knappen). En idé för framtiden: samma riktnings-gest funkar även direkt på <b>kortet</b> (utan att träffa en liten knapp) när man lärt sig den.
+</div>
+
+<script>
+const ITEMS4 = [
+  { key:'edit',  label:'Redigera',  ic:'✎' },
+  { key:'star',  label:'Stjärnmärk',ic:'☆' },
+  { key:'look',  label:'Slå upp',   ic:'🌐' },
+  { key:'img',   label:'Bildsök',   ic:'🖼' },
+];
+const ITEMS6 = ITEMS4.concat([
+  { key:'move', label:'Flytta',  ic:'↔' },
+  { key:'del',  label:'Ta bort', ic:'🗑' },
+]);
+// Ordning så att Bildsök hamnar vänster och Slå upp höger i kompass/arc
+const COMPASS_ORDER = ['img','look','edit','star','move','del']; // vänster, höger, upp, ner, ...
+
+function angleForCompass(i, n) {
+  // 0=upp, 90=höger, 180=ner, 270=vänster. Lägg ut jämnt men börja så att
+  // index 0 (Bildsök) = vänster (270), index 1 (Slå upp) = höger (90).
+  const preferred = [270, 90, 0, 180, 315, 45, 135, 225];
+  return preferred[i] ?? (i * 360 / n);
+}
+function angleForArc(i, n) {
+  // Båge ovanför: sprid mellan -78° och +78° (från upp)
+  if (n === 1) return 0;
+  const span = 156, start = -78;
+  return start + span * (i / (n - 1));
+}
+
+function radialStage(stage, layout) {
+  const trigger = stage.querySelector('.trigger');
+  const readout = stage.querySelector('.readout');
+  let n = 4, items = ITEMS4, opts = [], open = false, origin = null, moved = false, hot = -1, tapMode = false;
+
+  function ordered() {
+    const src = (n === 4 ? ITEMS4 : ITEMS6);
+    return COMPASS_ORDER.map(k => src.find(x => x.key === k)).filter(Boolean);
+  }
+  function build() {
+    opts.forEach(o => o.remove());
+    opts = [];
+    items = ordered();
+    items.forEach((it, i) => {
+      const el = document.createElement('div');
+      el.className = 'opt a-' + it.key;
+      el.innerHTML = `<span class="ic">${it.ic}</span>${it.label}`;
+      el.dataset.i = i;
+      el.addEventListener('click', (e) => { e.stopPropagation(); select(i); });
+      stage.appendChild(el);
+      opts.push(el);
+    });
+  }
+  function place() {
+    const tr = trigger.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    origin = { x: tr.left + tr.width/2 - sr.left, y: tr.top + tr.height/2 - sr.top };
+    const R = layout === 'arc' ? 116 : 104;
+    opts.forEach((el, i) => {
+      const deg = layout === 'arc' ? angleForArc(i, items.length) : angleForCompass(i, items.length);
+      const rad = deg * Math.PI/180;
+      const x = origin.x + R * Math.sin(rad);
+      const y = origin.y - R * Math.cos(rad);
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+    });
+  }
+  function openMenu() { place(); stage.classList.add('menu-open'); trigger.classList.add('armed'); open = true; }
+  function closeMenu() { stage.classList.remove('menu-open'); trigger.classList.remove('armed'); open = false; tapMode = false; setHot(-1); }
+  function setHot(i) { hot = i; opts.forEach((el, k) => el.classList.toggle('hot', k === i)); }
+  function nearest(px, py) {
+    const dx = px - origin.x, dy = py - origin.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 34) return -1; // nära mitten = inget val
+    let ang = Math.atan2(dx, -dy) * 180/Math.PI; if (ang < 0) ang += 360;
+    let best = -1, bestd = 999;
+    items.forEach((it, i) => {
+      let a = layout === 'arc' ? angleForArc(i, items.length) : angleForCompass(i, items.length);
+      if (a < 0) a += 360;
+      let d = Math.abs(((ang - a + 540) % 360) - 180);
+      if (d < bestd) { bestd = d; best = i; }
+    });
+    return bestd < (layout === 'arc' ? 26 : 46) ? best : -1;
+  }
+  function select(i) {
+    if (i < 0 || i >= items.length) return;
+    readout.textContent = 'Valde: ' + items[i].label;
+    opts[i].classList.add('hot');
+    setTimeout(closeMenu, 130);
+  }
+
+  trigger.addEventListener('pointerdown', (e) => {
+    e.preventDefault(); trigger.setPointerCapture(e.pointerId);
+    moved = false; openMenu(); setHot(-1);
+    origin = origin; // set in place()
+    trigger._sx = e.clientX; trigger._sy = e.clientY;
+  });
+  trigger.addEventListener('pointermove', (e) => {
+    if (!open) return;
+    if (Math.hypot(e.clientX - trigger._sx, e.clientY - trigger._sy) > 8) moved = true;
+    const sr = stage.getBoundingClientRect();
+    setHot(nearest(e.clientX - sr.left, e.clientY - sr.top));
+  });
+  trigger.addEventListener('pointerup', (e) => {
+    if (!open) return;
+    if (moved) { select(hot); }        // drog → välj det markerade (släpp-att-välja / flick)
+    else { tapMode = true; }           // bara tapp → låt menyn stå kvar för tapp-val
+  });
+  // Tapp utanför → stäng
+  stage.addEventListener('click', (e) => { if (open && tapMode && e.target === stage) closeMenu(); });
+
+  stage.querySelectorAll('.count button, .col .count button');
+  const countBtns = stage.parentElement.querySelectorAll('.count button');
+  countBtns.forEach(btn => btn.addEventListener('click', () => {
+    countBtns.forEach(b => b.classList.toggle('on', b === btn));
+    n = parseInt(btn.dataset.n, 10); closeMenu(); build();
+  }));
+  build();
+}
+
+function vlistStage(stage) {
+  const trigger = stage.querySelector('.trigger');
+  const readout = stage.querySelector('.readout');
+  let n = 4, items = [], open = false, moved = false, hot = -1, tapMode = false;
+  const wrap = document.createElement('div'); wrap.className = 'vlist'; stage.appendChild(wrap);
+  let vitems = [];
+  function build() {
+    wrap.innerHTML = '';
+    items = (n === 4 ? ITEMS4 : ITEMS6);
+    vitems = items.map((it, i) => {
+      const el = document.createElement('div');
+      el.className = 'vitem'; el.innerHTML = `<span>${it.ic}</span> ${it.label}`;
+      el.addEventListener('click', (e) => { e.stopPropagation(); select(i); });
+      wrap.appendChild(el); return el;
+    });
+  }
+  function place() {
+    const tr = trigger.getBoundingClientRect(), sr = stage.getBoundingClientRect();
+    wrap.style.bottom = (sr.bottom - tr.top + 12) + 'px';
+  }
+  function openMenu(){ place(); stage.classList.add('menu-open'); trigger.classList.add('armed'); open=true; }
+  function closeMenu(){ stage.classList.remove('menu-open'); trigger.classList.remove('armed'); open=false; tapMode=false; setHot(-1); }
+  function setHot(i){ hot=i; vitems.forEach((el,k)=>el.classList.toggle('hot',k===i)); }
+  function nearestByY(py){
+    let best=-1,bestd=1e9;
+    vitems.forEach((el,i)=>{ const r=el.getBoundingClientRect(); const c=r.top+r.height/2; const d=Math.abs(py-c); if(d<bestd){bestd=d;best=i;} });
+    return bestd<40?best:-1;
+  }
+  function select(i){ if(i<0)return; readout.textContent='Valde: '+items[i].label; vitems[i].classList.add('hot'); setTimeout(closeMenu,130); }
+
+  trigger.addEventListener('pointerdown',(e)=>{ e.preventDefault(); trigger.setPointerCapture(e.pointerId); moved=false; openMenu(); setHot(-1); trigger._sy=e.clientY; });
+  trigger.addEventListener('pointermove',(e)=>{ if(!open)return; if(Math.abs(e.clientY-trigger._sy)>8)moved=true; setHot(nearestByY(e.clientY)); });
+  trigger.addEventListener('pointerup',()=>{ if(!open)return; if(moved)select(hot); else tapMode=true; });
+  stage.addEventListener('click',(e)=>{ if(open&&tapMode&&e.target===stage)closeMenu(); });
+  const countBtns = stage.parentElement.querySelectorAll('.count button');
+  countBtns.forEach(btn=>btn.addEventListener('click',()=>{ countBtns.forEach(b=>b.classList.toggle('on',b===btn)); n=parseInt(btn.dataset.n,10); closeMenu(); build(); }));
+  build();
+}
+
+document.querySelectorAll('.stage').forEach(st => {
+  if (st.dataset.menu === 'radial') radialStage(st, st.dataset.layout);
+  else if (st.dataset.menu === 'vlist') vlistStage(st);
+});
+</script>
+</body>
+</html>
