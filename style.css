@@ -671,7 +671,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* SVG-båge (bara kurvan, ingen diameter-linje) */
 .fan-bg { position: absolute; z-index: 13; opacity: 0; transition: opacity .16s; pointer-events: none; overflow: visible; }
 .fan-open .fan-bg { opacity: 1; }
-.fan-bg path { fill: rgba(91,140,255,.10); stroke: rgba(91,140,255,.34); stroke-width: 1; }
+/* fyllning/stroke sätts som SVG-attribut (radiell gradient) – ingen CSS-fill som överskrider */
 .fan-opt {
   position: absolute; z-index: 15; padding: 6px 7px; border-radius: 12px;
   background: var(--surface); border: 1px solid var(--line); color: var(--text);
@@ -682,7 +682,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .fan-open .fan-opt { opacity: 1; transform: translate(-50%,-50%) scale(1); pointer-events: auto; }
 .fan-opt.hot { background: var(--accent); border-color: var(--accent); color: #fff; transform: translate(-50%,-50%) scale(1.16); }
-.fan-opt .ic { font-size: 1.05rem; line-height: 1; }
+/* Fast ikonruta så alla val får exakt samma storlek (ingen storleksskiftning). */
+.fan-opt .ic { width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 1.05rem; line-height: 1; }
+.fan-opt .ic svg { display: block; }
 .fan-opt .ic.on { color: var(--gold); }
 /* Endast opacity – ingen transform (skulle annars skriva över satellitens
    positionerings-transform och få knappen att snäppa). */

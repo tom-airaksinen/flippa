@@ -2297,23 +2297,34 @@ if ("speechSynthesis" in window) {
 // ---- Handlingskluster i nederkant: kontextuell (🔊/💡) + ⋯-fjädermeny ----
 // Fjäderns element skapas en gång och läggs i card-stack (samma koordinatsystem).
 const fanScrim = document.createElement("div"); fanScrim.className = "fan-scrim"; cardStack.appendChild(fanScrim);
-// Halvcirkeln ritas som SVG-båge (bara kurvan – ingen diameter-linje i botten).
+// Halvcirkeln ritas som SVG-båge (bara kurvan – ingen diameter-linje) med en mjuk
+// radiell gradient-glow som fyllning (som i prototypen), inte en platt enfärg.
 const SVGNS = "http://www.w3.org/2000/svg";
 const fanBg = document.createElementNS(SVGNS, "svg"); fanBg.setAttribute("class", "fan-bg");
-const fanArc = document.createElementNS(SVGNS, "path"); fanBg.appendChild(fanArc);
+fanBg.innerHTML =
+  '<defs><radialGradient id="fan-grad" cx="50%" cy="100%" r="88%">' +
+  '<stop offset="0%" stop-color="#5b8cff" stop-opacity="0.34"/>' +
+  '<stop offset="58%" stop-color="#5b8cff" stop-opacity="0.11"/>' +
+  '<stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/>' +
+  '</radialGradient></defs>' +
+  '<path fill="url(#fan-grad)" stroke="rgba(91,140,255,0.34)" stroke-width="1"/>';
+const fanArc = fanBg.querySelector("path");
 cardStack.appendChild(fanBg);
 // Ordning vänster→höger i bågen: Bildsök (vänster) … Slå upp (höger). Inga dubbletter
 // av Lyssna/Ledtråd – de bor i den kontextuella knappen bredvid ⋯.
+// Stiliserade linjeikoner (samma som gamla ⋯-menyn) för Slå upp/Bildsök – inte färgemoji.
+const FAN_SVG_GLOBE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg>';
+const FAN_SVG_IMAGE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
 const FAN_ITEMS = [
-  { key: "image",  ic: "🖼", label: "Bildsök" },
-  { key: "edit",   ic: "✎",  label: "Redigera" },
-  { key: "star",   ic: "☆",  label: "Stjärna" },
-  { key: "lookup", ic: "🌐", label: "Slå upp" },
+  { key: "image",  ic: FAN_SVG_IMAGE, label: "Bildsök" },
+  { key: "edit",   ic: "✎",           label: "Redigera" },
+  { key: "star",   ic: "☆",           label: "Stjärna" },
+  { key: "lookup", ic: FAN_SVG_GLOBE, label: "Slå upp" },
 ];
 const fanOpts = FAN_ITEMS.map((it, i) => {
   const el = document.createElement("div"); el.className = "fan-opt"; el.dataset.key = it.key;
   el.innerHTML = `<span class="ic">${it.ic}</span>${it.label}`;
-  el.addEventListener("click", (e) => { e.stopPropagation(); if (fanTapMode) selectFan(i); });
+  el.addEventListener("click", (e) => { e.stopPropagation(); if (fanTapMode) selectFan(i, true); });
   cardStack.appendChild(el); return el;
 });
 
@@ -2347,11 +2358,14 @@ function nearestFan(px,py){
   let ang = Math.atan2(dx,-dy)*180/Math.PI; if(ang<0) ang+=360; const angs = fanAngles(FAN_ITEMS.length); let best=-1, bd=999;
   angs.forEach((a,i)=>{ a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;} }); return bd<26?best:-1;
 }
-function selectFan(i){
+function selectFan(i, viaTap){
   if(i<0 || i>=FAN_ITEMS.length) return;
   const key = FAN_ITEMS[i].key, c = session && session.current;
+  const isWeb = (key==="lookup" || key==="image");
+  // iOS öppnar bara webbvyer (Slå upp/Bildsök) från ett TAPP, aldrig från ett glid
+  // (svep). Vid glid till dem: håll menyn öppen med valet markerat → ett tapp öppnar.
+  if(isWeb && !viaTap){ setFanHot(i); fanTapMode = true; fanPressing = false; return; }
   setFanHot(-1);
-  // Utför åtgärden FÖRST (window.open medan användargesten är färsk), stäng sedan.
   if(c){
     if(key==="edit") editCurrentCard();
     else if(key==="star"){ const on = toggleFav(c); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
@@ -2377,8 +2391,8 @@ moreBtn.addEventListener("pointermove",(e)=>{ if(!fanOpen || !fanPressing) retur
 let fanReleaseGuard = false;
 function fanRelease(){
   if(!fanOpen) return;
-  if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot); else closeFan(); } // glid: välj, annars (mitten) stäng
-  else if(fanPressing){ fanPressing = false; fanTapMode = true; }                    // rent tapp → låt stå för tapp-val
+  if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot, false); else closeFan(); } // glid: välj (webbvyer kräver tapp), annars (mitten) stäng
+  else if(fanPressing){ fanPressing = false; fanTapMode = true; }                        // rent tapp → låt stå för tapp-val
 }
 moreBtn.addEventListener("touchend",(e)=>{ if(!fanOpen) return; e.preventDefault(); fanReleaseGuard = true; fanRelease(); });
 moreBtn.addEventListener("pointerup",()=>{ if(fanReleaseGuard){ fanReleaseGuard = false; return; } fanRelease(); });
@@ -4063,7 +4077,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v203";
+const APP_VERSION = "v204";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
