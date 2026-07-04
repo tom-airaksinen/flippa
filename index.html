@@ -192,20 +192,6 @@
       </label>
     </div>
 
-    <!-- Lägesväxel: diskret handtag som fäller upp Svep | Handsfree (beta). Default: Svep. -->
-    <div id="mode-switch" class="mode-switch">
-      <button id="mode-handle" class="mode-handle" aria-expanded="false">
-        <span class="chev">⌃</span> <span id="mode-handle-lbl">Läge: Svep</span>
-      </button>
-      <div id="mode-slide" class="mode-slide">
-        <div id="mode-seg" class="mode-seg">
-          <div class="mode-thumb"></div>
-          <button class="mode-opt on" data-mode="swipe">👆 Svep</button>
-          <button class="mode-opt" data-mode="hf">🎙 Handsfree <span class="beta">beta</span></button>
-        </div>
-      </div>
-    </div>
-
     <footer class="train-footer">
       <div class="cues-swipe">
         <div class="hint-row">
@@ -229,6 +215,20 @@
         </div>
       </div>
     </footer>
+
+    <!-- Lägesväxel längst ner (under tipsen). Segmentet fälls UPP (över handtaget). Default: Svep. -->
+    <div id="mode-switch" class="mode-switch">
+      <div id="mode-slide" class="mode-slide">
+        <div id="mode-seg" class="mode-seg">
+          <div class="mode-thumb"></div>
+          <button class="mode-opt on" data-mode="swipe">👆 Svep</button>
+          <button class="mode-opt" data-mode="hf">🎙 Handsfree <span class="beta">beta</span></button>
+        </div>
+      </div>
+      <button id="mode-handle" class="mode-handle" aria-expanded="false">
+        <span class="chev">⌃</span> <span id="mode-handle-lbl">Läge: Svep</span>
+      </button>
+    </div>
   </section>
 
   <!-- Klar-skärm -->

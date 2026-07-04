@@ -902,11 +902,12 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   flex-direction: column;
   gap: 6px;
   margin-top: 14px;
-  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  padding: 10px 16px 4px;
   color: var(--muted);
   font-size: 0.8rem;
-  opacity: 0.4;
 }
+/* Svep-tipsen är avsiktligt diskreta; handsfree-orden (cues-hf) hålls läsbara. */
+.cues-swipe { opacity: 0.4; }
 .train-footer .hint-row { display: flex; justify-content: space-around; }
 .train-footer .hint-down { justify-content: center; }
 
@@ -930,8 +931,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .switch input:checked + .slider::before { transform: translateX(18px); }
 
 /* ---- Handsfree ---- */
-/* ---- Lägesväxel: dolt handtag → Svep | Handsfree (beta) ---- */
-.mode-switch { margin: 2px 16px 8px; }
+/* ---- Lägesväxel: dolt handtag → Svep | Handsfree (beta). Ligger längst ner,
+   segmentet fälls UPP (över handtaget). ---- */
+.mode-switch { margin: 4px 16px calc(10px + env(safe-area-inset-bottom)); }
 .mode-handle {
   display: flex; align-items: center; justify-content: center; gap: 8px;
   width: 100%; padding: 7px; border-radius: 10px;
@@ -943,7 +945,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .mode-slide { max-height: 0; overflow: hidden; transition: max-height 0.28s ease; }
 .mode-slide.open { max-height: 80px; }
 .mode-seg {
-  display: flex; position: relative; margin-top: 8px;
+  display: flex; position: relative; margin: 0 0 8px;
   background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 3px;
 }
 .mode-seg .mode-thumb {
