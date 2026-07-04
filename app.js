@@ -2335,24 +2335,27 @@ function updateCardMenuBtn() {
   globeBtn.classList.toggle("hidden", !(hasCard && foreignVisible()));
   if (!hasCard) closeCardMenu();
 }
-globeBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
-// Enkeltapp = Slå upp (direkt, i gesten). Dubbeltapp = Bildsök: andra tappet
-// gör om den redan öppnade Slå upp-fliken till en Google bildsökning (ingen extra
-// flik, och navigeringen sker i användargesten så popup-blockare släpper igenom).
-let globeLastTap = 0, globeWin = null;
+// Enkeltapp = Slå upp. Långtryck (~0,45 s) = Bildsök. Dubbeltapp går inte på mobil:
+// första tappet skulle öppna en flik och stjäla fokus, så andra tappet aldrig når
+// kortet – och en fördröjd window.open popup-blockas på iOS. Långtryck löser det:
+// inget öppnas förrän man släpper (click), så öppningen sker alltid i gesten.
+const GLOBE_HOLD_MS = 450;
+let globeDownT = 0, globeHoldTimer = null;
+globeBtn.addEventListener("pointerdown", (e) => {
+  e.stopPropagation();
+  globeDownT = Date.now();
+  clearTimeout(globeHoldTimer);
+  // Haptisk puff när långtrycket registrerats → "släpp för bildsök".
+  globeHoldTimer = setTimeout(() => { if (navigator.vibrate) navigator.vibrate(15); }, GLOBE_HOLD_MS);
+});
+["pointerup", "pointercancel", "pointerleave"].forEach((ev) =>
+  globeBtn.addEventListener(ev, () => clearTimeout(globeHoldTimer)));
 globeBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   if (!session || !session.current) return;
-  const term = session.current.front;
-  const now = Date.now();
-  if (now - globeLastTap < 350 && globeWin) {
-    globeLastTap = 0;
-    try { globeWin.location = googleImageSearchUrl(term); } catch (_) { window.open(googleImageSearchUrl(term), "_blank"); }
-    globeWin = null;
-    return;
-  }
-  globeLastTap = now;
-  globeWin = googleAiExplore(term);
+  const held = Date.now() - globeDownT >= GLOBE_HOLD_MS;
+  if (held) googleImageSearch(session.current.front);
+  else googleAiExplore(session.current.front);
 });
 cardMenuBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
 let cardMenuLastTap = 0;
@@ -3994,7 +3997,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v190";
+const APP_VERSION = "v191";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

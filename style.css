@@ -744,6 +744,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   opacity: 0;
   animation: none;
   -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none; /* långtryck ska inte visa iOS-callout */
+  -webkit-user-select: none; user-select: none;
+  touch-action: manipulation;
 }
 @keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
 
