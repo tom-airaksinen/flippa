@@ -2074,9 +2074,10 @@ function onMotion(e) {
 // =========================================================================
 //  Uttal (Web Speech API)
 // =========================================================================
-const cardActions = $("card-actions");
-const ctxBtn = $("ctx-btn");   // kontextuell: 🔊 (utländska) / 💡 (svenska med minnesregel)
-const moreBtn = $("more-btn"); // ⋯ → fjädermeny
+const speakBtn = $("speak-btn"); // 🔊 uppe till höger (utländska sidan)
+const hintBtn = $("hint-btn");   // 💡 nere till höger (svenska sidan m. minnesregel)
+const moreBtn = $("menu-tab");   // ⋯-fliken i kortets nederkant → fjädermeny
+function hideCardActions(){ moreBtn.classList.add("hidden"); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); }
 
 // Autoläge: läs upp automatiskt varje gång den utländska sidan visas
 const AUTO_SPEAK_KEY = "flippa-autospeak";
@@ -2119,7 +2120,7 @@ function updateSpeakBtn() { updateCardActions(); } // alias – klustret sköter
 
 // Dölj klustret direkt och visa det först när animationen (flipp/emerge) är klar.
 function showSpeakSoon(delay) {
-  cardActions.classList.add("hidden");
+  hideCardActions();
   closeFan();
   setTimeout(() => {
     updateCardActions();
@@ -2420,28 +2421,24 @@ moreBtn.addEventListener("pointercancel",()=>{ fanReleaseGuard = false; if(fanPr
 fanScrim.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); });
 fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeFan(); });
 
-// Kontextuell knapp: 🔊 (uttala) på utländska sidan, 💡 (ledtråd) på svenska med minnesregel.
-ctxBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
-ctxBtn.addEventListener("click",(e)=>{
+// 🔊 (uttala) uppe till höger på utländska sidan; 💡 (ledtråd) nere till höger på svenska.
+speakBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
+speakBtn.addEventListener("click",(e)=>{ e.stopPropagation(); track("uttala"); speakCurrent(); });
+hintBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
+hintBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
-  const act = ctxBtn.dataset.act;
-  if(act==="speak"){ track("uttala"); speakCurrent(); }
-  else if(act==="hint"){ const c = session && session.current; if(c && c.hint){ track("ledtrad-visad"); cardFrontHint.textContent = c.hint; cardFrontHint.classList.remove("hidden"); updateCardActions(); } }
+  const c = session && session.current;
+  if(c && c.hint){ track("ledtrad-visad"); cardFrontHint.textContent = c.hint; cardFrontHint.classList.remove("hidden"); updateCardActions(); }
 });
 
-// Visar/gömmer klustret, väljer rätt kontextuell knapp, och solo-läge (⋯ centrerad) på svenska sidan.
+// Visar/gömmer ⋯-fliken samt hörnknapparna 🔊 (utländska+röst) och 💡 (svenska+minnesregel).
 function updateCardActions(){
   const hasCard = !!(session && session.current);
-  cardActions.classList.toggle("hidden", !hasCard);
-  if(!hasCard){ closeFan(); return; }
+  moreBtn.classList.toggle("hidden", !hasCard);
+  if(!hasCard){ closeFan(); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); return; }
   const foreign = foreignVisible(), lang = subjectLang(currentSubject), c = session.current;
-  let ctx = null;
-  if(foreign){ if(lang && hasVoiceFor(lang)) ctx = { ic:"🔊", act:"speak", label:"Uttala" }; }
-  else if(c.hint && cardFrontHint.classList.contains("hidden")) ctx = { ic:"💡", act:"hint", label:"Visa ledtråd" };
-  if(ctx){ ctxBtn.classList.remove("hidden"); ctxBtn.textContent = ctx.ic; ctxBtn.dataset.act = ctx.act; ctxBtn.setAttribute("aria-label", ctx.label); }
-  else { ctxBtn.classList.add("hidden"); ctxBtn.dataset.act = ""; }
-  // Klustret är alltid flex-centrerat: finns ctx (🔊 el. 💡) → paret centreras som
-  // enhet; saknas ctx (svenska utan minnesregel) → ⋯ ensam i mitten (ctx display:none).
+  speakBtn.classList.toggle("hidden", !(foreign && lang && hasVoiceFor(lang)));
+  hintBtn.classList.toggle("hidden", !(!foreign && c.hint && cardFrontHint.classList.contains("hidden")));
 }
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
@@ -2540,7 +2537,7 @@ card.addEventListener("pointerdown", (e) => {
   startY = e.clientY;
   dragging = true;
   didSwipe = false;
-  cardActions.classList.add("hidden"); // dölj klustret direkt när man tar i kortet
+  hideCardActions(); // dölj kort-knapparna direkt när man tar i kortet
   closeFan();
   card.setPointerCapture(e.pointerId);
 });
@@ -4101,7 +4098,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v210";
+const APP_VERSION = "v211";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

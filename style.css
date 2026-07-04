@@ -639,27 +639,30 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .card-stack.stack-2::before, .card-stack.stack-2::after { display: block; }
 .card-stack.stack-1::after { display: block; }
 
-/* ---- Handlingskluster i nederkant på kortet: 🔊/💡 + ⋯-fjäder ---- */
-.card-actions {
-  position: absolute; left: 0; right: 0; bottom: 14px; z-index: 14;
-  display: flex; align-items: center; justify-content: center; gap: 14px;
-}
-.card-actions.hidden { display: none; }
-.ca-btn {
-  width: 46px; height: 46px; border-radius: 50%; border: none;
-  background: rgba(0,0,0,0.4); color: #fff; font-size: 1.3rem; line-height: 1; cursor: pointer;
+/* ---- 🔊/💡 i kortets hörn + ⋯-meny som halvellips-flik i nederkanten ---- */
+.corner-btn {
+  position: absolute; z-index: 11; width: 42px; height: 42px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,0.4); color: #fff; font-size: 1.2rem; line-height: 1; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent; animation: speak-fade 0.2s ease-out;
+}
+.corner-btn.hidden { display: none; }
+.corner-speak { top: 12px; right: 12px; }
+.corner-hint  { bottom: 12px; right: 12px; }
+.corner-btn:active { background: var(--accent); }
+
+.menu-tab {
+  position: absolute; z-index: 16; bottom: 0; left: 50%; transform: translateX(-50%);
+  width: 94px; height: 28px; border-radius: 120px 120px 0 0;
+  border: 1px solid var(--line); border-bottom: none; background: var(--surface-2);
+  color: var(--text); font-size: 1.35rem; font-weight: 700; line-height: 1; padding-bottom: 5px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
   touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
   -webkit-user-select: none; user-select: none; animation: speak-fade 0.2s ease-out;
 }
-.ca-btn.more { font-size: 1.5rem; }
-.ca-btn:active { background: var(--accent); }
-.ca-btn.armed { background: var(--accent); color: #fff; }
-.ca-btn.ctx.auto { background: var(--accent); box-shadow: 0 0 0 3px rgba(91,140,255,0.45); } /* autouppläsning på */
-.ca-btn.hidden { display: none; }
-/* (Ingen solo längre – klustret är alltid flex-centrerat; ctx döljs med display:none
-   när den saknas → paret centreras när ctx finns, ⋯ ensam i mitten annars.) */
+.menu-tab.hidden { display: none; }
+.menu-tab.armed { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* Fjädermeny – scrim + halvcirkel + val (val/scrim/bg skapas i JS) */
 .fan-scrim {
