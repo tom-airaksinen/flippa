@@ -2389,8 +2389,8 @@ function selectFan(i, src){
   // Slå upp & Bildsök (C1): navigera SAMMA flik via location.href → funkar även från
   // ett glid på iOS (window.open får bara öppna ny flik från ett tapp). Lämnar appen
   // tillfälligt; bakåt tar dig tillbaka.
-  if(key==="image"){ track("bildsok/"+src, {nav:true}); location.href = googleImageSearchUrl(c.front); return; }
-  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); location.href = googleAiExploreUrl(c.front); return; }
+  if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); location.href = googleImageSearchUrl(c.front); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); location.href = googleAiExploreUrl(c.front); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
@@ -2439,7 +2439,12 @@ function updateCardActions(){
   const foreign = foreignVisible(), lang = subjectLang(currentSubject), c = session.current;
   speakBtn.classList.toggle("hidden", !(foreign && lang && hasVoiceFor(lang)));
   hintBtn.classList.toggle("hidden", !(!foreign && c.hint && cardFrontHint.classList.contains("hidden")));
+  // Fliken ska kontrastera mot kortytan bakom: baksidan (surface-2) → mörkare front-färg.
+  moreBtn.classList.toggle("on-back", card.classList.contains("flipped"));
 }
+// Säkerställ att fjädern är stängd när man kommer tillbaka (t.ex. från Google via C1,
+// bfcache-återställning). Annars kan menyn ligga kvar öppen.
+window.addEventListener("pageshow", () => { closeFan(); });
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
 function closeCardMenu() { closeFan(); }
@@ -4098,7 +4103,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v211";
+const APP_VERSION = "v212";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

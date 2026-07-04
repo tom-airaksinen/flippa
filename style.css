@@ -662,6 +662,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-user-select: none; user-select: none; animation: speak-fade 0.2s ease-out;
 }
 .menu-tab.hidden { display: none; }
+/* Baksidan är ljusare (surface-2) → fliken tar den mörkare front-färgen för kontrast. */
+.menu-tab.on-back { background: var(--surface); }
 .menu-tab.armed { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 /* Fjädermeny – scrim + halvcirkel + val (val/scrim/bg skapas i JS) */
