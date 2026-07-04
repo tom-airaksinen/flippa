@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – prototyp: kortmeny som flik i nederkant</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+  h1{font-size:1.32rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 26px;max-width:660px;font-size:.92rem}
+  .grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
+  .col{width:320px}
+  .col h2{font-size:1.05rem;margin:0 0 2px}
+  .col .desc{color:var(--muted);font-size:.84rem;margin:0 0 12px;min-height:56px}
+
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:30px;padding:9px;box-shadow:0 18px 46px rgba(0,0,0,.55)}
+  .screen{position:relative;width:302px;height:600px;background:var(--bg);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;touch-action:none}
+  .topbar{display:flex;align-items:center;gap:10px;padding:11px 12px}
+  .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text)}
+  .pill{margin-left:auto;background:var(--surface-2);border-radius:20px;padding:3px 12px;font-size:.82rem;color:var(--muted)}
+  .readout{position:absolute;top:46px;left:0;right:0;text-align:center;color:var(--accent);font-weight:700;font-size:.88rem;min-height:18px;z-index:20}
+
+  .card-area{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:6px 16px 14px}
+  .card{position:relative;width:100%;max-width:250px;height:330px;border-radius:18px;background:var(--surface);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.4);overflow:visible}
+  .word{font-size:1.55rem;font-weight:700;text-align:center;padding:0 14px}
+  /* Hörnikoner (gamla platser) */
+  .corner{position:absolute;width:42px;height:42px;border-radius:50%;background:rgba(0,0,0,.4);color:#fff;font-size:1.15rem;
+    display:flex;align-items:center;justify-content:center;backdrop-filter:blur(3px);cursor:pointer;z-index:12}
+  .corner.speak{top:10px;right:10px}
+  .corner.hint{bottom:10px;right:10px}
+
+  /* Flik i nederkant av kortet */
+  .tab{position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:14;cursor:pointer;touch-action:none;
+    display:flex;align-items:center;justify-content:center;color:var(--text)}
+  .tab.armed{filter:brightness(1.15)}
+  /* Variant-stilar */
+  .tab.valj{width:104px;height:30px;border-radius:120px 120px 0 0;background:linear-gradient(#2a3a66,#223055);
+    border:1px solid var(--line);border-bottom:none;font-size:.68rem;font-weight:800;letter-spacing:.14em;color:#cdd8f5}
+  .tab.dots{width:88px;height:28px;border-radius:120px 120px 0 0;background:var(--surface-2);border:1px solid var(--line);border-bottom:none;
+    font-size:1.3rem;font-weight:700;padding-bottom:6px}
+  .tab.grip{width:120px;height:26px;border-radius:120px 120px 0 0;background:rgba(91,140,255,.10);border:1px solid rgba(91,140,255,.34);border-bottom:none}
+  .tab.grip::before{content:"";width:34px;height:4px;border-radius:3px;background:var(--muted);margin-top:6px}
+  .tab.armed.valj,.tab.armed.dots{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .tab.armed.grip{background:rgba(91,140,255,.30)}
+
+  /* Fjädermeny (marking menu) */
+  .scrim{position:absolute;inset:0;z-index:13;background:rgba(4,7,13,.5);opacity:0;transition:opacity .16s;pointer-events:none}
+  .menu-open .scrim{opacity:1;pointer-events:auto}
+  .bg{position:absolute;z-index:14;opacity:0;transition:opacity .16s;pointer-events:none;overflow:visible}
+  .menu-open .bg{opacity:1}
+  .opt{position:absolute;z-index:16;padding:6px 8px;border-radius:12px;background:var(--surface);border:1px solid var(--line);color:var(--text);
+    font-size:.66rem;font-weight:600;min-width:54px;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;
+    box-shadow:0 8px 20px rgba(0,0,0,.5);transform:translate(-50%,-50%);opacity:0;pointer-events:none;
+    transition:opacity .13s ease,background .1s,border-color .1s,box-shadow .1s}
+  .menu-open .opt{opacity:1;pointer-events:auto}
+  .opt.hot{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 0 3px rgba(91,140,255,.45),0 8px 20px rgba(0,0,0,.5)}
+  .opt .ic{width:20px;height:20px;display:flex;align-items:center;justify-content:center}
+  .opt .ic svg{display:block}
+
+  /* Realistisk nederkant */
+  .autospeak{display:flex;align-items:center;justify-content:space-between;padding:8px 18px;color:var(--text);font-size:.9rem}
+  .switch{width:44px;height:26px;border-radius:20px;background:var(--surface-2);position:relative}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+  .footer{padding:6px 16px 2px;color:var(--muted);font-size:.78rem;opacity:.4;min-height:64px}
+  .hint-row{display:flex;justify-content:space-around}
+  .hint-down{justify-content:center;margin-top:5px}
+  .mode{margin:10px 14px 12px}
+  .mode-handle{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:7px;border-radius:10px;
+    background:transparent;border:1px dashed var(--line);color:var(--muted);font-size:.84rem;font-weight:600}
+
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.66rem;color:var(--muted);padding:2px 9px;margin-left:6px}
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.8rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:16px;position:relative}
+  .pros li.good::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
+  .tip{max-width:680px;margin:32px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Kortmeny som flik i nederkant</h1>
+<p class="sub">⋯-menyn blir en liten <b>halvellips-flik</b> på kortets nederkant. Håll och glid till ett val, eller tapp-tapp. 🔊 och 💡 tillbaka i hörnen. Prova med musen: håll på fliken, dra, släpp.</p>
+
+<div class="grid">
+  <div class="col">
+    <h2>A · "VÄLJ" <span class="tag">tydlig text</span></h2>
+    <p class="desc">Fliken säger rakt ut vad den gör. Bra upptäckbarhet för nya användare.</p>
+    <div class="phone"><div class="screen" data-tab="valj"></div></div>
+    <ul class="pros"><li class="good">Solklart att det går att välja</li><li class="good">Ingen gissning kring ikon</li></ul>
+  </div>
+  <div class="col">
+    <h2>B · "…" <span class="tag">som nu</span></h2>
+    <p class="desc">Bekant ⋯-symbol, men flyttad till en flik i nederkanten i stället för ett hörn.</p>
+    <div class="phone"><div class="screen" data-tab="dots"></div></div>
+    <ul class="pros"><li class="good">Diskret, välbekant</li><li class="good">Tar minimal plats</li></ul>
+  </div>
+  <div class="col">
+    <h2>C · Grepp-flik <span class="tag">"dra upp"</span></h2>
+    <p class="desc">Ett litet handtag som antyder att något fälls upp. Minimalistisk, taktil känsla.</p>
+    <div class="phone"><div class="screen" data-tab="grip"></div></div>
+    <ul class="pros"><li class="good">Inbjuder till drag-gesten</li><li class="good">Ren, modern look</li></ul>
+  </div>
+</div>
+
+<div class="tip">
+  <b>Gemensamt:</b> håll på fliken → fjädern fälls upp över kortet (Bildsök vänster, Slå upp höger, Redigera/Stjärna upp), glid + släpp eller tapp-tapp. 🔊 (uttala) uppe till höger, 💡 (ledtråd) nere till höger – i hörnen som förr. Allt annat (Automatisk uppläsning, svep-tips, Läge-knapp) är med för att ge rätt helhetskänsla.
+</div>
+
+<script>
+const SVG_GLOBE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg>';
+const SVG_IMAGE='<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+const ITEMS=[{key:'image',ic:SVG_IMAGE,label:'Bildsök'},{key:'edit',ic:'✎',label:'Redigera'},{key:'star',ic:'☆',label:'Stjärna'},{key:'lookup',ic:SVG_GLOBE,label:'Slå upp'}];
+const SPAN=156;
+const angles=n=>{const s=-SPAN/2;return Array.from({length:n},(_,i)=>n===1?0:s+SPAN*i/(n-1));};
+const radius=n=>{if(n<2)return 112;const g=SPAN/(n-1);return Math.max(104,Math.min(140,84/(2*Math.sin(g/2*Math.PI/180))));};
+
+const TAB_LABEL={valj:'VÄLJ',dots:'⋯',grip:''};
+
+function buildScreen(screen){
+  const variant=screen.dataset.tab;
+  screen.innerHTML=`
+    <div class="topbar"><button class="back">←</button><span class="pill">7 kvar</span></div>
+    <div class="readout"></div>
+    <div class="card-area"><div class="card">
+      <button class="corner speak" title="Uttala">🔊</button>
+      <button class="corner hint" title="Ledtråd">💡</button>
+      <span class="word">gelato</span>
+      <div class="tab ${variant}">${TAB_LABEL[variant]}</div>
+    </div></div>
+    <div class="autospeak"><span>🔊 Automatisk uppläsning</span><span class="switch"></span></div>
+    <footer class="footer">
+      <div class="hint-row"><span>👈 kan inte</span><span>👆 kan bra</span><span>kan 👉</span></div>
+      <div class="hint-row hint-down"><span>👇 hopplöst</span></div>
+    </footer>
+    <div class="mode"><button class="mode-handle"><span>⌃</span> Läge: Svep</button></div>`;
+
+  const card=screen.querySelector('.card'), tab=screen.querySelector('.tab'), readout=screen.querySelector('.readout');
+  // corner-ikoner
+  screen.querySelector('.corner.speak').addEventListener('click',(e)=>{e.stopPropagation(); flash('🔊 läser upp: gelato');});
+  screen.querySelector('.corner.hint').addEventListener('click',(e)=>{e.stopPropagation(); flash('💡 visar ledtråd');});
+  function flash(t){ readout.textContent=t; setTimeout(()=>{ if(readout.textContent===t) readout.textContent=''; }, 1500); }
+
+  // fjäder-element
+  const scrim=document.createElement('div'); scrim.className='scrim'; card.appendChild(scrim);
+  const NS='http://www.w3.org/2000/svg';
+  const bg=document.createElementNS(NS,'svg'); bg.setAttribute('class','bg');
+  bg.innerHTML='<defs><radialGradient id="g-'+variant+'" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#5b8cff" stop-opacity=".20"/><stop offset="72%" stop-color="#5b8cff" stop-opacity=".06"/><stop offset="100%" stop-color="#5b8cff" stop-opacity="0"/></radialGradient></defs><path fill="url(#g-'+variant+')" stroke="rgba(91,140,255,.34)" stroke-width="1"/>';
+  const arc=bg.querySelector('path'); card.appendChild(bg);
+  const opts=ITEMS.map((it,i)=>{const el=document.createElement('div');el.className='opt';el.dataset.i=i;
+    el.innerHTML=`<span class="ic">${it.ic}</span>${it.label}`; el.addEventListener('click',(e)=>{e.stopPropagation(); if(tapMode)select(i);}); card.appendChild(el); return el;});
+
+  let open=false,moved=false,hot=-1,tapMode=false,pressing=false,origin=null,sx=0,sy=0,relGuard=false;
+  function place(){
+    const cr=card.getBoundingClientRect(), tr=tab.getBoundingClientRect();
+    origin={x:cr.width/2, y:tr.top+tr.height/2-cr.top};
+    const angs=angles(ITEMS.length), R=radius(ITEMS.length);
+    opts.forEach((el,i)=>{const rad=angs[i]*Math.PI/180; el.style.left=(origin.x+R*Math.sin(rad))+'px'; el.style.top=(origin.y-R*Math.cos(rad))+'px';});
+    const D=R+52; bg.style.width=(2*D)+'px'; bg.style.height=D+'px'; bg.style.left=(origin.x-D)+'px'; bg.style.top=(origin.y-D)+'px';
+    bg.setAttribute('viewBox',`0 0 ${2*D} ${D}`); arc.setAttribute('d',`M0 ${D} A ${D} ${D} 0 0 1 ${2*D} ${D}`);
+  }
+  function openMenu(){ place(); card.classList.add('menu-open'); tab.classList.add('armed'); open=true; }
+  function closeMenu(){ card.classList.remove('menu-open'); tab.classList.remove('armed'); open=false; tapMode=false; pressing=false; setHot(-1); }
+  function setHot(i){ hot=i; opts.forEach((el,k)=>el.classList.toggle('hot',k===i)); }
+  function nearest(px,py){ const dx=px-origin.x,dy=py-origin.y; if(Math.hypot(dx,dy)<34)return -1;
+    let ang=Math.atan2(dx,-dy)*180/Math.PI; if(ang<0)ang+=360; const angs=angles(ITEMS.length); let best=-1,bd=999;
+    angs.forEach((a,i)=>{a=(a+360)%360;let d=Math.abs(((ang-a+540)%360)-180);if(d<bd){bd=d;best=i;}}); return bd<26?best:-1; }
+  function select(i){ if(i<0)return; readout.textContent='Valde: '+ITEMS[i].label; opts[i].classList.add('hot'); setTimeout(closeMenu,150); }
+  function release(){ if(!open)return; if(pressing&&moved){ if(hot>=0)select(hot); else closeMenu(); } else if(pressing){pressing=false; tapMode=true;} }
+
+  tab.addEventListener('pointerdown',(e)=>{ e.stopPropagation(); e.preventDefault(); tab.setPointerCapture(e.pointerId); sx=e.clientX; sy=e.clientY; moved=false; if(open){closeMenu();return;} openMenu(); pressing=true; setHot(-1); });
+  tab.addEventListener('pointermove',(e)=>{ if(!open||!pressing)return; if(Math.hypot(e.clientX-sx,e.clientY-sy)>8)moved=true; const cr=card.getBoundingClientRect(); setHot(nearest(e.clientX-cr.left,e.clientY-cr.top)); });
+  tab.addEventListener('touchend',(e)=>{ if(!open)return; e.preventDefault(); relGuard=true; release(); });
+  tab.addEventListener('pointerup',()=>{ if(relGuard){relGuard=false;return;} release(); });
+  tab.addEventListener('pointercancel',()=>{ relGuard=false; if(pressing&&!tapMode)closeMenu(); });
+  scrim.addEventListener('pointerdown',(e)=>e.stopPropagation());
+  scrim.addEventListener('click',(e)=>{e.stopPropagation(); if(open)closeMenu();});
+}
+
+document.querySelectorAll('.screen').forEach(buildScreen);
+</script>
+</body>
+</html>
