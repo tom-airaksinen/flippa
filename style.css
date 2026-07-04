@@ -658,9 +658,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .ca-btn.armed { background: var(--accent); color: #fff; }
 .ca-btn.ctx.auto { background: var(--accent); box-shadow: 0 0 0 3px rgba(91,140,255,0.45); } /* autouppläsning på */
 .ca-btn.hidden { display: none; }
-/* Svenska sidan: ⋯ absolut centrerad; 💡 som satellit till vänster (utan att flytta ⋯). */
-.card-actions.solo #more-btn { position: absolute; left: 50%; transform: translateX(-50%); }
-.card-actions.solo #ctx-btn  { position: absolute; left: 50%; transform: translateX(calc(-50% - 40px)); }
+/* Svenska sidan: ⋯ centrerad (ensam flex-barn eftersom 💡 lyfts ut som absolut
+   satellit → ⋯ hamnar dead center med rätt vertikalläge, inget hopp). */
+.card-actions.solo #ctx-btn { position: absolute; top: 50%; left: 50%; transform: translate(calc(-50% - 40px), -50%); }
 
 /* Fjädermeny – scrim + halvcirkel + val (val/scrim/bg skapas i JS) */
 .fan-scrim {
@@ -668,13 +668,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   opacity: 0; transition: opacity .16s; pointer-events: none;
 }
 .fan-open .fan-scrim { opacity: 1; pointer-events: auto; }
-.fan-bg {
-  position: absolute; z-index: 13; opacity: 0; transition: opacity .16s; pointer-events: none;
-  border-radius: 999px 999px 0 0; border-bottom: none;
-  background: radial-gradient(closest-side, rgba(91,140,255,.20), rgba(91,140,255,.06) 72%, transparent);
-  border: 1px solid rgba(91,140,255,.34);
-}
+/* SVG-båge (bara kurvan, ingen diameter-linje) */
+.fan-bg { position: absolute; z-index: 13; opacity: 0; transition: opacity .16s; pointer-events: none; overflow: visible; }
 .fan-open .fan-bg { opacity: 1; }
+.fan-bg path { fill: rgba(91,140,255,.10); stroke: rgba(91,140,255,.34); stroke-width: 1; }
 .fan-opt {
   position: absolute; z-index: 15; padding: 6px 7px; border-radius: 12px;
   background: var(--surface); border: 1px solid var(--line); color: var(--text);
@@ -687,7 +684,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .fan-opt.hot { background: var(--accent); border-color: var(--accent); color: #fff; transform: translate(-50%,-50%) scale(1.16); }
 .fan-opt .ic { font-size: 1.05rem; line-height: 1; }
 .fan-opt .ic.on { color: var(--gold); }
-@keyframes speak-fade { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+/* Endast opacity – ingen transform (skulle annars skriva över satellitens
+   positionerings-transform och få knappen att snäppa). */
+@keyframes speak-fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* Utforska-arket (Wikimedia: betydelse + bilder) */
 .xpl-search { display: flex; gap: 8px; align-items: center; }

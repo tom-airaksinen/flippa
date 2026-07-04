@@ -2297,7 +2297,11 @@ if ("speechSynthesis" in window) {
 // ---- Handlingskluster i nederkant: kontextuell (🔊/💡) + ⋯-fjädermeny ----
 // Fjäderns element skapas en gång och läggs i card-stack (samma koordinatsystem).
 const fanScrim = document.createElement("div"); fanScrim.className = "fan-scrim"; cardStack.appendChild(fanScrim);
-const fanBg = document.createElement("div"); fanBg.className = "fan-bg"; cardStack.appendChild(fanBg);
+// Halvcirkeln ritas som SVG-båge (bara kurvan – ingen diameter-linje i botten).
+const SVGNS = "http://www.w3.org/2000/svg";
+const fanBg = document.createElementNS(SVGNS, "svg"); fanBg.setAttribute("class", "fan-bg");
+const fanArc = document.createElementNS(SVGNS, "path"); fanBg.appendChild(fanArc);
+cardStack.appendChild(fanBg);
 // Ordning vänster→höger i bågen: Bildsök (vänster) … Slå upp (höger). Inga dubbletter
 // av Lyssna/Ledtråd – de bor i den kontextuella knappen bredvid ⋯.
 const FAN_ITEMS = [
@@ -2325,7 +2329,10 @@ function placeFan(){
   fanOrigin = { x: sr.width/2, y: br.top + br.height/2 - sr.top };
   const angs = fanAngles(FAN_ITEMS.length), R = fanRadius(FAN_ITEMS.length);
   fanOpts.forEach((el,i)=>{ const rad = angs[i]*Math.PI/180; el.style.left = (fanOrigin.x + R*Math.sin(rad))+"px"; el.style.top = (fanOrigin.y - R*Math.cos(rad))+"px"; });
-  const D = R + 58; fanBg.style.width = (2*D)+"px"; fanBg.style.height = D+"px"; fanBg.style.left = (fanOrigin.x-D)+"px"; fanBg.style.top = (fanOrigin.y-D)+"px";
+  const D = R + 58;
+  fanBg.style.width = (2*D)+"px"; fanBg.style.height = D+"px"; fanBg.style.left = (fanOrigin.x-D)+"px"; fanBg.style.top = (fanOrigin.y-D)+"px";
+  fanBg.setAttribute("viewBox", `0 0 ${2*D} ${D}`);
+  fanArc.setAttribute("d", `M0 ${D} A ${D} ${D} 0 0 1 ${2*D} ${D}`); // öppen båge → ingen bottenlinje
 }
 function openFan(){
   if(!session || !session.current) return;
@@ -2342,12 +2349,16 @@ function nearestFan(px,py){
 }
 function selectFan(i){
   if(i<0 || i>=FAN_ITEMS.length) return;
-  const key = FAN_ITEMS[i].key; closeFan();
-  if(!session || !session.current) return;
-  if(key==="edit") editCurrentCard();
-  else if(key==="star"){ const on = toggleFav(session.current); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
-  else if(key==="lookup") googleAiExplore(session.current.front);
-  else if(key==="image") googleImageSearch(session.current.front);
+  const key = FAN_ITEMS[i].key, c = session && session.current;
+  setFanHot(-1);
+  // Utför åtgärden FÖRST (window.open medan användargesten är färsk), stäng sedan.
+  if(c){
+    if(key==="edit") editCurrentCard();
+    else if(key==="star"){ const on = toggleFav(c); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
+    else if(key==="lookup") googleAiExplore(c.front);
+    else if(key==="image") googleImageSearch(c.front);
+  }
+  closeFan();
 }
 
 moreBtn.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); e.preventDefault(); moreBtn.setPointerCapture(e.pointerId);
@@ -2359,11 +2370,19 @@ moreBtn.addEventListener("pointermove",(e)=>{ if(!fanOpen || !fanPressing) retur
   if(Math.hypot(e.clientX-fanSX, e.clientY-fanSY) > 8) fanMoved = true;
   const sr = cardStack.getBoundingClientRect(); setFanHot(nearestFan(e.clientX-sr.left, e.clientY-sr.top));
 });
-moreBtn.addEventListener("pointerup",()=>{ if(!fanOpen) return;
+// Släpp-hantering. VIKTIGT: på iOS får window.open (Slå upp/Bildsök) bara öppnas
+// från click/touchend – INTE från pointerup. Därför kör vi släppet i touchend på
+// pekskärm (och pointerup som fallback för mus/desktop), annars gör inget vid
+// glid till Slå upp/Bildsök.
+let fanReleaseGuard = false;
+function fanRelease(){
+  if(!fanOpen) return;
   if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot); else closeFan(); } // glid: välj, annars (mitten) stäng
   else if(fanPressing){ fanPressing = false; fanTapMode = true; }                    // rent tapp → låt stå för tapp-val
-});
-moreBtn.addEventListener("pointercancel",()=>{ if(fanPressing && !fanTapMode) closeFan(); });
+}
+moreBtn.addEventListener("touchend",(e)=>{ if(!fanOpen) return; e.preventDefault(); fanReleaseGuard = true; fanRelease(); });
+moreBtn.addEventListener("pointerup",()=>{ if(fanReleaseGuard){ fanReleaseGuard = false; return; } fanRelease(); });
+moreBtn.addEventListener("pointercancel",()=>{ fanReleaseGuard = false; if(fanPressing && !fanTapMode) closeFan(); });
 fanScrim.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); });
 fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeFan(); });
 
@@ -2385,8 +2404,7 @@ function updateCardActions(){
   let ctx = null;
   if(foreign){ if(lang && hasVoiceFor(lang)) ctx = { ic:"🔊", act:"speak", label:"Uttala" }; }
   else if(c.hint && cardFrontHint.classList.contains("hidden")) ctx = { ic:"💡", act:"hint", label:"Visa ledtråd" };
-  if(ctx){ ctxBtn.classList.remove("hidden"); ctxBtn.textContent = ctx.ic; ctxBtn.dataset.act = ctx.act; ctxBtn.setAttribute("aria-label", ctx.label);
-    ctxBtn.classList.toggle("auto", ctx.act==="speak" && autoSpeak && !handsfreeActive); }
+  if(ctx){ ctxBtn.classList.remove("hidden"); ctxBtn.textContent = ctx.ic; ctxBtn.dataset.act = ctx.act; ctxBtn.setAttribute("aria-label", ctx.label); }
   else { ctxBtn.classList.add("hidden"); ctxBtn.dataset.act = ""; }
   // Svenska sidan → ⋯ absolut centrerad (solo). Utländska → paret centrerat som enhet.
   cardActions.classList.toggle("solo", !foreign);
@@ -4045,7 +4063,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v202";
+const APP_VERSION = "v203";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
