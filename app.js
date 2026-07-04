@@ -2836,7 +2836,10 @@ function askWord(front, back, hint, opts = {}) {
         b: m.querySelector("#m-back").value.trim(),
         h: m.querySelector("#m-hint").value.trim(),
       });
-      m.querySelector("#m-front").focus();
+      // Vid REDIGERING (allowDelete) fokuseras inget fält → tangentbordet ligger nere
+      // och man får överblick över dialogen (vi vet ändå inte vad som ska ändras).
+      // Vid tillägg av nytt ord fokuseras första fältet så man kan börja skriva direkt.
+      if (!allowDelete) m.querySelector("#m-front").focus();
       m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
       if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ _delete: true }); };
       if (explore) m.querySelector("#m-globe").onclick = () => {
@@ -4078,7 +4081,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v208";
+const APP_VERSION = "v209";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
