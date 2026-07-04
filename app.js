@@ -2309,7 +2309,8 @@ autospeakToggle.addEventListener("change", () => {
 });
 // Visa toggeln bara om ämnet har en röst på enheten
 function updateAutospeakRow() {
-  autospeakRow.classList.toggle("hidden", !hasVoiceFor(subjectLang(currentSubject)));
+  // Dölj i handsfree – appen läser ju upp ändå, så toggeln är överflödig där.
+  autospeakRow.classList.toggle("hidden", handsfreeActive || !hasVoiceFor(subjectLang(currentSubject)));
 }
 
 // Förladda röstlistan (laddas asynkront i vissa webbläsare)
@@ -3809,6 +3810,7 @@ function setModeUI(hf) {
   cuesHf.classList.toggle("hidden", !hf);
   modeHandleLbl.textContent = "Läge: " + (hf ? "Handsfree" : "Svep");
   if (!hf) hfStatusEl.textContent = "Lyssnar…"; // återställ inför nästa gång
+  updateAutospeakRow(); // dölj/visa uppläsnings-toggeln beroende på läge
 }
 
 function closeModeSlide() {
@@ -4056,7 +4058,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v199";
+const APP_VERSION = "v200";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
