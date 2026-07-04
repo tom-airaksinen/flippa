@@ -2421,8 +2421,8 @@ function updateCardActions(){
   else if(c.hint && cardFrontHint.classList.contains("hidden")) ctx = { ic:"💡", act:"hint", label:"Visa ledtråd" };
   if(ctx){ ctxBtn.classList.remove("hidden"); ctxBtn.textContent = ctx.ic; ctxBtn.dataset.act = ctx.act; ctxBtn.setAttribute("aria-label", ctx.label); }
   else { ctxBtn.classList.add("hidden"); ctxBtn.dataset.act = ""; }
-  // Svenska sidan → ⋯ absolut centrerad (solo). Utländska → paret centrerat som enhet.
-  cardActions.classList.toggle("solo", !foreign);
+  // Klustret är alltid flex-centrerat: finns ctx (🔊 el. 💡) → paret centreras som
+  // enhet; saknas ctx (svenska utan minnesregel) → ⋯ ensam i mitten (ctx display:none).
 }
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
@@ -4078,7 +4078,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v207";
+const APP_VERSION = "v208";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
