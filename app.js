@@ -33,6 +33,21 @@ let currentLessonId = null;        // lektion öppen i editorn
 // ny service worker tar över; själva omladdningen sker först på en säker plats.
 let pendingReload = false, swReloading = false;
 
+// ---- Analytics (GoatCounter): lätta custom-events. Sidvisningar sköts av count.js. ----
+const GC_ENDPOINT = "https://flippa.goatcounter.com/count";
+function track(path, opts) {
+  opts = opts || {};
+  try {
+    if (opts.nav) {
+      // Slå upp/Bildsök navigerar bort (location.href) → keepalive så eventet hinner iväg.
+      fetch(GC_ENDPOINT + "?p=" + encodeURIComponent(path) + "&e=true&rnd=" + Math.random().toString(36).slice(2),
+            { mode: "no-cors", keepalive: true }).catch(function () {});
+    } else if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({ path: path, event: true });
+    }
+  } catch (_) {}
+}
+
 // ---- Användare (lokal profilväljare – INTE inloggning/säkerhet) ----
 // Varje område har en ägare (owner). Vald profil filtrerar vilka områden som visas.
 // Lektioner ärver områdets ägare automatiskt. Lätt att utöka med fler profiler.
@@ -1311,6 +1326,7 @@ async function startLessonSession(lessonId, force = false, continuing = false) {
   const note = lim && ordered.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${ordered.length} ord – resten kommer nästa pass.`
     : "";
+  if (!continuing) track("pass-lektion");
   beginSession({ queue, dirMode, label: lesson.name, note, kind: "lesson", lessonId, forced: force, continueLimit: (lim && ordered.length > queue.length) ? lim : 0 });
 }
 
@@ -1346,6 +1362,7 @@ function startDueSession(continuing = false) {
   const note = lim && due.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${due.length} förfallna ord – resten kvar.`
     : "";
+  if (!continuing) track("pass-dags");
   beginSession({ queue, dirMode, label: "Dags att öva", note, kind: "due", continueLimit: (lim && due.length > queue.length) ? lim : 0 });
 }
 
@@ -1678,6 +1695,7 @@ let lastSessionWasHF = false;
 function finishSession() {
   const wasHF = handsfreeActive;
   commitSessionStats(); // logga passet innan vi släpper session-objektet
+  track("pass-klart");
   stopHandsfree();
   const cont = session ? { limit: session.continueLimit, kind: session.kind, lessonId: session.lessonId, forced: session.forced } : null;
 
@@ -2326,7 +2344,7 @@ const FAN_ITEMS = [
 const fanOpts = FAN_ITEMS.map((it, i) => {
   const el = document.createElement("div"); el.className = "fan-opt"; el.dataset.key = it.key;
   el.innerHTML = `<span class="ic">${it.ic}</span>${it.label}`;
-  el.addEventListener("click", (e) => { e.stopPropagation(); if (fanTapMode) selectFan(i); });
+  el.addEventListener("click", (e) => { e.stopPropagation(); if (fanTapMode) selectFan(i, "tapp"); });
   cardStack.appendChild(el); return el;
 });
 
@@ -2361,18 +2379,19 @@ function nearestFan(px,py){
   let ang = Math.atan2(dx,-dy)*180/Math.PI; if(ang<0) ang+=360; const angs = fanAngles(FAN_ITEMS.length); let best=-1, bd=999;
   angs.forEach((a,i)=>{ a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;} }); return bd<26?best:-1;
 }
-function selectFan(i){
+function selectFan(i, src){
   if(i<0 || i>=FAN_ITEMS.length) return;
   const key = FAN_ITEMS[i].key, c = session && session.current;
+  src = src || "tapp"; // 'glid' | 'tapp' – för analytics
   setFanHot(-1);
   if(!c){ closeFan(); return; }
   // Slå upp & Bildsök (C1): navigera SAMMA flik via location.href → funkar även från
   // ett glid på iOS (window.open får bara öppna ny flik från ett tapp). Lämnar appen
   // tillfälligt; bakåt tar dig tillbaka.
-  if(key==="image"){ location.href = googleImageSearchUrl(c.front); return; }
-  if(key==="lookup"){ location.href = googleAiExploreUrl(c.front); return; }
-  if(key==="edit") editCurrentCard();
-  else if(key==="star"){ const on = toggleFav(c); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
+  if(key==="image"){ track("bildsok/"+src, {nav:true}); location.href = googleImageSearchUrl(c.front); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); location.href = googleAiExploreUrl(c.front); return; }
+  if(key==="edit"){ track("redigera"); editCurrentCard(); }
+  else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
 }
 
@@ -2392,7 +2411,7 @@ moreBtn.addEventListener("pointermove",(e)=>{ if(!fanOpen || !fanPressing) retur
 let fanReleaseGuard = false;
 function fanRelease(){
   if(!fanOpen) return;
-  if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot); else closeFan(); } // glid: välj, annars (mitten) stäng
+  if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot, "glid"); else closeFan(); } // glid: välj, annars (mitten) stäng
   else if(fanPressing){ fanPressing = false; fanTapMode = true; }                        // rent tapp → låt stå för tapp-val
 }
 moreBtn.addEventListener("touchend",(e)=>{ if(!fanOpen) return; e.preventDefault(); fanReleaseGuard = true; fanRelease(); });
@@ -2406,8 +2425,8 @@ ctxBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
 ctxBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
   const act = ctxBtn.dataset.act;
-  if(act==="speak") speakCurrent();
-  else if(act==="hint"){ const c = session && session.current; if(c && c.hint){ cardFrontHint.textContent = c.hint; cardFrontHint.classList.remove("hidden"); updateCardActions(); } }
+  if(act==="speak"){ track("uttala"); speakCurrent(); }
+  else if(act==="hint"){ const c = session && session.current; if(c && c.hint){ track("ledtrad-visad"); cardFrontHint.textContent = c.hint; cardFrontHint.classList.remove("hidden"); updateCardActions(); } }
 });
 
 // Visar/gömmer klustret, väljer rätt kontextuell knapp, och solo-läge (⋯ centrerad) på svenska sidan.
@@ -3889,6 +3908,7 @@ async function startHandsfree() {
     }
     if (!session || !session.current) return; // sessionen kan ha hunnit avslutas under await
   }
+  track("handsfree-pa");
   handsfreeActive = true;
   setModeUI(true);
   // Snäpp tillbaka till framsidan om kortet råkar vara flippat
@@ -4081,7 +4101,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v209";
+const APP_VERSION = "v210";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
