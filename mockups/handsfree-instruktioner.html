@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flippa – mockup: handsfree-instruktioner & lägesväxel</title>
+<style>
+  :root{
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:28px 16px 60px}
+  h1{font-size:1.4rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 30px;max-width:640px;font-size:.95rem}
+  .grid{display:flex;flex-wrap:wrap;gap:34px;justify-content:center;align-items:flex-start}
+  .col{width:320px}
+  .col h2{font-size:1.05rem;margin:0 0 2px;display:flex;align-items:center;gap:8px}
+  .col .desc{color:var(--muted);font-size:.85rem;margin:0 0 14px;min-height:52px}
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.82rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:18px;position:relative}
+  .pros li.good::before{content:"+";position:absolute;left:2px;color:var(--good);font-weight:700}
+  .pros li.bad::before{content:"–";position:absolute;left:2px;color:var(--fail);font-weight:700}
+
+  /* Telefon-ram med appens nederkant */
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:26px;padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.5)}
+  .screen{background:var(--bg);border-radius:18px;overflow:hidden;display:flex;flex-direction:column;height:430px}
+  .train-bar{display:flex;align-items:center;gap:10px;padding:10px 12px}
+  .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text);font-size:1rem}
+  .pill{background:var(--surface-2);border-radius:20px;padding:3px 12px;font-size:.85rem;color:var(--muted)}
+  .card-area{flex:1;display:flex;align-items:center;justify-content:center;padding:6px 16px}
+  .card{width:100%;max-width:230px;aspect-ratio:3/2;background:var(--surface);border-radius:16px;
+    display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.35)}
+  .bottom{padding:0 0 calc(10px + 4px)}
+
+  /* Svep-cues (dagens) */
+  .cues{color:var(--muted);font-size:.9rem;padding:8px 16px 12px}
+  .cue-row{display:flex;justify-content:space-around}
+  .cue-down{justify-content:center;margin-top:5px}
+
+  /* Röst-ord (handsfree) */
+  .listen{padding:6px 14px 12px}
+  .listen-head{display:flex;align-items:center;gap:7px;color:var(--accent);font-size:.82rem;font-weight:600;margin:0 2px 8px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.15)}}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:4px 11px;font-size:.82rem;color:var(--text);white-space:nowrap}
+  .chip b{font-weight:600}
+  .chip .g{font-size:.72rem;color:var(--muted);margin-left:5px}
+  .chip.grade-fail{border-color:rgba(224,90,79,.5)}
+  .chip.grade-good{border-color:rgba(91,191,114,.5)}
+  .chip.grade-easy{border-color:rgba(244,197,66,.5)}
+  .chip.grade-hard{border-color:rgba(255,138,61,.5)}
+
+  /* Sentence-variant av röst-orden */
+  .listen-sentence{color:var(--muted);font-size:.86rem;padding:2px 4px;line-height:1.7}
+  .listen-sentence b{color:var(--text);background:var(--surface-2);border-radius:6px;padding:1px 6px;font-weight:600}
+
+  /* Segmentväxel Svep | Handsfree */
+  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:3px;margin:2px 16px 10px;position:relative}
+  .seg button{flex:1;border:none;background:transparent;color:var(--muted);font-size:.9rem;font-weight:600;
+    padding:9px 6px;border-radius:9px;cursor:pointer;z-index:1;transition:color .18s;display:flex;align-items:center;justify-content:center;gap:6px}
+  .seg button.on{color:#fff}
+  .seg .thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);background:var(--accent);
+    border-radius:9px;transition:transform .22s cubic-bezier(.4,0,.2,1)}
+  .seg.hf .thumb{transform:translateX(100%)}
+
+  /* Dagens enkla knapp */
+  .hf-btn{margin:2px 16px 10px;padding:11px 13px;border:none;border-radius:12px;background:var(--surface-2);
+    color:var(--text);font-size:.95rem;font-weight:600;width:calc(100% - 32px);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+  .hf-btn.active{background:var(--accent);color:#fff}
+
+  /* Förslag B: dold handtags-flik som glider upp */
+  .handle-wrap{margin:2px 16px 10px}
+  .handle{display:flex;align-items:center;justify-content:center;gap:8px;color:var(--muted);
+    font-size:.85rem;padding:7px;border-radius:10px;background:transparent;border:1px dashed var(--line);cursor:pointer;width:100%}
+  .handle .chev{transition:transform .2s}
+  .slideup{max-height:0;overflow:hidden;transition:max-height .28s ease}
+  .slideup.open{max-height:80px}
+  .col.b .seg{margin:8px 0 0}
+
+  .modehdr{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 18px 4px}
+  .hide{display:none}
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.7rem;color:var(--muted);padding:2px 9px;margin-left:6px}
+  .tip{max-width:660px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 18px;font-size:.9rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Handsfree – tydligare instruktioner & lägesväxel</h1>
+<p class="sub">Tre förslag. Klicka på växeln/knappen i varje för att se hur ytan under kortet byter från svep-tips till <b>vilka ord handsfree lyssnar efter</b>.</p>
+
+<div class="grid">
+
+  <!-- FÖRSLAG A -->
+  <div class="col a">
+    <h2>A · Segmentväxel <span class="tag">alltid synlig</span></h2>
+    <p class="desc">Tydligt val <b>Svep | Handsfree</b> längst ner. Cue-ytan byter innehåll efter läge. Ordet-chipsen är märkta med samma betyg som svepen.</p>
+    <div class="phone"><div class="screen">
+      <div class="train-bar"><button class="back">←</button><span class="pill">7 kvar</span></div>
+      <div class="card-area"><div class="card">gelato</div></div>
+      <div class="bottom">
+        <!-- Svep-läge -->
+        <div class="cues" data-mode="swipe">
+          <div class="cue-row"><span>👈 kan inte</span><span>👆 kan bra</span><span>kan 👉</span></div>
+          <div class="cue-row cue-down"><span>👇 hopplöst</span></div>
+        </div>
+        <!-- Handsfree-läge -->
+        <div class="listen hide" data-mode="hf">
+          <div class="listen-head"><span class="dot"></span> Lyssnar – säg:</div>
+          <div class="chips">
+            <span class="chip grade-fail"><b>"kan inte"</b></span>
+            <span class="chip grade-good"><b>"kan"</b></span>
+            <span class="chip grade-easy"><b>"kan bra"</b></span>
+            <span class="chip grade-hard"><b>"hopplöst"</b></span>
+            <span class="chip"><b>"flippa"</b><span class="g">vänd</span></span>
+            <span class="chip"><b>"ångra"</b><span class="g">tillbaka</span></span>
+          </div>
+        </div>
+        <div class="seg" data-seg>
+          <div class="thumb"></div>
+          <button class="on" data-set="swipe">👆 Svep</button>
+          <button data-set="hf">🎙 Handsfree</button>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros">
+      <li class="good">Solklart att det är två lägen att välja mellan</li>
+      <li class="good"> Orden syns direkt när man byter</li>
+      <li class="bad">Tar mest visuell plats – syns hela tiden</li>
+    </ul>
+  </div>
+
+  <!-- FÖRSLAG B -->
+  <div class="col b">
+    <h2>B · Dold – glider upp <span class="tag">låg profil</span></h2>
+    <p class="desc">Bara en diskret rad i nederkant. Tryck så glider segmentväxeln upp. Håller fokus på kortet tills man själv vill byta läge.</p>
+    <div class="phone"><div class="screen">
+      <div class="train-bar"><button class="back">←</button><span class="pill">7 kvar</span></div>
+      <div class="card-area"><div class="card">gelato</div></div>
+      <div class="bottom">
+        <div class="cues" data-mode="swipe">
+          <div class="cue-row"><span>👈 kan inte</span><span>👆 kan bra</span><span>kan 👉</span></div>
+          <div class="cue-row cue-down"><span>👇 hopplöst</span></div>
+        </div>
+        <div class="listen hide" data-mode="hf">
+          <div class="listen-head"><span class="dot"></span> Lyssnar – säg:</div>
+          <div class="chips">
+            <span class="chip grade-fail"><b>"kan inte"</b></span>
+            <span class="chip grade-good"><b>"kan"</b></span>
+            <span class="chip grade-easy"><b>"kan bra"</b></span>
+            <span class="chip grade-hard"><b>"hopplöst"</b></span>
+            <span class="chip"><b>"flippa"</b></span>
+            <span class="chip"><b>"ångra"</b></span>
+          </div>
+        </div>
+        <div class="handle-wrap">
+          <button class="handle" data-handle><span class="chev">⌃</span> <span data-handle-lbl>Läge: Svep</span></button>
+          <div class="slideup" data-slide>
+            <div class="seg" data-seg>
+              <div class="thumb"></div>
+              <button class="on" data-set="swipe">👆 Svep</button>
+              <button data-set="hf">🎙 Handsfree</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros">
+      <li class="good">Minimalt visuellt fokus tills man vill byta</li>
+      <li class="good">Samma tydliga val när det väl fälls upp</li>
+      <li class="bad">Ett extra tryck; lite mindre upptäckbart</li>
+    </ul>
+  </div>
+
+  <!-- FÖRSLAG C -->
+  <div class="col c">
+    <h2>C · Behåll knappen <span class="tag">minsta ändring</span></h2>
+    <p class="desc">Dagens enda <b>🎙 Handsfree</b>-knapp kvar. När den slås på förvandlas cue-raden till en lyssnar-mening. Minst att bygga.</p>
+    <div class="phone"><div class="screen">
+      <div class="train-bar"><button class="back">←</button><span class="pill">7 kvar</span></div>
+      <div class="card-area"><div class="card">gelato</div></div>
+      <div class="bottom">
+        <div class="cues" data-mode="swipe">
+          <div class="cue-row"><span>👈 kan inte</span><span>👆 kan bra</span><span>kan 👉</span></div>
+          <div class="cue-row cue-down"><span>👇 hopplöst</span></div>
+        </div>
+        <div class="listen hide" data-mode="hf">
+          <div class="listen-head"><span class="dot"></span> Lyssnar…</div>
+          <p class="listen-sentence">Säg <b>"kan"</b>, <b>"kan bra"</b>, <b>"kan inte"</b> eller <b>"hopplöst"</b> – och <b>"flippa"</b> / <b>"ångra"</b>.</p>
+        </div>
+        <button class="hf-btn" data-hfbtn>🎙 Handsfree</button>
+      </div>
+    </div></div>
+    <ul class="pros">
+      <li class="good">Enklast att bygga; känns bekant</li>
+      <li class="good">Cue-ytan gör dubbel nytta (svep ↔ röst)</li>
+      <li class="bad">Mindre "läge-känsla" än en segmentväxel</li>
+    </ul>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Not:</b> chip-varianten (A/B) märker rösten med samma färg som svepen (röd = kan inte, grön = kan, gul = kan bra, orange = hopplöst) så det blir lätt att koppla ihop de två lägena. C använder en kort mening i stället. Alla tre kan förstås blandas – t.ex. B:s dolda upplägg med A:s färgade chips.
+</div>
+
+<script>
+  // Segmentväxel (A och B)
+  document.querySelectorAll("[data-seg]").forEach((seg) => {
+    const scope = seg.closest(".bottom");
+    seg.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const hf = btn.dataset.set === "hf";
+        seg.classList.toggle("hf", hf);
+        seg.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b === btn));
+        scope.querySelector('[data-mode="swipe"]').classList.toggle("hide", hf);
+        scope.querySelector('[data-mode="hf"]').classList.toggle("hide", !hf);
+        const lbl = scope.querySelector("[data-handle-lbl]");
+        if (lbl) lbl.textContent = "Läge: " + (hf ? "Handsfree" : "Svep");
+      });
+    });
+  });
+  // Slide-up (B)
+  document.querySelectorAll("[data-handle]").forEach((h) => {
+    const slide = h.parentElement.querySelector("[data-slide]");
+    const chev = h.querySelector(".chev");
+    h.addEventListener("click", () => {
+      const open = slide.classList.toggle("open");
+      chev.style.transform = open ? "rotate(180deg)" : "";
+    });
+  });
+  // Enkel knapp (C)
+  document.querySelectorAll("[data-hfbtn]").forEach((btn) => {
+    const scope = btn.closest(".bottom");
+    btn.addEventListener("click", () => {
+      const on = btn.classList.toggle("active");
+      btn.textContent = "";
+      btn.append("🎙 Handsfree" + (on ? " • på" : ""));
+      scope.querySelector('[data-mode="swipe"]').classList.toggle("hide", on);
+      scope.querySelector('[data-mode="hf"]').classList.toggle("hide", !on);
+    });
+  });
+</script>
+</body>
+</html>

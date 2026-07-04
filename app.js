@@ -3802,16 +3802,22 @@ async function startHandsfree() {
   if ("speechSynthesis" in window) {
     try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
   }
-  // Förhandsbevilja mikrofonen om det går (vanlig Safari/Android). Men GE INTE UPP om
-  // det failar: i en hemskärms-PWA på iOS är getUserMedia ofta begränsad medan
-  // taligenkänningen ändå funkar. Låt då SpeechRecognition begära mikrofonen själv –
-  // dess onerror visar "Mikrofon ej tillåten" om den verkligen nekas.
-  if (!hfMicGranted && navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+  // Säkra mikrofonen INNAN vi läser upp något. Annars läses ordet upp och passet
+  // "dör" tyst så fort taligenkänningen nekas (knappen släcks) – förvirrande. Fela
+  // hellre tidigt, med ett åtgärdbart meddelande, och läs inte upp ordet i onödan.
+  if (!hfMicGranted) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      flash("Den här enheten ger inte appen mikrofon för handsfree. Prova att öppna Flippa i Safari i stället för från hemskärmen.", 5500);
+      return;
+    }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach((t) => t.stop()); // behöver inte strömmen – taligenkänningen sköter sin egen
       hfMicGranted = true;
-    } catch (_) { /* fortsätt ändå – SpeechRecognition sköter behörigheten */ }
+    } catch (_) {
+      flash("Mikrofonåtkomst nekad. Tillåt mikrofonen i Inställningar (eller öppna Flippa i Safari) för att köra handsfree.", 5500);
+      return;
+    }
     if (!session || !session.current) return; // sessionen kan ha hunnit avslutas under await
   }
   handsfreeActive = true;
@@ -4006,7 +4012,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v194";
+const APP_VERSION = "v195";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
