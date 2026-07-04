@@ -973,7 +973,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* Handsfree-läge i footern: orden appen lyssnar efter */
 .hf-status { font-size: 0.85rem; font-weight: 600; color: var(--accent); }
 .cues-hf { padding: 2px 2px 4px; }
-.hf-listen-head { display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 8px; }
+/* Fast höjd så raden inte krymper när status-texten är tom (bara pricken kvar
+   medan svenska ordet läses upp) – annars åker chipsen upp någon pixel. */
+.hf-listen-head { display: flex; align-items: center; justify-content: center; gap: 7px; margin-bottom: 8px; min-height: 22px; }
 .hf-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: hf-pulse-dot 1.4s ease-in-out infinite; }
 @keyframes hf-pulse-dot {
   0%, 100% { opacity: .35; transform: scale(.8); }

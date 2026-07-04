@@ -39,3 +39,10 @@
 - [x] Deploy? → **Svar:** GitHub Pages, live på https://tom-airaksinen.github.io/flashcards/ (2026-05-30)
 - [x] Egen ikon till hemskärmen? → **Svar:** Ja, neutral kort-stack-ikon (icon.svg → 192/512 px) (2026-05-30)
 - [ ] Om anonym inloggning skulle fela på github.io: lägg ev. till domänen under Firebase Auth → Settings → Authorized domains.
+- [x] Skydda användaren från omladdning mitt i något vid deploy? → **Nivå 1 byggd (v199, 2026-07-04):** omladdning för ny version skjuts upp tills man är på ämnes-/lektionslistan utan pass/handsfree/öppen modal (`maybeReloadForUpdate`/`isSafeToReloadForUpdate`). Nivå 2 (diskret "ny version"-banner utan skipWaiting) återstår. → **Analys (2026-07-04):** Idag gör SW:n `skipWaiting` och appen `location.reload()` så fort ny version upptäcks (kollas var 60:e s + vid förgrund). Ingen dataförlust (SRS/statistik sparas löpande, innehåll i Firebase) – men flyktigt läge tappas (pågående passkö, Klar-skärmens Fortsätt, halvskriven glosa, handsfree) + splash blinkar. Åtgärd i tre nivåer: **(1)** uppskjuten reload – ladda bara om när man är på listan, ingen modal/pass/handsfree (~30–45 min, löser ~90 %); **(2)** ta bort `skipWaiting`, visa diskret "Ny version – tryck för att uppdatera"-banner (~1 h, standard-PWA-mönster); **(3)** kombo. Rekommendation inför bredare release: nivå 1 nu, nivå 2 senare. Litet, isolerat jobb (~SW-logik + lite UI), ingen risk för övrig app.
+
+## Innehållsbibliotek (nivåindelat) – se [`innehallsbibliotek.md`](innehallsbibliotek.md)
+- [ ] Nivåetiketter: "Nybörjare / Medel / Avancerad" eller "nybörjare / kan en del / avancerad"? (styr lektionsnamn)
+- [ ] Vilka språk får färdiga paket först? (italienska redan på gång)
+- [ ] Engelsk master som mellanled, eller generera direkt svenska↔målspråk?
+- [ ] Distribution längre fram: i-app-bibliotek vs delade CSV-filer?

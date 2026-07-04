@@ -29,6 +29,9 @@ const CACHE_KEY = "flashcards-content-cache-v1";
 let content = loadCachedContent(); // [{id,name,order,owner,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
 let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
+// Uppdaterings-skydd: ny app-version laddas inte om mitt i ett pass. Sätts när en
+// ny service worker tar över; själva omladdningen sker först på en säker plats.
+let pendingReload = false, swReloading = false;
 
 // ---- Användare (lokal profilväljare – INTE inloggning/säkerhet) ----
 // Varje område har en ägare (owner). Vald profil filtrerar vilka områden som visas.
@@ -860,6 +863,7 @@ function renderSubjects() {
     });
     row.addEventListener("pointerdown", (e) => onRowPointerDown(e, row, list, subjectDragCfg));
   });
+  maybeReloadForUpdate(); // säker plats → applicera ev. väntande app-uppdatering
 }
 
 // Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
@@ -972,6 +976,7 @@ function renderLessons() {
       openEditor(btn.dataset.edit);
     });
   });
+  maybeReloadForUpdate(); // säker plats → applicera ev. väntande app-uppdatering
 }
 
 // ---- Drag & drop-omordning av rader (långtryck) – lektioner och ämnen ----
@@ -4051,18 +4056,33 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v198";
+const APP_VERSION = "v199";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
+// Ladda bara om för en ny version när det är ofarligt: på ämnes-/lektionslistan,
+// utan pågående pass, handsfree eller öppen modal. Annars väntar omladdningen tills
+// man är tillbaka på en lista (se anropen i renderSubjects/renderLessons).
+function isSafeToReloadForUpdate() {
+  return (activeScreen === "subjects" || activeScreen === "lessons")
+    && !session && !handsfreeActive
+    && modalRoot.classList.contains("hidden");
+}
+function maybeReloadForUpdate() {
+  if (!pendingReload || swReloading) return;
+  if (!isSafeToReloadForUpdate()) return;
+  swReloading = true;
+  location.reload();
+}
+
 if ("serviceWorker" in navigator) {
   const hadController = !!navigator.serviceWorker.controller;
-  let refreshing = false;
-  // När en ny service worker tar över → ladda om en gång så nya versionen syns direkt
+  // Ny service worker tog över → ladda INTE om direkt (kan vara mitt i ett pass).
+  // Markera väntande och ladda om vid nästa säkra tillfälle.
   navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (!hadController || refreshing) return;
-    refreshing = true;
-    location.reload();
+    if (!hadController) return;
+    pendingReload = true;
+    maybeReloadForUpdate();
   });
   navigator.serviceWorker
     .register("sw.js", { updateViaCache: "none" })
