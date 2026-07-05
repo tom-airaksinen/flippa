@@ -26,6 +26,7 @@ input, textarea {
   --fire: #ff8a3d;
   --gold: #f4c542;
   --line: #2c3c63; /* strukturkant (väljare, modaler, flikfält) */
+  --track: rgba(255, 255, 255, 0.12); /* omärkt del av behärskningsstapeln (= nya ord) */
 }
 
 /* Rosa tema – gäller bara Hedvigs profil (klass sätts på <html> i applyTheme) */
@@ -42,6 +43,7 @@ input, textarea {
   --fire: #ff2e86;   /* streak-siffran */
   --gold: #d98a26;
   --line: #f0aecd;
+  --track: rgba(74, 34, 54, 0.12);
 }
 /* Ljus bakgrund kräver vit text på de rosa chiparna + ljusa kort-lager */
 :root.theme-rosa #due-btn { color: #fff; }
@@ -296,6 +298,19 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   font-weight: 600;
   margin-right: 8px;
 }
+
+/* ---- Lektionsrad med behärskningsstapel (två rader) ---- */
+.lesson-row { flex-direction: column; align-items: stretch; gap: 0; padding: 11px 14px; }
+.lesson-row .row-l1 { display: flex; align-items: center; gap: 10px; }
+.lesson-row .row-r { display: flex; align-items: center; flex: none; }
+.lesson-row .row-l2 { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mbar { flex: 1; display: flex; height: 6px; border-radius: 4px; overflow: hidden; background: var(--track); min-width: 40px; }
+.mbar i { height: 100%; display: block; }
+.m-learned { background: var(--good); }
+.m-learning { background: #e0915a; }
+.m-pct { font-size: 0.74rem; font-weight: 700; color: var(--good); min-width: 30px; text-align: right; }
+.m-cnt { font-size: 0.68rem; color: var(--muted); white-space: nowrap; }
+.row.paused .mbar { opacity: 0.55; }
 /* "nya"-tagg: dämpad/informativ (blå) – mindre skrikig än gula "dags" som är att-göra */
 .new-tag {
   background: rgba(91, 140, 255, 0.18);

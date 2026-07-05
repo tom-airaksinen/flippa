@@ -1014,21 +1014,37 @@ function renderLessons() {
     if (canLookUp) $("lookup-add").onclick = () => openTranslate(null, raw);
     return;
   }
-  // Dagens introducerade nya ord räknas redan i "dags" – exkludera dem ur "nya"
-  // så taggarna delar upp helheten (dags = att göra idag, nya = återstående backlog).
-  const introducedToday = new Set(todaysNewCards(currentSubject).map((c) => c.id));
+  // Behärskning per lektion: andel ord i låda ≥ 4 ("inlärt"), på väg = låda 1–3, ny = låda 0.
+  // Riktningen följer den valda dir-selecten (blandat = svagaste av de två riktningarna),
+  // samma logik som Leitner-stapeln på statistikfliken. Icke-muterande läsning ur srs.
+  const dirMode = $("dir-select").value;
+  const boxOf = (c) => {
+    const fb = (srs[srsKey(c, "f2b")] || {}).box || 0;
+    const bb = (srs[srsKey(c, "b2f")] || {}).box || 0;
+    return dirMode === "f2b" ? fb : dirMode === "b2f" ? bb : Math.min(fb, bb);
+  };
   list.innerHTML = lessonsToShow
     .map((l) => {
       const paused = isLessonPaused(l.id);
       const d = dueCountForLessons([l]);
-      const dueTag = d > 0 ? `<span class="due-tag">${d} dags</span>` : "";
-      const nNew = l.cards.reduce((n, c) => n + (isNewCard(c) && !introducedToday.has(c.id) ? 1 : 0), 0);
-      const newTag = nNew > 0 ? `<span class="new-tag">${nNew} nya</span>` : "";
+      const dueTag = d > 0 ? `<span class="due-tag">⏰ ${d}</span>` : "";
       const pauseIco = paused ? ` <span class="lesson-paused-ico" title="Pausad" aria-label="Pausad">⏸</span>` : "";
-      return `<div class="row${paused ? " paused" : ""}" data-lesson="${l.id}">
-        <span class="row-title"><span class="row-name">${esc(l.name)}</span>${pauseIco}</span>
-        <span class="row-meta">${newTag}${dueTag}${l.cards.length} ord</span>
-        <button class="row-edit" data-edit="${l.id}" title="Öppna lektionen för att ändra">›</button>
+      const total = l.cards.length;
+      let learned = 0, learning = 0;
+      l.cards.forEach((c) => { const bx = boxOf(c); if (bx >= 4) learned++; else if (bx >= 1) learning++; });
+      const pct = total ? Math.round((learned / total) * 100) : 0;
+      const lw = total ? (learned / total) * 100 : 0;
+      const gw = total ? (learning / total) * 100 : 0;
+      return `<div class="row lesson-row${paused ? " paused" : ""}" data-lesson="${l.id}">
+        <div class="row-l1">
+          <span class="row-title"><span class="row-name">${esc(l.name)}</span>${pauseIco}</span>
+          <span class="row-r">${dueTag}<button class="row-edit" data-edit="${l.id}" title="Öppna lektionen för att ändra">›</button></span>
+        </div>
+        <div class="row-l2">
+          <span class="mbar"><i class="m-learned" style="width:${lw}%"></i><i class="m-learning" style="width:${gw}%"></i></span>
+          <span class="m-pct">${pct}%</span>
+          <span class="m-cnt">${total} ord</span>
+        </div>
       </div>`;
     })
     .join("");
@@ -4181,7 +4197,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v217";
+const APP_VERSION = "v218";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
