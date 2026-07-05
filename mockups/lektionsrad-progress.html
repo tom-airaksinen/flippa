@@ -65,6 +65,35 @@
   .pill.pause,.badge.pause{background:rgba(255,255,255,.09);color:var(--muted)}
   .segbar.pausedbar i.learned{background:#6f8a77}
 
+  /* ---- Full skärm-chrome (variant 4 & 5) ---- */
+  .screen.tall{height:648px}
+  .hdr{display:flex;align-items:center;gap:7px;padding:12px 12px 6px}
+  .hdr .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text);font-size:1rem;flex-shrink:0}
+  .hdr h3{font-size:1.02rem;margin:0;font-weight:650;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr .ic{width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:var(--muted);font-size:1rem;flex-shrink:0}
+  .pills2{display:flex;gap:8px;padding:2px 12px 8px}
+  .optp{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:var(--text)}
+  .optp .lbl{font-size:.55rem;letter-spacing:.1em;color:var(--muted);display:block}
+  .optp .val{font-size:.8rem;font-weight:600}
+  .optp .car{color:var(--muted);font-size:.7rem}
+  .abtn{margin:0 12px 8px;display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 24px);border:none;border-radius:11px;padding:10px;font-size:.9rem;font-weight:650}
+  .abtn.primary{background:var(--accent);color:#fff}
+  .abtn.alt{background:var(--surface);border:1px solid var(--line);color:var(--text)}
+  .searchbar{margin:0 12px 10px;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 11px;color:var(--muted);font-size:.84rem}
+
+  /* ---- Kompakt lektionsrad (variant 5) ---- */
+  .crow{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 11px}
+  .crow.paused{opacity:.62}
+  .crow .cnm{font-size:.88rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:92px}
+  .crow .cbar{flex:1;display:flex;height:6px;border-radius:4px;overflow:hidden;background:var(--new);min-width:40px}
+  .crow .cbar i{height:100%}
+  .crow .cbar .learned{background:var(--good)} .crow .cbar .learning{background:var(--learn)}
+  .crow .cbar.pausedbar .learned{background:#6f8a77}
+  .crow .cpct{font-size:.72rem;font-weight:700;color:var(--good);min-width:30px;text-align:right}
+  .crow .cdue{font-size:.62rem;color:#ffc196;white-space:nowrap}
+  .crow .cpause{font-size:.62rem;color:var(--muted);white-space:nowrap}
+  .crow .cgo{color:var(--muted);font-size:1.05rem;flex-shrink:0;opacity:.7}
+
   .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.78rem;color:var(--muted)}
   .pros li{margin:3px 0;padding-left:16px;position:relative}
   .pros li.g::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
@@ -75,7 +104,7 @@
 </head>
 <body>
 <h1>Behärskning i lektionsraden (A2)</h1>
-<p class="sub">”Inlärt” = låda ≥ 4. Tre sätt att visa det – och hur de hanterar trängseln med nya/förfallna-indikatorerna. Varje variant visar en <b>pausad</b> lektion (nedtonad, ⏸, räknas ej i pass men behärskningen syns ändå) och behåller <b>högerpilen ›</b> som separat tryckyta: <b>rad-tryck = öva</b>, <b>› = öppna för att se/redigera orden</b>.</p>
+<p class="sub">”Inlärt” = låda ≥ 4. Tre sätt att visa det – och hur de hanterar trängseln med nya/förfallna-indikatorerna. Varje variant visar en <b>pausad</b> lektion (nedtonad, ⏸, räknas ej i pass men behärskningen syns ändå) och behåller <b>högerpilen ›</b> som separat tryckyta: <b>rad-tryck = öva</b>, <b>› = öppna för att se/redigera orden</b>. Variant <b>4 &amp; 5</b> visar hela dagens skärm (rubrik, ✎ ⬆️ ＋, riktning/kort-per-pass, Dags att öva, Slå upp ord, sök) – variant 5 med kompakta rader så fler lektioner får plats.</p>
 <div class="legend">
   <span><i class="sw" style="background:#5bbf72"></i> inlärt (låda ≥ 4)</span>
   <span><i class="sw" style="background:#e0915a"></i> på väg (låda 1–3)</span>
@@ -181,6 +210,66 @@
       </div>
     </div></div>
     <ul class="pros"><li class="g">Kompakt, låga rader</li><li class="g">%-siffran syns direkt</li><li class="b">Ring + 2 pills + namn = trångt smalt</li></ul>
+  </div>
+
+  <!-- Variant 4: segmenterad + FULL skärm-chrome -->
+  <div class="col">
+    <h2>4 · Segmenterad + full skärm <span class="tag">allt på plats</span></h2>
+    <p class="desc">Variant 1:s stapel, men med hela dagens skärm ovanför: ämnesrubrik + ✎ ⬆️ ＋, riktning/kort-per-pass, Dags att öva, Slå upp ord och sök. Visar hur mycket chrome som ligger före listan idag.</p>
+    <div class="phone"><div class="screen tall">
+      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">✎</button><button class="ic">⬆️</button><button class="ic">＋</button></div>
+      <div class="pills2">
+        <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
+        <button class="optp"><span><span class="lbl">KORT/PASS</span><span class="val">Alla</span></span><span class="car">▾</span></button>
+      </div>
+      <button class="abtn primary">⏰ Dags att öva (18)</button>
+      <button class="abtn alt">🔎 Slå upp ord</button>
+      <div class="searchbar">🔍 Sök i alla lektioner…</div>
+      <div class="rows">
+        <div class="row">
+          <div class="r-top"><span class="nm">Mat &amp; dryck</span><span class="rt-right"><span class="badge">⏰ 5</span><button class="go">›</button></span></div>
+          <div style="margin-top:9px" class="segbar"><i class="learned" style="width:82%"></i><i class="learning" style="width:6%"></i></div>
+          <div class="barcap"><span><b>82 %</b> inlärt</span><span>41 ord</span></div>
+        </div>
+        <div class="row paused">
+          <div class="r-top"><span class="nm">Verb – imperfekt</span><span class="rt-right"><span class="badge pause">⏸ Pausad</span><button class="go">›</button></span></div>
+          <div style="margin-top:9px" class="segbar pausedbar"><i class="learned" style="width:60%"></i><i class="learning" style="width:15%"></i></div>
+          <div class="barcap"><span><b>60 %</b> inlärt</span><span>vilar – räknas ej i pass</span></div>
+        </div>
+        <div class="row">
+          <div class="r-top"><span class="nm">Resa</span><span class="rt-right"><button class="go">›</button></span></div>
+          <div style="margin-top:9px" class="segbar"><i class="learned" style="width:8%"></i><i class="learning" style="width:12%"></i></div>
+          <div class="barcap"><span><b>8 %</b> inlärt</span><span>25 ord · 20 nya</span></div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros"><li class="g">Inget tas bort – full paritet</li><li class="b">~⅓ av skärmen är chrome före listan</li></ul>
+  </div>
+
+  <!-- Variant 5: full skärm + KOMPAKTA rader -->
+  <div class="col">
+    <h2>5 · Full skärm + kompakta rader <span class="tag">fler får plats</span></h2>
+    <p class="desc">Samma skärm som 4, men lektionsraderna hoptryckta till en rad: namn + mini-stapel + % + ⏰ + ›. Fler lektioner syns samtidigt trots att all chrome är kvar.</p>
+    <div class="phone"><div class="screen tall">
+      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">✎</button><button class="ic">⬆️</button><button class="ic">＋</button></div>
+      <div class="pills2">
+        <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
+        <button class="optp"><span><span class="lbl">KORT/PASS</span><span class="val">Alla</span></span><span class="car">▾</span></button>
+      </div>
+      <button class="abtn primary">⏰ Dags att öva (18)</button>
+      <button class="abtn alt">🔎 Slå upp ord</button>
+      <div class="searchbar">🔍 Sök i alla lektioner…</div>
+      <div class="rows">
+        <div class="crow"><span class="cnm">Mat &amp; dryck</span><span class="cbar"><i class="learned" style="width:82%"></i><i class="learning" style="width:6%"></i></span><span class="cpct">82%</span><span class="cdue">⏰5</span><span class="cgo">›</span></div>
+        <div class="crow"><span class="cnm">Familjen</span><span class="cbar"><i class="learned" style="width:45%"></i><i class="learning" style="width:40%"></i></span><span class="cpct">45%</span><span class="cdue">⏰8</span><span class="cgo">›</span></div>
+        <div class="crow paused"><span class="cnm">Verb – imperfekt</span><span class="cbar pausedbar"><i class="learned" style="width:60%"></i></span><span class="cpct" style="color:var(--muted)">60%</span><span class="cpause">⏸</span><span class="cgo">›</span></div>
+        <div class="crow"><span class="cnm">Resa</span><span class="cbar"><i class="learned" style="width:8%"></i><i class="learning" style="width:12%"></i></span><span class="cpct">8%</span><span class="cdue" style="color:#a9c2ff">20 ny</span><span class="cgo">›</span></div>
+        <div class="crow"><span class="cnm">Kroppen</span><span class="cbar"><i class="learned" style="width:70%"></i><i class="learning" style="width:10%"></i></span><span class="cpct">70%</span><span class="cdue">⏰2</span><span class="cgo">›</span></div>
+        <div class="crow"><span class="cnm">Kläder</span><span class="cbar"><i class="learned" style="width:33%"></i><i class="learning" style="width:22%"></i></span><span class="cpct">33%</span><span class="cdue" style="color:#a9c2ff">6 ny</span><span class="cgo">›</span></div>
+        <div class="crow"><span class="cnm">Tid &amp; datum</span><span class="cbar"><i class="learned" style="width:91%"></i></span><span class="cpct">91%</span><span class="cgo">›</span></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li class="g">~7 lektioner mot ~4</li><li class="g">Behåller %, ⏰ och ›</li><li class="b">Tätare – mindre andningsrum</li></ul>
   </div>
 
 </div>
