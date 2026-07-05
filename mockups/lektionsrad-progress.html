@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – mockup: behärskning i lektionsraden (A2)</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63;
+    --learn:#e0915a; --new:rgba(255,255,255,.13); }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px}
+  h1{font-size:1.32rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 22px;max-width:700px;font-size:.92rem}
+  .legend{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:0 auto 26px;font-size:.8rem;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+  .grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
+  .col{width:320px}
+  .col h2{font-size:1.02rem;margin:0 0 2px}
+  .col .desc{color:var(--muted);font-size:.84rem;margin:0 0 12px;min-height:66px}
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.64rem;color:var(--muted);padding:2px 9px;margin-left:6px;vertical-align:2px}
+
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:30px;padding:9px;box-shadow:0 18px 46px rgba(0,0,0,.55)}
+  .screen{position:relative;width:302px;height:520px;background:var(--bg);border-radius:22px;overflow:hidden;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
+  .topbar .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text)}
+  .topbar h3{font-size:1.02rem;margin:0;font-weight:650}
+  .seg{margin:2px 14px 10px;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.74rem}
+  .seg span{flex:1;text-align:center;padding:6px 0;color:var(--muted)}
+  .seg span.on{background:var(--accent);color:#fff;font-weight:600}
+  .rows{padding:0 14px;display:flex;flex-direction:column;gap:9px}
+
+  .row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px}
+  .r-top{display:flex;align-items:center;gap:8px}
+  .nm{font-weight:600;font-size:.94rem}
+  .edit{margin-left:auto;color:var(--muted);font-size:1.1rem;opacity:.6}
+  .pill{border-radius:20px;font-size:.66rem;padding:2px 8px;white-space:nowrap}
+  .pill.new{background:rgba(91,140,255,.16);color:#a9c2ff}
+  .pill.due{background:rgba(255,138,61,.18);color:#ffc196}
+  .pills{display:flex;gap:5px;margin-left:auto}
+
+  /* Segmenterad stapel */
+  .segbar{display:flex;height:7px;border-radius:5px;overflow:hidden;background:var(--new)}
+  .segbar i{display:block;height:100%}
+  .segbar .learned{background:var(--good)} .segbar .learning{background:var(--learn)}
+  .barcap{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted);margin-top:5px}
+  .barcap b{color:var(--good)}
+
+  /* Ring */
+  .ring{width:38px;height:38px;border-radius:50%;flex-shrink:0;
+    background:conic-gradient(var(--good) calc(var(--p)*1%), var(--new) 0);
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .ring::after{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--surface)}
+  .ring span{position:relative;z-index:1;font-size:.6rem;font-weight:700}
+
+  .badge{display:inline-flex;align-items:center;gap:3px;background:rgba(255,138,61,.18);color:#ffc196;border-radius:20px;font-size:.66rem;padding:2px 8px}
+
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.78rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:16px;position:relative}
+  .pros li.g::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
+  .pros li.b::before{content:"−";position:absolute;left:0;color:var(--fail);font-weight:700}
+  .tip{max-width:720px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Behärskning i lektionsraden (A2)</h1>
+<p class="sub">”Inlärt” = låda ≥ 4. Tre sätt att visa det – och hur de hanterar trängseln med nya/förfallna-indikatorerna. Samma tre lektioner i varje variant för jämförelse: <b>Mat</b> (82 % inlärt, 5 dags), <b>Familjen</b> (45 %, 8 dags), <b>Resa</b> (8 %, mest nya).</p>
+<div class="legend">
+  <span><i class="sw" style="background:#5bbf72"></i> inlärt (låda ≥ 4)</span>
+  <span><i class="sw" style="background:#e0915a"></i> på väg (låda 1–3)</span>
+  <span><i class="sw" style="background:rgba(255,255,255,.2)"></i> nya (ej börjat)</span>
+</div>
+
+<div class="grid">
+
+  <!-- Variant 1: Segmenterad allt-i-ett -->
+  <div class="col">
+    <h2>1 · Segmenterad stapel <span class="tag">allt-i-ett</span></h2>
+    <p class="desc">En stapel kodar allt: grön inlärt, orange på väg, grå nya. Nya/dags-pillren <b>försvinner</b> – de ligger i stapeln. Bara ⏰ förfallna får en liten badge, för de är tidskänsliga och värda en knuff.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div class="rows">
+        <div class="row">
+          <div class="r-top"><span class="nm">Mat &amp; dryck</span><span class="badge">⏰ 5</span></div>
+          <div style="margin-top:9px" class="segbar"><i class="learned" style="width:82%"></i><i class="learning" style="width:6%"></i></div>
+          <div class="barcap"><span><b>82 %</b> inlärt</span><span>41 ord</span></div>
+        </div>
+        <div class="row">
+          <div class="r-top"><span class="nm">Familjen</span><span class="badge">⏰ 8</span></div>
+          <div style="margin-top:9px" class="segbar"><i class="learned" style="width:45%"></i><i class="learning" style="width:40%"></i></div>
+          <div class="barcap"><span><b>45 %</b> inlärt</span><span>20 ord</span></div>
+        </div>
+        <div class="row">
+          <div class="r-top"><span class="nm">Resa</span></div>
+          <div style="margin-top:9px" class="segbar"><i class="learned" style="width:8%"></i><i class="learning" style="width:12%"></i></div>
+          <div class="barcap"><span><b>8 %</b> inlärt</span><span>25 ord · 20 nya</span></div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros"><li class="g">Löser trängseln – en stapel i stället för pills</li><li class="g">Skuld + belöning i samma bild</li><li class="b">Stapelns färger måste läras in</li></ul>
+  </div>
+
+  <!-- Variant 2: Tvårad -->
+  <div class="col">
+    <h2>2 · Tvårad <span class="tag">rymligast</span></h2>
+    <p class="desc">Rad 1 som idag (namn + nya/dags-pills, oförändrat). Rad 2: en tunn inlärt-stapel + text. Inget trängs – men raderna blir högre, så färre lektioner får plats.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div class="rows">
+        <div class="row">
+          <div class="r-top"><span class="nm">Mat &amp; dryck</span><span class="pills"><span class="pill new">2 nya</span><span class="pill due">5 dags</span></span></div>
+          <div style="margin-top:10px" class="segbar"><i class="learned" style="width:82%"></i></div>
+          <div class="barcap"><span><b>82 %</b> inlärt</span></div>
+        </div>
+        <div class="row">
+          <div class="r-top"><span class="nm">Familjen</span><span class="pills"><span class="pill new">3 nya</span><span class="pill due">8 dags</span></span></div>
+          <div style="margin-top:10px" class="segbar"><i class="learned" style="width:45%"></i></div>
+          <div class="barcap"><span><b>45 %</b> inlärt</span></div>
+        </div>
+        <div class="row">
+          <div class="r-top"><span class="nm">Resa</span><span class="pills"><span class="pill new">20 nya</span></span></div>
+          <div style="margin-top:10px" class="segbar"><i class="learned" style="width:8%"></i></div>
+          <div class="barcap"><span><b>8 %</b> inlärt</span></div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros"><li class="g">Behåller befintliga pills orörda</li><li class="g">Tydligast separation skuld/behärskning</li><li class="b">Högre rader → färre syns</li></ul>
+  </div>
+
+  <!-- Variant 3: Ring + pills -->
+  <div class="col">
+    <h2>3 · Ring + pills <span class="tag">kompakt, enrad</span></h2>
+    <p class="desc">En liten %-ring till höger, pillren kvar. Ryms på en rad – men visar tydligt trängselrisken på smala skärmar när allt ska samsas.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div class="rows">
+        <div class="row"><div class="r-top">
+          <span class="ring" style="--p:82"><span>82%</span></span>
+          <div><span class="nm">Mat &amp; dryck</span><div style="margin-top:3px"><span class="pill new">2 nya</span> <span class="pill due">5 dags</span></div></div>
+        </div></div>
+        <div class="row"><div class="r-top">
+          <span class="ring" style="--p:45"><span>45%</span></span>
+          <div><span class="nm">Familjen</span><div style="margin-top:3px"><span class="pill new">3 nya</span> <span class="pill due">8 dags</span></div></div>
+        </div></div>
+        <div class="row"><div class="r-top">
+          <span class="ring" style="--p:8"><span>8%</span></span>
+          <div><span class="nm">Resa</span><div style="margin-top:3px"><span class="pill new">20 nya</span></div></div>
+        </div></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li class="g">Kompakt, låga rader</li><li class="g">%-siffran syns direkt</li><li class="b">Ring + 2 pills + namn = trångt smalt</li></ul>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Rekommendation & trängsel:</b> variant <b>1 (segmenterad)</b> löser själva problemet du pekar på – den <em>ersätter</em> nya/dags-pillren i stället för att lägga till bredvid dem, så raden blir renare trots mer information. Behåll bara ⏰-förfallna som badge (tidskänsligt, actionable). Om du vill behålla de exakta siffrorna ”12 nya · 5 dags” är <b>variant 2 (tvårad)</b> tryggast – priset är högre rader. Variant 3 visar varför enrad-med-allt blir trångt. Min gissning: <b>1 för renhet, 2 om siffrorna känns viktiga</b> – de kan t.o.m. kombineras (segmenterad stapel som rad 2).
+</div>
+
+</body>
+</html>

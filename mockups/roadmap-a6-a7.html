@@ -162,10 +162,26 @@
     <ul class="pros"><li>Tyst miljö-vänligt</li><li>Självförklarande, tidsbegränsat</li></ul>
   </div>
 
-  <!-- A7b · Starthint -->
+  <!-- A7b · Tom lista (ingen hint) -->
   <div class="col">
-    <h2>A7b · Engångshint <span class="tag">rad = starta pass</span></h2>
-    <p class="desc">Första gången någon är på lektionslistan: en liten coachmark som förklarar att ett tryck startar ett pass direkt. Visas en gång, sen aldrig mer.</p>
+    <h2>A7b · Tom lista <span class="tag">ingen hint än</span></h2>
+    <p class="desc">Finns ingen lektion finns inget att tipsa om – hinten hålls tillbaka. Skärmen visar bara skapa-läget. Hinten väntar tills det finns minst en rad att trycka på.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;text-align:center">
+        <div style="font-size:2.4rem">📚</div>
+        <div style="color:var(--muted);font-size:.9rem;max-width:210px">Inga lektioner än. Skapa en lektion så kan du börja öva.</div>
+        <button style="background:var(--accent);color:#fff;border:none;border-radius:11px;padding:10px 20px;font-size:.9rem;font-weight:650">＋ Ny lektion</button>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Ingen hint utan något att peka på</li><li>Utlöses vid <b>första skapade</b> lektionen</li></ul>
+  </div>
+
+  <!-- A7b · Starthint (5 lektioner) -->
+  <div class="col">
+    <h2>A7b · Engångshint <span class="tag">5 lektioner</span></h2>
+    <p class="desc">Så fort listan har minst en rad visas coachmarken en gång: ett tryck startar ett pass direkt. Här med 5 lektioner. En flagga i localStorage gör att den aldrig kommer tillbaka.</p>
     <div class="phone"><div class="screen">
       <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
       <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
@@ -174,8 +190,10 @@
         <div class="row spot"><span class="nm">Mat &amp; dryck</span><span class="meta"><span class="pill new">12 nya</span><span class="pill due">5 dags</span></span></div>
         <div class="row" style="opacity:.5"><span class="nm">Familjen</span><span class="meta"><span class="pill due">8 dags</span></span></div>
         <div class="row" style="opacity:.5"><span class="nm">Resa</span><span class="meta"><span class="pill new">20 nya</span></span></div>
+        <div class="row" style="opacity:.5"><span class="nm">Verb – presens</span><span class="meta"><span class="pill due">3 dags</span></span></div>
+        <div class="row" style="opacity:.5"><span class="nm">Kroppen</span><span class="meta"><span class="pill new">15 nya</span></span></div>
       </div>
-      <div class="coach" style="top:150px">
+      <div class="coach" style="top:158px">
         <div class="h">Tryck för att öva 👆</div>
         <p>Ett tryck på en lektion startar ett pass direkt – du behöver inte öppna den först. (Pennan ›  redigerar orden.)</p>
         <button class="ok">Uppfattat</button>

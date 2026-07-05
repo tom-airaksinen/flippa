@@ -363,6 +363,24 @@ inte ett fristående admin-bygge.
 
 ---
 
+## 8) Produkt-events att lägga till (GoatCounter)
+
+Utöver användnings-eventen (bildsök, slå upp, uttala …) finns *produktbeteenden* värda
+att mäta för att veta om nya funktioner träffar rätt. Idéer:
+
+- **`kunde-direkt`** (idé 2026-07-05): tryck ett event varje gång A1-regeln utlöses —
+  dvs. ett helt nytt ord (låda 0) svaras 👆 och hoppar direkt till låda 4. Svarar på
+  frågan *"respekterar appen min nivå?"*: hur ofta möter användare ord de redan kan?
+  Högt värde efter en stor import (t.ex. Collins 3000) bekräftar att snabb-avbetningen
+  behövs; nära noll betyder att folk sällan får banala ord. Billig rad i `gradeCard`.
+- Fler kandidater när funktionerna finns: `snabbsortering-anvand` (A1 steg 2),
+  `exempelmening-visad` (A4), `leech-minnesregel-foreslagen` (A3).
+
+Litet men viktigt: eventen är anonym aggregatdata (se avsnitt 7) — bra för "hur ofta",
+inte för "vem".
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
