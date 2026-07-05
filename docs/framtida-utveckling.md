@@ -306,6 +306,63 @@ delat-innehåll-vs-eget (avsnitt 1) och (b) den löpande synken mellan enheter.
 
 ---
 
+## 7) Admin-läge (statistik & användaröverblick)
+
+Idé (2026-07-05): ett admin-läge hårt knutet till Toms konto för att hantera
+lektioner och se statistik — dels från GoatCounter, dels (på sikt) per-användardata
+från Firebase: hur många lektioner andra har, hur deras Leitnerlådor ser ut osv.
+
+### Nyckelinsikt: den intressanta datan finns oftast inte att läsa ännu
+Att se *andras* lektioner/lådor går i praktiken inte idag, oavsett hur enkelt
+admin-UI:t byggs:
+
+- **Leitnerlådorna ligger i `localStorage` per enhet, inte i Firebase** → de finns
+  bara på varje användares egen telefon. Ingen serverkälla att läsa andras SRS från.
+- **Det finns inga separata användarkonton än** (delat innehållsträd + anonym auth).
+
+Samma beroende som återkommer i avsnitt 1 och 6: för att se andras lektioner/lådor
+krävs först **riktig inloggning per uid + SRS flyttad till Firebase**.
+
+### GoatCounter – enkelt att komma åt, men trubbigt
+- **Enklast:** bara en länk till GoatCounter-dashboarden. Noll kod.
+- Siffror *in-app* via [API:t](https://www.goatcounter.com/api.html) kräver Bearer-token
+  → **exponeras i klienten** (läs-only, egen statistik, låg insats men ändå), och
+  **CORS** kan tvinga fram en liten proxy. Samma "var bor nyckeln?"-problem som AI-funktionen.
+- Framför allt: **anonym aggregatdata.** Svarar på "hur många använde bildsök", men
+  **inget** om enskilda användares lektioner eller lådor.
+
+### Firebase – inte "svårare att läsa", utan "inget att läsa än"
+- **Innehållsträdet** ligger redan där med ägar-taggar (`owner`) → "hur många lektioner
+  har X" *skulle* kunna härledas, men är i nuläget mest Toms eget innehåll.
+- **Säkerhetsreglerna** är idag "vem som helst inloggad får allt". Att läsa allas data
+  kräver regler som ger *just admin-uid* bred läsrätt (admin-whitelist) — medveten design.
+- **Lådorna finns inte här alls** (se ovan).
+
+### Admin-gating (säkerhet)
+`currentUser === "tom"` är **kosmetiskt** — går att sätta i `localStorage`. Duger för
+att visa *egen enhets* data (inget känsligt läcker), men ett läge som läser *andras*
+data från Firebase **måste** skyddas serverside (säkerhetsregler mot uid), annars är
+det inte säkert oavsett hur knappen ser ut.
+
+### Rekommenderad trappa (lätt → svår)
+1. **Lokalt överblicksläge över eget konto (trivialt, nu):** antal ämnen/lektioner/kort,
+   fördelning av egna Leitnerlådor (histogram från localStorage-SRS), förfallna idag.
+   Datan finns redan på enheten — noll backend, noll ny auth, kosmetisk tom-gate. Blir
+   samma UI man senare riktar mot molndata.
+2. **GoatCounter: länk till dashboarden** (API + token/proxy bara om siffror in-app
+   verkligen behövs — tveksamt värt det).
+3. **Det stora:** riktig auth + SRS→Firebase + admin-säkerhetsregler → *då* går det att
+   se andra användares lektioner och lådor. Hela multi-user-projektet.
+
+> **Integritet:** att se andras lektioner/vad de pluggar har GDPR-implikationer även
+> som admin — ha med i steg 3 (kopplar till GDPR-avsnittet i avsnitt 1).
+
+**Kort sagt:** börja med steg 1 (egen data, lätt och nyttig), använd Goats dashboard
+som den är, och betrakta "se andras lådor" som en frukt av multi-user-migreringen —
+inte ett fristående admin-bygge.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
