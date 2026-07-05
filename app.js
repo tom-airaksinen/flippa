@@ -2871,6 +2871,27 @@ function askSubject(title, name = "", lang = "", allowDelete = false) {
   });
 }
 
+// Redigera lektion: namn + (valfritt) ta bort. Spegling av askSubject, utan språk.
+function askLesson(title, name = "", allowDelete = false) {
+  return new Promise((resolve) => {
+    const delBtn = allowDelete ? `<button class="full-btn danger" id="ml-del">${TRASH_ICON_SVG} Ta bort lektion</button>` : "";
+    const m = openModal(`
+      <h3>${esc(title)}</h3>
+      <label>Namn</label>
+      <input type="text" id="ml-name" value="${esc(name)}" autocomplete="off" />
+      <div class="modal-actions">
+        <button class="btn-secondary" id="ml-cancel">Avbryt</button>
+        <button class="btn-primary" id="ml-ok">Spara</button>
+      </div>${delBtn}`);
+    const nameI = m.querySelector("#ml-name");
+    if (name) { nameI.focus(); nameI.select(); }
+    m.querySelector("#ml-cancel").onclick = () => { closeModal(); resolve(null); };
+    m.querySelector("#ml-ok").onclick = () => { const n = nameI.value.trim(); closeModal(); resolve(n ? { name: n } : null); };
+    if (allowDelete) m.querySelector("#ml-del").onclick = () => { closeModal(); resolve({ delete: true }); };
+    nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#ml-ok").click(); });
+  });
+}
+
 // Dubblettkontroll: kollar om de utländska orden (front) redan finns i området
 // (case-insensitive). Returnerar korten som ska läggas till, eller null vid avbryt.
 function confirmDuplicates(subject, cards) {
@@ -3506,8 +3527,14 @@ document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.addEventListener(
 $("rename-lesson").onclick = async () => {
   const lesson = getCurrentLesson();
   if (!lesson) return;
-  const name = await askName("Byt namn på lektion", lesson.name);
-  if (name) renameLesson(currentSubject.id, lesson.id, name);
+  const res = await askLesson("Redigera lektion", lesson.name, true);
+  if (!res) return;
+  if (res.delete) {
+    const ok = await confirmDanger("Ta bort lektion?", `"${lesson.name}" och alla dess ord tas bort.`);
+    if (ok) { removeLesson(currentSubject.id, lesson.id); renderLessons(); }
+    return;
+  }
+  renameLesson(currentSubject.id, lesson.id, res.name);
 };
 // Pausa/återuppta lektionen (▶ när pausad, ⏸ när aktiv) – uppe till höger i lektionen
 const togglePauseBtn = $("toggle-pause");
@@ -3523,12 +3550,6 @@ togglePauseBtn.onclick = () => {
   const on = toggleLessonPause(lesson.id);
   updatePauseToggle(lesson.id);
   flash(on ? "Lektionen pausad – tyst i Dags att öva" : "Lektionen aktiverad igen", 2000);
-};
-$("delete-lesson").onclick = async () => {
-  const lesson = getCurrentLesson();
-  if (!lesson) return;
-  const ok = await confirmDanger("Ta bort lektion?", `"${lesson.name}" och alla dess ord tas bort.`);
-  if (ok) { removeLesson(currentSubject.id, lesson.id); renderLessons(); }
 };
 $("add-words").onclick = async () => {
   const lesson = getCurrentLesson();
@@ -4244,7 +4265,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v222";
+const APP_VERSION = "v223";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
