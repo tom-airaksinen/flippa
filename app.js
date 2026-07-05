@@ -2437,8 +2437,8 @@ function selectFan(i, src){
   // Slå upp & Bildsök (C1): navigera SAMMA flik via location.href → funkar även från
   // ett glid på iOS (window.open får bara öppna ny flik från ett tapp). Lämnar appen
   // tillfälligt; bakåt tar dig tillbaka.
-  if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); location.href = googleImageSearchUrl(c.front); return; }
-  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); location.href = googleAiExploreUrl(c.front); return; }
+  if(key==="image"){ track("bildsok/"+src, {nav:true}); markExternalNav(); closeFan(); location.href = googleImageSearchUrl(c.front); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); markExternalNav(); closeFan(); location.href = googleAiExploreUrl(c.front); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
@@ -2496,9 +2496,25 @@ function updateCardActions(){
   // Fliken ska kontrastera mot kortytan bakom: baksidan (surface-2) → mörkare front-färg.
   moreBtn.classList.toggle("on-back", card.classList.contains("flipped"));
 }
+// Slå upp/Bildsök navigerar i samma flik (location.href) → Google-sidan hamnar i
+// FRAMÅT-historiken. På iOS kan ett vänstersvep på ett kort (som startar nära
+// högerkanten) då råka trigga Safaris framåt-gest och kasta tillbaka dig till AI-vyn.
+// markExternalNav() flaggar att vi lämnar frivilligt; vid retur nollar vi framåt-
+// stacken med en pushState (trunkerar framåt-historiken enligt spec) så det inte
+// finns någon sida att svepa fram till. Scoped till just den resan – vanlig
+// navigering rörs inte.
+function markExternalNav(){ try { sessionStorage.setItem("flippa-ext-nav", "1"); } catch(_){} }
 // Säkerställ att fjädern är stängd när man kommer tillbaka (t.ex. från Google via C1,
 // bfcache-återställning). Annars kan menyn ligga kvar öppen.
-window.addEventListener("pageshow", () => { closeFan(); });
+window.addEventListener("pageshow", () => {
+  closeFan();
+  try {
+    if (sessionStorage.getItem("flippa-ext-nav")) {
+      sessionStorage.removeItem("flippa-ext-nav");
+      history.pushState(null, "", location.href); // trunkerar framåt-stacken (Google-sidan)
+    }
+  } catch(_){}
+});
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
 function closeCardMenu() { closeFan(); }
@@ -4158,7 +4174,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v215";
+const APP_VERSION = "v216";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
