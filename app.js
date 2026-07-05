@@ -3233,6 +3233,16 @@ function setupSearchClear(inputEl, onChange) {
   return sync;
 }
 const syncEditorClear = setupSearchClear(editorSearch, () => { if (activeScreen === "editor") renderEditor(); });
+
+// 🔍 fäller ut/in "Filtrera ord" i editorn (dolt som standard → frigör en rad).
+const editorSearchBtn = $("editor-search-btn"), editorToolbar = $("editor-toolbar");
+editorSearchBtn.onclick = () => {
+  const show = editorToolbar.classList.contains("hidden");
+  editorToolbar.classList.toggle("hidden", !show);
+  editorSearchBtn.classList.toggle("active", show);
+  if (show) { editorSearch.focus(); }
+  else if (editorSearch.value) { editorSearch.value = ""; syncEditorClear(); if (activeScreen === "editor") renderEditor(); }
+};
 setupSearchClear($("lessons-search"), () => { if (activeScreen === "lessons") renderLessons(); });
 
 let editorSort = "added"; // added | front-az | back-az | weak-front | weak-back
@@ -3242,6 +3252,10 @@ function openEditor(lessonId) {
   editorSearch.value = ($("lessons-search").value || "").trim();
   syncEditorClear();
   editorSort = "added";
+  // Filtret börjar hopfällt – utom när ett filter följde med hit (från lektionslistans sök).
+  const hasFilter = !!editorSearch.value;
+  $("editor-toolbar").classList.toggle("hidden", !hasFilter);
+  $("editor-search-btn").classList.toggle("active", hasFilter);
   renderEditor();
 }
 
@@ -4230,7 +4244,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v221";
+const APP_VERSION = "v222";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
