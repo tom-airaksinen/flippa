@@ -156,13 +156,28 @@ const GENDER_STRATEGY = {
   hi: "marker", bn: "marker", pa: "marker", mr: "marker",
   ar: "marker", he: "marker",
 };
+// För "marker"-språk med en förutsägbar genusregel: be modellen markera BARA
+// undantagen i stället för varje ord (renare + förstärker regeln pedagogiskt).
+// "Avviker från regeln" självkorrigerar snyggt: ett ryskt -ь-ord som är feminint
+// avviker från "konsonant = maskulinum" → markeras; ett maskulint -ь-ord matchar
+// → markeras inte. Bara språk vars regel är trygg att formulera på en rad tas med;
+// övriga marker-språk (cs, sk, sydslaviska, baltiska, semitiska …) markerar allt.
+const GENDER_RULE = {
+  ru: "genus följer normalt ändelsen (-а/-я = femininum, konsonant = maskulinum, -о/-е = neutrum)",
+  uk: "genus följer normalt ändelsen (-а/-я = femininum, konsonant = maskulinum, -о/-е = neutrum)",
+  pl: "genus följer normalt ändelsen (-a = femininum, konsonant = maskulinum, -o/-e/-ę = neutrum)",
+};
 function genderPromptNote(code) {
   const base = String(code || "").split("-")[0].toLowerCase();
   const strat = GENDER_STRATEGY[base];
   if (strat === "article")
     return " För substantiv: ta med bestämd artikel så genus framgår, men håll den svenska sidan i obestämd form.";
-  if (strat === "marker")
+  if (strat === "marker") {
+    const rule = GENDER_RULE[base];
+    if (rule)
+      return ` För substantiv: ${rule}. Ange genus (m/f/n) i parentes ENDAST när ordet avviker från regeln. Håll den svenska sidan neutral.`;
     return " För substantiv: ange genus (m/f/n) i parentes efter ordet, men håll den svenska sidan neutral.";
+  }
   return "";
 }
 
@@ -4136,7 +4151,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v213";
+const APP_VERSION = "v214";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
