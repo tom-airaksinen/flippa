@@ -2478,19 +2478,18 @@ moreBtn.addEventListener("pointermove",(e)=>{ if(!fanOpen || !fanPressing) retur
   if(Math.hypot(e.clientX-fanSX, e.clientY-fanSY) > 8) fanMoved = true;
   const sr = cardStack.getBoundingClientRect(); setFanHot(nearestFan(e.clientX-sr.left, e.clientY-sr.top));
 });
-// Släpp-hantering. VIKTIGT: på iOS får window.open (Slå upp/Bildsök) bara öppnas
-// från click/touchend – INTE från pointerup. Därför kör vi släppet i touchend på
-// pekskärm (och pointerup som fallback för mus/desktop), annars gör inget vid
-// glid till Slå upp/Bildsök.
-let fanReleaseGuard = false;
+// Släpp-hantering: allt sker på pointerup. (Tidigare kördes släppet i touchend med en
+// guard mot pointerup eftersom window.open på iOS bara får öppnas från tapp/touchend.
+// Men Slå upp/Bildsök navigerar numera via location.href som saknar den gest-
+// begränsningen – så den bräckliga dubbelvägen togs bort. Den kunde läcka guard-läget
+// mellan gester så att nästa glid avbröts, dvs "menyn blinkar till men gör inget".)
 function fanRelease(){
   if(!fanOpen) return;
   if(fanPressing && fanMoved){ if(fanHot>=0) selectFan(fanHot, "glid"); else closeFan(); } // glid: välj, annars (mitten) stäng
   else if(fanPressing){ fanPressing = false; fanTapMode = true; }                        // rent tapp → låt stå för tapp-val
 }
-moreBtn.addEventListener("touchend",(e)=>{ if(!fanOpen) return; e.preventDefault(); fanReleaseGuard = true; fanRelease(); });
-moreBtn.addEventListener("pointerup",()=>{ if(fanReleaseGuard){ fanReleaseGuard = false; return; } fanRelease(); });
-moreBtn.addEventListener("pointercancel",()=>{ fanReleaseGuard = false; if(fanPressing && !fanTapMode) closeFan(); });
+moreBtn.addEventListener("pointerup",()=>{ fanRelease(); });
+moreBtn.addEventListener("pointercancel",()=>{ if(fanPressing && !fanTapMode) closeFan(); fanPressing = false; });
 fanScrim.addEventListener("pointerdown",(e)=>{ e.stopPropagation(); });
 fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeFan(); });
 
@@ -4224,7 +4223,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v219";
+const APP_VERSION = "v220";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
