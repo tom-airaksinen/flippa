@@ -106,6 +106,9 @@
   .ami+.ami{margin-top:2px}
   .ami.on{background:var(--surface-2)}
   .ami small{display:block;color:var(--muted);font-size:.68rem}
+  /* Rikta popover-pilen mot rätt header-ikon i variant 7 */
+  .addmenu[data-menu="add"]::before{right:57px}
+  .addmenu[data-menu="subject"]::before{right:50px}
 
   /* Variant 7 – tvåradig combo: namn/pil + låg rad med tunn stapel */
   .trow{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:9px 12px}
@@ -120,6 +123,17 @@
   .trow .l2 .bar.pausedbar .learned{background:#6f8a77}
   .trow .l2 .pct{font-size:.68rem;font-weight:700;color:var(--good);min-width:28px;text-align:right}
   .trow .l2 .cnt{font-size:.62rem;color:var(--muted);white-space:nowrap}
+
+  /* ---- Grafiska linjeikoner (variant 7) ---- */
+  .i{width:20px;height:20px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+  .i.fill{fill:currentColor;stroke:none}
+  .hdr .ic .i{width:19px;height:19px}
+  .badge .i{width:12px;height:12px;stroke-width:2.3}
+  .abtn .i{width:17px;height:17px;stroke:#fff}
+  .ami .i{width:19px;height:19px;flex-shrink:0}
+  .v7search{display:none;margin:0 12px 10px;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 11px;color:var(--muted);font-size:.84rem}
+  .v7search.open{display:flex}
+  .v7search .i{width:16px;height:16px}
 
   .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.78rem;color:var(--muted)}
   .pros li{margin:3px 0;padding-left:16px;position:relative}
@@ -338,36 +352,43 @@
     <ul class="pros"><li class="g">3 ingångar → 1 ＋-meny</li><li class="g">Listan börjar högre – mer luft</li></ul>
   </div>
 
-  <!-- Variant 7: städat läge + tvåradig combo-rad (1+5) -->
+  <!-- Variant 7: städat läge + tvåradig combo-rad (1+5) – INTERAKTIV -->
   <div class="col">
-    <h2>7 · Städat + combo-rad <span class="tag">1 + 5</span></h2>
-    <p class="desc">Städad chrome som nr 6, men raderna är en mix av 1 och 5: namn + ⏰/nya + › på rad 1, och en <b>låg rad 2</b> med tunn stapel + % (+ ordantal). ~40 % högre än idag men mycket lägre än variant 1 – och fler ryms än i nr 6.</p>
-    <div class="phone"><div class="screen tall">
-      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">＋</button><button class="ic">⋯</button><button class="ic">🔍</button></div>
+    <h2>7 · Städat + combo-rad <span class="tag">interaktiv</span></h2>
+    <p class="desc">Grafiska linjeikoner (inga färgemojis). <b>Tryck på ＋, ⋯ och 🔍</b> – de öppnar meny / ämnesmeny / sök på riktigt. Raderna: namn + status + › på rad 1, låg rad 2 med tunn stapel + % + ordantal (även pausade visar ordantal).</p>
+    <div class="phone"><div class="screen tall" id="v7">
+      <div class="hdr">
+        <button class="back"><svg class="i" viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <h3>🇮🇹 Italienska</h3>
+        <button class="ic" data-act="add" aria-label="Lägg till"><svg class="i" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <button class="ic" data-act="subject" aria-label="Ämne"><svg class="i fill" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+        <button class="ic" data-act="search" aria-label="Sök"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg></button>
+      </div>
       <div class="pills2">
         <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
         <button class="optp"><span><span class="lbl">KORT/PASS</span><span class="val">Alla</span></span><span class="car">▾</span></button>
       </div>
-      <button class="abtn primary">⏰ Dags att öva (18)</button>
+      <button class="abtn primary"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg> Dags att öva (18)</button>
+      <div class="v7search"><svg class="i" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg> <input type="search" placeholder="Sök i alla lektioner…" style="flex:1;background:none;border:none;color:var(--text);font-size:.86rem;outline:none"/></div>
       <div class="rows">
         <div class="trow">
-          <div class="l1"><span class="nm">Mat &amp; dryck</span><span class="rt"><span class="badge">⏰ 5</span><button class="go">›</button></span></div>
+          <div class="l1"><span class="nm">Mat &amp; dryck</span><span class="rt"><span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg> 5</span><button class="go">›</button></span></div>
           <div class="l2"><span class="bar"><i class="learned" style="width:82%"></i><i class="learning" style="width:6%"></i></span><span class="pct">82%</span><span class="cnt">41 ord</span></div>
         </div>
         <div class="trow">
-          <div class="l1"><span class="nm">Familjen</span><span class="rt"><span class="badge">⏰ 8</span><button class="go">›</button></span></div>
+          <div class="l1"><span class="nm">Familjen</span><span class="rt"><span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg> 8</span><button class="go">›</button></span></div>
           <div class="l2"><span class="bar"><i class="learned" style="width:45%"></i><i class="learning" style="width:40%"></i></span><span class="pct">45%</span><span class="cnt">20 ord</span></div>
         </div>
         <div class="trow paused">
-          <div class="l1"><span class="nm">Verb – imperfekt</span><span class="rt"><span class="badge pause">⏸ Pausad</span><button class="go">›</button></span></div>
-          <div class="l2"><span class="bar pausedbar"><i class="learned" style="width:60%"></i></span><span class="pct" style="color:var(--muted)">60%</span><span class="cnt">vilar</span></div>
+          <div class="l1"><span class="nm">Verb – imperfekt</span><span class="rt"><span class="badge pause"><svg class="i fill" viewBox="0 0 24 24"><rect x="7" y="6" width="3.4" height="12" rx="1"/><rect x="13.6" y="6" width="3.4" height="12" rx="1"/></svg> Pausad</span><button class="go">›</button></span></div>
+          <div class="l2"><span class="bar pausedbar"><i class="learned" style="width:60%"></i></span><span class="pct" style="color:var(--muted)">60%</span><span class="cnt">24 ord</span></div>
         </div>
         <div class="trow">
           <div class="l1"><span class="nm">Resa</span><span class="rt"><span class="badge" style="background:rgba(91,140,255,.16);color:#a9c2ff">20 nya</span><button class="go">›</button></span></div>
           <div class="l2"><span class="bar"><i class="learned" style="width:8%"></i><i class="learning" style="width:12%"></i></span><span class="pct">8%</span><span class="cnt">25 ord</span></div>
         </div>
         <div class="trow">
-          <div class="l1"><span class="nm">Kroppen</span><span class="rt"><span class="badge">⏰ 2</span><button class="go">›</button></span></div>
+          <div class="l1"><span class="nm">Kroppen</span><span class="rt"><span class="badge"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg> 2</span><button class="go">›</button></span></div>
           <div class="l2"><span class="bar"><i class="learned" style="width:70%"></i><i class="learning" style="width:10%"></i></span><span class="pct">70%</span><span class="cnt">30 ord</span></div>
         </div>
         <div class="trow">
@@ -375,11 +396,43 @@
           <div class="l2"><span class="bar"><i class="learned" style="width:91%"></i></span><span class="pct">91%</span><span class="cnt">18 ord</span></div>
         </div>
       </div>
+      <!-- Popovers (dolda tills man trycker) -->
+      <div class="mscrim" style="display:none"></div>
+      <div class="addmenu" style="display:none;right:44px" data-menu="add">
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Ny lektion</div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg> <span>Slå upp &amp; lägg till ord<small>enskilda ord, båda håll</small></span></div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/></svg> Importera CSV</div>
+      </div>
+      <div class="addmenu" style="display:none;right:14px" data-menu="subject">
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/></svg> Byt namn</div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg> <span>Språk<small>Italienska</small></span></div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6"/></svg> <span>Ägare<small>Tom</small></span></div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><path d="M8 9l4-4 4 4"/><path d="M8 15l4 4 4-4"/></svg> Ordna om lektioner</div>
+        <div class="ami"><svg class="i" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="12" rx="2"/><path d="M7 7V5h10v2"/></svg> <span>Nya kort per dag<small>5</small></span></div>
+      </div>
     </div></div>
-    <ul class="pros"><li class="g">Stapel + % på egen låg rad</li><li class="g">~6 ryms, luftigare än nr 5</li><li class="b">Något högre rader än idag</li></ul>
+    <ul class="pros"><li class="g">Tryckbara ＋ / ⋯ / 🔍 (prova!)</li><li class="g">Grafiska ikoner, ordantal även pausat</li><li class="b">Något högre rader än idag</li></ul>
   </div>
 
 </div>
+
+<script>
+(function(){
+  var scr = document.getElementById('v7');
+  if(!scr) return;
+  var scrim = scr.querySelector('.mscrim');
+  var addm = scr.querySelector('.addmenu[data-menu="add"]');
+  var subm = scr.querySelector('.addmenu[data-menu="subject"]');
+  var search = scr.querySelector('.v7search');
+  function closeMenus(){ scrim.style.display='none'; addm.style.display='none'; subm.style.display='none';
+    Array.prototype.forEach.call(scr.querySelectorAll('.ic'), function(b){ b.classList.remove('act'); }); }
+  function open(el, btn){ closeMenus(); scrim.style.display='block'; el.style.display='block'; btn.classList.add('act'); }
+  scr.querySelector('[data-act="add"]').addEventListener('click', function(e){ e.stopPropagation(); (addm.style.display==='block') ? closeMenus() : open(addm, this); });
+  scr.querySelector('[data-act="subject"]').addEventListener('click', function(e){ e.stopPropagation(); (subm.style.display==='block') ? closeMenus() : open(subm, this); });
+  scr.querySelector('[data-act="search"]').addEventListener('click', function(e){ e.stopPropagation(); closeMenus(); var on = search.classList.toggle('open'); this.classList.toggle('act', on); if(on){ var i = search.querySelector('input'); if(i) i.focus(); } });
+  scrim.addEventListener('click', closeMenus);
+})();
+</script>
 
 <div class="tip">
   <b>Rekommendation & trängsel:</b> variant <b>1 (segmenterad)</b> löser själva problemet du pekar på – den <em>ersätter</em> nya/dags-pillren i stället för att lägga till bredvid dem, så raden blir renare trots mer information. Behåll bara ⏰-förfallna som badge (tidskänsligt, actionable). Om du vill behålla de exakta siffrorna ”12 nya · 5 dags” är <b>variant 2 (tvårad)</b> tryggast – priset är högre rader. Variant 3 visar varför enrad-med-allt blir trångt (ring + 2 pills + pil).
