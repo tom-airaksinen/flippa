@@ -133,6 +133,39 @@ function subjectFlag(s) {
   return flagForLang(subjectLang(s));
 }
 
+// --- Genus i AI-prompten -------------------------------------------------
+// Många språk har substantivgenus, och en glosa blir mer användbar om genus syns
+// på den utländska sidan. Hur genus visas skiljer sig åt:
+//   "article" – bestämd artikel avslöjar genus (romanska, tyska, nederländska, grekiska)
+//   "marker"  – genus finns men ingen artikel visar det → be modellen ange m/f/n
+// Språk utan grammatiskt genus (engelska, finska, turkiska, japanska, kinesiska,
+// koreanska, indonesiska …) saknas medvetet → inget tillägg. Basdelen av koden
+// (före "-") används som nyckel, så både "de" och "de-DE" träffar.
+const GENDER_STRATEGY = {
+  // Genus syns på bestämd artikel
+  de: "article", nl: "article",                       // der/die/das · de/het
+  fr: "article", it: "article", es: "article",        // le/la · il/lo/la · el/la
+  pt: "article", ca: "article", gl: "article",        // o/a · el/la · o/a
+  el: "article",                                       // ο/η/το
+  // Genus finns men ingen (framförställd) artikel visar det → be om explicit markering
+  ru: "marker", uk: "marker", be: "marker",
+  pl: "marker", cs: "marker", sk: "marker",
+  bg: "marker", mk: "marker", sr: "marker", hr: "marker", bs: "marker", sl: "marker",
+  lt: "marker", lv: "marker",
+  ro: "marker", is: "marker",
+  hi: "marker", bn: "marker", pa: "marker", mr: "marker",
+  ar: "marker", he: "marker",
+};
+function genderPromptNote(code) {
+  const base = String(code || "").split("-")[0].toLowerCase();
+  const strat = GENDER_STRATEGY[base];
+  if (strat === "article")
+    return " För substantiv: ta med bestämd artikel så genus framgår, men håll den svenska sidan i obestämd form.";
+  if (strat === "marker")
+    return " För substantiv: ange genus (m/f/n) i parentes efter ordet, men håll den svenska sidan neutral.";
+  return "";
+}
+
 // Svenskt språknamn för en BCP-47-kod (t.ex. "it-IT" → "Italienska") via Intl.
 function langLabel(code) {
   if (!code) return "Inget / ej språk";
@@ -3209,7 +3242,7 @@ function renderEditor() {
   const list = $("editor-list");
   if (!lesson.cards.length) {
     const lang = currentForeignLabel();
-    const aiPrompt = `Kan du ge mig 30 bra ord och fraser på temat "${lesson.name}" på ${lang}? Formatet ska vara ord/fras på ${lang};svensk översättning, en per rad`;
+    const aiPrompt = `Kan du ge mig 30 bra ord och fraser på temat "${lesson.name}" på ${lang}? Formatet ska vara ord/fras på ${lang};svensk översättning, en per rad.${genderPromptNote(subjectLang(currentSubject))}`;
     // Renare tomt läge: AI-prompten är dold tills man trycker "ta hjälp av en AI".
     list.innerHTML = `
       <p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>
@@ -4103,7 +4136,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v212";
+const APP_VERSION = "v213";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
