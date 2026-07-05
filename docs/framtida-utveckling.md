@@ -257,6 +257,55 @@ klock-/telefon-följeslagaren mot samma data.
 
 ---
 
+## 6) Migrera befintlig SRS-statistik till Firebase
+
+Delfråga (2026-07-05): om SRS flyttas till Firebase för inloggade användare – går
+den **befintliga** progressen i `localStorage` att föra över?
+
+### Kort svar: ja, och det är en av de enklare bitarna
+Datan är liten, redan ordnyckel-baserad och enhetsoberoende. Det finns **redan en
+migrering** i koden (localStorage→localStorage, `app.js:570`) som gör exakt den här
+typen av "behåll högsta box"-sammanslagning – samma mönster återanvänds mot molnet.
+
+### Varför det går smidigt
+SRS ligger i `flashcards-srs-v1` som ett litet objekt med nyckeln
+`front|back|riktning` (t.ex. `gelato|glass|f2b`) → `{box, due, lastSeen}`
+(`app.js:195`, `srsKey`). Det viktiga:
+
+- **Nyckeln bygger på ordet, inte på kort-id eller enhet.** Blobben kan laddas upp
+  rakt av till `/users/{uid}/srs` **utan id-ommappning** – samma ord matchar samma
+  ruta oavsett enhet eller hur innehållsträdet ser ut.
+- **Pytteliten data** – några KB även med tusentals ord. Ryms lätt i gratiskvoten.
+- **Merge-logiken finns redan.** Vid inloggning: ingen molndata → ladda upp lokal;
+  finns molndata → slå ihop med "högsta box vinner" (samma regel som `app.js:581`).
+
+### Begränsningar & fallgropar
+1. **Bara enheten man loggar in från fångas först.** Har man kört anonymt på både
+   iPhone och iPad har varje enhet sin egen `localStorage`. Migreringen sker per
+   enhet vid första inloggningen *där* – de slås ihop i molnet, men det kräver
+   inloggning på varje enhet minst en gång.
+2. **Ordnycklar är känsliga för redigering.** Ändras ett korts text byter nyckeln
+   namn och den gamla SRS-posten blir föräldralös. Detta gäller **redan idag**
+   lokalt – flytten gör det inte värre, men problemet följer med.
+3. **Merge-regel måste väljas medvetet.** "Högsta box vinner" är rimligt för `box`,
+   men bestäm separat vad som gäller för `due`/`lastSeen` (senaste? högsta?).
+4. **Träningsstatistiken** (`flippa-stats-v1`, passloggar – `app.js:1380`) kan också
+   flyttas, men den är en **historik-lista**: sammanslagning av två enheter =
+   konkatenera + deduplicera på tidsstämpel, inte "högsta vinner".
+5. **Radera inte lokalt förrän uppladdning bekräftats.** Behåll `localStorage` som
+   fallback så inget går förlorat om nätet strular mitt i.
+6. **Migrering ≠ löpande synk.** Att *flytta över* befintlig data är trivialt. Den
+   egentliga utmaningen framåt är att hålla moln + lokal synkade *fortsättningsvis*
+   (offline-skrivningar, last-write-wins, konflikter mellan enheter i realtid) – en
+   separat, större fråga.
+
+### Sammanfattning
+Engångsmigreringen är låg risk och lite jobb tack vare de ordbaserade nycklarna. Den
+stora insatsen ligger inte i att flytta gammal data, utan i (a) datamodellen
+delat-innehåll-vs-eget (avsnitt 1) och (b) den löpande synken mellan enheter.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
