@@ -952,6 +952,8 @@ async function pickUser() {
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
   $("lessons-search").value = "";
+  $("lessons-toolbar").classList.add("hidden");        // söket börjar hopfällt
+  $("lessons-search-btn").classList.remove("active");
   renderLessons();
 }
 
@@ -3811,6 +3813,31 @@ async function startCsvImport(files) {
 $("import-csv").onclick = () => { const inp = $("csv-file"); inp.value = ""; inp.click(); };
 $("csv-file").addEventListener("change", (e) => { startCsvImport(e.target.files); });
 
+// ＋-meny: samlar Ny lektion / Slå upp & lägg till ord / Importera CSV under en knapp.
+// Menyvalens egna onclick-handlers (add-lesson/translate-subject/import-csv) är redan
+// bundna på id ovan – här sköts bara öppna/stäng.
+const addMenuBtn = $("add-menu-btn"), addMenu = $("add-menu");
+function closeAddMenu() { addMenu.classList.add("hidden"); addMenuBtn.classList.remove("active"); }
+addMenuBtn.onclick = (e) => {
+  e.stopPropagation();
+  const open = addMenu.classList.toggle("hidden") === false;
+  addMenuBtn.classList.toggle("active", open);
+};
+addMenu.addEventListener("click", () => closeAddMenu()); // klick på ett val stänger menyn (valets handler kör ändå)
+document.addEventListener("click", (e) => {
+  if (!addMenu.classList.contains("hidden") && !addMenu.contains(e.target) && e.target !== addMenuBtn) closeAddMenu();
+});
+
+// 🔍 fäller ut/in "Sök i alla lektioner" (dolt som standard – frigör en rad).
+const lessonsSearchBtn = $("lessons-search-btn"), lessonsToolbar = $("lessons-toolbar");
+lessonsSearchBtn.onclick = () => {
+  const show = lessonsToolbar.classList.contains("hidden");
+  lessonsToolbar.classList.toggle("hidden", !show);
+  lessonsSearchBtn.classList.toggle("active", show);
+  if (show) { $("lessons-search").focus(); }
+  else if ($("lessons-search").value) { $("lessons-search").value = ""; if (activeScreen === "lessons") renderLessons(); }
+};
+
 // =========================================================================
 //  Backup: exportera / importera SRS-statistik (localStorage)
 // =========================================================================
@@ -4197,7 +4224,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v218";
+const APP_VERSION = "v219";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

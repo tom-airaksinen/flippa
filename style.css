@@ -221,7 +221,22 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   align-items: center;
   gap: 12px;
   padding: 18px 16px 10px;
+  position: relative;
 }
+.icon-btn.active { background: var(--accent); color: #fff; }
+/* ＋-meny: samlar Ny lektion / Slå upp / Importera under en knapp */
+.add-menu {
+  position: absolute; z-index: 32; top: calc(100% - 2px); right: 12px;
+  min-width: 216px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px; box-shadow: 0 16px 38px rgba(0,0,0,0.5);
+}
+.add-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: none; color: var(--text); text-align: left;
+  padding: 11px 12px; border-radius: 8px; font-size: 0.95rem; font-family: inherit; cursor: pointer;
+}
+.add-menu-item + .add-menu-item { margin-top: 2px; }
+.add-menu-item:active { background: var(--surface-2); }
 .app-header h1 { font-size: 1.3rem; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
 /* Rena texttitlar (lektion/ord-listan) trunkeras med … – display:flex ovan
    stoppar annars text-overflow; dessa har ingen logo så block fungerar. */
