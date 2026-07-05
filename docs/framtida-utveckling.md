@@ -381,6 +381,22 @@ inte för "vem".
 
 ---
 
+## 9) Explicit "Ordna om"-läge (framtida)
+
+Beslut 2026-07-05: **behåll dagens långtrycks-drag** för att ordna om lektioner *och*
+ämnen tills vidare. Men troligt framtida steg: ett explicit **"Ordna om"-läge** med
+tydliga drag-handles (☰) och en Klar-knapp, som man går in i medvetet.
+
+- **Motiv:** på lektionslistan är tap = *starta pass*, så långtrycks-drag riskerar att
+  råka dra igång ett pass. Ett explicit läge tar bort den krocken och gör gesten
+  upptäckbar (idag är den "hemlig").
+- **Gäller båda listorna:** inför det för lektioner *och* ämnen för konsekvens (på
+  ämneslistan är krocken mindre eftersom tap = öppna ämnet, men enhetlighet vinner).
+- Mockup finns (variant 9 i `mockups/lektionsrad-progress.html`): banner + ☰-handles +
+  Klar, upplyft rad vid drag.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
