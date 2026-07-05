@@ -54,7 +54,7 @@ input, textarea {
 :root.theme-rosa .st-d.l2 { background: rgba(255,61,143,0.55); }
 :root.theme-rosa .st-d.l3 { background: rgba(255,61,143,0.80); }
 /* Leitners starkaste låda är hårdkodat blå → rosa (övriga behåller styrkeskalan) */
-:root.theme-rosa .lt-bar.b6 { background: var(--accent); }
+:root.theme-rosa .lt-bar.b7 { background: var(--accent); }
 
 html, body {
   height: 100%;
@@ -443,6 +443,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .lt-bar { width: 72%; min-height: 0; border-radius: 5px 5px 0 0; background: rgba(255, 255, 255, 0.08); }
 .lt-bar.b1 { background: #e05a4f; } .lt-bar.b2 { background: #e0915a; } .lt-bar.b3 { background: #f4c542; }
 .lt-bar.b4 { background: #8fbf5a; } .lt-bar.b5 { background: #5bbf72; } .lt-bar.b6 { background: #5b8cff; }
+.lt-bar.b7 { background: #9b6dff; }
 .lt-lbl { font-size: 0.6rem; color: var(--muted); }
 
 /* Prestationer – brickrad (rimmar med PASS/KORT-rutan) */
@@ -1074,6 +1075,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .box-badge.b4 { background: #8fbf5a; color: #0d1426; }
 .box-badge.b5 { background: #5bbf72; color: #0d1426; }
 .box-badge.b6 { background: #5b8cff; color: #fff; }
+.box-badge.b7 { background: #9b6dff; color: #fff; }
 
 /* edit-knapp på lektions-/ämnesrader */
 .row-edit {

@@ -221,9 +221,10 @@ function langOptionsForPicker(selected) {
 const SRS_KEY = "flashcards-srs-v1";
 let srs = JSON.parse(localStorage.getItem(SRS_KEY) || "{}");
 
-// Lådintervall i dagar (låda 1..6). Box 0 = ny (förfaller direkt).
-const BOX_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32 };
-const MAX_BOX = 6;
+// Lådintervall i dagar (låda 1..7). Box 0 = ny (förfaller direkt). Låda 7 (64 dagar,
+// A5) lyfter taket så mogna ord inte trängs ihop på 32 dagar och dominerar "Dags att öva".
+const BOX_INTERVALS = { 1: 1, 2: 2, 3: 4, 4: 8, 5: 16, 6: 32, 7: 64 };
+const MAX_BOX = 7;
 const DAY_MS = 24 * 60 * 60 * 1000;
 // Snäpp en tidsstämpel till lokal midnatt (00:00 i enhetens tidszon). Används för
 // förfallodatum så att "förfallna idag" blir tillgängliga från morgonen, inte vid
@@ -273,6 +274,12 @@ function gradeCard(card, dir, grade) {
   if (grade === "fail" || grade === "hard") {
     e.box = 1;
     e.due = now; // dyker upp igen idag
+  } else if (grade === "easy" && (e.box || 0) === 0) {
+    // A1 "kunde direkt": ett HELT nytt ord (låda 0) som svaras 👆 kan väldigt bra kan
+    // man ju redan → hoppa direkt till låda 4 (8 dagar) i stället för låda 2, så man
+    // slipper tröska banala ord genom systemet. Får ändå en kontrollrepetition.
+    e.box = 4;
+    e.due = startOfLocalDay(now + BOX_INTERVALS[e.box] * DAY_MS);
   } else {
     // kan = +1 låda, kan väldigt bra = +2. Nytt ord + "kan" → låda 1 = tidigast imorgon.
     const step = grade === "easy" ? 2 : 1;
@@ -1545,7 +1552,7 @@ function renderStats() {
     const bb = (srs[srsKey(c, "b2f")] || {}).box || 0;
     return dirMode === "f2b" ? fb : dirMode === "b2f" ? bb : Math.min(fb, bb);
   };
-  const ltCounts = [0, 0, 0, 0, 0, 0, 0];
+  const ltCounts = [0, 0, 0, 0, 0, 0, 0, 0];
   const ltSubjects = statsScope === "all" ? mine : (scopeSubject ? [scopeSubject] : []);
   ltSubjects.forEach((s) => s.lessons.forEach((l) => l.cards.forEach((c) => { ltCounts[boxOf(c)]++; })));
 
@@ -1563,7 +1570,7 @@ function renderStats() {
   })));
   const ltMax = Math.max(1, ...ltCounts);
   const ltTotal = ltCounts.reduce((a, b) => a + b, 0);
-  const LT_LABELS = ["Ny", "1d", "2d", "4d", "8d", "16d", "32d"];
+  const LT_LABELS = ["Ny", "1d", "2d", "4d", "8d", "16d", "32d", "64d"];
   const leitner = ltCounts.map((n, i) =>
     `<div class="lt-col"><div class="lt-num">${n || ""}</div><div class="lt-bar b${i}" style="height:${n ? Math.max(6, Math.round(n / ltMax * 100)) : 0}%"></div><div class="lt-lbl">${LT_LABELS[i]}</div></div>`
   ).join("");
@@ -3320,7 +3327,7 @@ function renderEditor() {
       let badge = "";
       if (showBox) {
         const box = strengthBox(c);
-        badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 6 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
+        badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 7 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
       }
       const fav = isFav(c);
       return `<div class="word-row" data-id="${c.id}">
@@ -4174,7 +4181,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v216";
+const APP_VERSION = "v217";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
