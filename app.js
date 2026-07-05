@@ -2094,7 +2094,14 @@ function undoLastAnswer() {
   animating = true;
   card.classList.add(inClass);
   // 0,7s delay + 0,7s inglidning = 1,4s; lite buffert innan vi släpper interaktion
-  setTimeout(() => { card.classList.remove(inClass); animating = false; }, 1450);
+  setTimeout(() => {
+    card.classList.remove(inClass);
+    animating = false;
+    // Settlat läge efter ångra-inglidningen: visa rätt kort-knappar igen. loadCard:s
+    // showSpeakSoon-timer hann köra medan animating var true (→ guarden dolde klustret),
+    // så utan detta saknas t.ex. glödlampan på svenska sidan efter en skak-ångra.
+    updateCardActions();
+  }, 1450);
   return true;
 }
 
@@ -4223,7 +4230,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v220";
+const APP_VERSION = "v221";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
