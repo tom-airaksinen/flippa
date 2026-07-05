@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – mockup: A6 dagsbesked + A7 ångra & starthint</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px}
+  h1{font-size:1.32rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 26px;max-width:680px;font-size:.92rem}
+  .grid{display:flex;flex-wrap:wrap;gap:30px;justify-content:center;align-items:flex-start}
+  .col{width:320px}
+  .col h2{font-size:1.02rem;margin:0 0 2px}
+  .col .desc{color:var(--muted);font-size:.84rem;margin:0 0 12px;min-height:52px}
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.66rem;color:var(--muted);padding:2px 9px;margin-left:6px;vertical-align:2px}
+
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:30px;padding:9px;box-shadow:0 18px 46px rgba(0,0,0,.55)}
+  .screen{position:relative;width:302px;height:600px;background:var(--bg);border-radius:22px;overflow:hidden;display:flex;flex-direction:column}
+  .topbar{display:flex;align-items:center;gap:10px;padding:12px 14px 8px}
+  .topbar .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text);font-size:1rem}
+  .topbar h3{font-size:1.02rem;margin:0;font-weight:650}
+  .seg{margin:2px 14px 10px;display:flex;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.76rem}
+  .seg span{flex:1;text-align:center;padding:6px 0;color:var(--muted)}
+  .seg span.on{background:var(--accent);color:#fff;font-weight:600}
+
+  /* Lektionsrader */
+  .rows{padding:0 14px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+  .row{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:10px}
+  .row .nm{font-weight:600;font-size:.94rem}
+  .row .meta{margin-left:auto;display:flex;gap:6px;align-items:center}
+  .pill{border-radius:20px;font-size:.68rem;padding:2px 8px;white-space:nowrap}
+  .pill.new{background:rgba(91,140,255,.16);color:#a9c2ff}
+  .pill.due{background:rgba(255,138,61,.18);color:#ffc196}
+  .pill.done{background:rgba(91,191,114,.16);color:#9fe0b3}
+
+  /* A6 – dagsbesked-kort */
+  .daybox{margin:2px 14px 12px;border-radius:14px;padding:14px 16px;border:1px solid var(--line);background:var(--surface)}
+  .daybox.duestate{background:linear-gradient(180deg,rgba(255,138,61,.15),rgba(255,138,61,.04));border-color:rgba(255,138,61,.4)}
+  .daybox.donestate{background:linear-gradient(180deg,rgba(91,191,114,.15),rgba(91,191,114,.04));border-color:rgba(91,191,114,.4)}
+  .dayrow{display:flex;align-items:center;gap:10px}
+  .dayrow .big{font-size:1.02rem;font-weight:700}
+  .dayrow .em{font-size:1.3rem}
+  .daysub{color:var(--muted);font-size:.8rem;margin-top:4px}
+  .daysub b{color:var(--text)}
+
+  /* Klar-skärm */
+  .congrats{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;text-align:center;gap:2px}
+  .congrats .tier{font-size:3.1rem;line-height:1}
+  .congrats .done{font-size:1.55rem;font-weight:750;margin-top:8px}
+  .congrats .line{color:var(--muted);font-size:.9rem}
+  .congrats .statline{display:flex;gap:18px;margin:14px 0 4px}
+  .congrats .statline .s{display:flex;flex-direction:column}
+  .congrats .statline .n{font-size:1.2rem;font-weight:700}
+  .congrats .statline .l{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+  .forecast{margin-top:18px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 18px;display:flex;align-items:center;gap:10px}
+  .forecast .em{font-size:1.2rem}
+  .forecast .t{font-size:.9rem;text-align:left}
+  .forecast .t b{color:var(--text)}
+  .forecast .t span{color:var(--muted)}
+  .cbtn{margin-top:22px;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:11px 26px;font-size:.95rem;font-weight:650}
+
+  /* Träningskort (för ångra) */
+  .card-area{flex:1;position:relative;display:flex;align-items:center;justify-content:center;padding:10px 16px}
+  .card{position:relative;width:100%;max-width:250px;height:330px;border-radius:18px;background:var(--surface);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px rgba(0,0,0,.4)}
+  .card.swept{transform:translateX(-52px) rotate(-6deg);opacity:.55;transition:all .2s}
+  .word{font-size:1.5rem;font-weight:700}
+  .feed{position:absolute;top:20px;left:0;right:0;text-align:center;color:var(--fail);font-weight:800;font-size:1.1rem}
+  /* A7a – diskret ångra-pill */
+  .undo{position:absolute;left:50%;transform:translateX(-50%);bottom:16px;background:rgba(20,28,48,.94);
+    border:1px solid var(--line);border-radius:22px;padding:8px 16px;display:flex;align-items:center;gap:8px;
+    color:var(--text);font-size:.86rem;font-weight:600;box-shadow:0 8px 22px rgba(0,0,0,.5)}
+  .undo .ic{font-size:1.05rem}
+  .undo .timer{width:26px;height:3px;border-radius:2px;background:var(--line);position:relative;overflow:hidden}
+  .undo .timer::after{content:"";position:absolute;inset:0;width:60%;background:var(--accent);border-radius:2px}
+
+  /* A7b – engångshint (coachmark) */
+  .scrim{position:absolute;inset:0;background:rgba(4,7,13,.55);z-index:5}
+  .coach{position:absolute;z-index:6;left:20px;right:20px;background:var(--surface);border:1px solid var(--accent);
+    border-radius:14px;padding:14px 16px;box-shadow:0 14px 34px rgba(0,0,0,.6)}
+  .coach .h{font-weight:700;font-size:.95rem;margin-bottom:3px}
+  .coach p{margin:0 0 10px;color:var(--muted);font-size:.84rem}
+  .coach .ok{background:var(--accent);color:#fff;border:none;border-radius:9px;padding:7px 14px;font-size:.82rem;font-weight:600;float:right}
+  .coach::before{content:"";position:absolute;top:-9px;left:38px;width:16px;height:16px;background:var(--surface);
+    border-left:1px solid var(--accent);border-top:1px solid var(--accent);transform:rotate(45deg)}
+  .row.spot{position:relative;z-index:6;border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.35)}
+
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.8rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:16px;position:relative}
+  .pros li::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
+  .tip{max-width:700px;margin:34px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Dagsbesked, ångra &amp; starthint</h1>
+<p class="sub">Mockup för <b>A6</b> (stäng dagen med besked + morgondagsprognos, i lektionslistan och på klar-skärmen) samt två A7-detaljer: <b>diskret ångra</b> efter ett svep och en <b>engångshint</b> om att rad-tryck startar ett pass.</p>
+
+<div class="grid">
+
+  <!-- A6 · Lektionslista -->
+  <div class="col">
+    <h2>A6 · Lektionslistan <span class="tag">klart för idag</span></h2>
+    <p class="desc">När inget är förfallet ersätts den försvinnande ”Dags att öva”-knappen av ett lugnt besked + prognos för imorgon.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div class="daybox donestate">
+        <div class="dayrow"><span class="em">✓</span><span class="big">Klart för idag</span></div>
+        <div class="daysub">Imorgon väntar <b>~23 ord</b> · 18 repetitioner + 5 nya</div>
+      </div>
+      <div class="rows">
+        <div class="row"><span class="nm">Mat &amp; dryck</span><span class="meta"><span class="pill done">✓ idag</span></span></div>
+        <div class="row"><span class="nm">Familjen</span><span class="meta"><span class="pill done">✓ idag</span></span></div>
+        <div class="row"><span class="nm">Resa</span><span class="meta"><span class="pill done">✓ idag</span></span></div>
+        <div class="row"><span class="nm">Verb – presens</span><span class="meta"><span class="pill done">✓ idag</span></span></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Tomrum blir belöning</li><li>Man vet vad imorgon innebär</li></ul>
+  </div>
+
+  <!-- A6 · Klar-skärm -->
+  <div class="col">
+    <h2>A6 · Klar-skärmen <span class="tag">samma prognos</span></h2>
+    <p class="desc">Efter ett avklarat pass: fira klart, och sätt förväntan för nästa dag med samma siffra.</p>
+    <div class="phone"><div class="screen">
+      <div class="congrats">
+        <div class="tier">🥇</div>
+        <div class="done">Klart!</div>
+        <div class="line">Du körde igenom hela passet</div>
+        <div class="statline">
+          <div class="s"><span class="n">24</span><span class="l">kort</span></div>
+          <div class="s"><span class="n">3</span><span class="l">min</span></div>
+          <div class="s"><span class="n">7</span><span class="l">🔥 dagar</span></div>
+        </div>
+        <div class="forecast">
+          <span class="em">🌅</span>
+          <div class="t"><b>Imorgon väntar ~23 ord</b><br><span>18 repetitioner + 5 nya</span></div>
+        </div>
+        <button class="cbtn">Klar</button>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Bygger den dagliga vanan</li><li>Återanvänder samma prognoslogik</li></ul>
+  </div>
+
+  <!-- A7a · Ångra -->
+  <div class="col">
+    <h2>A7a · Diskret ångra <span class="tag">utan att skaka</span></h2>
+    <p class="desc">Efter ett svep dyker ett litet ↩︎ upp i några sekunder. Hjälper på bussen/i sängen och den som aldrig läst hjälpfliken – skak finns kvar parallellt.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>Mat &amp; dryck</h3><span style="margin-left:auto;color:var(--muted);font-size:.8rem">6 kvar</span></div>
+      <div class="card-area">
+        <div class="feed">👈 Kan inte</div>
+        <div class="card swept"><span class="word">la mela</span></div>
+        <div class="undo"><span class="ic">↩︎</span> Ångra<span class="timer"></span></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Tyst miljö-vänligt</li><li>Självförklarande, tidsbegränsat</li></ul>
+  </div>
+
+  <!-- A7b · Starthint -->
+  <div class="col">
+    <h2>A7b · Engångshint <span class="tag">rad = starta pass</span></h2>
+    <p class="desc">Första gången någon är på lektionslistan: en liten coachmark som förklarar att ett tryck startar ett pass direkt. Visas en gång, sen aldrig mer.</p>
+    <div class="phone"><div class="screen">
+      <div class="topbar"><button class="back">←</button><h3>🇮🇹 Italienska</h3></div>
+      <div class="seg"><span>Från svenska</span><span class="on">Till svenska</span><span>Blandat</span></div>
+      <div class="scrim"></div>
+      <div class="rows" style="position:relative;z-index:6">
+        <div class="row spot"><span class="nm">Mat &amp; dryck</span><span class="meta"><span class="pill new">12 nya</span><span class="pill due">5 dags</span></span></div>
+        <div class="row" style="opacity:.5"><span class="nm">Familjen</span><span class="meta"><span class="pill due">8 dags</span></span></div>
+        <div class="row" style="opacity:.5"><span class="nm">Resa</span><span class="meta"><span class="pill new">20 nya</span></span></div>
+      </div>
+      <div class="coach" style="top:150px">
+        <div class="h">Tryck för att öva 👆</div>
+        <p>Ett tryck på en lektion startar ett pass direkt – du behöver inte öppna den först. (Pennan ›  redigerar orden.)</p>
+        <button class="ok">Uppfattat</button>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Tar bort förstagångs-överraskningen</li><li>Skiljer tryck (öva) från › (redigera)</li></ul>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Så hänger de ihop:</b> prognossiffran (A6) räknas som ”kort med förfallodatum imorgon + morgondagens nyordskvot” och visas identiskt på båda ställena. Ångra-pillen (A7a) återanvänder den befintliga ångra-stacken – bara en synlig, tidsbegränsad knapp utöver skak. Starthinten (A7b) sätter en flagga i <code>localStorage</code> när den stängts, så den aldrig kommer tillbaka.
+</div>
+
+</body>
+</html>
