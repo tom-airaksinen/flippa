@@ -2481,6 +2481,12 @@ hintBtn.addEventListener("click",(e)=>{
 
 // Visar/gömmer ⋯-fliken samt hörnknapparna 🔊 (utländska+röst) och 💡 (svenska+minnesregel).
 function updateCardActions(){
+  // Medan kortet dras eller flyger ska knapparna hållas dolda. Annars kan en
+  // fördröjd timer (t.ex. showSpeakSoon efter en flipp) återvisa fliken mitt i ett
+  // svep, så den ligger kvar på kortets gamla plats medan kortet flyttat sig.
+  // (Buggrapport: ⋯-menyn "hänger kvar" vid drag.) Settlade lägen (snapBack:s
+  // transitionend, flyOut-slutet, loadCard) kör updateCardActions igen och visar rätt.
+  if (dragging || animating) { hideCardActions(); return; }
   const hasCard = !!(session && session.current);
   moreBtn.classList.toggle("hidden", !hasCard);
   if(!hasCard){ closeFan(); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); return; }
@@ -2573,6 +2579,7 @@ function flyOut(grade) {
     setTimeout(() => {
       card.classList.remove("emerge");
       animating = false;
+      updateCardActions(); // settlat läge efter animationen: visa knapparna för nästa kort
     }, 260);
   }, 220);
 }
@@ -4151,7 +4158,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v214";
+const APP_VERSION = "v215";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
