@@ -67,7 +67,42 @@ temanot per lektion). Byt språkparet vid behov.
 - **Stickprov:** lista de 10 första 1:orna och 6 första 3:orna per lektion och
   ögna igenom – kärnorna ska vara självklara, nischerna igenkännbart smala.
 
-## Tekniskt flöde (Firebase REST, fungerar utan appen)
+## Kallstart i ny session: använd verktygsskriptet, inte ad-hoc-curl
+
+**Kör alla dataoperationer via `scripts/prio-klassning.py`** – improviserade
+curl/python-kommandon ger en ny permission-prompt per variant, medan skriptet
+är ETT stabilt kommandomönster (godkänn en gång med "always allow", eller lägg
+regeln nedan i `.claude/settings.json`). Skriptet innehåller dessutom hela
+valideringen och vägrar skriva vid minsta avvikelse – säkerhetsreglerna kan
+inte hoppas över av misstag. `dangerously-skip-permissions` behövs aldrig.
+
+```
+python3 scripts/prio-klassning.py subjects            # lista ämnen
+python3 scripts/prio-klassning.py lessons <subjectId> # lista lektioner
+python3 scripts/prio-klassning.py export <subjectId> <utkatalog>
+python3 scripts/prio-klassning.py write  <subjectId> <lessonId> <utfil>
+python3 scripts/prio-klassning.py verify <subjectId>
+```
+
+Flödet blir: `export` → klassa varje lektions TSV enligt prompten nedan →
+skriv utfil `cardId;front;prio` → `write` (validerar + skriver + verifierar i
+ett steg) → `verify` för slutrapport. Obs: text-samtycke i chatten ger inga
+verktygsrättigheter – det är permission-dialogen som gäller.
+
+Permission-regel för `.claude/settings.json` (läggs in av användaren):
+
+```json
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 scripts/prio-klassning.py)",
+      "Bash(python3 scripts/prio-klassning.py *)"
+    ]
+  }
+}
+```
+
+## Tekniskt flöde (Firebase REST – referens; föredra skriptet ovan)
 
 Konfig (apiKey, databaseURL) finns i `firebase-config.js` – inte hemlig,
 skyddet är anonym inloggning + regler.
