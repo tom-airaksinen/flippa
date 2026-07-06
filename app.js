@@ -576,6 +576,26 @@ function cardPrio(c) { return c.prio === 1 || c.prio === 3 ? c.prio : 2; }
 // Introduktionsvikter per prio: 15/4/1 → 75/20/5 när alla band har nya ord.
 const PRIO_WEIGHTS = { 1: 15, 2: 4, 3: 1 };
 
+// Viktat urval av n kort ur en pool enligt prio-banden (15/4/1, största-rest,
+// spill i prio-ordning) – samma fördelningsprincip som todaysNewCards men utan
+// lektionsdimensionen. Utan prio-data (allt band 2) = ren slump, som förut.
+function pickWeightedByPrio(cards, n) {
+  if (n >= cards.length) return [...cards];
+  const bands = [1, 2, 3];
+  const buckets = bands.map((p) => shuffleInPlace(cards.filter((c) => cardPrio(c) === p)));
+  const weights = bands.map((p, i) => (buckets[i].length ? PRIO_WEIGHTS[p] : 0));
+  const wSum = weights.reduce((a, b) => a + b, 0);
+  const ideal = weights.map((w) => (wSum ? (n * w) / wSum : 0));
+  const take = ideal.map((v, i) => Math.min(buckets[i].length, Math.floor(v)));
+  let rest = n - take.reduce((a, b) => a + b, 0);
+  ideal
+    .map((v, i) => ({ i, frac: v - Math.floor(v) }))
+    .sort((a, b) => b.frac - a.frac)
+    .forEach(({ i }) => { if (rest > 0 && take[i] < buckets[i].length) { take[i]++; rest--; } });
+  bands.forEach((_, i) => { while (rest > 0 && take[i] < buckets[i].length) { take[i]++; rest--; } });
+  return buckets.flatMap((b, i) => b.slice(0, take[i]));
+}
+
 // Hamilton/största-rest: fördela `total` platser proportionellt mot bucket-storlekar.
 function allocProportional(counts, total) {
   const sum = counts.reduce((a, b) => a + b, 0);
@@ -1419,22 +1439,33 @@ async function startLessonSession(lessonId, force = false, continuing = false) {
     if (yes) startLessonSession(lessonId, true);
     return;
   }
-  // svagast först (lägsta låda), men slumpad ordning inom samma låda
+  // Urval: svagast först (lägsta låda). I boxen där kort/pass-taket nås görs
+  // urvalet prio-viktat (15/4/1) i stället för ren slump – så "10 ord" i en stor
+  // olärd lektion blir mest kärnord, precis som i Dags att öva. Presentations-
+  // ordningen blandas efteråt som förut.
   const minBox = (c) => Math.min(getEntry(c, "f2b").box || 0, getEntry(c, "b2f").box || 0);
-  const ordered = [...pool]
-    .map((c) => ({ c, box: minBox(c), r: Math.random() }))
-    .sort((a, b) => a.box - b.box || a.r - b.r)
-    .map((x) => x.c);
   const lim = sessionLimit();
-  // Urvalet sker svagast-först (ovan), men presentationsordningen blandas så nya
-  // och mognade kort slumpas in i passet i stället för att komma i fast ordning.
-  const queue = shuffleInPlace(lim ? ordered.slice(0, lim) : [...ordered]);
+  let picked;
+  if (lim && pool.length > lim) {
+    const byBox = new Map();
+    pool.forEach((c) => { const b = minBox(c); if (!byBox.has(b)) byBox.set(b, []); byBox.get(b).push(c); });
+    picked = [];
+    [...byBox.keys()].sort((a, b) => a - b).forEach((b) => {
+      const room = lim - picked.length;
+      if (room <= 0) return;
+      const cards = byBox.get(b);
+      picked.push(...(cards.length <= room ? cards : pickWeightedByPrio(cards, room)));
+    });
+  } else {
+    picked = [...pool];
+  }
+  const queue = shuffleInPlace(picked);
   queue.forEach((c) => runSeen.add(c.id)); // markera som sedda i rundan
-  const note = lim && ordered.length > queue.length
-    ? `Pass klart! 🎉 ${queue.length} av ${ordered.length} ord – resten kommer nästa pass.`
+  const note = lim && pool.length > queue.length
+    ? `Pass klart! 🎉 ${queue.length} av ${pool.length} ord – resten kommer nästa pass.`
     : "";
   if (!continuing) track("pass-lektion");
-  beginSession({ queue, dirMode, label: lesson.name, note, kind: "lesson", lessonId, forced: force, continueLimit: (lim && ordered.length > queue.length) ? lim : 0 });
+  beginSession({ queue, dirMode, label: lesson.name, note, kind: "lesson", lessonId, forced: force, continueLimit: (lim && pool.length > queue.length) ? lim : 0 });
 }
 
 function startDueSession(continuing = false) {
@@ -4319,7 +4350,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v224";
+const APP_VERSION = "v225";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
