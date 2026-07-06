@@ -1078,7 +1078,8 @@ function renderLessons(keepChoosers) {
   }
   // Tom-not: filter aktivt + inget behörigt just nu + det FINNS ord på urbockade nivåer
   const pf = prioFilterFor(currentSubject.id);
-  const hasExcluded = !!pf && activeLessons(currentSubject).some((l) => l.cards.some((c) => !prioAllowed(c)));
+  const prioActive = !!pf;
+  const hasExcluded = prioActive && activeLessons(currentSubject).some((l) => l.cards.some((c) => !prioAllowed(c)));
   $("prio-empty-note").classList.toggle("hidden", !(due === 0 && hasExcluded));
 
   const list = $("lessons-list");
@@ -1117,12 +1118,15 @@ function renderLessons(keepChoosers) {
       const d = dueCountForLessons([l]);
       const dueTag = d > 0 ? `<span class="due-tag">⏰ ${d}</span>` : "";
       const pauseIco = paused ? ` <span class="lesson-paused-ico" title="Pausad" aria-label="Pausad">⏸</span>` : "";
-      const total = l.cards.length;
+      // Behärskning mäts mot valda prio-nivåer (filtret). Utan aktivt filter = alla ord.
+      const scope = l.cards.filter((c) => prioAllowed(c));
+      const total = scope.length;
       let learned = 0, learning = 0;
-      l.cards.forEach((c) => { const bx = boxOf(c); if (bx >= 4) learned++; else if (bx >= 1) learning++; });
+      scope.forEach((c) => { const bx = boxOf(c); if (bx >= 4) learned++; else if (bx >= 1) learning++; });
       const pct = total ? Math.round((learned / total) * 100) : 0;
       const lw = total ? (learned / total) * 100 : 0;
       const gw = total ? (learning / total) * 100 : 0;
+      const cntLabel = prioActive ? `${total} av nivå` : `${total} ord`;
       return `<div class="row lesson-row${paused ? " paused" : ""}" data-lesson="${l.id}">
         <div class="row-l1">
           <span class="row-title"><span class="row-name">${esc(l.name)}</span>${pauseIco}</span>
@@ -1131,7 +1135,7 @@ function renderLessons(keepChoosers) {
         <div class="row-l2">
           <span class="mbar"><i class="m-learned" style="width:${lw}%"></i><i class="m-learning" style="width:${gw}%"></i></span>
           <span class="m-pct">${pct}%</span>
-          <span class="m-cnt">${total} ord</span>
+          <span class="m-cnt">${cntLabel}</span>
         </div>
       </div>`;
     })
@@ -1477,11 +1481,16 @@ async function startLessonSession(lessonId, force = false, continuing = false) {
     dirMode === "f2b" ? getEntry(c, "f2b").due <= now
     : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
     : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
-  const pool = (force ? [...lesson.cards] : lesson.cards.filter(activeToday)).filter((c) => !runSeen.has(c.id));
+  // Priofiltret gäller även manuell träning: vill man t.ex. bara nivå 1 av Sjöfart.
+  const pool = (force ? [...lesson.cards] : lesson.cards.filter(activeToday)).filter((c) => !runSeen.has(c.id) && prioAllowed(c));
   if (!pool.length) {
+    if (!lesson.cards.some((c) => prioAllowed(c))) {
+      toast("Inga ord på valda prio-nivåer i den här lektionen – ändra i KORT/PASS", 4000);
+      return;
+    }
     const yes = await confirmPrimary(
       "Inget kvar att öva idag",
-      `Du har redan lärt in alla ord i "${lesson.name}" idag. Köra igenom hela lektionen ändå?`,
+      `Du har redan lärt in alla ord (på valda prio-nivåer) i "${lesson.name}" idag. Köra igenom lektionen ändå?`,
       "Kör ändå!"
     );
     if (yes) startLessonSession(lessonId, true);
@@ -4433,7 +4442,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v231";
+const APP_VERSION = "v232";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
