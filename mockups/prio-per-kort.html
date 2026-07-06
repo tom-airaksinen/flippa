@@ -130,6 +130,14 @@
   .priochips button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 4px;font-size:.82rem;font-weight:600;font-family:inherit}
   .priochips button.on{background:rgba(91,140,255,.16);border-color:var(--accent)}
   .priochips .pdot{width:10px;height:10px}
+  /* avmarkerbar 1/2/3-segment */
+  .priosegs{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg)}
+  .priosegs button{flex:1;background:none;border:none;border-right:1px solid var(--line);color:var(--muted);padding:11px 0;font-weight:700;font-size:1rem;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;cursor:pointer}
+  .priosegs button:last-child{border-right:none}
+  .priosegs button.on{color:#fff}
+  .priosegs .pdot{width:10px;height:10px}
+  .priosegs button.on .pdot{background:#fff}
+  .prioseg-note{font-size:.74rem;color:var(--muted);margin-top:8px}
 
   /* Varianter-sektion */
   .vsec-h{max-width:720px;margin:44px auto 6px;font-size:1.15rem;font-weight:650;text-align:center}
@@ -269,6 +277,35 @@
     <ul class="pros"><li>Prio ryms utan att svälla modalen</li><li>Ren fältuppdatering – SRS/stjärnor orörda</li></ul>
   </div>
 
+  <!-- 4b · Redigera ord – avmarkerbar 1/2/3-segment -->
+  <div class="col">
+    <h2>4b · Redigera ord – segment <span class="tag">1/2/3, avmarkerbar</span></h2>
+    <p class="desc">Alternativ prio-kontroll: en segmentknapp 1/2/3. <b>Ingen är vald</b> om prio inte är explicit satt. Tryck för att sätta; tryck på den valda igen för att ta bort valet (→ ovärderat).</p>
+    <div class="phone"><div class="screen">
+      <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
+      <div class="scrim"></div>
+      <div class="modal">
+        <div class="modal-head"><h4>Redigera ord</h4><div class="mhbtns">
+          <button class="mhbtn" title="Utforska"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg></button>
+          <button class="mhbtn del" title="Ta bort"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12"/></svg></button>
+        </div></div>
+        <label>Utländskt (framsida)</label><input value="el taburete">
+        <label>Svenska (baksida)</label><input value="pall">
+        <label>Minnesregel (valfritt)</label><textarea rows="2"></textarea>
+        <label>Prio</label>
+        <div class="priosegs" data-seg>
+          <button data-lvl="1"><i class="pdot p1"></i>1</button>
+          <button data-lvl="2"><i class="pdot p2"></i>2</button>
+          <button data-lvl="3"><i class="pdot p3"></i>3</button>
+        </div>
+        <div class="prioseg-note" data-note></div>
+        <label>Lektion</label><div class="lesson"><span>Möbler</span><span class="car">▾</span></div>
+        <div class="mact"><button class="ghost">Avbryt</button><button class="ok">Spara</button></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Solklart "ingen vald" = ovärderat</li><li>Tryck igen = ta bort valet</li></ul>
+  </div>
+
   <!-- 5 · Ordlistan -->
   <div class="col">
     <h2>5 · Ordlistan i editorn <span class="tag">nivåpunkt + sortering</span></h2>
@@ -397,6 +434,27 @@
     });
   });
   document.addEventListener('click', closeAll);
+})();
+
+// Avmarkerbar 1/2/3-segment (skärm 4b): ingen vald = ovärderat; tryck på vald → av.
+(function(){
+  var C={1:'#5b8cff',2:'#6f7fc0',3:'#48557a'}, N={1:'Kärna',2:'Vanlig',3:'Nisch'};
+  Array.prototype.forEach.call(document.querySelectorAll('[data-seg]'), function(seg){
+    var note = seg.parentElement.querySelector('[data-note]');
+    var btns = Array.prototype.slice.call(seg.querySelectorAll('button'));
+    function render(){
+      var on = seg.querySelector('button.on');
+      btns.forEach(function(b){ if(!b.classList.contains('on')) b.style.background=''; });
+      if(on){ var l=+on.dataset.lvl; on.style.background=C[l]; if(note) note.textContent='Prio '+l+' · '+N[l]; }
+      else if(note){ note.textContent='Ingen prio satt – körs som Vanlig (2)'; }
+    }
+    btns.forEach(function(b){ b.addEventListener('click', function(){
+      if(b.classList.contains('on')){ b.classList.remove('on'); }        // tryck på vald → avmarkera (ovärderat)
+      else { btns.forEach(function(x){ x.classList.remove('on'); }); b.classList.add('on'); }
+      render();
+    });});
+    render();  // start: ingen vald
+  });
 })();
 </script>
 </body>
