@@ -1127,6 +1127,24 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .word-prio.p2 { background: var(--prio2); }
 .word-prio.p3 { background: var(--prio3); }
 
+/* Priofilter i KORT/PASS-väljaren */
+.prio-filter { display: flex; gap: 8px; }
+.prio-filter button {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px;
+  color: var(--text); padding: 9px 4px; font-family: inherit; font-weight: 600; font-size: 0.82rem;
+  cursor: pointer; opacity: 0.5;
+}
+.prio-filter button.on { opacity: 1; border-color: var(--accent); }
+.prio-filter button small { font-size: 0.62rem; font-weight: 400; color: var(--muted); }
+.prio-filter button .prio-dot { width: 11px; height: 11px; }
+/* Prio-prickar på KORT/PASS-pillen (visas bara när något är urbockat) */
+.limit-dots { display: inline-flex; gap: 2px; vertical-align: middle; margin-left: 4px; }
+.limit-dots i { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
+.limit-dots i.p1 { background: var(--prio1); } .limit-dots i.p2 { background: var(--prio2); } .limit-dots i.p3 { background: var(--prio3); }
+.limit-dots i.off { background: transparent; border: 1px solid var(--muted); }
+.prio-empty { color: var(--muted); font-size: 0.82rem; text-align: center; margin: 0 16px 12px; }
+
 /* edit-knapp på lektions-/ämnesrader */
 .row-edit {
   background: var(--surface-2);

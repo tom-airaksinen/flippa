@@ -573,6 +573,29 @@ function todayStr() {
 // Saknat/ogiltigt fält tolkas som 2 vid läsning men skrivs aldrig till Firebase –
 // oklassat innehåll beter sig då exakt som före prio-funktionen (allt lika).
 function cardPrio(c) { return c.prio === 1 || c.prio === 3 ? c.prio : 2; }
+// Priofilter: personligt + per ämne (profil → ämnes-id → [nivåer]). Frånvarande = alla.
+const PRIO_FILTER_KEY = "flippa-priofilter-v1";
+function prioFilterFor(subjectId) {
+  try {
+    const arr = (JSON.parse(localStorage.getItem(PRIO_FILTER_KEY) || "{}")[unitUser()] || {})[subjectId];
+    return Array.isArray(arr) && arr.length && arr.length < 3 ? arr : null; // null = alla nivåer
+  } catch { return null; }
+}
+function setPrioFilter(subjectId, levels) {
+  let all; try { all = JSON.parse(localStorage.getItem(PRIO_FILTER_KEY) || "{}"); } catch { all = {}; }
+  const u = unitUser();
+  all[u] = all[u] || {};
+  if (!levels || levels.length >= 3) delete all[u][subjectId]; // alla valda = frånvarande (= alla)
+  else all[u][subjectId] = levels.slice().sort();
+  localStorage.setItem(PRIO_FILTER_KEY, JSON.stringify(all));
+}
+// Behörighet: kortets prio (frånvarande = 2) ∈ valda nivåer. Frånvarande filter = alla.
+function prioAllowed(c, sid) {
+  const id = sid || (currentSubject && currentSubject.id);
+  if (!id) return true;
+  const f = prioFilterFor(id);
+  return !f || f.includes(cardPrio(c));
+}
 // Introduktionsvikter per prio: 15/4/1 → 75/20/5 när alla band har nya ord.
 const PRIO_WEIGHTS = { 1: 15, 2: 4, 3: 1 };
 
@@ -631,7 +654,7 @@ function todaysNewCards(subject) {
     // till nästa band, kärna först), (2) varje bands andel fördelas
     // proportionellt över lektionerna som tidigare. Utan prio-data hamnar allt
     // i band 2 → identiskt beteende med före prio-funktionen.
-    const newByLesson = lessons.map((l) => l.cards.filter(isNewCard));
+    const newByLesson = lessons.map((l) => l.cards.filter((c) => isNewCard(c) && prioAllowed(c, subject.id)));
     const totalNew = newByLesson.reduce((a, b) => a + b.length, 0);
     const quota = Math.min(newPerDay(), totalNew);
     const bands = [1, 2, 3];
@@ -669,7 +692,7 @@ function todaysNewCards(subject) {
   const out = [];
   lessons.forEach((l) => // bara aktiva lektioner – pausade ord faller bort även om de valdes tidigare idag
     l.cards.forEach((c) => {
-      if (idSet.has(c.id) && isNewCard(c)) out.push(c); // ej graderat ännu
+      if (idSet.has(c.id) && isNewCard(c) && prioAllowed(c, subject.id)) out.push(c); // ej graderat + inom filtret (skärpning slår direkt)
     })
   );
   return out;
@@ -1025,16 +1048,16 @@ function dueCountForLessons(lessons, starredOnly) {
   let n = 0;
   lessons.forEach((l) =>
     l.cards.forEach((c) => {
-      if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && (!starredOnly || isFav(c))) n++;
+      if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && (!starredOnly || isFav(c)) && prioAllowed(c)) n++;
     })
   );
   return n;
 }
 
-function renderLessons() {
+function renderLessons(keepChoosers) {
   if (!currentSubject) return renderSubjects();
   stopHandsfree();
-  closeChoosers();
+  if (!keepChoosers) closeChoosers(); // priofilter-toggle uppdaterar listan men håller väljaren öppen
   syncOptionPills();
   if (rowDrag && rowDrag.active) return; // rita inte om mitt i en drag-omordning
   // Plocka färsk referens (innehåll kan ha uppdaterats från Firebase)
@@ -1053,6 +1076,10 @@ function renderLessons() {
   } else {
     dueBtn.classList.add("hidden");
   }
+  // Tom-not: filter aktivt + inget behörigt just nu + det FINNS ord på urbockade nivåer
+  const pf = prioFilterFor(currentSubject.id);
+  const hasExcluded = !!pf && activeLessons(currentSubject).some((l) => l.cards.some((c) => !prioAllowed(c)));
+  $("prio-empty-note").classList.toggle("hidden", !(due === 0 && hasExcluded));
 
   const list = $("lessons-list");
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
@@ -1373,12 +1400,16 @@ function toggleChooser(which) {
 function syncOptionPills() {
   const dirOpt = dirSelect.options[dirSelect.selectedIndex];
   $("dir-val").textContent = dirOpt ? dirOpt.text : "Från svenska";
-  $("limit-val").textContent = limitLabel(sessionLimitSel.value) + (onlyStarred() ? " ⭐" : "");
+  const pf = currentSubject ? prioFilterFor(currentSubject.id) : null;
+  const dots = pf ? ' <span class="limit-dots">' + [1, 2, 3].map((l) => `<i class="p${l}${pf.includes(l) ? "" : " off"}"></i>`).join("") + "</span>" : "";
+  $("limit-val").innerHTML = esc(limitLabel(sessionLimitSel.value)) + (onlyStarred() ? " ⭐" : "") + dots;
   if (onlyStarredToggle.checked !== onlyStarred()) onlyStarredToggle.checked = onlyStarred();
   dirChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === dirSelect.value));
   $("limit-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === sessionLimitSel.value));
   const npd = String(newPerDay());
   $("newperday-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === npd));
+  const pfSet = pf || [1, 2, 3];
+  $("prio-filter").querySelectorAll("button").forEach((b) => b.classList.toggle("on", pfSet.includes(Number(b.dataset.lvl))));
 }
 dirPill.onclick = () => toggleChooser("dir");
 limitPill.onclick = () => toggleChooser("limit");
@@ -1400,6 +1431,18 @@ $("newperday-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   localStorage.setItem(NEW_PER_DAY_KEY, b.dataset.v);
   syncOptionPills();
+});
+// Priofilter – toggla nivå (minst en måste vara vald). Stäng inte väljaren.
+$("prio-filter").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b || !currentSubject) return;
+  const lvl = Number(b.dataset.lvl);
+  const cur = prioFilterFor(currentSubject.id) || [1, 2, 3];
+  const next = cur.includes(lvl) ? cur.filter((x) => x !== lvl) : cur.concat(lvl);
+  if (!next.length) return; // minst en nivå
+  setPrioFilter(currentSubject.id, next);
+  track("priofilter/" + [1, 2, 3].filter((x) => next.includes(x)).join(""));
+  syncOptionPills();
+  if (activeScreen === "lessons") renderLessons(true); // uppdatera räknare + tom-not, behåll väljaren öppen
 });
 syncOptionPills();
 
@@ -1481,7 +1524,7 @@ function startDueSession(continuing = false) {
   const inDue = new Set();
   activeLessons(currentSubject).forEach((l) => // hoppa över pausade lektioner
     l.cards.forEach((c) => {
-      if (isDueNow(c, dirMode, now) && !runSeen.has(c.id)) {
+      if (isDueNow(c, dirMode, now) && !runSeen.has(c.id) && prioAllowed(c)) {
         due.push(c); inDue.add(c.id);
       }
     })
@@ -1817,7 +1860,7 @@ function remainingForContinue(cont) {
     currentSubject.lessons.forEach((l) =>
       l.cards.forEach((c) => {
         if (runSeen.has(c.id)) return;
-        if (isDueNow(c, dirMode, now) || newSet.has(c.id)) n++;
+        if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && prioAllowed(c)) n++;
       })
     );
     return n;
@@ -4390,7 +4433,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v230";
+const APP_VERSION = "v231";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

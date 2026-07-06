@@ -107,6 +107,13 @@
           </label>
         </div>
         <p class="opt-note">Fokuspass: bara dina stjärnmärkta ord som är förfallna. Nya ord introduceras som vanligt.</p>
+        <div class="opt-sub">Prio</div>
+        <div class="prio-filter" id="prio-filter">
+          <button type="button" data-lvl="1"><span class="prio-dot p1"></span>Prio 1<small>Kärna</small></button>
+          <button type="button" data-lvl="2"><span class="prio-dot p2"></span>Prio 2<small>Vanlig</small></button>
+          <button type="button" data-lvl="3"><span class="prio-dot p3"></span>Prio 3<small>Nisch</small></button>
+        </div>
+        <p class="opt-note">Styr vilka ord som introduceras och repeteras. Prio 1 (kärna) prioriteras alltid mest.</p>
       </div>
     </div>
     <!-- Dolda "backing stores": all befintlig läs-/spar-/import-logik använder dessa -->
@@ -124,6 +131,7 @@
       <option value="50">50</option>
     </select>
     <button id="due-btn" class="primary-btn hidden"></button>
+    <p id="prio-empty-note" class="prio-empty hidden">Inga ord på valda prio-nivåer just nu – ändra i KORT/PASS.</p>
     <div class="editor-toolbar hidden" id="lessons-toolbar">
       <div class="search-wrap">
         <input type="search" id="lessons-search" class="editor-search" placeholder="Sök i alla lektioner…" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
