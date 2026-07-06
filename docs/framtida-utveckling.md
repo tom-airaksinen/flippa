@@ -397,6 +397,39 @@ tydliga drag-handles (☰) och en Klar-knapp, som man går in i medvetet.
 
 ---
 
+## 10) Slå upp & lägg till flera ord – bättre UI (framtida)
+
+Idé (2026-07-06): dagens "Slå upp & lägg till" klarar flera ord via semikolon
+(`nord;syd;väst`), men det är dolt/powerusermässigt, och den `;`-baserade parningen är
+skör (båda sidor måste ha exakt lika många delar → "olika antal ord"-fel). Status:
+**prototyp klar, väntar på beslut att implementera** (pausad – itereras ev. vidare senare).
+
+### Design (prototyp A+C)
+Interaktiv mockup: [`mockups/sla-upp-flera.html`](../mockups/sla-upp-flera.html)
+(live: `flippa.tomairaksinen.se/mockups/sla-upp-flera.html`).
+
+- **Inmatning:** flerrads-textarea "**ett ord per rad**" (semikolon/komma funkar också
+  för inklistrade listor) i stället för ett enradsfält.
+- **Granskningslista efter uppslag:** varje ord blir en egen **stackad** rad – ord/fras
+  överst, full-breddsfält för översättningen under (klarar långa fraser som
+  *la caserma dei vigili del fuoco* utan trunkering), redigerbar + ✕ för att ta bort.
+- **Löser två problem:** upptäckbarhet (multi-ord blir självklart) och skörheten
+  (ingen `;`-räkning – varje par är en egen rad).
+
+### Beslut som redan tagits (2026-07-06)
+- **Dubbletter utesluts INTE automatiskt.** De flaggas inline (⚠ + lektionsnamn) men
+  räknas med; användaren kan kryssa bort dem själv, och den **befintliga
+  dubblettdialogen** (Hoppa över / Lägg till ändå) visas vid "Lägg till" – så man
+  medvetet kan lägga ett ord i ytterligare en lektion.
+
+### Vid skarp implementation
+Återanvänder mycket som redan finns: `confirmDuplicates` (dubblettdialogen), `addCards`,
+`doTranslate`/`matchCase`. I princip: byt enradsfältet mot textarea + granskningslista,
+behåll resten. Ev. tillägg att bolla: liten progress-indikator + mjukt tak när MyMemory
+slår upp många ord (rate limits).
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
