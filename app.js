@@ -2633,7 +2633,7 @@ async function editCurrentCard() {
   }
   if (!lid) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid, prio: c.prio });
   if (!res) return;
   if (res._delete) {
     const ok = await confirmDanger("Ta bort ord?", `"${c.front}" tas bort.`);
@@ -2654,10 +2654,12 @@ async function editCurrentCard() {
   c.front = res.front;
   c.back = res.back;
   c.hint = res.hint || null;
+  if (res.prio !== c.prio) track("prio-justerad");
+  c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lid) {
-    moveCard(currentSubject.id, lid, res.lessonId, c.id, res.front, res.back, res.hint, c.prio);
+    moveCard(currentSubject.id, lid, res.lessonId, c.id, res.front, res.back, res.hint, res.prio);
   } else {
-    updateCard(currentSubject.id, lid, c.id, res.front, res.back, res.hint);
+    updateCard(currentSubject.id, lid, c.id, res.front, res.back, res.hint, res.prio);
   }
   // uppdatera visat kort direkt
   const showFrontFirst = session.shownDir === "f2b";
@@ -3019,7 +3021,8 @@ function askWords() {
 // opts: { allowDelete, explore, lessons, lessonId }
 // Returnerar { front, back, hint, lessonId } | { _delete:true } | null
 function askWord(front, back, hint, opts = {}) {
-  const { allowDelete, explore, lessons, lessonId } = opts;
+  const { allowDelete, explore, lessons, lessonId, prio } = opts;
+  const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
   const showLesson = lessons && lessons.length > 1; // bara meningsfullt att flytta om det finns fler lektioner
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
@@ -3037,6 +3040,13 @@ function askWord(front, back, hint, opts = {}) {
       <input type="text" id="m-back" value="${esc(b)}" autocomplete="off" autocapitalize="none" lang="sv" spellcheck="true" />
       <label>Minnesregel (valfritt)</label>
       <textarea id="m-hint" rows="2" placeholder="t.ex. liknar engelskans …" autocapitalize="sentences" lang="sv" spellcheck="true">${esc(h || "")}</textarea>
+      <label>Prio</label>
+      <div class="prio-segs" id="m-prio">
+        <button type="button" data-lvl="1"><span class="prio-dot p1"></span>1</button>
+        <button type="button" data-lvl="2"><span class="prio-dot p2"></span>2</button>
+        <button type="button" data-lvl="3"><span class="prio-dot p3"></span>3</button>
+      </div>
+      <p class="prio-seg-note" id="m-prio-note"></p>
       ${lessonBlock}
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
@@ -3052,6 +3062,20 @@ function askWord(front, back, hint, opts = {}) {
         b: m.querySelector("#m-back").value.trim(),
         h: m.querySelector("#m-hint").value.trim(),
       });
+      // Prio-segment: ingen vald = ovärderat (fältet lagras aldrig som default).
+      // Tryck på vald igen → avmarkera. Explicit val 1/2/3 sparas.
+      let curPrio = (prio === 1 || prio === 2 || prio === 3) ? prio : null;
+      const prioNote = m.querySelector("#m-prio-note");
+      const renderPrio = () => {
+        m.querySelectorAll("#m-prio button").forEach((b) => b.classList.toggle("on", Number(b.dataset.lvl) === curPrio));
+        prioNote.textContent = curPrio ? `Prio ${curPrio} · ${PRIO_NAMES[curPrio]}` : "Ingen prio satt – körs som Vanlig";
+      };
+      m.querySelectorAll("#m-prio button").forEach((b) => { b.onclick = () => {
+        const lvl = Number(b.dataset.lvl);
+        curPrio = curPrio === lvl ? null : lvl;
+        renderPrio();
+      }; });
+      renderPrio();
       // Vid REDIGERING (allowDelete) fokuseras inget fält → tangentbordet ligger nere
       // och man får överblick över dialogen (vi vet ändå inte vad som ska ändras).
       // Vid tillägg av nytt ord fokuseras första fältet så man kan börja skriva direkt.
@@ -3066,7 +3090,7 @@ function askWord(front, back, hint, opts = {}) {
         const v = vals();
         const chosenLid = lessonSel ? lessonSel.value : lessonId;
         closeModal();
-        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, lessonId: chosenLid } : null);
+        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, lessonId: chosenLid, prio: curPrio } : null);
       };
     };
     open(front, back, hint);
@@ -3298,8 +3322,10 @@ function addCards(sid, lid, cards) {
   });
   return base.update(updates).catch(writeError);
 }
-function updateCard(sid, lid, cid, front, back, hint) {
-  db.ref(`content/subjects/${sid}/lessons/${lid}/cards/${cid}`).update({ front, back, hint: hint || null }).catch(writeError);
+function updateCard(sid, lid, cid, front, back, hint, prio) {
+  // prio: 1/2/3 sparas; null/övrigt tar bort fältet (default 2 lagras aldrig).
+  const upd = { front, back, hint: hint || null, prio: (prio === 1 || prio === 2 || prio === 3) ? prio : null };
+  db.ref(`content/subjects/${sid}/lessons/${lid}/cards/${cid}`).update(upd).catch(writeError);
 }
 function removeCard(sid, lid, cid) {
   db.ref(`content/subjects/${sid}/lessons/${lid}/cards/${cid}`).remove().catch(writeError);
@@ -3571,14 +3597,16 @@ async function editWord(cid) {
   const c = lesson.cards.find((x) => x.id === cid);
   if (!c) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id, prio: c.prio });
   if (!res) return;
   if (res._delete) { deleteWord(cid); return; }
   c.hint = res.hint || null;
+  if (res.prio !== c.prio) track("prio-justerad");
+  c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lesson.id) {
-    moveCard(currentSubject.id, lesson.id, res.lessonId, cid, res.front, res.back, res.hint, c.prio);
+    moveCard(currentSubject.id, lesson.id, res.lessonId, cid, res.front, res.back, res.hint, res.prio);
   } else {
-    updateCard(currentSubject.id, lesson.id, cid, res.front, res.back, res.hint);
+    updateCard(currentSubject.id, lesson.id, cid, res.front, res.back, res.hint, res.prio);
   }
 }
 
