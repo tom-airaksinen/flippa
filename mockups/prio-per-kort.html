@@ -116,6 +116,11 @@
   .prio-pop.below{bottom:auto;top:calc(100% + 9px)}
   .prio-pop.below::after{bottom:auto;top:-7px;border:none;border-left:1px solid var(--line);border-top:1px solid var(--line)}
   .prio-badge.dot{width:18px;height:18px;padding:0;border:2px solid transparent;border-radius:50%}
+  /* ovärderat (saknar prio) – streckat/dämpat, körs som Vanlig */
+  .prio-badge.num.unset{border-style:dashed;color:var(--muted);border-color:var(--muted)}
+  .prio-badge.word.unset{color:var(--muted)}
+  .prio-badge.dot.unset{background:transparent;border:2px dashed var(--muted)}
+  .prio-opt .std{margin-left:auto;color:var(--muted);font-size:.7rem}
   .prio-opt{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:.9rem;cursor:pointer}
   .prio-opt.cur{background:var(--surface-2)}
   .prio-opt .dotc{width:12px;height:12px;border-radius:50%;flex:none}
@@ -242,7 +247,7 @@
   <!-- 4 · Redigera ord (realistisk) -->
   <div class="col">
     <h2>4 · Redigera ord <span class="tag">alla dagens fält + prio</span></h2>
-    <p class="desc">Dagens riktiga modal: framsida/baksida, minnesregel (textarea), 🌐 utforska + 🗑 ta bort i huvudet, och Lektion-väljare. Prio läggs till som en <b>kompakt, tryckbar</b> kontroll (tryck på "2").</p>
+    <p class="desc">Här ett ord som <b>saknar prio</b> (t.ex. nyimporterat, ej bedömt). Kontrollen visar ett streckat "–" = ovärderat (körs som Vanlig). Tryck → sätt en nivå; då blir den ifylld och fältet sparas. Övriga fält är dagens riktiga (textarea + Lektion).</p>
     <div class="phone"><div class="screen">
       <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
       <div class="scrim"></div>
@@ -255,7 +260,7 @@
         <label>Svenska (baksida)</label><input value="brandman">
         <label>Minnesregel (valfritt)</label><textarea rows="2">vigile = vakt · fuoco = eld</textarea>
         <div class="prio-row"><label>Prio</label>
-          <div class="prio-ctl"><button class="prio-badge num" data-lvl="2"></button></div>
+          <div class="prio-ctl"><button class="prio-badge num" data-lvl=""></button></div>
         </div>
         <label>Lektion</label><div class="lesson"><span>Mat &amp; dryck</span><span class="car">▾</span></div>
         <div class="mact"><button class="ghost">Avbryt</button><button class="ok">Spara</button></div>
@@ -350,19 +355,27 @@
 (function(){
   var C={1:'#5b8cff',2:'#6f7fc0',3:'#48557a'}, N={1:'Kärna',2:'Vanlig',3:'Nisch'};
   function paint(b){
-    var l=+b.dataset.lvl;
-    if(b.classList.contains('num')){ b.textContent=l; b.style.color=C[l]; b.style.borderColor=C[l]; }
-    else if(b.classList.contains('word')){ b.innerHTML='<span class="dotc" style="width:11px;height:11px;border-radius:50%;background:'+C[l]+'"></span>'+N[l]+'<span class="car">▾</span>'; }
-    else if(b.classList.contains('dot')){ b.style.background=C[l]; }
+    var raw=b.dataset.lvl, unset=!raw, l=+raw;
+    b.classList.toggle('unset', unset);
+    if(b.classList.contains('num')){
+      if(unset){ b.textContent='–'; b.style.color=''; b.style.borderColor=''; }
+      else { b.textContent=l; b.style.color=C[l]; b.style.borderColor=C[l]; }
+    } else if(b.classList.contains('word')){
+      if(unset){ b.innerHTML='<span class="dotc" style="width:11px;height:11px;border-radius:50%;border:1.5px dashed var(--muted)"></span>Vanlig <span class="car">(standard) ▾</span>'; }
+      else { b.innerHTML='<span class="dotc" style="width:11px;height:11px;border-radius:50%;background:'+C[l]+'"></span>'+N[l]+'<span class="car">▾</span>'; }
+    } else if(b.classList.contains('dot')){
+      b.style.background = unset ? 'transparent' : C[l];
+    }
   }
   function closeAll(){ Array.prototype.forEach.call(document.querySelectorAll('.prio-pop'), function(p){ p.remove(); }); }
   function openPop(b){
     closeAll();
-    var ctl=b.closest('.prio-ctl'), cur=+b.dataset.lvl;
+    var ctl=b.closest('.prio-ctl'), cur=b.dataset.lvl?+b.dataset.lvl:0;
     var pop=document.createElement('div'); pop.className='prio-pop open';
     [1,2,3].forEach(function(l){
       var o=document.createElement('div'); o.className='prio-opt'+(l===cur?' cur':'');
-      o.innerHTML='<span class="dotc" style="background:'+C[l]+'"></span>'+N[l]+(l===cur?'<span class="ck">✓</span>':'');
+      var tag = l===cur ? '<span class="ck">✓</span>' : (cur===0 && l===2 ? '<span class="std">standard</span>' : '');
+      o.innerHTML='<span class="dotc" style="background:'+C[l]+'"></span>'+N[l]+tag;
       o.addEventListener('click', function(e){ e.stopPropagation(); b.dataset.lvl=l; paint(b); closeAll(); });
       pop.appendChild(o);
     });
