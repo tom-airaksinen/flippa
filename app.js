@@ -568,6 +568,14 @@ function todayStr() {
   return new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD i lokal tid
 }
 
+// ---- Prio per kort ----
+// prio = relativ centralitet inom kortets tema: 1 = kärna, 2 = vanlig, 3 = nisch.
+// Saknat/ogiltigt fält tolkas som 2 vid läsning men skrivs aldrig till Firebase –
+// oklassat innehåll beter sig då exakt som före prio-funktionen (allt lika).
+function cardPrio(c) { return c.prio === 1 || c.prio === 3 ? c.prio : 2; }
+// Introduktionsvikter per prio: 15/4/1 → 75/20/5 när alla band har nya ord.
+const PRIO_WEIGHTS = { 1: 15, 2: 4, 3: 1 };
+
 // Hamilton/största-rest: fördela `total` platser proportionellt mot bucket-storlekar.
 function allocProportional(counts, total) {
   const sum = counts.reduce((a, b) => a + b, 0);
@@ -593,18 +601,40 @@ function todaysNewCards(subject) {
   const lessons = activeLessons(subject); // pausade lektioner bidrar inte med nya ord
   let entry = ledger[subject.id];
   if (!entry || entry.date !== today) {
-    // Bygg buckets per lektion av nya kort och fördela proportionellt.
-    const buckets = lessons.map((l) => l.cards.filter(isNewCard));
-    const counts = buckets.map((b) => b.length);
-    const totalNew = counts.reduce((a, b) => a + b, 0);
-    const alloc = allocProportional(counts, Math.min(newPerDay(), totalNew));
+    // Dagens nya ord väljs i två steg: (1) kvoten fördelas över prio-banden med
+    // vikterna 15/4/1 (→ 75/20/5 när alla band har nya ord; underskott spiller
+    // till nästa band, kärna först), (2) varje bands andel fördelas
+    // proportionellt över lektionerna som tidigare. Utan prio-data hamnar allt
+    // i band 2 → identiskt beteende med före prio-funktionen.
+    const newByLesson = lessons.map((l) => l.cards.filter(isNewCard));
+    const totalNew = newByLesson.reduce((a, b) => a + b.length, 0);
+    const quota = Math.min(newPerDay(), totalNew);
+    const bands = [1, 2, 3];
+    const bandBuckets = bands.map((p) => newByLesson.map((cs) => cs.filter((c) => cardPrio(c) === p)));
+    const bandAvail = bandBuckets.map((buckets) => buckets.reduce((a, b) => a + b.length, 0));
+    // Viktad fördelning över banden (största-rest), med tak = tillgängligt antal
+    const weights = bands.map((p, bi) => (bandAvail[bi] > 0 ? PRIO_WEIGHTS[p] : 0));
+    const wSum = weights.reduce((a, b) => a + b, 0);
+    const ideal = weights.map((w) => (wSum ? (quota * w) / wSum : 0));
+    const bandTake = ideal.map((v, bi) => Math.min(bandAvail[bi], Math.floor(v)));
+    let rest = quota - bandTake.reduce((a, b) => a + b, 0);
+    ideal
+      .map((v, bi) => ({ bi, frac: v - Math.floor(v) }))
+      .sort((a, b) => b.frac - a.frac)
+      .forEach(({ bi }) => { if (rest > 0 && bandTake[bi] < bandAvail[bi]) { bandTake[bi]++; rest--; } });
+    bands.forEach((_, bi) => { // spill: fyll ur banden i prio-ordning om rest kvarstår
+      while (rest > 0 && bandTake[bi] < bandAvail[bi]) { bandTake[bi]++; rest--; }
+    });
     const ids = [];
-    buckets.forEach((cards, i) => {
-      const shuffled = cards
-        .map((c) => ({ c, r: Math.random() }))
-        .sort((a, b) => a.r - b.r)
-        .map((x) => x.c);
-      shuffled.slice(0, alloc[i]).forEach((c) => ids.push(c.id));
+    bands.forEach((_, bi) => {
+      const alloc = allocProportional(bandBuckets[bi].map((b) => b.length), bandTake[bi]);
+      bandBuckets[bi].forEach((cards, i) => {
+        const shuffled = cards
+          .map((c) => ({ c, r: Math.random() }))
+          .sort((a, b) => a.r - b.r)
+          .map((x) => x.c);
+        shuffled.slice(0, alloc[i]).forEach((c) => ids.push(c.id));
+      });
     });
     entry = { date: today, ids };
     ledger[subject.id] = entry;
@@ -677,7 +707,11 @@ function normalize(subjectsObj) {
           name: l.name,
           order: l.order ?? 0,
           cards: Object.entries(l.cards || {})
-            .map(([cid, c]) => ({ id: cid, front: c.front, back: c.back, hint: c.hint ?? null, order: c.order ?? 0 }))
+            .map(([cid, c]) => ({
+              id: cid, front: c.front, back: c.back, hint: c.hint ?? null,
+              prio: c.prio === 1 || c.prio === 2 || c.prio === 3 ? c.prio : null,
+              order: c.order ?? 0,
+            }))
             .sort(byOrder),
         }))
         .sort(byOrder),
@@ -2583,7 +2617,7 @@ async function editCurrentCard() {
   c.back = res.back;
   c.hint = res.hint || null;
   if (res.lessonId && res.lessonId !== lid) {
-    moveCard(currentSubject.id, lid, res.lessonId, c.id, res.front, res.back, res.hint);
+    moveCard(currentSubject.id, lid, res.lessonId, c.id, res.front, res.back, res.hint, c.prio);
   } else {
     updateCard(currentSubject.id, lid, c.id, res.front, res.back, res.hint);
   }
@@ -3052,8 +3086,20 @@ function parseLines(text) {
       const i = line.indexOf(";");
       if (i < 0) return null;
       const front = line.slice(0, i).trim();
-      const back = line.slice(i + 1).trim();
-      return front && back ? { front, back } : null;
+      let back = line.slice(i + 1).trim();
+      // Valfri tredje kolumn: slutar raden på ;1 ;2 eller ;3 tolkas det som prio.
+      // Allt annat efter första ; räknas som baksida (som får innehålla ;).
+      let prio = null;
+      const j = back.lastIndexOf(";");
+      if (j >= 0) {
+        const tail = back.slice(j + 1).trim();
+        if (tail === "1" || tail === "2" || tail === "3") {
+          prio = parseInt(tail, 10);
+          back = back.slice(0, j).trim();
+        }
+      }
+      if (!front || !back) return null;
+      return prio ? { front, back, prio } : { front, back };
     })
     .filter(Boolean);
 }
@@ -3208,7 +3254,9 @@ function addCards(sid, lid, cards) {
   const updates = {};
   const order = Date.now();
   cards.forEach((c, i) => {
-    updates[base.push().key] = { front: c.front, back: c.back, order: order + i, createdAt: TS };
+    const card = { front: c.front, back: c.back, order: order + i, createdAt: TS };
+    if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio; // default (2) skrivs aldrig
+    updates[base.push().key] = card;
   });
   return base.update(updates).catch(writeError);
 }
@@ -3220,10 +3268,13 @@ function removeCard(sid, lid, cid) {
 }
 // Flytta ett kort till en annan lektion (atomiskt: lägg till nytt + ta bort gammalt).
 // SRS följer med automatiskt eftersom inlärningen nycklas på ordet, inte kort-id:t.
-function moveCard(sid, fromLid, toLid, cid, front, back, hint) {
+// prio måste däremot skickas med explicit – annars tappas den vid flytt.
+function moveCard(sid, fromLid, toLid, cid, front, back, hint, prio) {
   const newKey = db.ref(`content/subjects/${sid}/lessons/${toLid}/cards`).push().key;
   const updates = {};
-  updates[`content/subjects/${sid}/lessons/${toLid}/cards/${newKey}`] = { front, back, hint: hint || null, order: Date.now(), createdAt: TS };
+  const card = { front, back, hint: hint || null, order: Date.now(), createdAt: TS };
+  if (prio === 1 || prio === 2 || prio === 3) card.prio = prio;
+  updates[`content/subjects/${sid}/lessons/${toLid}/cards/${newKey}`] = card;
   updates[`content/subjects/${sid}/lessons/${fromLid}/cards/${cid}`] = null;
   db.ref().update(updates).catch(writeError);
 }
@@ -3487,7 +3538,7 @@ async function editWord(cid) {
   if (res._delete) { deleteWord(cid); return; }
   c.hint = res.hint || null;
   if (res.lessonId && res.lessonId !== lesson.id) {
-    moveCard(currentSubject.id, lesson.id, res.lessonId, cid, res.front, res.back, res.hint);
+    moveCard(currentSubject.id, lesson.id, res.lessonId, cid, res.front, res.back, res.hint, c.prio);
   } else {
     updateCard(currentSubject.id, lesson.id, cid, res.front, res.back, res.hint);
   }
@@ -3737,7 +3788,7 @@ function detectDelim(text) {
 }
 
 const FAV_FALSEY = new Set(["", "0", "nej", "no", "false", "n"]);
-// Läs alla valda filer → lista av {sektion, front, back, fav, hint}
+// Läs alla valda filer → lista av {sektion, front, back, fav, hint, prio}
 function readCsvFiles(files) {
   return Promise.all([...files].map((f) => f.text())).then((texts) => {
     const out = [];
@@ -3752,7 +3803,9 @@ function readCsvFiles(files) {
         if (!sektion || !front || !back) return;
         const fav = !FAV_FALSEY.has((r[3] || "").trim().toLowerCase());
         const hint = (r[4] || "").trim();
-        out.push({ sektion, front, back, fav, hint });
+        const rawPrio = (r[5] || "").trim();
+        const prio = rawPrio === "1" || rawPrio === "2" || rawPrio === "3" ? parseInt(rawPrio, 10) : null;
+        out.push({ sektion, front, back, fav, hint, prio });
       });
     });
     return out;
@@ -3806,9 +3859,9 @@ function commitImport(subject, plan) {
     }
     s.cards.forEach((rec, ci) => {
       const ck = db.ref(`content/subjects/${sid}/lessons/${lid}/cards`).push().key;
-      updates[`content/subjects/${sid}/lessons/${lid}/cards/${ck}`] = {
-        front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS,
-      };
+      const card = { front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS };
+      if (rec.prio === 1 || rec.prio === 2 || rec.prio === 3) card.prio = rec.prio;
+      updates[`content/subjects/${sid}/lessons/${lid}/cards/${ck}`] = card;
       if (rec.fav) favKeys.push(`${normPart(rec.front)}|${normPart(rec.back)}`);
     });
   });
@@ -3845,6 +3898,7 @@ async function startCsvImport(files) {
   m.querySelector("#imp-cancel").onclick = closeModal;
   m.querySelector("#imp-go").onclick = () => {
     closeModal();
+    if (plan.list.some((s) => s.cards.some((c) => c.prio))) track("import-med-prio");
     commitImport(subject, plan)
       .then(() => flash(`Importerade ${plan.wordCount} ord i ${plan.list.length} lektioner ✓`, 3000))
       .catch((e) => { writeError(e); toast("Importen misslyckades: " + (e.code || e.message), 5000); });
@@ -4265,7 +4319,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v223";
+const APP_VERSION = "v224";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

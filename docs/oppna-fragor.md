@@ -41,7 +41,21 @@
 - [ ] Om anonym inloggning skulle fela på github.io: lägg ev. till domänen under Firebase Auth → Settings → Authorized domains.
 - [x] Skydda användaren från omladdning mitt i något vid deploy? → **Nivå 1 byggd (v199, 2026-07-04):** omladdning för ny version skjuts upp tills man är på ämnes-/lektionslistan utan pass/handsfree/öppen modal (`maybeReloadForUpdate`/`isSafeToReloadForUpdate`). Nivå 2 (diskret "ny version"-banner utan skipWaiting) återstår. → **Analys (2026-07-04):** Idag gör SW:n `skipWaiting` och appen `location.reload()` så fort ny version upptäcks (kollas var 60:e s + vid förgrund). Ingen dataförlust (SRS/statistik sparas löpande, innehåll i Firebase) – men flyktigt läge tappas (pågående passkö, Klar-skärmens Fortsätt, halvskriven glosa, handsfree) + splash blinkar. Åtgärd i tre nivåer: **(1)** uppskjuten reload – ladda bara om när man är på listan, ingen modal/pass/handsfree (~30–45 min, löser ~90 %); **(2)** ta bort `skipWaiting`, visa diskret "Ny version – tryck för att uppdatera"-banner (~1 h, standard-PWA-mönster); **(3)** kombo. Rekommendation inför bredare release: nivå 1 nu, nivå 2 senare. Litet, isolerat jobb (~SW-logik + lite UI), ingen risk för övrig app.
 
+## Prio per kort (nivåer) – se [`prio-plan-2026-07-06.html`](prio-plan-2026-07-06.html)
+- [x] Nivå per lektion eller prio per kort? → **Svar:** Prio per kort (1–3, tomt = 2) ersätter nivåindelade lektioner helt; `innehallsbibliotek.md` skrivs om (2026-07-06)
+- [x] Delad eller personlig prio? → **Svar:** Fält på kortet, följer med användarens kopia av innehållet; bibliotekets prio = ursprungsförslag (2026-07-06)
+- [x] Påverkar nivåfiltret även repetitioner? → **Svar:** Ja, nya + repetitioner – samma semantik som paus; urbockad nivå fryser orden tills den bockas i igen (2026-07-06)
+- [ ] Exakta vikter för nyordsintroduktion? Startförslag 15/4/1 (→ 75/20/5 när alla nivåer valda), justeras efter känsla
+- [x] Terminologi: "prio" eller "nivå"? → **Svar:** `prio` överallt (kod, CSV, UI-rubrik) – "nivå" är redan dubbelt upptaget (Leitner "en nivå upp" i hjälpen + prestationernas "Ändra nivåer"). I UI bär värde-etiketterna begreppet: Kärna / Vanlig / Nisch (2026-07-06)
+- [x] Ska AI-promptmallen (tom lektion) be om prio? → **Svar:** Ja – formatet `ord;översättning;prio` med kort definition; komplexiteten bor i prompten (läses av AI:n), inte hos användaren. Prio alltid valfri vid inklistring: tredje kolumn som är exakt 1/2/3 tolkas som prio, annars del av baksidan. Inga API-anrop från Flippa – användarens egen AI som idag (2026-07-06)
+- [x] Global språkfrekvens eller relativ prio? → **Svar:** Relativ till TEMAT (inte till listan, inte till språket): prio = relativ centralitet inom det innehåll ordet tillhör. Allmänna listor (Collins, "Kroatiska 101") = temat är hela språket → sammanfaller med frekvens. Lektionen svarar på "vad", prio på "i vilken ordning inom det". Promptprinciper: urvalet får aldrig styras av prio; fördelningshinten (~½/⅓/resten vid 30+ ord) är riktmärke mot 1-inflation, aldrig kvot; korta vardagslistor kan sakna prio 3 helt. Se prio-planen §00 + §05 (2026-07-06)
+- [x] Temalektioner (t.ex. Sjöfart) får mest prio 2–3 av en globalt kalibrerad AI – behövs "boost:a denna lektion"? → **Svar:** Löst av den relativa semantiken: kantarellen får prio 1 inom Svampar och flödar in i huvudfåran. Boost-mekanism behövs inte (2026-07-06)
+- [ ] A/B-testa fördelningshintens varianter mot olika LLM:er inför backfillen: (A) ingen hint, (B) mjuk villkorad hint, (C) rangordna-först-och-buckla
+- [ ] Spillriktning när en nivåhink sinar – mot närmast högre prio först?
+- [ ] Hjälpflikens text: eget stycke om nivåer inkl. att urbockad nivå pausar repetitioner?
+
 ## Innehållsbibliotek (nivåindelat) – se [`innehallsbibliotek.md`](innehallsbibliotek.md)
+> **OBS (2026-07-06):** Nivå-per-lektion-upplägget nedan ersätts av prio per kort (se ovan). Planen ska skrivas om: en lektion per topic, prio-kolumn i CSV, nivåval via priofiltret.
 - [ ] Nivåetiketter: "Nybörjare / Medel / Avancerad" eller "nybörjare / kan en del / avancerad"? (styr lektionsnamn)
 - [ ] Vilka språk får färdiga paket först? (italienska redan på gång)
 - [ ] Engelsk master som mellanled, eller generera direkt svenska↔målspråk?

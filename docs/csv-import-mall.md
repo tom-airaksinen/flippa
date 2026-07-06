@@ -18,6 +18,7 @@ sig, plus en färdig prompt för att få ut det ur Collins-PDF:en.
 | 3 | `svenska` | ja | Baksidan (översättningen). |
 | 4 | `favorit` | nej | `x` eller `1` = stjärnmärks direkt. Tomt = vanlig. |
 | 5 | `minnesregel` | nej | Frivillig minnesregel/exempel → kortets hint-fält. |
+| 6 | `prio` | nej | `1` kärna · `2` vanlig · `3` nisch – relativ centralitet **inom temat** (se [`prio-plan-2026-07-06.html`](prio-plan-2026-07-06.html)). Tomt = tolkas som vanlig (2), inget skrivs. |
 
 - **En rad = en glosa.** Tomma rader ignoreras.
 - Innehåller ett fält självt `;` eller `,` → omslut fältet med dubbla citattecken,
