@@ -3422,6 +3422,7 @@ function sortedCards(lesson) {
     case "back-az": return cs.sort((a, b) => sortCollator.compare(a.back, b.back));
     case "weak-front": return cs.sort((a, b) => weakKey(a, "f2b") - weakKey(b, "f2b"));
     case "weak-back": return cs.sort((a, b) => weakKey(a, "b2f") - weakKey(b, "b2f"));
+    case "prio-desc": return cs.sort((a, b) => cardPrio(a) - cardPrio(b) || sortCollator.compare(a.front, b.front));
     default: return cs.sort(byOrder);
   }
 }
@@ -3430,6 +3431,7 @@ $("sort-btn").onclick = async () => {
   const fl = currentForeignLabel();
   const opts = [
     { label: "Först tillagda", value: "added" },
+    { label: "Prio – fallande", value: "prio-desc" },
     { label: `Alfabetiskt ${fl}`, value: "front-az" },
     { label: "Alfabetiskt svenska", value: "back-az" },
     { label: `Svagast från ${fl}`, value: "weak-front" },
@@ -4385,7 +4387,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v228";
+const APP_VERSION = "v229";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
