@@ -27,6 +27,7 @@ input, textarea {
   --gold: #f4c542;
   --line: #2c3c63; /* strukturkant (väljare, modaler, flikfält) */
   --track: rgba(255, 255, 255, 0.12); /* omärkt del av behärskningsstapeln (= nya ord) */
+  --prio1: #5b8cff; --prio2: #6f7fc0; --prio3: #48557a; /* Kärna/Vanlig/Nisch */
 }
 
 /* Rosa tema – gäller bara Hedvigs profil (klass sätts på <html> i applyTheme) */
@@ -44,6 +45,7 @@ input, textarea {
   --gold: #d98a26;
   --line: #f0aecd;
   --track: rgba(74, 34, 54, 0.12);
+  --prio1: #ff3d8f; --prio2: #db7ba6; --prio3: #a86e8a; /* rosa-familj: vivid → dämpad */
 }
 /* Ljus bakgrund kräver vit text på de rosa chiparna + ljusa kort-lager */
 :root.theme-rosa #due-btn { color: #fff; }
@@ -1112,11 +1114,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .prio-segs button { flex: 1; background: none; border: none; border-right: 1px solid var(--line); color: var(--muted); padding: 11px 0; font-family: inherit; font-weight: 700; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; }
 .prio-segs button:last-child { border-right: none; }
 .prio-segs button.on { color: #fff; }
-.prio-segs button.on[data-lvl="1"] { background: #5b8cff; }
-.prio-segs button.on[data-lvl="2"] { background: #6f7fc0; }
-.prio-segs button.on[data-lvl="3"] { background: #48557a; }
+.prio-segs button.on[data-lvl="1"] { background: var(--prio1); }
+.prio-segs button.on[data-lvl="2"] { background: var(--prio2); }
+.prio-segs button.on[data-lvl="3"] { background: var(--prio3); }
 .prio-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.prio-dot.p1 { background: #5b8cff; } .prio-dot.p2 { background: #6f7fc0; } .prio-dot.p3 { background: #48557a; }
+.prio-dot.p1 { background: var(--prio1); } .prio-dot.p2 { background: var(--prio2); } .prio-dot.p3 { background: var(--prio3); }
 .prio-segs button.on .prio-dot { background: #fff; }
 .prio-seg-note { font-size: 0.78rem; color: var(--muted); margin: 7px 0 0; }
 
