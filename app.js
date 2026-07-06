@@ -578,11 +578,16 @@ const PRIO_WEIGHTS = { 1: 15, 2: 4, 3: 1 };
 
 // Viktat urval av n kort ur en pool enligt prio-banden (15/4/1, största-rest,
 // spill i prio-ordning) – samma fördelningsprincip som todaysNewCards men utan
-// lektionsdimensionen. Utan prio-data (allt band 2) = ren slump, som förut.
-function pickWeightedByPrio(cards, n) {
+// lektionsdimensionen. Utan prio-data (allt band 2) = som förut.
+// keepOrder: behåll poolens ordning inom banden (t.ex. mest-förfallet-först)
+// i stället för att slumpa – då blir urvalet "viktat mellan band, äldst inom band".
+function pickWeightedByPrio(cards, n, keepOrder) {
   if (n >= cards.length) return [...cards];
   const bands = [1, 2, 3];
-  const buckets = bands.map((p) => shuffleInPlace(cards.filter((c) => cardPrio(c) === p)));
+  const buckets = bands.map((p) => {
+    const b = cards.filter((c) => cardPrio(c) === p);
+    return keepOrder ? b : shuffleInPlace(b);
+  });
   const weights = bands.map((p, i) => (buckets[i].length ? PRIO_WEIGHTS[p] : 0));
   const wSum = weights.reduce((a, b) => a + b, 0);
   const ideal = weights.map((w) => (wSum ? (n * w) / wSum : 0));
@@ -1493,9 +1498,11 @@ function startDueSession(continuing = false) {
   due.sort((a, b) => Math.min(getEntry(a, "f2b").due, getEntry(a, "b2f").due) -
     Math.min(getEntry(b, "f2b").due, getEntry(b, "b2f").due));
   const lim = sessionLimit();
-  // Urvalet sker mest-förfallet-först (ovan), men ordningen blandas så nya och
-  // mognade kort slumpas in i passet.
-  const queue = shuffleInPlace(lim ? due.slice(0, lim) : [...due]);
+  // Urval vid stor backlogg: prio-viktat mellan banden (15/4/1) så kärnord
+  // repeteras först när allt inte hinns med – men mest-förfallet-först INOM
+  // varje band (sorteringen ovan behålls av keepOrder). Nisch-bandets andel
+  // gör att inga ord svälts helt. Presentationsordningen blandas som förut.
+  const queue = shuffleInPlace(lim && due.length > lim ? pickWeightedByPrio(due, lim, true) : [...due]);
   queue.forEach((c) => runSeen.add(c.id)); // markera som sedda i rundan
   const note = lim && due.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${due.length} förfallna ord – resten kvar.`
@@ -4350,7 +4357,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v225";
+const APP_VERSION = "v226";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
