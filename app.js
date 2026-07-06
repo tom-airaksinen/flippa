@@ -3506,11 +3506,14 @@ function renderEditor() {
         badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 7 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
       }
       const fav = isFav(c);
+      const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
+      const prioDot = (c.prio === 1 || c.prio === 2 || c.prio === 3)
+        ? ` <span class="word-prio p${c.prio}" title="Prio ${c.prio} · ${PRIO_NAMES[c.prio]}"></span>` : "";
       return `<div class="word-row" data-id="${c.id}">
         <button class="word-row-del" data-del="${c.id}" aria-label="Ta bort ord" title="Ta bort ord">${TRASH_ICON_SVG}</button>
         <div class="word-row-main">
           <div class="word-texts">
-            <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
+            <div class="word-front">${esc(c.front)}${prioDot}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
             <div class="word-back">${esc(c.back)}</div>
           </div>
           ${badge}
@@ -4387,7 +4390,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v229";
+const APP_VERSION = "v230";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

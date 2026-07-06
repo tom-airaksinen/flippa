@@ -1121,6 +1121,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .prio-dot.p1 { background: var(--prio1); } .prio-dot.p2 { background: var(--prio2); } .prio-dot.p3 { background: var(--prio3); }
 .prio-segs button.on .prio-dot { background: #fff; }
 .prio-seg-note { font-size: 0.78rem; color: var(--muted); margin: 7px 0 0; }
+/* Liten prio-prick i ordraden (som 💡-flaggan) – bara när prio är satt */
+.word-prio { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; margin-left: 5px; }
+.word-prio.p1 { background: var(--prio1); }
+.word-prio.p2 { background: var(--prio2); }
+.word-prio.p3 { background: var(--prio3); }
 
 /* edit-knapp på lektions-/ämnesrader */
 .row-edit {
