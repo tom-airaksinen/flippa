@@ -40,7 +40,7 @@
   .abtn{margin:0 12px 8px;display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 24px);border:none;border-radius:11px;padding:10px;font-size:.9rem;font-weight:650;background:var(--easy);color:#0d1426}
 
   /* lektionsrader (combo) */
-  .rows{padding:0 12px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .rows{padding:0 12px;display:flex;flex-direction:column;gap:9px}
   .trow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .l1{display:flex;align-items:center;gap:8px}
   .l1 .nm{font-weight:600;font-size:.92rem}
@@ -91,6 +91,50 @@
   .mact{display:flex;gap:10px;margin-top:16px}
   .mact button{flex:1;border:none;border-radius:11px;padding:11px;font-weight:650;font-size:.9rem;font-family:inherit}
   .mact .ok{background:var(--accent);color:#fff} .mact .ghost{background:var(--surface-2);color:var(--text)}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .modal-head h4{margin:0}
+  .mhbtns{display:flex;gap:8px}
+  .mhbtn{width:32px;height:32px;border-radius:9px;background:var(--surface-2);border:none;color:var(--muted);display:flex;align-items:center;justify-content:center}
+  .mhbtn.del{color:#e06a5f}
+  .modal textarea{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:inherit;font-size:.94rem;padding:9px 10px;resize:none;line-height:1.5}
+  .modal .lesson{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:9px 10px;font-size:.9rem;display:flex;justify-content:space-between;align-items:center}
+  .modal .lesson .car{color:var(--muted)}
+  .prio-row{display:flex;align-items:center;justify-content:space-between;margin:12px 0 2px}
+  .prio-row label{margin:0}
+
+  /* --- Kompakt prio-kontroll (tryckbar) --- */
+  .prio-ctl{position:relative}
+  .prio-badge{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line);border-radius:20px;background:var(--bg);color:var(--text);font-family:inherit;font-weight:600;font-size:.86rem;padding:6px 12px;cursor:pointer}
+  .prio-badge .car{color:var(--muted);font-size:.66rem}
+  .prio-badge .dotc{width:11px;height:11px;border-radius:50%;flex:none}
+  .prio-badge.num{padding:0;width:34px;height:34px;justify-content:center;border-radius:50%;font-size:1.05rem;font-weight:700}
+  .prio-pop{position:absolute;bottom:calc(100% + 9px);right:0;z-index:30;width:158px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 16px 38px rgba(0,0,0,.6);display:none}
+  .prio-pop.open{display:block}
+  .prio-pop::after{content:"";position:absolute;bottom:-7px;right:18px;width:13px;height:13px;background:var(--surface);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+  .prio-pop.left{right:auto;left:0}
+  .prio-pop.left::after{right:auto;left:18px}
+  .prio-pop.below{bottom:auto;top:calc(100% + 9px)}
+  .prio-pop.below::after{bottom:auto;top:-7px;border:none;border-left:1px solid var(--line);border-top:1px solid var(--line)}
+  .prio-badge.dot{width:18px;height:18px;padding:0;border:2px solid transparent;border-radius:50%}
+  .prio-opt{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:.9rem;cursor:pointer}
+  .prio-opt.cur{background:var(--surface-2)}
+  .prio-opt .dotc{width:12px;height:12px;border-radius:50%;flex:none}
+  .prio-opt .ck{margin-left:auto;color:var(--accent);font-size:.8rem}
+  /* explicit chips-variant */
+  .priochips{display:flex;gap:7px}
+  .priochips button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 4px;font-size:.82rem;font-weight:600;font-family:inherit}
+  .priochips button.on{background:rgba(91,140,255,.16);border-color:var(--accent)}
+  .priochips .pdot{width:10px;height:10px}
+
+  /* Varianter-sektion */
+  .vsec-h{max-width:720px;margin:44px auto 6px;font-size:1.15rem;font-weight:650;text-align:center}
+  .vsec-sub{max-width:660px;margin:0 auto 22px;color:var(--muted);text-align:center;font-size:.9rem}
+  .vgrid{display:flex;flex-wrap:wrap;gap:22px;justify-content:center;align-items:flex-start}
+  .vcard{width:250px;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px}
+  .vcard h3{margin:0 0 3px;font-size:.98rem}
+  .vcard .vd{color:var(--muted);font-size:.8rem;margin:0 0 16px;min-height:52px}
+  .vdemo{display:flex;align-items:center;gap:10px;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:14px;min-height:70px}
+  .vdemo .vlab{color:var(--muted);font-size:.85rem;flex:1}
 
   /* ordlista */
   .wl-sort{display:flex;justify-content:flex-end;padding:2px 12px 8px}
@@ -195,28 +239,29 @@
     <ul class="pros"><li>Collins 3000 blir hanterbar – bara kärnan räknas</li><li>Ärligare behärskning ("av nivå")</li></ul>
   </div>
 
-  <!-- 4 · Redigera ord -->
+  <!-- 4 · Redigera ord (realistisk) -->
   <div class="col">
-    <h2>4 · Redigera ord <span class="tag">ny Prio-rad</span></h2>
-    <p class="desc">Enda nya alltid-synliga fältet på ord-nivå: en Prio-rad i redigera-modalen. Förvald = kortets värde (saknas → Vanlig).</p>
+    <h2>4 · Redigera ord <span class="tag">alla dagens fält + prio</span></h2>
+    <p class="desc">Dagens riktiga modal: framsida/baksida, minnesregel (textarea), 🌐 utforska + 🗑 ta bort i huvudet, och Lektion-väljare. Prio läggs till som en <b>kompakt, tryckbar</b> kontroll (tryck på "2").</p>
     <div class="phone"><div class="screen">
       <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
       <div class="scrim"></div>
       <div class="modal">
-        <h4>Redigera ord</h4>
-        <label>Italienska</label><input value="il vigile del fuoco">
-        <label>Svenska</label><input value="brandman">
-        <label>Prio</label>
-        <div class="priosel">
-          <button><i class="pdot p1"></i> Kärna</button>
-          <button class="on"><i class="pdot p2"></i> Vanlig</button>
-          <button><i class="pdot p3"></i> Nisch</button>
+        <div class="modal-head"><h4>Redigera ord</h4><div class="mhbtns">
+          <button class="mhbtn" title="Utforska"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg></button>
+          <button class="mhbtn del" title="Ta bort"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V5a1.5 1.5 0 0 1 1.5-1.5h3A1.5 1.5 0 0 1 15 5v2"/><path d="M6.5 7l.8 12a2 2 0 0 0 2 1.9h5.4a2 2 0 0 0 2-1.9l.8-12"/></svg></button>
+        </div></div>
+        <label>Utländskt (framsida)</label><input value="il vigile del fuoco">
+        <label>Svenska (baksida)</label><input value="brandman">
+        <label>Minnesregel (valfritt)</label><textarea rows="2">vigile = vakt · fuoco = eld</textarea>
+        <div class="prio-row"><label>Prio</label>
+          <div class="prio-ctl"><button class="prio-badge num" data-lvl="2"></button></div>
         </div>
-        <label>Minnesregel (valfri)</label><input value="vigile = vakt · fuoco = eld">
-        <div class="mact"><button class="ghost">Ta bort</button><button class="ok">Spara</button></div>
+        <label>Lektion</label><div class="lesson"><span>Mat &amp; dryck</span><span class="car">▾</span></div>
+        <div class="mact"><button class="ghost">Avbryt</button><button class="ok">Spara</button></div>
       </div>
     </div></div>
-    <ul class="pros"><li>Ren fältuppdatering – SRS/stjärnor orörda</li><li>Fjädermenyn på kortet lämnas orörd</li></ul>
+    <ul class="pros"><li>Prio ryms utan att svälla modalen</li><li>Ren fältuppdatering – SRS/stjärnor orörda</li></ul>
   </div>
 
   <!-- 5 · Ordlistan -->
@@ -227,18 +272,41 @@
       <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
       <div class="wl-sort"><span>Sortera: Efter nivå ▾</span></div>
       <div class="rows">
-        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">pane</div><div class="wb">bröd</div></div><span class="star">★</span></div>
-        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">acqua</div><div class="wb">vatten</div></div><span class="star">☆</span></div>
-        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">caffè</div><div class="wb">kaffe</div></div><span class="star">☆</span></div>
-        <div class="wrow"><i class="pdot p2"></i><div class="wt"><div class="wf">tovagliolo</div><div class="wb">servett</div></div><span class="star">☆</span></div>
-        <div class="wrow"><i class="pdot p2"></i><div class="wt"><div class="wf">posate</div><div class="wb">bestick</div></div><span class="star">☆</span></div>
-        <div class="wrow"><i class="pdot p3"></i><div class="wt"><div class="wf">radicchio</div><div class="wb">rödsallat</div></div><span class="star">☆</span></div>
-        <div class="wrow"><i class="pdot p3"></i><div class="wt"><div class="wf">strutto</div><div class="wb">ister</div></div><span class="star">☆</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="1"></button></div><div class="wt"><div class="wf">pane</div><div class="wb">bröd</div></div><span class="star">★</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="1"></button></div><div class="wt"><div class="wf">acqua</div><div class="wb">vatten</div></div><span class="star">☆</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="2"></button></div><div class="wt"><div class="wf">tovagliolo</div><div class="wb">servett</div></div><span class="star">☆</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="2"></button></div><div class="wt"><div class="wf">posate</div><div class="wb">bestick</div></div><span class="star">☆</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="3"></button></div><div class="wt"><div class="wf">radicchio</div><div class="wb">rödsallat</div></div><span class="star">☆</span></div>
+        <div class="wrow"><div class="prio-ctl"><button class="prio-badge dot" data-lvl="3"></button></div><div class="wt"><div class="wf">strutto</div><div class="wb">ister</div></div><span class="star">☆</span></div>
       </div>
     </div></div>
     <ul class="pros"><li>Diskret – en punkt, ingen ny kolumn</li><li>Sortera fram nischorden för att omvärdera</li></ul>
   </div>
 
+</div>
+
+<h2 class="vsec-h">Kompakt prio-kontroll – varianter (tryck för att prova)</h2>
+<p class="vsec-sub">Samma kontroll kan sitta både i Redigera ord (skärm 4) och direkt i ordlistan (skärm 5). Här tre uttryck, från minimalt till explicit – alla tryckbara med en liten meny ovanför:</p>
+<div class="vgrid">
+  <div class="vcard">
+    <h3>A · Siffra + tryck-meny</h3>
+    <p class="vd">Bara nivåsiffran, färgad. Tryck (eller tryck &amp; glid) → liten meny ovanför fingret. Minimal yta – perfekt i listor.</p>
+    <div class="vdemo"><span class="vlab">il vigile … → brandman</span><div class="prio-ctl"><button class="prio-badge num" data-lvl="2"></button></div></div>
+  </div>
+  <div class="vcard">
+    <h3>B · Ordchip</h3>
+    <p class="vd">Visar nivåns namn + prick. Tryck → samma meny. Mer läsbart, tar lite mer plats.</p>
+    <div class="vdemo"><span class="vlab">il vigile … → brandman</span><div class="prio-ctl"><button class="prio-badge word" data-lvl="2"></button></div></div>
+  </div>
+  <div class="vcard">
+    <h3>C · Explicita chips</h3>
+    <p class="vd">Alla tre alltid synliga, direktval utan meny. Tydligast men bredast – bäst i modalen, inte i listrader.</p>
+    <div class="vdemo"><div class="priochips" style="width:100%">
+      <button data-lvl="1"><i class="pdot p1"></i> Kärna</button>
+      <button data-lvl="2" class="on"><i class="pdot p2"></i> Vanlig</button>
+      <button data-lvl="3"><i class="pdot p3"></i> Nisch</button>
+    </div></div>
+  </div>
 </div>
 
 <div class="tip">
@@ -276,6 +344,46 @@
     render();
   };});
   render();
+})();
+
+// Kompakt, tryckbar prio-kontroll (siffra/ordchip/prick → meny ovanför)
+(function(){
+  var C={1:'#5b8cff',2:'#6f7fc0',3:'#48557a'}, N={1:'Kärna',2:'Vanlig',3:'Nisch'};
+  function paint(b){
+    var l=+b.dataset.lvl;
+    if(b.classList.contains('num')){ b.textContent=l; b.style.color=C[l]; b.style.borderColor=C[l]; }
+    else if(b.classList.contains('word')){ b.innerHTML='<span class="dotc" style="width:11px;height:11px;border-radius:50%;background:'+C[l]+'"></span>'+N[l]+'<span class="car">▾</span>'; }
+    else if(b.classList.contains('dot')){ b.style.background=C[l]; }
+  }
+  function closeAll(){ Array.prototype.forEach.call(document.querySelectorAll('.prio-pop'), function(p){ p.remove(); }); }
+  function openPop(b){
+    closeAll();
+    var ctl=b.closest('.prio-ctl'), cur=+b.dataset.lvl;
+    var pop=document.createElement('div'); pop.className='prio-pop open';
+    [1,2,3].forEach(function(l){
+      var o=document.createElement('div'); o.className='prio-opt'+(l===cur?' cur':'');
+      o.innerHTML='<span class="dotc" style="background:'+C[l]+'"></span>'+N[l]+(l===cur?'<span class="ck">✓</span>':'');
+      o.addEventListener('click', function(e){ e.stopPropagation(); b.dataset.lvl=l; paint(b); closeAll(); });
+      pop.appendChild(o);
+    });
+    ctl.appendChild(pop);
+    if(b.classList.contains('dot')) pop.classList.add('left');   // prick i lista ligger till vänster
+    var sc=b.closest('.screen');
+    if(sc){ var br=b.getBoundingClientRect(), sr=sc.getBoundingClientRect(); if(br.top-sr.top < sr.height*0.42) pop.classList.add('below'); }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.prio-badge'), function(b){
+    paint(b);
+    b.addEventListener('click', function(e){ e.stopPropagation();
+      var open=b.closest('.prio-ctl').querySelector('.prio-pop');
+      if(open){ closeAll(); } else { openPop(b); }
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('.priochips'), function(row){
+    Array.prototype.forEach.call(row.querySelectorAll('button'), function(btn){
+      btn.addEventListener('click', function(){ Array.prototype.forEach.call(row.querySelectorAll('button'), function(x){ x.classList.remove('on'); }); btn.classList.add('on'); });
+    });
+  });
+  document.addEventListener('click', closeAll);
 })();
 </script>
 </body>
