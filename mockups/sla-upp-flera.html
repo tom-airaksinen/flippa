@@ -37,19 +37,24 @@
   .hint{color:var(--muted);font-size:.76rem;margin:12px 0 0}
   .hint code{background:var(--bg);border:1px solid var(--line);border-radius:5px;padding:1px 5px;font-size:.9em}
 
-  /* Granskningslista */
-  .rev-head{display:flex;font-size:.66rem;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;padding:0 4px 6px}
-  .rev-head .c1{flex:1} .rev-head .c2{flex:1;padding-left:22px}
-  .rev{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;margin:0 -2px}
-  .rev-row{background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:8px 9px}
-  .rev-line{display:flex;align-items:center;gap:8px}
-  .rev-row .src{flex:1;min-width:0;font-size:.94rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .rev-row .arr{color:var(--muted);flex:none}
-  .rev-dup{font-size:.62rem;color:var(--warn);padding:6px 2px 0}
-  .rev-row .dst{flex:1;min-width:0;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
-    color:var(--text);font-family:inherit;font-size:.94rem;padding:7px 9px}
-  .rev-row .rm{flex:none;width:28px;height:28px;border-radius:8px;background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer}
-  .rev-row.dup{opacity:.62}
+  /* Granskningslista – stackad rad, robust för långa ord/fraser */
+  .rev-cap{color:var(--muted);font-size:.76rem;margin:0 0 12px}
+  .rev{display:flex;flex-direction:column;gap:9px;max-height:320px;overflow-y:auto;margin:0 -2px 2px;padding:2px}
+  .rev-row{position:relative;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+  .rev-row.dup{border-color:rgba(224,145,90,.55)}
+  .rev-row .rm{position:absolute;top:7px;right:7px;width:26px;height:26px;border-radius:8px;background:none;border:none;color:var(--muted);font-size:1.05rem;line-height:1;cursor:pointer}
+  .rev-src{font-size:.92rem;font-weight:600;padding-right:32px;word-break:break-word;line-height:1.35}
+  .rev-arrow{color:var(--muted);font-size:.8rem;margin:6px 0 2px}
+  .rev-dst{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+    color:var(--text);font-family:inherit;font-size:.94rem;padding:8px 10px}
+  .rev-dup{font-size:.66rem;color:var(--warn);margin-top:8px}
+
+  /* Dubblettdialog (behålls: hoppa över / lägg till ändå) */
+  .dupdlg{position:absolute;inset:0;z-index:5;background:rgba(4,7,13,.6);display:flex;align-items:center;justify-content:center;padding:20px}
+  .dupdlg-card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 18px 16px;width:100%;box-shadow:0 18px 44px rgba(0,0,0,.6)}
+  .dupdlg-card h4{margin:0 0 8px;font-size:1.05rem}
+  .dupdlg-card p{margin:0 0 6px;color:var(--muted);font-size:.86rem}
+  .dupdlg-card ul{margin:6px 0 0;padding-left:18px;color:var(--muted);font-size:.84rem}
   .prog{color:var(--muted);font-size:.78rem;text-align:center;padding:10px}
   .flash{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--good);color:#04120a;
     font-weight:700;font-size:.85rem;padding:7px 14px;border-radius:20px;opacity:0;transition:opacity .2s;pointer-events:none}
@@ -90,10 +95,10 @@
         <!-- STEG 1: inmatning -->
         <div id="step-input">
           <label id="in-label">Ord (svenska) – ett per rad</label>
-          <textarea id="words" rows="5" placeholder="nord&#10;syd&#10;väst">nord
+          <textarea id="words" rows="5" placeholder="brandstation&#10;kaffe&#10;syd">brandstation
+kaffe
 syd
-väst
-hund</textarea>
+tack så mycket</textarea>
           <div class="lesson"><span>Lägg till i: <b>Mat</b></span><span class="car">▾</span></div>
           <div class="row-btns">
             <button class="btn primary" id="lookup">🔎 Slå upp</button>
@@ -103,14 +108,26 @@ hund</textarea>
 
         <!-- STEG 2: granskningslista -->
         <div id="step-review" style="display:none">
-          <div class="rev-head"><span class="c1" id="rh1">Svenska</span><span class="c2" id="rh2">Italienska</span></div>
+          <p class="rev-cap">Granska och rätta översättningarna – ta bort ✕ det du inte vill ha.</p>
           <div class="rev" id="rev"></div>
           <div class="lesson"><span>Lägg till i: <b>Mat</b></span><span class="car">▾</span></div>
           <div class="row-btns">
             <button class="btn ghost" id="back">◀ Ändra orden</button>
             <button class="btn primary" id="add">Lägg till</button>
           </div>
-          <p class="hint" id="rev-hint">Rätta översättningarna vid behov. Dubbletter (finns redan) hoppas över.</p>
+          <p class="hint">Dubbletter flaggas (⚠) men läggs ändå med – du får bekräfta hoppa över eller lägga till ändå.</p>
+        </div>
+      </div>
+
+      <!-- Dubblettdialog vid "Lägg till" (behålls från idag) -->
+      <div class="dupdlg" id="dupdlg" style="display:none">
+        <div class="dupdlg-card">
+          <h4 id="dup-title">Dubbletter</h4>
+          <div id="dup-body"></div>
+          <div class="row-btns">
+            <button class="btn primary" id="dup-skip">Hoppa över</button>
+            <button class="btn ghost" id="dup-all">Lägg till ändå</button>
+          </div>
         </div>
       </div>
     </div></div>
@@ -119,62 +136,78 @@ hund</textarea>
 </div>
 
 <div class="note">
-  <b>Så löser den de två problemen:</b> multi-ord blir självklart (en rad = ett ord, ingen dold semikolon-regel) och den sköra <code>;</code>-parningen försvinner helt – varje par är en egen rad man kan rätta eller ta bort. Enradsfallet blir en lista med en rad, så det förblir enkelt för ett ord. Dubbletter flaggas <b>inline</b> (i stället för en separat dialog efteråt) och hoppas över i antalet. Riktningsväxeln byter bara vilket språk man skriver in.
+  <b>Så löser den de två problemen:</b> multi-ord blir självklart (en rad = ett ord, ingen dold semikolon-regel) och den sköra <code>;</code>-parningen försvinner helt – varje par är en egen <b>stackad</b> rad som klarar långa fraser (t.ex. <i>brandstation → la caserma dei vigili del fuoco</i>) och kan rättas eller tas bort. Enradsfallet blir en lista med en rad, så det förblir enkelt för ett ord. <b>Dubbletter</b> flaggas inline (⚠ med lektionsnamn) men utesluts inte automatiskt – man kryssar bort dem själv, och den befintliga dubblettdialogen (Hoppa över / Lägg till ändå) visas vid "Lägg till" så man kan välja att medvetet lägga ordet i en till lektion.
 </div>
 
 <script>
 (function(){
+  // Demo-lexikon (inkl. långa fraser för att visa att layouten håller).
   var DICT={ nord:'nord', syd:'sud', 'väst':'ovest', 'öst':'est', hund:'cane', katt:'gatto', hus:'casa',
-    bil:'auto', vatten:'acqua', 'bröd':'pane', 'mjölk':'latte', sol:'sole', kaffe:'caffè', vin:'vino' };
+    bil:'auto', vatten:'acqua', 'bröd':'pane', 'mjölk':'latte', sol:'sole', kaffe:'caffè', vin:'vino',
+    brandstation:'la caserma dei vigili del fuoco', 'tack så mycket':'grazie mille', sjukhus:'ospedale' };
   var REV={}; Object.keys(DICT).forEach(function(k){ REV[DICT[k]]=k; });
-  var EXISTING={ sv:{'syd':1}, for:{'sud':1} }; // demo: dessa "finns redan"
+  // Demo: dessa finns redan – och i vilken lektion (visas i varningen).
+  var EXISTING={ sv:{'syd':'Väderstreck'}, for:{'sud':'Väderstreck'} };
   var dir='sv2for';
   var $=function(id){return document.getElementById(id);};
-  var screen=$('screen');
 
   function setDir(d){ dir=d; Array.prototype.forEach.call(document.querySelectorAll('#dir button'),function(b){b.classList.toggle('on',b.dataset.d===d);});
     var sv=d==='sv2for';
     $('in-label').textContent = sv ? 'Ord (svenska) – ett per rad' : 'Ord (italienska) – ett per rad';
-    $('rh1').textContent = sv ? 'Svenska':'Italienska'; $('rh2').textContent = sv ? 'Italienska':'Svenska';
   }
   document.querySelectorAll('#dir button').forEach(function(b){ b.onclick=function(){ setDir(b.dataset.d); }; });
 
   function translate(w){ var k=w.toLowerCase(); return dir==='sv2for' ? (DICT[k]||'') : (REV[k]||''); }
-  function isDup(w){ var k=w.toLowerCase(); return dir==='sv2for' ? !!EXISTING.sv[k] : !!EXISTING['for'][k]; }
-
+  function dupLesson(w){ var k=w.toLowerCase(); return (dir==='sv2for' ? EXISTING.sv[k] : EXISTING['for'][k]) || null; }
   function parseWords(){ return $('words').value.split(/[\n;,]+/).map(function(x){return x.trim();}).filter(Boolean); }
+  function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+  function foreignName(){ return 'italienska'; }
 
   function renderReview(){
     var words=parseWords(); var rev=$('rev'); rev.innerHTML='';
     words.forEach(function(w){
-      var t=translate(w), dup=isDup(w);
-      var row=document.createElement('div'); row.className='rev-row'+(dup?' dup':'');
-      row.innerHTML='<div class="rev-line"><span class="src">'+w+'</span>'
-        +'<span class="arr">→</span>'
-        +'<input class="dst" value="'+(t||'')+'" placeholder="översätt själv">'
-        +'<button class="rm" title="Ta bort">✕</button></div>'
-        +(dup?'<div class="rev-dup">⚠ finns redan – hoppas över</div>':'');
+      var t=translate(w), dup=dupLesson(w);
+      var row=document.createElement('div'); row.className='rev-row'+(dup?' dup':''); row.dataset.dup=dup?'1':'';
+      row.innerHTML='<button class="rm" title="Ta bort">✕</button>'
+        +'<div class="rev-src">'+esc(w)+'</div>'
+        +'<div class="rev-arrow">↓ '+(dir==='sv2for'?foreignName():'svenska')+'</div>'
+        +'<input class="rev-dst" value="'+esc(t)+'" placeholder="översätt själv">'
+        +(dup?'<div class="rev-dup">⚠ finns redan i "'+esc(dup)+'"</div>':'');
       row.querySelector('.rm').onclick=function(){ row.remove(); updateCount(); };
       rev.appendChild(row);
     });
     updateCount();
   }
   function updateCount(){
-    var rows=document.querySelectorAll('#rev .rev-row');
-    var addable=0; rows.forEach(function(r){ if(!r.classList.contains('dup')) addable++; });
-    $('add').textContent='Lägg till '+addable+' ord';
-    $('add').disabled = addable===0;
+    var n=document.querySelectorAll('#rev .rev-row').length; // dubbletter räknas MED (utesluts ej auto)
+    $('add').textContent = n ? 'Lägg till '+n+' ord' : 'Lägg till';
+    $('add').disabled = n===0;
   }
   function show(step){ $('step-input').style.display = step==='input'?'':'none'; $('step-review').style.display = step==='review'?'':'none'; }
+  function flash(msg){ var f=$('flash'); f.textContent=msg; f.classList.add('on'); setTimeout(function(){ f.classList.remove('on'); },1700); }
+  function finish(n){ $('dupdlg').style.display='none'; flash('La till '+n+' ord ✓'); show('input'); }
 
   $('lookup').onclick=function(){ if(!parseWords().length) return; renderReview(); show('review'); };
   $('back').onclick=function(){ show('input'); };
   $('add').onclick=function(){
-    var n=document.querySelectorAll('#rev .rev-row:not(.dup)').length; if(!n) return;
-    var f=$('flash'); f.textContent='La till '+n+' ord ✓'; f.classList.add('on');
-    setTimeout(function(){ f.classList.remove('on'); },1600);
-    show('input');
+    var rows=Array.prototype.slice.call(document.querySelectorAll('#rev .rev-row'));
+    if(!rows.length) return;
+    var dups=rows.filter(function(r){ return r.dataset.dup==='1'; });
+    if(dups.length){
+      // Behåll dagens dubblettdialog: hoppa över eller lägg till ändå.
+      $('dup-title').textContent = dups.length===1 ? 'Dubblett' : 'Dubbletter';
+      var names=dups.map(function(r){ return esc(r.querySelector('.rev-src').textContent); });
+      $('dup-body').innerHTML = dups.length===1
+        ? '<p>"'+names[0]+'" finns redan i en annan lektion. Vill du hoppa över det eller lägga till det ändå här?</p>'
+        : '<p>Följande ord finns redan i andra lektioner:</p><ul><li>'+names.join('</li><li>')+'</li></ul>';
+      $('dup-skip').textContent = 'Hoppa över ('+(rows.length-dups.length)+')';
+      $('dup-all').textContent = 'Lägg till ändå ('+rows.length+')';
+      $('dupdlg').style.display='flex';
+    } else finish(rows.length);
   };
+  $('dup-skip').onclick=function(){ var rows=document.querySelectorAll('#rev .rev-row').length, d=document.querySelectorAll('#rev .rev-row[data-dup="1"]').length; finish(rows-d); };
+  $('dup-all').onclick=function(){ finish(document.querySelectorAll('#rev .rev-row').length); };
+
   setDir('sv2for');
 })();
 </script>
