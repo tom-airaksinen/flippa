@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – prototyp: Prio per kort (Kärna/Vanlig/Nisch)</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --learn:#e0915a; --easy:#f4c542; --line:#2c3c63; --track:rgba(255,255,255,.12);
+    --p1:#5b8cff; --p2:#6f7fc0; --p3:#48557a; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.5;padding:26px 14px 70px}
+  h1{font-size:1.34rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 16px;max-width:680px;font-size:.92rem}
+  .legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin:0 auto 26px;font-size:.84rem}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .pdot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+  .pdot.p1{background:var(--p1)} .pdot.p2{background:var(--p2)} .pdot.p3{background:var(--p3)}
+  .grid{display:flex;flex-wrap:wrap;gap:32px;justify-content:center;align-items:flex-start}
+  .col{width:322px}
+  .col h2{font-size:1.02rem;margin:0 0 2px}
+  .col .desc{color:var(--muted);font-size:.84rem;margin:0 0 12px;min-height:56px}
+  .tag{display:inline-block;background:var(--surface-2);border:1px solid var(--line);border-radius:20px;font-size:.64rem;color:var(--muted);padding:2px 9px;margin-left:6px;vertical-align:2px}
+
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:30px;padding:9px;box-shadow:0 18px 46px rgba(0,0,0,.55)}
+  .screen{position:relative;width:304px;height:632px;background:var(--bg);border-radius:22px;overflow:hidden;display:flex;flex-direction:column}
+  .hdr{display:flex;align-items:center;gap:7px;padding:12px 12px 6px}
+  .hdr .back{width:30px;height:30px;border-radius:8px;background:var(--surface-2);border:none;color:var(--text);font-size:1rem;flex:none}
+  .hdr h3{font-size:1.02rem;margin:0;font-weight:650;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .hdr .ic{width:30px;height:30px;border-radius:8px;background:transparent;border:none;color:var(--muted);font-size:1rem;flex:none}
+  .pills2{display:flex;gap:8px;padding:2px 12px 8px}
+  .optp{flex:1;display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px;color:var(--text);text-align:left}
+  .optp.k{flex:0 0 46%}
+  .optp .lbl{font-size:.55rem;letter-spacing:.1em;color:var(--muted);display:block}
+  .optp .val{font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:5px}
+  .optp .car{color:var(--muted);font-size:.7rem}
+  .pilldots{display:inline-flex;gap:2px}
+  .pilldots i{width:7px;height:7px;border-radius:50%;display:inline-block;border:1px solid var(--muted)}
+  .pilldots i.p1{background:var(--p1);border-color:var(--p1)} .pilldots i.p2{background:var(--p2);border-color:var(--p2)} .pilldots i.p3{background:var(--p3);border-color:var(--p3)}
+  .abtn{margin:0 12px 8px;display:flex;align-items:center;justify-content:center;gap:7px;width:calc(100% - 24px);border:none;border-radius:11px;padding:10px;font-size:.9rem;font-weight:650;background:var(--easy);color:#0d1426}
+
+  /* lektionsrader (combo) */
+  .rows{padding:0 12px;display:flex;flex-direction:column;gap:9px;overflow:hidden}
+  .trow{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .l1{display:flex;align-items:center;gap:8px}
+  .l1 .nm{font-weight:600;font-size:.92rem}
+  .l1 .rt{margin-left:auto;display:flex;align-items:center;gap:7px}
+  .badge{border-radius:20px;font-size:.66rem;padding:2px 8px;background:var(--easy);color:#0d1426;font-weight:600}
+  .go{color:var(--muted);font-size:1.05rem;opacity:.7}
+  .l2{display:flex;align-items:center;gap:9px;margin-top:8px}
+  .bar{flex:1;display:flex;height:6px;border-radius:4px;overflow:hidden;background:var(--track)}
+  .bar i{height:100%} .bar .learned{background:var(--good)} .bar .learning{background:var(--learn)}
+  .pct{font-size:.72rem;font-weight:700;color:var(--good);min-width:30px;text-align:right}
+  .cnt{font-size:.62rem;color:var(--muted);white-space:nowrap}
+
+  /* chooser-popover */
+  .scrim{position:absolute;inset:0;background:rgba(4,7,13,.5);z-index:8}
+  .chooser{position:absolute;left:12px;right:12px;top:92px;z-index:9;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 18px 44px rgba(0,0,0,.55);max-height:88%;overflow-y:auto}
+  .csec{font-size:.6rem;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;margin:2px 2px 7px}
+  .segs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .segs button{flex:1 0 26%;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:8px 4px;font-size:.82rem;font-family:inherit}
+  .segs button.on{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+  .toggle{display:flex;align-items:center;justify-content:space-between;padding:9px 2px;font-size:.88rem}
+  .sw{width:42px;height:24px;border-radius:20px;background:var(--surface-2);position:relative;flex:none}
+  .sw.on{background:var(--accent)} .sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:left .15s} .sw.on::after{left:21px}
+  .note{color:var(--muted);font-size:.72rem;margin:2px 2px 12px}
+  /* PRIO-raden (ny) */
+  .prio-block{border-top:1px solid var(--line);margin-top:6px;padding-top:12px}
+  .chips{display:flex;gap:7px}
+  .chip2{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 4px;font-size:.8rem;font-weight:600;cursor:pointer}
+  .chip2 .pdot{width:10px;height:10px}
+  .chip2.on{background:rgba(91,140,255,.14);border-color:var(--accent)}
+  .chip2.off{opacity:.42}
+  .chip2 .chk{font-size:.7rem;color:var(--accent)}
+  .dist{margin-top:12px;background:var(--bg);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+  .dist-h{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .dbar{display:flex;align-items:center;gap:9px;margin-bottom:6px;font-size:.76rem}
+  .dbar .dl{width:60px;flex:none;display:flex;align-items:center;gap:6px}
+  .dbar .dt{flex:1;height:12px;border-radius:6px;background:var(--surface-2);overflow:hidden}
+  .dbar .df{height:100%;border-radius:6px}
+  .dbar .dp{width:38px;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:.72rem}
+
+  /* Redigera ord-modal */
+  .modal{position:absolute;left:12px;right:12px;top:70px;z-index:9;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 18px 44px rgba(0,0,0,.55)}
+  .modal h4{margin:0 0 12px;font-size:1.05rem}
+  .modal label{display:block;font-size:.72rem;color:var(--muted);margin:10px 0 5px}
+  .modal input{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);font-family:inherit;font-size:.94rem;padding:9px 10px}
+  .priosel{display:flex;gap:7px;margin-top:5px}
+  .priosel button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:9px 4px;font-size:.82rem;font-weight:600;font-family:inherit}
+  .priosel button.on{background:rgba(91,140,255,.16);border-color:var(--accent)}
+  .mact{display:flex;gap:10px;margin-top:16px}
+  .mact button{flex:1;border:none;border-radius:11px;padding:11px;font-weight:650;font-size:.9rem;font-family:inherit}
+  .mact .ok{background:var(--accent);color:#fff} .mact .ghost{background:var(--surface-2);color:var(--text)}
+
+  /* ordlista */
+  .wl-sort{display:flex;justify-content:flex-end;padding:2px 12px 8px}
+  .wl-sort span{background:var(--surface);border:1px solid var(--line);border-radius:9px;padding:6px 10px;font-size:.76rem;color:var(--muted)}
+  .wrow{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:11px 12px}
+  .wrow .wt{flex:1;min-width:0}
+  .wrow .wf{font-size:.94rem;font-weight:600}
+  .wrow .wb{font-size:.78rem;color:var(--muted)}
+  .wrow .star{color:var(--muted);opacity:.5}
+
+  .pros{list-style:none;padding:0;margin:12px 2px 0;font-size:.78rem;color:var(--muted)}
+  .pros li{margin:3px 0;padding-left:16px;position:relative}
+  .pros li::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
+  .tip{max-width:720px;margin:32px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+</style>
+</head>
+<body>
+<h1>Prio per kort – hur det påverkar skärmarna</h1>
+<p class="sub">De skärmar som ändras mest av prio-planen (Kärna/Vanlig/Nisch per ord). Default är <b>alla nivåer på</b> och viktningen (75/20/5) sköts osynligt – nybörjaren ser ingen skillnad. KORT/PASS-väljaren nedan är <b>interaktiv</b>: bocka ur en nivå och se fördelningen + pillen ändras.</p>
+<div class="legend">
+  <span><i class="pdot p1"></i> Kärna (prio 1)</span>
+  <span><i class="pdot p2"></i> Vanlig (prio 2)</span>
+  <span><i class="pdot p3"></i> Nisch (prio 3)</span>
+</div>
+
+<div class="grid">
+
+  <!-- 1 · Lektionslistan default -->
+  <div class="col">
+    <h2>1 · Lektionslistan – normalläge <span class="tag">oförändrat</span></h2>
+    <p class="desc">Alla nivåer på. KORT/PASS-pillen är ren (inga prickar), räknare som idag. Nybörjaren märker inget – bara att nya ord kommer i vettig ordning.</p>
+    <div class="phone"><div class="screen">
+      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">✎</button><button class="ic">＋</button><button class="ic">🔍</button></div>
+      <div class="pills2">
+        <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
+        <button class="optp k"><span><span class="lbl">KORT/PASS</span><span class="val">10</span></span><span class="car">▾</span></button>
+      </div>
+      <button class="abtn">⏰ Dags att öva (18)</button>
+      <div class="rows">
+        <div class="trow"><div class="l1"><span class="nm">Mat &amp; dryck</span><span class="rt"><span class="badge">⏰ 5</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:82%"></i><i class="learning" style="width:6%"></i></span><span class="pct">82%</span><span class="cnt">41 ord</span></div></div>
+        <div class="trow"><div class="l1"><span class="nm">Familjen</span><span class="rt"><span class="badge">⏰ 8</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:45%"></i><i class="learning" style="width:40%"></i></span><span class="pct">45%</span><span class="cnt">20 ord</span></div></div>
+        <div class="trow"><div class="l1"><span class="nm">Collins 3000</span><span class="rt"><span class="badge">⏰ 5</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:12%"></i><i class="learning" style="width:8%"></i></span><span class="pct">12%</span><span class="cnt">3000 ord</span></div></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Ingen ny yta för nybörjaren</li><li>Viktningen jobbar osynligt</li></ul>
+  </div>
+
+  <!-- 2 · KORT/PASS-väljaren (interaktiv) -->
+  <div class="col">
+    <h2>2 · KORT/PASS-väljaren <span class="tag">ny PRIO-rad · interaktiv</span></h2>
+    <p class="desc">Här bor hela funktionen. Nya PRIO-raden med tre chips + en live-förhandsvisning av hur nya ord fördelas. <b>Prova att bocka ur en nivå.</b></p>
+    <div class="phone"><div class="screen" id="v2">
+      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">✎</button><button class="ic">＋</button><button class="ic">🔍</button></div>
+      <div class="pills2">
+        <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
+        <button class="optp k"><span><span class="lbl">KORT/PASS</span><span class="val" id="v2pill">10 <span class="pilldots" id="v2dots"></span></span></span><span class="car">▴</span></button>
+      </div>
+      <div class="scrim"></div>
+      <div class="chooser">
+        <div class="csec">Kort per pass</div>
+        <div class="segs"><button>Alla</button><button class="on">10</button><button>15</button><button>20</button><button>30</button><button>50</button></div>
+        <div class="csec">Nya kort per dag</div>
+        <div class="segs"><button>0</button><button>5</button><button class="on">10</button><button>15</button><button>20</button><button>30</button></div>
+        <div class="toggle"><span>⭐ Endast stjärnord</span><span class="sw"></span></div>
+
+        <div class="prio-block">
+          <div class="csec">Prio – vilka ord som körs</div>
+          <div class="chips" id="v2chips">
+            <div class="chip2 on" data-lvl="1"><i class="pdot p1"></i> Kärna <span class="chk">✓</span></div>
+            <div class="chip2 on" data-lvl="2"><i class="pdot p2"></i> Vanliga <span class="chk">✓</span></div>
+            <div class="chip2 on" data-lvl="3"><i class="pdot p3"></i> Nisch <span class="chk">✓</span></div>
+          </div>
+          <div class="note">Styr vilka ord som introduceras och repeteras. Kärnord prioriteras alltid mest.</div>
+          <div class="dist">
+            <div class="dist-h">Nya ord fördelas ungefär</div>
+            <div id="v2dist"></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>En rad i befintlig popp – ingen ny skärm</li><li>Viktningen blir konkret & synlig</li></ul>
+  </div>
+
+  <!-- 3 · Lektionslistan med Nisch urbockad -->
+  <div class="col">
+    <h2>3 · Filter aktivt (Nisch av) <span class="tag">räknare speglar valet</span></h2>
+    <p class="desc">Med Nisch urbockad visar pillen ●●○, och räknare + behärskning speglar bara valda nivåer: "Dags att öva" 18 → 12, och behärskning mäts mot dina nivåer ("kärnord").</p>
+    <div class="phone"><div class="screen">
+      <div class="hdr"><button class="back">←</button><h3>🇮🇹 Italienska</h3><button class="ic">✎</button><button class="ic">＋</button><button class="ic">🔍</button></div>
+      <div class="pills2">
+        <button class="optp"><span><span class="lbl">RIKTNING</span><span class="val">Till svenska</span></span><span class="car">▾</span></button>
+        <button class="optp k"><span><span class="lbl">KORT/PASS</span><span class="val">10 <span class="pilldots"><i class="p1"></i><i class="p2"></i><i></i></span></span></span><span class="car">▾</span></button>
+      </div>
+      <button class="abtn">⏰ Dags att öva (12)</button>
+      <div class="rows">
+        <div class="trow"><div class="l1"><span class="nm">Mat &amp; dryck</span><span class="rt"><span class="badge">⏰ 4</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:88%"></i><i class="learning" style="width:5%"></i></span><span class="pct">88%</span><span class="cnt">34 av nivå</span></div></div>
+        <div class="trow"><div class="l1"><span class="nm">Familjen</span><span class="rt"><span class="badge">⏰ 6</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:52%"></i><i class="learning" style="width:36%"></i></span><span class="pct">52%</span><span class="cnt">17 av nivå</span></div></div>
+        <div class="trow"><div class="l1"><span class="nm">Collins 3000</span><span class="rt"><span class="badge">⏰ 2</span><span class="go">›</span></span></div><div class="l2"><span class="bar"><i class="learned" style="width:34%"></i><i class="learning" style="width:14%"></i></span><span class="pct">34%</span><span class="cnt">620 av nivå</span></div></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Collins 3000 blir hanterbar – bara kärnan räknas</li><li>Ärligare behärskning ("av nivå")</li></ul>
+  </div>
+
+  <!-- 4 · Redigera ord -->
+  <div class="col">
+    <h2>4 · Redigera ord <span class="tag">ny Prio-rad</span></h2>
+    <p class="desc">Enda nya alltid-synliga fältet på ord-nivå: en Prio-rad i redigera-modalen. Förvald = kortets värde (saknas → Vanlig).</p>
+    <div class="phone"><div class="screen">
+      <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
+      <div class="scrim"></div>
+      <div class="modal">
+        <h4>Redigera ord</h4>
+        <label>Italienska</label><input value="il vigile del fuoco">
+        <label>Svenska</label><input value="brandman">
+        <label>Prio</label>
+        <div class="priosel">
+          <button><i class="pdot p1"></i> Kärna</button>
+          <button class="on"><i class="pdot p2"></i> Vanlig</button>
+          <button><i class="pdot p3"></i> Nisch</button>
+        </div>
+        <label>Minnesregel (valfri)</label><input value="vigile = vakt · fuoco = eld">
+        <div class="mact"><button class="ghost">Ta bort</button><button class="ok">Spara</button></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Ren fältuppdatering – SRS/stjärnor orörda</li><li>Fjädermenyn på kortet lämnas orörd</li></ul>
+  </div>
+
+  <!-- 5 · Ordlistan -->
+  <div class="col">
+    <h2>5 · Ordlistan i editorn <span class="tag">nivåpunkt + sortering</span></h2>
+    <p class="desc">Varje ord får en liten nivåpunkt (som 💡-flaggan idag) och ett nytt sorteringsval "Efter nivå". Visar alltid alla ord – det är förvaltningsytan.</p>
+    <div class="phone"><div class="screen">
+      <div class="hdr"><button class="back">←</button><h3>Mat &amp; dryck</h3><button class="ic">⏸</button><button class="ic">✎</button><button class="ic">🔍</button></div>
+      <div class="wl-sort"><span>Sortera: Efter nivå ▾</span></div>
+      <div class="rows">
+        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">pane</div><div class="wb">bröd</div></div><span class="star">★</span></div>
+        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">acqua</div><div class="wb">vatten</div></div><span class="star">☆</span></div>
+        <div class="wrow"><i class="pdot p1"></i><div class="wt"><div class="wf">caffè</div><div class="wb">kaffe</div></div><span class="star">☆</span></div>
+        <div class="wrow"><i class="pdot p2"></i><div class="wt"><div class="wf">tovagliolo</div><div class="wb">servett</div></div><span class="star">☆</span></div>
+        <div class="wrow"><i class="pdot p2"></i><div class="wt"><div class="wf">posate</div><div class="wb">bestick</div></div><span class="star">☆</span></div>
+        <div class="wrow"><i class="pdot p3"></i><div class="wt"><div class="wf">radicchio</div><div class="wb">rödsallat</div></div><span class="star">☆</span></div>
+        <div class="wrow"><i class="pdot p3"></i><div class="wt"><div class="wf">strutto</div><div class="wb">ister</div></div><span class="star">☆</span></div>
+      </div>
+    </div></div>
+    <ul class="pros"><li>Diskret – en punkt, ingen ny kolumn</li><li>Sortera fram nischorden för att omvärdera</li></ul>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Så påverkas appen:</b> nästan all yta är oförändrad. Det nya är (a) <b>en rad i KORT/PASS-väljaren</b> (skärm 2) som styr allt, (b) en <b>pill-indikator</b> som bara syns när man bockat ur något (skärm 3), (c) räknare/behärskning som räknar mot valda nivåer, (d) en <b>Prio-rad i Redigera ord</b> (skärm 4) och (e) en <b>nivåpunkt i ordlistan</b> (skärm 5). Träningskortet och fjädermenyn rörs inte. Default = allt på → dagens beteende, men med kärnord först. Detaljerna finns i <code>docs/prio-plan-2026-07-06.html</code>.
+</div>
+
+<script>
+(function(){
+  var W={1:15,2:4,3:1}, NAMES={1:'Kärna',2:'Vanlig',3:'Nisch'};
+  var v2=document.getElementById('v2'); if(!v2) return;
+  var chips=Array.prototype.slice.call(v2.querySelectorAll('#v2chips .chip2'));
+  function active(){ return chips.filter(function(c){return c.classList.contains('on');}).map(function(c){return +c.dataset.lvl;}); }
+  function render(){
+    var a=active(); var sum=a.reduce(function(s,l){return s+W[l];},0);
+    // fördelningsstaplar
+    var dist=document.getElementById('v2dist'); dist.innerHTML='';
+    a.forEach(function(l){
+      var pct=Math.round(W[l]/sum*100);
+      var row=document.createElement('div'); row.className='dbar';
+      row.innerHTML='<span class="dl"><i class="pdot p'+l+'"></i>'+NAMES[l]+'</span>'
+        +'<span class="dt"><span class="df" style="width:'+pct+'%;background:var(--p'+l+')"></span></span>'
+        +'<span class="dp">'+pct+' %</span>';
+      dist.appendChild(row);
+    });
+    // pill-prickar (visas bara om något är urbockat)
+    var dots=document.getElementById('v2dots');
+    if(a.length===3){ dots.innerHTML=''; }
+    else { dots.innerHTML=[1,2,3].map(function(l){ return a.indexOf(l)>=0 ? '<i class="p'+l+'"></i>' : '<i></i>'; }).join(''); }
+  }
+  chips.forEach(function(c){ c.onclick=function(){
+    // minst en nivå måste vara på
+    if(c.classList.contains('on') && active().length===1) return;
+    c.classList.toggle('on'); c.classList.toggle('off', !c.classList.contains('on'));
+    c.querySelector('.chk').textContent = c.classList.contains('on')?'✓':'';
+    render();
+  };});
+  render();
+})();
+</script>
+</body>
+</html>
