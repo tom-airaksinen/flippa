@@ -4027,8 +4027,8 @@ $("clog-back").onclick = closeChangelog;
 (function () {
   const el = $("changelog-screen"); let sx = 0, sy = 0, tracking = false, decided = false, horiz = false;
   el.addEventListener("pointerdown", (e) => { if (e.button != null && e.button > 0) return; sx = e.clientX; sy = e.clientY; tracking = true; decided = false; horiz = false; });
-  el.addEventListener("pointermove", (e) => { if (!tracking || decided) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; decided = true; horiz = Math.abs(dx) > Math.abs(dy) * 1.3; if (!horiz) tracking = false; }); // horisontellt svep (vänster ELLER höger) → stäng
-  el.addEventListener("pointerup", (e) => { const ok = tracking && horiz && Math.abs(e.clientX - sx) > 70; tracking = false; if (ok) closeChangelog(); });
+  el.addEventListener("pointermove", (e) => { if (!tracking || decided) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; decided = true; horiz = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.3; if (!horiz) tracking = false; }); // högersvep → tillbaka (som resten av appen)
+  el.addEventListener("pointerup", (e) => { const ok = tracking && horiz && (e.clientX - sx) > 70; tracking = false; if (ok) closeChangelog(); });
   el.addEventListener("pointercancel", () => { tracking = false; });
 })();
 $("rename-lesson").onclick = async () => {
@@ -4768,7 +4768,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v244";
+const APP_VERSION = "v245";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
