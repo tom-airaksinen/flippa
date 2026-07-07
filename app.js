@@ -1223,7 +1223,7 @@ function notifSettingsHTML() {
   const on = Notification.permission === "granted" && !!local.enabled;
   const time = local.time || "08:00";
   let rows = `<div class="set-row" id="push-toggle-row">
-      <span class="set-body"><span class="set-t">Daglig påminnelse</span><span class="set-d">${on ? "Kör ett pass direkt" : "Slå på för en daglig knuff"}</span></span>
+      <span class="set-body"><span class="set-t">Daglig påminnelse</span>${on ? "" : `<span class="set-d">Slå på för en daglig pushnotis</span>`}</span>
       <span class="sw ${on ? "on" : ""}" id="push-toggle"></span></div>`;
   if (on) {
     rows += `<div class="set-row static">
@@ -3914,7 +3914,18 @@ $("add-lesson").onclick = async () => {
   openEditor(id); // hamna direkt inne i lektionen för att fylla på
 };
 $("edit-subject").onclick = () => { if (currentSubject) editSubject(currentSubject.id); };
-document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.addEventListener("click", () => setTab(b.dataset.tab)));
+// Tryck på en flik: byt flik. Trycker man på REDAN aktiva Flippa-fliken → backa ett
+// steg i stacken (som iOS-appar): lektion → ämne, ämne/inställningar → huvudskärm.
+function flippaBackOne() {
+  closeChoosers();
+  if (activeScreen === "editor") renderLessons();
+  else if (activeScreen === "lessons" || activeScreen === "settings") renderSubjects();
+  // subjects (huvudskärmen) → redan i botten, gör inget
+}
+document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.addEventListener("click", () => {
+  if (b.dataset.tab === "flippa" && activeTab === "flippa") flippaBackOne();
+  else setTab(b.dataset.tab);
+}));
 $("rename-lesson").onclick = async () => {
   const lesson = getCurrentLesson();
   if (!lesson) return;
@@ -4652,7 +4663,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v236";
+const APP_VERSION = "v237";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

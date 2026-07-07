@@ -1380,7 +1380,12 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .wc-lock { color: var(--muted); }
 
 /* Inställningsskärm */
-.settings-body { padding: 6px 14px 30px; overflow-y: auto; }
+.settings-body {
+  padding: 6px 14px 30px; overflow-y: auto; flex: 1; min-height: 0;
+  /* Samma mjuka uttoning i nederkanten som listorna */
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+}
 .set-sec {
   font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--muted); font-weight: 700; margin: 20px 6px 8px;
