@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Flippa – enhetlig "Lägg till ord" (förslag)</title>
+<title>Flippa – enhetlig "Lägg till ord" (förslag v2)</title>
 <style>
-  :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; }
-  html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; }
+  :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; --prio1:#5b8cff; --prio2:#6f7fc0; --prio3:#48557a; }
+  html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; --prio1:#ff3d8f; --prio2:#db7ba6; --prio3:#a86e8a; }
   * { box-sizing:border-box; }
   body { margin:0; background:#05080f; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; padding:20px 12px 60px; }
   .head { max-width:900px; margin:0 auto 12px; }
@@ -16,44 +16,63 @@
   .bar button { border:1px solid var(--line); background:#0d1426; color:var(--muted); font:inherit; font-size:.85rem; padding:8px 15px; border-radius:999px; cursor:pointer; }
   .bar button.on { background:var(--accent); color:#fff; border-color:transparent; }
   .stage { display:flex; justify-content:center; margin-top:22px; }
-  .phone { width:390px; min-height:720px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+  .phone { width:390px; min-height:730px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
   .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px; background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
-  /* modal-liknande dialog */
-  .sheet { margin:44px 12px 12px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px 16px; flex:1; }
+  .sheet { margin:44px 12px 12px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px 16px; flex:1; overflow-y:auto; }
   .sheet h3 { margin:0 0 14px; font-size:1.15rem; }
-  /* segmentkontroll */
   .seg { display:flex; background:var(--surface-2); border-radius:12px; padding:4px; gap:4px; margin-bottom:16px; }
   .seg button { flex:1; border:none; background:none; color:var(--muted); font:inherit; font-size:.9rem; font-weight:600; padding:9px 6px; border-radius:9px; cursor:pointer; }
   .seg button.on { background:var(--accent); color:#fff; }
-  .hint { color:var(--muted); font-size:.85rem; line-height:1.5; margin:0 0 12px; }
+  .subseg { display:inline-flex; background:var(--surface-2); border-radius:9px; padding:3px; gap:3px; margin-bottom:14px; }
+  .subseg button { border:none; background:none; color:var(--muted); font:inherit; font-size:.82rem; font-weight:600; padding:6px 12px; border-radius:7px; cursor:pointer; }
+  .subseg button.on { background:var(--accent); color:#fff; }
+  .hint { color:var(--muted); font-size:.84rem; line-height:1.5; margin:0 0 12px; }
   .hint code { background:var(--surface-2); padding:1px 5px; border-radius:5px; font-size:.85em; }
   textarea, input.txt { width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:12px; }
-  textarea { min-height:120px; resize:none; }
+  textarea { min-height:110px; resize:none; }
   input.txt:focus, textarea:focus { outline:none; border-color:var(--accent); }
   .row { display:flex; gap:10px; margin-top:14px; }
   .btn { flex:1; border:none; border-radius:12px; padding:13px 10px; font:inherit; font-weight:700; font-size:.95rem; cursor:pointer; }
   .btn.primary { background:var(--accent); color:#fff; }
   .btn.claude { background:#d97757; color:#fff; } .btn.gpt { background:#10a37f; color:#fff; }
-  .field { margin-bottom:14px; }
+  .field { margin-bottom:13px; }
   .field label { display:block; font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:7px; }
+  .two { display:flex; gap:10px; } .two .field { flex:1; margin-bottom:0; }
   .stepper { display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; width:fit-content; overflow:hidden; }
   .stepper button { width:44px; height:44px; border:none; background:none; color:var(--accent); font-size:1.4rem; cursor:pointer; }
   .stepper .val { min-width:48px; text-align:center; font-weight:700; }
-  .divider { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin:18px 0 12px; }
+  /* prio-väljare (avmarkerbar 1/2/3 – som Redigera ord) */
+  .prio-seg { display:inline-flex; gap:6px; }
+  .prio-seg button { width:44px; height:38px; border:1px solid var(--line); background:var(--surface-2); color:var(--muted); font:inherit; font-weight:700; border-radius:9px; cursor:pointer; }
+  .prio-seg button.on[data-p="1"]{ background:var(--prio1); border-color:transparent; color:#fff; }
+  .prio-seg button.on[data-p="2"]{ background:var(--prio2); border-color:transparent; color:#fff; }
+  .prio-seg button.on[data-p="3"]{ background:var(--prio3); border-color:transparent; color:#fff; }
+  .prio-none { color:var(--muted); font-size:.8rem; margin-left:10px; }
+  /* copy-prompt + tertiary */
+  .tertiary { text-align:center; margin-top:12px; }
+  .tertiary button { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; font-size:.88rem; cursor:pointer; text-decoration:underline; }
+  .divider { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin:18px 0 12px; }
   .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
-  .lookup-res { display:flex; align-items:center; gap:10px; background:var(--surface-2); border-radius:11px; padding:11px 13px; margin-top:10px; }
+  /* slå upp riktning */
+  .dir { display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; padding:9px 12px; margin-bottom:12px; }
+  .dir .lang { font-weight:600; } .dir .lang.dim{ color:var(--muted);font-weight:500; }
+  .dir .swap { margin-left:auto; width:36px;height:36px;border-radius:9px;border:none;background:var(--bg);color:var(--accent);font-size:1.1rem;cursor:pointer; }
+  .arrow { color:var(--muted); }
+  .lookup-res { display:flex; align-items:center; gap:10px; background:var(--surface-2); border-radius:11px; padding:11px 13px; margin-top:12px; }
   .lookup-res .w { flex:1; } .lookup-res .w b{ font-weight:600; } .lookup-res .w small{ color:var(--muted); display:block; }
   .lookup-res .add { width:34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.2rem; cursor:pointer; }
+  /* auto-urklipp-banner */
+  .clip { display:flex; align-items:center; gap:10px; background:color-mix(in srgb, var(--good) 18%, var(--surface-2)); border:1px solid color-mix(in srgb, var(--good) 45%, transparent); border-radius:11px; padding:10px 12px; margin-bottom:10px; font-size:.85rem; }
+  .clip .cbtn { margin-left:auto; border:none; background:var(--good); color:#06210f; font:inherit; font-weight:700; font-size:.82rem; padding:6px 12px; border-radius:8px; cursor:pointer; }
   .step-ind { font-size:.76rem; color:var(--muted); margin-bottom:12px; }
   .back-link { background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:12px; }
   .note { max-width:390px; margin:12px auto 0; color:var(--muted); font-size:.8rem; text-align:center; line-height:1.5; }
-  .pulse { box-shadow:0 0 0 3px color-mix(in srgb, var(--good) 55%, transparent); }
 </style>
 </head>
 <body>
 <div class="head">
-  <h1>Enhetlig "Lägg till ord" – förslag</h1>
-  <p class="sub">En dialog med segment <b>Manuellt / Slå upp / AI</b> istället för spridda ingångar. Två förslag skiljer sig i AI-loopen (hur man skickar iväg och sen klistrar in svaret). Växla förslag, segment och tema nedan.</p>
+  <h1>Enhetlig "Lägg till ord" – förslag v2</h1>
+  <p class="sub">Nu med: kopiera prompt (valfri LLM), riktning i Slå upp, "en i taget" vs "flera" i Manuellt med prio-väljare, och auto-urklipp vid retur. Växla förslag/segment/tema.</p>
 </div>
 <div class="bar">
   <button data-prop="A" class="on">Förslag A · allt-i-ett</button>
@@ -78,69 +97,95 @@
 <p class="note" id="note"></p>
 
 <script>
-let prop = "A", mode = "manual", aiStep = 1;
-const body = document.getElementById("modeBody");
-const note = document.getElementById("note");
+let prop="A", mode="manual", manualSub="single", lookupFwd=true, aiStep=1;
+const body=document.getElementById("modeBody"), note=document.getElementById("note");
+const FOREIGN="Italienska";
 
+function prioSeg() {
+  return `<div class="field"><label>Prio (valfritt)</label>
+    <div class="prio-seg" id="prioSeg">
+      <button data-p="1">1</button><button data-p="2">2</button><button data-p="3">3</button>
+      <span class="prio-none" id="prioNone">ingen vald</span>
+    </div></div>`;
+}
+function wirePrio() {
+  const seg=document.getElementById("prioSeg"); if(!seg) return;
+  seg.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    const on=b.classList.contains("on");
+    seg.querySelectorAll("button").forEach(x=>x.classList.remove("on"));
+    if(!on) b.classList.add("on");
+    document.getElementById("prioNone").textContent = b.classList.contains("on") ? "" : "ingen vald";
+  });
+}
 function manualHTML() {
-  return `<p class="hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfritt: prio (1–3) sist: <code>grazie;tack;1</code></p>
-    <textarea placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
-    <div class="row"><button class="btn primary">Lägg till</button></div>`;
+  const sub=`<div class="subseg" id="subseg"><button data-s="single" class="${manualSub==="single"?"on":""}">En i taget</button><button data-s="bulk" class="${manualSub==="bulk"?"on":""}">Flera (klistra in)</button></div>`;
+  if(manualSub==="single") {
+    return sub + `<div class="two">
+        <div class="field"><label>Utländskt</label><input class="txt" placeholder="t.ex. gelato"></div>
+        <div class="field"><label>Svenska</label><input class="txt" placeholder="t.ex. glass"></div>
+      </div>${prioSeg()}
+      <div class="row"><button class="btn primary">Lägg till</button></div>`;
+  }
+  return sub + `<p class="hint">En rad = en glosa: <b>utländskt;svenskt</b>. Skriv flera rader för flera ord. Valfri prio (1–3) sist: <code>grazie;tack;1</code></p>
+    <textarea placeholder="ciao;hej&#10;grazie;tack;1&#10;buongiorno;god morgon"></textarea>
+    <div class="row"><button class="btn primary">Lägg till alla</button></div>`;
 }
 function lookupHTML() {
-  return `<p class="hint">Skriv ett ord så slår appen upp översättningen – lägg till med ett tryck.</p>
-    <input class="txt" type="text" placeholder="t.ex. gelato" value="gelato" />
+  const from = lookupFwd ? FOREIGN : "Svenska", to = lookupFwd ? "Svenska" : FOREIGN;
+  return `<div class="dir"><span class="lang">${from}</span><span class="arrow">→</span><span class="lang dim">${to}</span>
+      <button class="swap" id="swap" title="Byt riktning">⇄</button></div>
+    <input class="txt" type="text" placeholder="Skriv på ${from.toLowerCase()}…" value="${lookupFwd?"gelato":"glass"}">
     <div class="row"><button class="btn primary">Slå upp</button></div>
-    <div class="lookup-res"><span class="w"><b>gelato</b><small>glass</small></span><button class="add">＋</button></div>`;
+    <div class="lookup-res"><span class="w"><b>${lookupFwd?"gelato":"glass"}</b><small>${lookupFwd?"glass":"gelato"}</small></span><button class="add">＋</button></div>`;
+}
+function copyPromptTertiary() {
+  return `<div class="tertiary"><button id="copyPrompt">⧉ Kopiera prompt (för annan AI)</button></div>`;
+}
+function pasteBlock() {
+  return `<div class="clip"><span>📋</span><span>Hittade ett svar i urklipp</span><button class="cbtn">Klistra in</button></div>
+    <textarea placeholder="…eller klistra in AI:ns svar här"></textarea>
+    <div class="row"><button class="btn primary">Lägg till från svaret</button></div>`;
+}
+function aiSendFields(withStep) {
+  return `${withStep?`<div class="step-ind">Steg 1 av 2 · skicka frågan</div>`:""}
+    <div class="field"><label>Antal ord/fraser</label>
+      <div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
+    <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart"></div>
+    <div class="row"><button class="btn claude" data-go>Öppna i Claude</button><button class="btn gpt" data-go>Öppna i ChatGPT</button></div>
+    ${copyPromptTertiary()}`;
 }
 function aiHTML() {
-  if (prop === "A") {
-    // Allt-i-ett: skicka + klistra-in i samma vy
-    return `<div class="field"><label>Antal ord/fraser</label>
-        <div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
-      <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart" /></div>
-      <div class="row"><button class="btn claude">Öppna i Claude</button><button class="btn gpt">Öppna i ChatGPT</button></div>
-      <div class="divider">När du fått svaret</div>
-      <textarea placeholder="Klistra in AI:ns svar här…"></textarea>
-      <div class="row"><button class="btn primary">Lägg till från svaret</button></div>`;
-  }
-  // Förslag B: guide i två steg
-  if (aiStep === 1) {
-    return `<div class="step-ind">Steg 1 av 2 · skicka frågan</div>
-      <div class="field"><label>Antal ord/fraser</label>
-        <div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
-      <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart" /></div>
-      <div class="row"><button class="btn claude" data-go>Öppna i Claude</button><button class="btn gpt" data-go>Öppna i ChatGPT</button></div>`;
-  }
-  return `<div class="step-ind">Steg 2 av 2 · klistra in svaret</div>
-    <p class="hint">Kopiera AI:ns svar och klistra in här – appen plockar ut orden (och prio).</p>
-    <textarea class="pulse" placeholder="Klistra in AI:ns svar här…" autofocus></textarea>
-    <div class="row"><button class="btn primary">Lägg till från svaret</button></div>
-    <button class="back-link" data-back>← Skicka igen</button>`;
+  if(prop==="A") return aiSendFields(false) + `<div class="divider">När du fått svaret</div>` + pasteBlock();
+  if(aiStep===1) return aiSendFields(true);
+  return `<div class="step-ind">Steg 2 av 2 · klistra in svaret</div>` + pasteBlock() + `<button class="back-link" data-back>← Skicka igen</button>`;
 }
 
 const NOTES = {
-  manual: "Manuellt: dagens inklistring, nu med prio-kolumnen synlig.",
-  lookup: "Slå upp: enstaka ord via översättning (dagens Slå upp-flöde).",
-  ai: prop => prop === "A"
-    ? "Förslag A: skicka iväg OCH klistra in i samma vy – när du kommer tillbaka ligger inklistringsrutan redan här."
-    : "Förslag B: guide i två steg. Efter att du skickat visas steg 2 (klistra in) automatiskt när du är tillbaka.",
+  manual: () => manualSub==="single"
+    ? "Manuellt · En i taget: skriv ordet + översättningen och (valfritt) tryck en prio 1–3. Enkla vanliga fallet."
+    : "Manuellt · Flera: en rad per glosa, semikolon mellan – och valfri prio sist (;1/;2/;3).",
+  lookup: () => `Slå upp: ⇄ byter riktning (${lookupFwd?FOREIGN+"→Svenska":"Svenska→"+FOREIGN}) så du kan skriva på valfritt språk.`,
+  ai: () => (prop==="A"
+    ? "Förslag A: skicka ELLER kopiera prompt (för annan AI) – och klistra in svaret i samma vy. Auto-urklipp vid retur."
+    : "Förslag B: steg 1 skicka/kopiera prompt → steg 2 (klistra in) visas vid retur, med auto-urklipp.")
 };
 function render() {
-  body.innerHTML = mode === "manual" ? manualHTML() : mode === "lookup" ? lookupHTML() : aiHTML();
-  note.textContent = mode === "ai" ? NOTES.ai(prop) : NOTES[mode];
-  if (mode === "ai" && prop === "B") {
-    body.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { aiStep = 2; render(); });
-    const back = body.querySelector("[data-back]"); if (back) back.onclick = () => { aiStep = 1; render(); };
+  body.innerHTML = mode==="manual"?manualHTML():mode==="lookup"?lookupHTML():aiHTML();
+  note.textContent = NOTES[mode]();
+  if(mode==="manual"){ if(manualSub==="single") wirePrio();
+    document.getElementById("subseg").onclick=(e)=>{const b=e.target.closest("[data-s]");if(!b)return;manualSub=b.dataset.s;render();}; }
+  if(mode==="lookup"){ document.getElementById("swap").onclick=()=>{lookupFwd=!lookupFwd;render();}; }
+  if(mode==="ai"){
+    const cp=document.getElementById("copyPrompt"); if(cp) cp.onclick=()=>{ cp.textContent="Kopierat ✓ – klistra in i valfri AI"; if(prop==="B"){ setTimeout(()=>{aiStep=2;render();},400);} };
+    if(prop==="B"){ body.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{aiStep=2;render();});
+      const back=body.querySelector("[data-back]"); if(back) back.onclick=()=>{aiStep=1;render();}; }
   }
 }
-document.getElementById("seg").onclick = (e) => { const b = e.target.closest("[data-m]"); if (!b) return;
-  mode = b.dataset.m; aiStep = 1;
-  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x === b)); render(); };
-document.querySelectorAll(".bar [data-prop]").forEach(b => b.onclick = () => {
-  prop = b.dataset.prop; aiStep = 1;
-  document.querySelectorAll(".bar [data-prop]").forEach(x => x.classList.toggle("on", x === b)); render(); });
-document.getElementById("themeBtn").onclick = () => { const r = document.documentElement.classList.toggle("rosa"); document.getElementById("themeBtn").textContent = r ? "🌙 Mörkt tema" : "🌸 Rosa tema"; };
+document.getElementById("seg").onclick=(e)=>{const b=e.target.closest("[data-m]");if(!b)return;mode=b.dataset.m;aiStep=1;
+  document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b));render();};
+document.querySelectorAll(".bar [data-prop]").forEach(b=>b.onclick=()=>{prop=b.dataset.prop;aiStep=1;
+  document.querySelectorAll(".bar [data-prop]").forEach(x=>x.classList.toggle("on",x===b));render();});
+document.getElementById("themeBtn").onclick=()=>{const r=document.documentElement.classList.toggle("rosa");document.getElementById("themeBtn").textContent=r?"🌙 Mörkt tema":"🌸 Rosa tema";};
 render();
 </script>
 </body>
