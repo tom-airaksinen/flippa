@@ -34,7 +34,7 @@ const CHANGELOG = [
     { t: "Behärskningsmätare per lektion – se hur långt du kommit", type: "new", hi: true, ico: "📊",
       desc: "En stapel per lektion visar hur stor andel av orden du lärt in." },
     { t: "Renare kort och lektionslista", type: "improved" },
-    { t: "Anpassade AI-prompter per språk", type: "improved" },
+    { t: "Anpassade AI-prompter per språk för att få med bestämd artikel eller genusmarkör där det är relevant", type: "improved" },
   ]},
   { date: "4 juli 2026", ver: "v211", items: [
     { t: "Slå upp & bildsök direkt från kortet", type: "new", hi: true, ico: "🔎",
