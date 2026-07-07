@@ -122,12 +122,14 @@ body {
 /* Statistik-fliken */
 #stats-screen {
   position: relative;
-  padding: 8px 16px 40px;
+  padding: 0 16px 40px; /* toppavstånd ges av .stats-header (matchar Flippa) */
   /* Samma mjuka uttoning i nederkanten som listorna har */
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
 }
-.stats-header { display: flex; align-items: center; gap: 8px; padding: 8px 0 4px; }
+/* Samma header-geometri som Flippas .app-header (18/10px padding + 66px radhöjd)
+   så rubriken varken hoppar upp/ner eller får mindre luft vid flikbyte. */
+.stats-header { display: flex; align-items: center; gap: 8px; padding: 18px 0 10px; min-height: 66px; box-sizing: border-box; }
 .stats-header h1 { font-size: 1.4rem; margin: 0; }
 .stats-scope { margin: 4px 0 6px; }
 .stats-scope .cs { width: 100%; }
@@ -154,11 +156,11 @@ body {
 
 /* Hjälp-fliken */
 #help-screen {
-  padding: 8px 16px 40px;
+  padding: 0 16px 40px; /* toppavstånd ges av .help-header (matchar Flippa) */
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
 }
-.help-header { display: flex; align-items: center; gap: 8px; padding: 8px 0 4px; }
+.help-header { display: flex; align-items: center; gap: 8px; padding: 18px 0 10px; min-height: 66px; box-sizing: border-box; }
 .help-header h1 { font-size: 1.4rem; margin: 0; }
 .help-body h2 { font-size: 0.98rem; margin: 20px 0 6px; }
 .help-body p { font-size: 0.86rem; line-height: 1.5; color: var(--muted); margin: 0 0 8px; }

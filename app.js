@@ -4769,7 +4769,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v247";
+const APP_VERSION = "v248";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
