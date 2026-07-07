@@ -1412,3 +1412,30 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .set-t { font-size: 0.97rem; }
 .set-d { font-size: 0.8rem; color: var(--muted); }
 .set-chev { color: var(--muted); font-size: 1.15rem; }
+.set-d.bad { color: var(--fail); }
+.beta-badge {
+  display: inline-block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--bg); background: var(--easy);
+  padding: 2px 7px; border-radius: 999px; margin-left: 7px; vertical-align: middle;
+}
+.set-note {
+  color: var(--muted); font-size: 0.85rem; line-height: 1.5;
+  background: var(--surface); border-radius: 14px; padding: 14px 15px;
+}
+.set-time {
+  background: var(--surface-2); color: var(--text); border: none; border-radius: 9px;
+  padding: 6px 10px; font: inherit; font-size: 0.95rem; font-variant-numeric: tabular-nums;
+}
+/* toggle-switch (notis-inställningar) */
+.sw {
+  width: 46px; height: 28px; border-radius: 999px; background: var(--surface-2);
+  position: relative; flex: none; cursor: pointer; border: 1px solid var(--line);
+  transition: background 0.18s;
+}
+.sw::after {
+  content: ""; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px;
+  border-radius: 50%; background: #fff; transition: transform 0.18s;
+}
+.sw.on { background: var(--good); border-color: transparent; }
+.sw.on::after { transform: translateX(18px); }
+.sw.dis { opacity: 0.4; cursor: not-allowed; }

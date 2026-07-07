@@ -820,6 +820,7 @@ function listenContent() {
       cacheContent(content);
       showStatus(null);
       renderCurrentScreen();
+      if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
     },
     (err) => {
       console.error(err);
@@ -1075,6 +1076,7 @@ function renderSettingsScreen() {
       <span class="set-prof-name">${esc(userName(currentUser))}</span>
       <button class="set-switch-btn" id="set-switch" type="button">Byt</button>
     </div>
+    ${notifSettingsHTML()}
     <div class="set-sec">Träning</div>
     <div class="set-card">
       <button class="set-row" id="set-levels" type="button">
@@ -1095,6 +1097,12 @@ function renderSettingsScreen() {
   $("set-switch").onclick = pickUser;
   $("set-levels").onclick = openLevelsModal;
   $("set-backup").onclick = openBackup;
+  const pt = $("push-toggle");
+  if (pt) pt.onclick = () => { const l = pushLocal(); if (l.enabled) disablePush(); else enablePush(l.time || "08:00"); };
+  const ptime = $("push-time");
+  if (ptime) ptime.onchange = () => setPushTime(ptime.value);
+  const ptest = $("push-test");
+  if (ptest) ptest.onclick = testPush;
 }
 function openSettings() {
   if (!currentUser) return;
@@ -1113,8 +1121,124 @@ async function openBackup() {
   else if (a === "import") openImport();
 }
 
+// =========================================================================
+//  Push-notiser (daglig påminnelse) – beta. VAPID-publik nyckel; privat + DB-secret
+//  ligger som GitHub-secrets och används av scripts/send-push.js (GitHub Actions).
+// =========================================================================
+const VAPID_PUBLIC = "BLOmvL_k3k4gnRqJ0bZ3-sBMJDZimWQrKLmDmq32p8fqQaL2dVWE1_NCPVLQCFzPC-sibyUlfwN8_R9jteHeBJs";
+const PUSH_LOCAL_KEY = "flippa-push-local";     // { enabled, time } – lokal spegel för UI
+const DEVICE_KEY = "flippa-device-id";          // slump-id per enhet (nyckel i /push)
+const LAST_SUBJECT_KEY = "flippa-last-subject"; // för deep-link vid notis-tryck
+let pendingPushOpen = false;                    // sätts vid kallstart via #pushopen
+
+function deviceId() {
+  let id = localStorage.getItem(DEVICE_KEY);
+  if (!id) { id = "d" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(DEVICE_KEY, id); }
+  return id;
+}
+function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
+function isStandalone() { return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; }
+function pushLocal() { try { return JSON.parse(localStorage.getItem(PUSH_LOCAL_KEY) || "{}"); } catch { return {}; } }
+function setPushLocal(o) { localStorage.setItem(PUSH_LOCAL_KEY, JSON.stringify(o)); }
+function localToday() { return new Date().toLocaleDateString("sv-SE"); } // YYYY-MM-DD
+// lastSent-startvärde: har vald tid redan passerat idag → sätt idag (undvik direkt-knuff);
+// ligger tiden framåt → null så den fyras idag vid rätt tid.
+function lastSentInit(time) {
+  const d = new Date(), nowMin = d.getHours() * 60 + d.getMinutes();
+  const [th, tm] = String(time || "08:00").split(":").map(Number);
+  return nowMin >= (th * 60 + tm) ? localToday() : null;
+}
+function urlB64ToUint8(b64) {
+  const pad = "=".repeat((4 - (b64.length % 4)) % 4);
+  const s = (b64 + pad).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(s), arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+
+async function enablePush(time) {
+  time = time || "08:00";
+  if (!pushSupported()) { toast("Notiser stöds inte i den här webbläsaren", 3500); return; }
+  if (!isStandalone()) { toast("Lägg till Flippa på hemskärmen först – notiser kräver den installerade appen", 4500); return; }
+  let perm;
+  try { perm = await Notification.requestPermission(); } catch (_) { perm = Notification.permission; }
+  if (perm !== "granted") {
+    toast(perm === "denied" ? "Notiser är blockerade – slå på i telefonens inställningar" : "Du nekade notiser", 4000);
+    renderSettingsScreen(); return;
+  }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8(VAPID_PUBLIC) });
+    await db.ref("push/" + deviceId()).set({
+      subscription: JSON.parse(JSON.stringify(sub)),
+      time, enabled: true, lastSent: lastSentInit(time),
+      user: currentUser || null, ua: (navigator.userAgent || "").slice(0, 120),
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    });
+    setPushLocal({ enabled: true, time });
+    track("push-pa");
+  } catch (e) { console.error(e); toast("Kunde inte slå på notiser", 3500); }
+  renderSettingsScreen();
+}
+async function disablePush() {
+  try { const reg = await navigator.serviceWorker.ready; const sub = await reg.pushManager.getSubscription(); if (sub) await sub.unsubscribe(); } catch (_) {}
+  try { await db.ref("push/" + deviceId()).remove(); } catch (_) {}
+  setPushLocal({ enabled: false, time: pushLocal().time || "08:00" });
+  track("push-av");
+  renderSettingsScreen();
+}
+async function setPushTime(time) {
+  setPushLocal({ enabled: true, time });
+  try { await db.ref("push/" + deviceId()).update({ time, lastSent: lastSentInit(time) }); } catch (_) {}
+}
+async function testPush() {
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    await reg.showNotification("Dags att flippa!", { body: "Kör ett pass direkt", icon: "./icon-192.png", badge: "./icon-192.png", tag: "flippa-test" });
+  } catch (_) { toast("Kunde inte visa testnotis", 3000); }
+}
+// Notis-tryck → hoppa in i senast valda ämne (annars huvudskärmen).
+function openLastSubjectFromPush() {
+  if (!currentUser) { renderSubjects(); return; }
+  const id = localStorage.getItem(LAST_SUBJECT_KEY);
+  const s = id && content.find((x) => x.id === id && x.owner === currentUser);
+  if (s) openSubject(id); else renderSubjects();
+}
+
+// Notis-sektionen i inställningarna – olika states beroende på miljö/behörighet.
+function notifSettingsHTML() {
+  const beta = `<span class="beta-badge">beta</span>`;
+  const head = `<div class="set-sec">Påminnelser ${beta}</div>`;
+  if (!pushSupported() || !isStandalone()) {
+    return head + `<div class="set-note">📲 Lägg till Flippa på hemskärmen först – dagliga påminnelser funkar bara i den installerade appen (särskilt på iPhone).</div>`;
+  }
+  if (Notification.permission === "denied") {
+    return head + `<div class="set-card"><div class="set-row static">
+      <span class="set-body"><span class="set-t">Daglig påminnelse</span><span class="set-d bad">Notiser är blockerade för Flippa</span></span>
+      <span class="sw dis"></span></div></div>
+      <div class="set-note">Slå på igen i telefonens Inställningar → Flippa → Notiser.</div>`;
+  }
+  const local = pushLocal();
+  const on = Notification.permission === "granted" && !!local.enabled;
+  const time = local.time || "08:00";
+  let rows = `<div class="set-row" id="push-toggle-row">
+      <span class="set-body"><span class="set-t">Daglig påminnelse</span><span class="set-d">${on ? "Kör ett pass direkt" : "Slå på för en daglig knuff"}</span></span>
+      <span class="sw ${on ? "on" : ""}" id="push-toggle"></span></div>`;
+  if (on) {
+    rows += `<div class="set-row static">
+      <span class="set-body"><span class="set-t">Påminn mig</span><span class="set-d">Kommer inom en kvart efter vald tid</span></span>
+      <input type="time" id="push-time" class="set-time" value="${time}"></div>`;
+    rows += `<button class="set-row" id="push-test" type="button">
+      <span class="set-body"><span class="set-t">Testa notisen</span><span class="set-d">Visa en direkt på den här enheten</span></span>
+      <span class="set-chev">›</span></button>`;
+  }
+  return head + `<div class="set-card">${rows}</div>`;
+}
+
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
+  localStorage.setItem(LAST_SUBJECT_KEY, id); // för deep-link vid notis-tryck
   $("lessons-search").value = "";
   $("lessons-toolbar").classList.add("hidden");        // söket börjar hopfällt
   $("lessons-search-btn").classList.remove("active");
@@ -4528,7 +4652,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v235";
+const APP_VERSION = "v236";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
@@ -4556,6 +4680,10 @@ if ("serviceWorker" in navigator) {
     pendingReload = true;
     maybeReloadForUpdate();
   });
+  // Notis-tryck när appen redan är öppen: service workern ber oss öppna senaste ämne.
+  navigator.serviceWorker.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "flippa-open-subject") openLastSubjectFromPush();
+  });
   navigator.serviceWorker
     .register("sw.js", { updateViaCache: "none" })
     .then((reg) => {
@@ -4568,6 +4696,14 @@ if ("serviceWorker" in navigator) {
     })
     .catch(() => {});
 }
+
+// Kallstart via notis (#pushopen) → öppna senaste ämne när innehållet laddats.
+try {
+  if (location.hash.indexOf("pushopen") >= 0) {
+    pendingPushOpen = true;
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+} catch (_) {}
 
 boot();
 

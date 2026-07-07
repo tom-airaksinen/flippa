@@ -1,0 +1,24 @@
+name: Push-påminnelser
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # var 15:e min (UTC); scriptet matchar mot Stockholm-tid
+  workflow_dispatch: {}       # gör det möjligt att köra manuellt för test
+
+concurrency:
+  group: push-reminders
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm install web-push@3 --no-save
+      - run: node scripts/send-push.js
+        env:
+          FIREBASE_DB_SECRET: ${{ secrets.FIREBASE_DB_SECRET }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}

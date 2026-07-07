@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v235";
+const CACHE = "flashcards-v236";
 const ASSETS = [
   "./",
   "./index.html",
@@ -35,6 +35,34 @@ self.addEventListener("activate", (e) => {
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
+});
+
+// ---- Push-notiser (daglig påminnelse) ----
+self.addEventListener("push", (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = {}; }
+  const title = d.title || "Dags att flippa!";
+  const body = d.body || "Kör ett pass direkt";
+  const url = d.url || "./";
+  e.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: "./icon-192.png",
+    badge: "./icon-192.png",
+    tag: "flippa-daglig",   // ersätter ev. tidigare (ingen stapel)
+    data: { url },
+  }));
+});
+
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "./";
+  e.waitUntil((async () => {
+    const list = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+    for (const c of list) {
+      if ("focus" in c) { try { c.postMessage({ type: "flippa-open-subject" }); } catch (_) {} return c.focus(); }
+    }
+    if (self.clients.openWindow) return self.clients.openWindow(url);
+  })());
 });
 
 self.addEventListener("fetch", (e) => {
