@@ -127,12 +127,20 @@
   .u-card .nm small { display:block; color:var(--muted); font-weight:400; font-size:.8rem; }
   .u-card .lock { color:var(--muted); }
   .u-card .badge { color:var(--good); font-size:.8rem; font-weight:700; }
-  .lockrow { margin-top:2px; background:var(--surface); border-radius:14px; padding:14px 16px; }
-  .lockrow .ll { font-size:.85rem; color:var(--muted); margin-bottom:9px; }
-  .lockrow .dots { display:flex; gap:9px; }
-  .lockrow .dots i { width:13px; height:13px; border-radius:50%; background:var(--surface-2); }
-  .lockrow .dots i.f { background:var(--accent); }
   .logout-hint { margin-top:auto; padding:16px 0 8px; text-align:center; color:var(--muted); font-size:.78rem; }
+  /* lösenordsdialog som dyker upp när man trycker på en låst profil */
+  .pw-scrim { position:absolute; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center; z-index:30; padding:24px; }
+  .pw-dialog { background:var(--surface); border:1px solid var(--line); border-radius:20px;
+    padding:22px 20px; width:100%; max-width:300px; text-align:center; }
+  .pw-dialog .av { width:48px; height:48px; border-radius:50%; display:inline-flex; align-items:center;
+    justify-content:center; font-size:1.3rem; font-weight:700; color:#fff; margin:0 auto 12px; }
+  .pw-title { font-size:1.05rem; font-weight:700; }
+  .pw-sub { color:var(--muted); font-size:.82rem; margin-top:3px; }
+  .pw-dots { display:flex; gap:12px; justify-content:center; margin:20px 0; }
+  .pw-dots i { width:14px; height:14px; border-radius:50%; background:var(--surface-2); }
+  .pw-dots i.f { background:var(--accent); }
+  .pw-cancel { border:none; background:none; color:var(--muted); font:inherit; font-size:.9rem; cursor:pointer; padding:6px 12px; }
 
   /* toppnivå-vyväxlare */
   .viewbar { max-width:900px; margin:0 auto 4px; display:flex; gap:8px; flex-wrap:wrap; }
@@ -195,10 +203,10 @@ const svg = {
   trash:'<svg viewBox="0 0 24 24"><polyline points="4,7 20,7"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>',
 };
 const USERS = [
-  { id:'tom', name:'Tom', role:'Vuxen · admin', locked:true, color:'#5b8cff' },
-  { id:'hedvig', name:'Hedvig', role:'Rosa tema', locked:true, color:'#ff3d8f' },
+  { id:'tom', name:'Tom', locked:true, color:'#5b8cff' },
+  { id:'hedvig', name:'Hedvig', locked:true, color:'#ff3d8f' },
   { id:'wille', name:'Wille', locked:true, color:'#5bbf72' },
-  { id:'guest', name:'Gäst', role:'Ingen låskod', locked:false, color:'#9aa3b2' },
+  { id:'guest', name:'Gäst', locked:false, color:'#9aa3b2' },
 ];
 
 let state = { view:'settings', env:'pwa', perm:'default' };
@@ -269,7 +277,7 @@ function renderSettings() {
       <div class="sec-lbl">Profil</div>
       <div class="prof-hero">
         <span class="avatar">T</span>
-        <div style="flex:1"><div class="nm">Tom</div><div class="role">Vuxen · admin</div></div>
+        <div style="flex:1"><div class="nm">Tom</div></div>
         <button class="inline-btn">Byt</button>
       </div>
 
@@ -277,9 +285,6 @@ function renderSettings() {
 
       <div class="sec-lbl">Träning</div>
       <div class="card">
-        <div class="row"><span class="ic">${svg.speaker}</span>
-          <div class="body"><div class="t">Automatisk uppläsning</div><div class="d">Läs upp det utländska ordet</div></div>
-          <div class="sw on"></div></div>
         <div class="row"><span class="ic">${svg.target}</span>
           <div class="body"><div class="t">Mål & nivåer</div><div class="d">Kort/dag och veckomål</div></div>
           <span class="chev">›</span></div>
@@ -292,16 +297,6 @@ function renderSettings() {
           <span class="chev">›</span></div>
       </div>
 
-      <div class="sec-lbl">Konto <span class="coming">kommer</span></div>
-      <div class="card">
-        <div class="row disabled"><span class="ic">${svg.logout}</span>
-          <div class="body"><div class="t">Logga in med Apple / Google</div><div class="d">Synka mellan enheter – när riktig inloggning finns</div></div>
-          <span class="chev">›</span></div>
-        <div class="row disabled"><span class="ic">${svg.trash}</span>
-          <div class="body"><div class="t">Radera mina data</div><div class="d">Exportera & radera (GDPR)</div></div>
-          <span class="chev">›</span></div>
-      </div>
-
       <div class="sec-lbl">Om</div>
       <div class="card">
         <div class="row"><span class="ic">${svg.help}</span>
@@ -309,15 +304,14 @@ function renderSettings() {
         <div class="row"><span class="ic">${svg.user}</span>
           <div class="body"><div class="t">Version</div><div class="d">Flippa v233</div></div></div>
       </div>
-      <div class="ghost">Profillåsen (Tom/Hedvig/Wille) är bara på skoj – det är inte riktig inloggning ännu.</div>
+      <div class="ghost">Lösenorden på profilerna är bara på skoj – inte riktig inloggning ännu.</div>
     </div>`;
 }
 
 function userCard(u, opts={}) {
   const av = `<span class="av" style="background:${u.color}">${u.name[0]}</span>`;
   const badge = opts.current ? `<span class="badge">✓ Inloggad nu</span>` : (u.locked ? `<span class="lock">🔒</span>` : '');
-  const sub = u.role ? `<small>${u.role}</small>` : '';
-  return `<div class="u-card ${opts.current?'current':''}">${av}<span class="nm">${u.name}${sub}</span>${badge}</div>`;
+  return `<div class="u-card ${opts.current?'current':''}">${av}<span class="nm">${u.name}</span>${badge}</div>`;
 }
 
 function renderFirst() {
@@ -326,10 +320,9 @@ function renderFirst() {
       <div class="welcome">
         <div class="logo">🃏</div>
         <h2>Välkommen till Flippa</h2>
-        <p>Vem är du? Välj din profil för att börja.</p>
+        <p>Vem är du?</p>
       </div>
       <div class="u-list">${USERS.map(u=>userCard(u)).join('')}</div>
-      <div class="ghost">Ingen profil är vald ännu – det här är det första du möts av på en ny enhet. Inget annat i appen syns förrän du valt.</div>
     </div>`;
 }
 
@@ -343,11 +336,16 @@ function renderSwitch() {
         ${userCard(USERS[2])}
         ${userCard(USERS[3])}
       </div>
-      <div class="lockrow">
-        <div class="ll">🔒 Ange Hedvigs kod för att byta</div>
-        <div class="dots"><i class="f"></i><i class="f"></i><i></i><i></i><i></i></div>
-      </div>
       <div class="logout-hint">Här kommer även <b>Logga ut</b> att bo när riktig inloggning finns.</div>
+    </div>
+    <div class="pw-scrim">
+      <div class="pw-dialog">
+        <span class="av" style="background:#ff3d8f">H</span>
+        <div class="pw-title">Lösenord för Hedvig</div>
+        <div class="pw-sub">Byter till Hedvigs profil</div>
+        <div class="pw-dots"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i></div>
+        <button class="pw-cancel">Avbryt</button>
+      </div>
     </div>`;
 }
 
