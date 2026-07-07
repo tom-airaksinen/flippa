@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Flippa – enhetlig "Lägg till ord" (förslag v3)</title>
+<title>Flippa – enhetlig "Lägg till ord" (förslag v4)</title>
 <style>
-  :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; --prio1:#5b8cff; --prio2:#6f7fc0; --prio3:#48557a; }
+  :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --easy:#f4c542; --line:#2c3c63; --prio1:#5b8cff; --prio2:#6f7fc0; --prio3:#48557a; }
   html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; --prio1:#ff3d8f; --prio2:#db7ba6; --prio3:#a86e8a; }
   * { box-sizing:border-box; }
   body { margin:0; background:#05080f; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; padding:20px 12px 60px; }
@@ -16,23 +16,26 @@
   .bar button { border:1px solid var(--line); background:#0d1426; color:var(--muted); font:inherit; font-size:.85rem; padding:8px 15px; border-radius:999px; cursor:pointer; }
   .bar button.on { background:var(--accent); color:#fff; border-color:transparent; }
   .stage { display:flex; justify-content:center; margin-top:22px; }
-  .phone { width:390px; min-height:730px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+  .phone { width:390px; min-height:740px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
   .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px; background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
   .sheet { margin:44px 12px 12px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px 16px; flex:1; overflow-y:auto; }
   .sheet h3 { margin:0 0 14px; font-size:1.15rem; }
   .seg { display:flex; background:var(--surface-2); border-radius:12px; padding:4px; gap:4px; margin-bottom:16px; }
   .seg button { flex:1; border:none; background:none; color:var(--muted); font:inherit; font-size:.9rem; font-weight:600; padding:9px 6px; border-radius:9px; cursor:pointer; }
   .seg button.on { background:var(--accent); color:#fff; }
+  .subseg { display:inline-flex; background:var(--surface-2); border-radius:9px; padding:3px; gap:3px; margin-bottom:14px; }
+  .subseg button { border:none; background:none; color:var(--muted); font:inherit; font-size:.82rem; font-weight:600; padding:6px 12px; border-radius:7px; cursor:pointer; }
+  .subseg button.on { background:var(--accent); color:#fff; }
   .hint { color:var(--muted); font-size:.84rem; line-height:1.5; margin:0 0 12px; }
   .hint code { background:var(--surface-2); padding:1px 5px; border-radius:5px; font-size:.85em; }
-  textarea, input.txt { width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:12px; }
-  textarea { min-height:120px; resize:none; }
+  textarea, input.txt { width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:11px 12px; }
+  textarea { resize:none; line-height:1.4; }
   .row { display:flex; gap:10px; margin-top:14px; }
   .btn { flex:1; border:none; border-radius:12px; padding:13px 10px; font:inherit; font-weight:700; font-size:.95rem; cursor:pointer; }
   .btn.primary { background:var(--accent); color:#fff; }
   .btn.claude { background:#d97757; color:#fff; } .btn.gpt { background:#10a37f; color:#fff; }
   .field { margin-bottom:13px; }
-  .field label { display:block; font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:7px; }
+  .field label { display:block; font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:6px; }
   .stepper { display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; width:fit-content; overflow:hidden; }
   .stepper button { width:44px; height:44px; border:none; background:none; color:var(--accent); font-size:1.4rem; cursor:pointer; }
   .stepper .val { min-width:48px; text-align:center; font-weight:700; }
@@ -40,33 +43,45 @@
   .tertiary button { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; font-size:.88rem; cursor:pointer; text-decoration:underline; }
   .divider { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin:18px 0 12px; }
   .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
-  /* Slå upp: riktning + tappbart exempel-fält + resultatrader med prio */
+  /* Slå upp */
   .dir { display:flex; align-items:center; gap:10px; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; padding:9px 12px; margin-bottom:12px; }
   .dir .lang { font-weight:600; } .dir .lang.dim{ color:var(--muted);font-weight:500; }
   .dir .swap { margin-left:auto; width:36px;height:36px;border-radius:9px;border:none;background:var(--bg);color:var(--accent);font-size:1.1rem;cursor:pointer; }
   .arrow { color:var(--muted); }
-  .qpill { width:100%; text-align:left; background:var(--surface-2); border:1px dashed var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:12px; cursor:pointer; }
+  .qpill { width:100%; text-align:left; background:var(--surface-2); border:1px dashed var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:11px 12px; cursor:pointer; }
   .qpill small { display:block; color:var(--muted); font-size:.72rem; margin-top:4px; }
-  .res-row { display:flex; align-items:center; gap:10px; background:var(--surface-2); border-radius:11px; padding:10px 12px; margin-top:10px; }
-  .res-w { flex:1; font-size:.95rem; } .res-w .to{ font-weight:700; } .res-w .from{ color:var(--muted); }
+  .lead { font-size:.78rem; color:var(--muted); margin:14px 0 4px; }
+  /* redigerbart uppslags-kort (V1) */
+  .lu-card { background:var(--surface-2); border:1px solid var(--line); border-radius:14px; padding:12px; margin-top:10px; position:relative; }
+  .lu-card .rm { position:absolute; top:8px; right:8px; width:26px; height:26px; border:none; border-radius:50%; background:var(--bg); color:var(--muted); cursor:pointer; font-size:.9rem; }
+  .lu-card .flabel { font-size:.68rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin:6px 0 4px; }
+  .lu-card textarea { background:var(--bg); }
+  .lu-foot { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
   .rprio { display:inline-flex; gap:5px; }
-  .rprio button { width:30px; height:30px; border:1px solid var(--line); background:var(--bg); color:var(--muted); font:inherit; font-weight:700; font-size:.82rem; border-radius:8px; cursor:pointer; }
+  .rprio button { width:32px; height:32px; border:1px solid var(--line); background:var(--bg); color:var(--muted); font:inherit; font-weight:700; font-size:.82rem; border-radius:8px; cursor:pointer; }
   .rprio button.on[data-p="1"]{ background:var(--prio1); border-color:transparent; color:#fff; }
   .rprio button.on[data-p="2"]{ background:var(--prio2); border-color:transparent; color:#fff; }
   .rprio button.on[data-p="3"]{ background:var(--prio3); border-color:transparent; color:#fff; }
-  .res-lead { font-size:.78rem; color:var(--muted); margin:14px 0 2px; }
-  /* auto-urklipp */
-  .clip { display:flex; align-items:center; gap:10px; background:color-mix(in srgb, var(--good) 18%, var(--surface-2)); border:1px solid color-mix(in srgb, var(--good) 45%, transparent); border-radius:11px; padding:10px 12px; margin-bottom:10px; font-size:.85rem; }
-  .clip .cbtn { margin-left:auto; border:none; background:var(--good); color:#06210f; font:inherit; font-weight:700; font-size:.82rem; padding:6px 12px; border-radius:8px; cursor:pointer; }
-  .step-ind { font-size:.76rem; color:var(--muted); margin-bottom:12px; }
+  .rprio .plab { color:var(--muted); font-size:.72rem; align-self:center; margin-right:4px; }
+  /* V2 en-i-taget */
+  .stepind { display:flex; align-items:center; justify-content:space-between; font-size:.78rem; color:var(--muted); margin:6px 0 12px; }
+  .queue { margin-top:14px; } .queue .qi { color:var(--muted); font-size:.82rem; padding:6px 0; border-top:1px solid var(--line); }
+  /* AI clipboard */
+  .sim { font-size:.74rem; color:var(--muted); display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+  .sim button { border:1px solid var(--line); background:var(--surface-2); color:var(--muted); font:inherit; font-size:.74rem; padding:4px 9px; border-radius:999px; cursor:pointer; }
+  .sim button.on { border-color:var(--accent); color:var(--accent); }
+  .clip-btn { width:100%; border:1px solid var(--line); background:var(--surface-2); color:var(--text); font:inherit; font-weight:600; font-size:.92rem; padding:12px; border-radius:11px; cursor:pointer; }
+  .paste-msg { border-radius:10px; padding:10px 12px; font-size:.84rem; margin:10px 0; }
+  .paste-msg.ok { background:color-mix(in srgb, var(--good) 18%, var(--surface-2)); border:1px solid color-mix(in srgb, var(--good) 45%, transparent); }
+  .paste-msg.warn { background:color-mix(in srgb, var(--easy) 15%, var(--surface-2)); border:1px solid color-mix(in srgb, var(--easy) 45%, transparent); color:var(--text); }
   .back-link { background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:12px; }
   .note { max-width:390px; margin:12px auto 0; color:var(--muted); font-size:.8rem; text-align:center; line-height:1.5; }
 </style>
 </head>
 <body>
 <div class="head">
-  <h1>Enhetlig "Lägg till ord" – förslag v3</h1>
-  <p class="sub">Huvudriktning: <b>A · allt-i-ett</b>. Manuellt är enkelt (prio via <code>;</code> sist). Slå upp är interaktiv – tryck i fältet för att växla exempel (glass / glass;godis;läsk), och sätt prio per uppslaget ord. Växla förslag/segment/tema.</p>
+  <h1>Enhetlig "Lägg till ord" – förslag v4</h1>
+  <p class="sub">Slå upp: två varianter (<b>Kort</b> = alla redigerbara samtidigt · <b>En i taget</b> = fokus + kö), båda med redigerbara fält som klarar långa fraser + prio per ord. Tryck i fältet för att växla exempel (ord / flera / lång fras). AI: ärligt urklipps-flöde med validering. Växla nedan.</p>
 </div>
 <div class="bar">
   <button data-prop="A" class="on">Förslag A · allt-i-ett</button>
@@ -92,78 +107,110 @@
 
 <script>
 let prop="A", mode="manual", aiStep=1;
-let dir="sv2it", multi=false, searched=false;  // Slå upp-state
+let dir="sv2it", preset=0, searched=false, luVar="cards", luIdx=0;
+let clipSim="valid", pasteState=null;
 const body=document.getElementById("modeBody"), note=document.getElementById("note");
 const FOREIGN="Italienska";
-// Hårdkodade uppslag (mockup): svenska↔italienska
+// Hårdkodade uppslag: [0]=ett ord, [1]=några, [2]=lång fras
 const DATA = {
-  sv2it: { single:[["glass","gelato"]], multi:[["glass","gelato"],["godis","caramelle"],["läsk","bibita"]] },
-  it2sv: { single:[["gelato","glass"]], multi:[["gelato","glass"],["caramelle","godis"],["bibita","läsk"]] },
+  sv2it: [ [["glass","gelato"]],
+           [["glass","gelato"],["godis","caramelle"],["läsk","bibita"]],
+           [["vad kostar det här?","quanto costa questo?"]] ],
+  it2sv: [ [["gelato","glass"]],
+           [["gelato","glass"],["caramelle","godis"],["bibita","läsk"]],
+           [["quanto costa questo?","vad kostar det här?"]] ],
 };
-const queryText = () => (multi ? DATA[dir].multi : DATA[dir].single).map(p=>p[0]).join(";");
+const pairs = () => DATA[dir][preset];
+const queryText = () => pairs().map(p=>p[0]).join("; ");
+// Utländskt/Svenska oavsett riktning: utländskt = italienska-sidan
+const foreignOf = (p) => dir==="sv2it" ? p[1] : p[0];
+const swedishOf = (p) => dir==="sv2it" ? p[0] : p[1];
 
 function manualHTML() {
   return `<p class="hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfri prio (1–3) sist: <code>grazie;tack;1</code></p>
-    <textarea placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
+    <textarea rows="4" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
     <div class="row"><button class="btn primary">Lägg till</button></div>`;
+}
+function rprio(){ return `<span class="rprio"><span class="plab">Prio</span><button data-p="1">1</button><button data-p="2">2</button><button data-p="3">3</button></span>`; }
+function editCard(p, i, showRm){
+  return `<div class="lu-card">${showRm?`<button class="rm" title="Ta bort">✕</button>`:""}
+    <div class="flabel">Utländskt</div><textarea rows="1">${foreignOf(p)}</textarea>
+    <div class="flabel">Svenska</div><textarea rows="1">${swedishOf(p)}</textarea>
+    <div class="lu-foot">${rprio()}</div></div>`;
 }
 function lookupHTML() {
   const from = dir==="sv2it" ? "Svenska" : FOREIGN, to = dir==="sv2it" ? FOREIGN : "Svenska";
-  const pairs = multi ? DATA[dir].multi : DATA[dir].single;
-  let res = "";
-  if (searched) {
-    res = `<div class="res-lead">Uppslaget – tryck en prio (valfritt) och lägg till:</div>` +
-      pairs.map((p,i)=>`<div class="res-row">
-        <span class="res-w"><span class="from">${p[0]}</span> <span class="arrow">→</span> <span class="to">${p[1]}</span></span>
-        <span class="rprio" data-row="${i}"><button data-p="1">1</button><button data-p="2">2</button><button data-p="3">3</button></span>
-      </div>`).join("") +
-      `<div class="row"><button class="btn primary">Lägg till ${pairs.length>1?pairs.length+" ord":"ordet"}</button></div>`;
-  } else {
-    res = `<div class="row"><button class="btn primary" id="doLookup">Slå upp</button></div>`;
+  const sub = `<div class="subseg" id="luseg"><button data-v="cards" class="${luVar==="cards"?"on":""}">Kort</button><button data-v="onebyone" class="${luVar==="onebyone"?"on":""}">En i taget</button></div>`;
+  const top = `<div class="dir"><span class="lang">${from}</span><span class="arrow">→</span><span class="lang dim">${to}</span><button class="swap" id="swap" title="Byt riktning">⇄</button></div>
+    <button class="qpill" id="qpill">${queryText()}<small>tryck för att växla exempel: ett ord ↔ flera ↔ lång fras</small></button>`;
+  if(!searched) return sub+top+`<div class="row"><button class="btn primary" id="doLookup">Slå upp</button></div>`;
+  const ps = pairs();
+  if(luVar==="cards"){
+    return sub+top+`<div class="lead">Redigera vid behov, sätt prio (valfritt), lägg till:</div>`+
+      ps.map((p,i)=>editCard(p,i,ps.length>1)).join("")+
+      `<div class="row"><button class="btn primary">Lägg till ${ps.length>1?ps.length+" ord":"ordet"}</button></div>`;
   }
-  return `<div class="dir"><span class="lang">${from}</span><span class="arrow">→</span><span class="lang dim">${to}</span>
-      <button class="swap" id="swap" title="Byt riktning">⇄</button></div>
-    <button class="qpill" id="qpill">${queryText()}<small>tryck för att växla exempel (ett ord ↔ flera med ;)</small></button>
-    ${res}`;
+  // En i taget
+  const p = ps[luIdx];
+  const rest = ps.slice(luIdx+1);
+  return sub+top+
+    `<div class="stepind"><span>Ord ${luIdx+1} av ${ps.length}</span>${ps.length>1?`<span>${ps.length-luIdx-1} kvar</span>`:""}</div>`+
+    editCard(p, luIdx, false)+
+    `<div class="row"><button class="btn primary" id="luNext">${luIdx<ps.length-1?"Lägg till & nästa →":"Lägg till"}</button></div>`+
+    (rest.length?`<div class="queue">`+rest.map(r=>`<div class="qi">Näst: ${swedishOf(r)} → ${foreignOf(r)}</div>`).join("")+`</div>`:"");
 }
-function copyPromptTertiary(){ return `<div class="tertiary"><button id="copyPrompt">⧉ Kopiera prompt (för annan AI)</button></div>`; }
-function pasteBlock(){ return `<div class="clip"><span>📋</span><span>Hittade ett svar i urklipp</span><button class="cbtn">Klistra in</button></div>
-    <textarea placeholder="…eller klistra in AI:ns svar här"></textarea>
-    <div class="row"><button class="btn primary">Lägg till från svaret</button></div>`; }
-function aiSend(withStep){ return `${withStep?`<div class="step-ind">Steg 1 av 2 · skicka frågan</div>`:""}
+function pasteBlock() {
+  const sim = `<div class="sim">Simulera urklipp:
+     <button data-clip="valid" class="${clipSim==="valid"?"on":""}">AI-svar</button>
+     <button data-clip="invalid" class="${clipSim==="invalid"?"on":""}">Storgatan 12</button></div>`;
+  let msg = "";
+  if(pasteState==="ok") msg = `<div class="paste-msg ok">✓ Hittade 3 glosor i urklipp – tillagda nedan, redigera vid behov.</div>`;
+  if(pasteState==="warn") msg = `<div class="paste-msg warn">Det där ser inte ut som glosor. Kopiera AI:ns svar (raderna med <b>;</b>) och försök igen.</div>`;
+  const filled = pasteState==="ok" ? "gelato;glass;1\ncaramelle;godis\nbibita;läsk" : "";
+  return `<div class="lead">När du fått svaret – klistra in det:</div>${sim}
+    <button class="clip-btn" id="clipBtn">📋 Klistra in från urklipp</button>${msg}
+    <textarea rows="3" placeholder="…eller klistra in manuellt här">${filled}</textarea>
+    <div class="row"><button class="btn primary">Lägg till</button></div>`;
+}
+function copyTertiary(){ return `<div class="tertiary"><button id="copyPrompt">⧉ Kopiera prompt (för annan AI)</button></div>`; }
+function aiSend(step){ return `${step?`<div class="stepind"><span>Steg 1 av 2 · skicka frågan</span></div>`:""}
     <div class="field"><label>Antal ord/fraser</label><div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
     <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart"></div>
-    <div class="row"><button class="btn claude" data-go>Öppna i Claude</button><button class="btn gpt" data-go>Öppna i ChatGPT</button></div>
-    ${copyPromptTertiary()}`; }
-function aiHTML() {
+    <div class="row"><button class="btn claude" data-go>Öppna i Claude</button><button class="btn gpt" data-go>Öppna i ChatGPT</button></div>${copyTertiary()}`; }
+function aiHTML(){
   if(prop==="A") return aiSend(false)+`<div class="divider">När du fått svaret</div>`+pasteBlock();
   if(aiStep===1) return aiSend(true);
-  return `<div class="step-ind">Steg 2 av 2 · klistra in svaret</div>`+pasteBlock()+`<button class="back-link" data-back>← Skicka igen</button>`;
+  return `<div class="stepind"><span>Steg 2 av 2 · klistra in svaret</span></div>`+pasteBlock()+`<button class="back-link" data-back>← Skicka igen</button>`;
 }
-const NOTES = {
-  manual: ()=>"Manuellt: enkelt som förut – en rad per glosa, prio läggs valfritt sist med ; (t.ex. grazie;tack;1).",
-  lookup: ()=>`Slå upp: ⇄ byter riktning. Tryck i fältet för att växla exempel (glass ↔ glass;godis;läsk). Efter uppslag sätter du prio per ord innan du lägger till.`,
-  ai: ()=> prop==="A" ? "Förslag A: skicka/kopiera prompt + klistra in svaret i samma vy (auto-urklipp vid retur)." : "Förslag B: guide i två steg.",
+const NOTES={
+  manual:()=>"Manuellt: enkelt – en rad per glosa, prio valfritt sist med ; (grazie;tack;1).",
+  lookup:()=>`Slå upp (${luVar==="cards"?"Kort":"En i taget"}): fälten är redigerbara och klarar långa fraser; sätt prio per ord. ⇄ byter riktning, tryck i fältet för att växla exempel.`,
+  ai:()=> prop==="A" ? "A: skicka/kopiera prompt + klistra in i samma vy. Urklipp valideras (måste ge ;-rader), annars vänlig fallback." : "B: guide i två steg; samma ärliga urklipps-knapp.",
 };
-function render() {
+function wireRprio(root){ root.querySelectorAll(".rprio").forEach(seg=>seg.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{
+  const on=btn.classList.contains("on"); seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); if(!on) btn.classList.add("on"); })); }
+function render(){
   body.innerHTML = mode==="manual"?manualHTML():mode==="lookup"?lookupHTML():aiHTML();
   note.textContent = NOTES[mode]();
   if(mode==="lookup"){
-    document.getElementById("swap").onclick=()=>{ dir=dir==="sv2it"?"it2sv":"sv2it"; searched=false; render(); };
-    document.getElementById("qpill").onclick=()=>{ multi=!multi; searched=false; render(); };
-    const dl=document.getElementById("doLookup"); if(dl) dl.onclick=()=>{ searched=true; render(); };
-    body.querySelectorAll(".rprio").forEach(seg=>seg.querySelectorAll("button").forEach(btn=>btn.onclick=()=>{
-      const on=btn.classList.contains("on"); seg.querySelectorAll("button").forEach(x=>x.classList.remove("on")); if(!on) btn.classList.add("on");
-    }));
+    document.getElementById("luseg").onclick=(e)=>{const b=e.target.closest("[data-v]");if(!b)return;luVar=b.dataset.v;luIdx=0;render();};
+    document.getElementById("swap").onclick=()=>{dir=dir==="sv2it"?"it2sv":"sv2it";searched=false;luIdx=0;render();};
+    document.getElementById("qpill").onclick=()=>{preset=(preset+1)%3;searched=false;luIdx=0;render();};
+    const dl=document.getElementById("doLookup"); if(dl) dl.onclick=()=>{searched=true;luIdx=0;render();};
+    wireRprio(body);
+    body.querySelectorAll(".lu-card .rm").forEach(x=>x.onclick=()=>{}); // mockup: no-op
+    const nx=document.getElementById("luNext"); if(nx) nx.onclick=()=>{ if(luIdx<pairs().length-1){luIdx++;render();} };
   }
   if(mode==="ai"){
-    const cp=document.getElementById("copyPrompt"); if(cp) cp.onclick=()=>{ cp.textContent="Kopierat ✓ – klistra in i valfri AI"; if(prop==="B") setTimeout(()=>{aiStep=2;render();},400); };
-    if(prop==="B"){ body.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{aiStep=2;render();}); const bk=body.querySelector("[data-back]"); if(bk) bk.onclick=()=>{aiStep=1;render();}; }
+    const cp=document.getElementById("copyPrompt"); if(cp) cp.onclick=()=>{cp.textContent="Kopierat ✓ – klistra in i valfri AI"; if(prop==="B") setTimeout(()=>{aiStep=2;pasteState=null;render();},400);};
+    const cb=document.getElementById("clipBtn"); if(cb) cb.onclick=()=>{ pasteState = clipSim==="valid"?"ok":"warn"; render(); };
+    body.querySelectorAll(".sim [data-clip]").forEach(b=>b.onclick=()=>{clipSim=b.dataset.clip;pasteState=null;render();});
+    if(prop==="B"){ body.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{aiStep=2;pasteState=null;render();}); const bk=body.querySelector("[data-back]"); if(bk) bk.onclick=()=>{aiStep=1;render();}; }
   }
 }
-document.getElementById("seg").onclick=(e)=>{const b=e.target.closest("[data-m]");if(!b)return;mode=b.dataset.m;aiStep=1;searched=false;
+document.getElementById("seg").onclick=(e)=>{const b=e.target.closest("[data-m]");if(!b)return;mode=b.dataset.m;aiStep=1;searched=false;luIdx=0;pasteState=null;
   document.querySelectorAll("#seg button").forEach(x=>x.classList.toggle("on",x===b));render();};
-document.querySelectorAll(".bar [data-prop]").forEach(b=>b.onclick=()=>{prop=b.dataset.prop;aiStep=1;
+document.querySelectorAll(".bar [data-prop]").forEach(b=>b.onclick=()=>{prop=b.dataset.prop;aiStep=1;pasteState=null;
   document.querySelectorAll(".bar [data-prop]").forEach(x=>x.classList.toggle("on",x===b));render();});
 document.getElementById("themeBtn").onclick=()=>{const r=document.documentElement.classList.toggle("rosa");document.getElementById("themeBtn").textContent=r?"🌙 Mörkt tema":"🌸 Rosa tema";};
 render();
