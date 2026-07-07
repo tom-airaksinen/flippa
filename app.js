@@ -19,6 +19,7 @@ const screens = {
   editor: $("editor-screen"),
   training: $("training-screen"),
   congrats: $("congrats-screen"),
+  settings: $("settings-screen"),
 };
 
 // ---- App-state ----
@@ -854,7 +855,7 @@ function seedIfEmpty() {
 //  Navigation / rendering
 // =========================================================================
 // Skärm-djup styr glidriktningen: djupare = push (in från höger), grundare = pop.
-const SCREEN_DEPTH = { subjects: 0, lessons: 1, editor: 2, training: 2, congrats: 3 };
+const SCREEN_DEPTH = { subjects: 0, lessons: 1, editor: 2, training: 2, congrats: 3, settings: 1 };
 const NAV_DUR = 220;
 const NAV_EASE = "cubic-bezier(.4,0,.2,1)";
 const prefersReducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -972,23 +973,26 @@ function renderCurrentScreen() {
   if (activeScreen === "subjects") renderSubjects();
   else if (activeScreen === "lessons") renderLessons();
   else if (activeScreen === "editor") renderEditor();
+  else if (activeScreen === "settings") renderSettingsScreen();
 }
 
 function renderSubjects() {
   if (rowDrag && rowDrag.active) return; // rita inte om mitt i en drag-omordning
   activeScreen = "subjects";
   show("subjects");
-  // Profilväljaren högst upp speglar vald användare
-  const pill = $("user-pill");
-  pill.textContent = currentUser ? `👤 ${userName(currentUser)} ▾` : "👤 Vem är du? ▾";
   const list = $("subjects-list");
-  // Göm ＋/⋯ tills man valt vem man är (inget att lägga till/säkerhetskopiera ännu)
+  // Avataren (→ inställningar) speglar vald användare; ＋ och avatar döljs tills man valt
+  const av = $("profile-btn");
+  av.classList.toggle("hidden", !currentUser);
+  av.textContent = currentUser ? userName(currentUser).charAt(0) : "";
+  av.style.background = currentUser ? profileColor(currentUser) : "";
   $("add-subject").classList.toggle("hidden", !currentUser);
-  $("menu-btn").classList.toggle("hidden", !currentUser);
 
-  // Ingen profil vald (t.ex. ny enhet) → tomt läge
+  // Ingen profil vald (t.ex. ny enhet) → välkomst-/väljarvy
   if (!currentUser) {
-    list.innerHTML = `<p class="empty">Vem är du? Välj här 👆</p>`;
+    list.innerHTML = welcomeHTML();
+    list.querySelectorAll("[data-profile]").forEach((el) =>
+      el.addEventListener("click", () => selectProfile(el.dataset.profile)));
     return;
   }
   // Bara den valda användarens områden
@@ -1019,16 +1023,90 @@ function renderSubjects() {
 }
 
 // Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
+// Profilfärg för avatar/väljare (matchar mockupen). Fallback = accent.
+const PROFILE_COLORS = { tom: "#5b8cff", hedvig: "#ff3d8f", wille: "#5bbf72", guest: "#9aa3b2" };
+function profileColor(id) { return PROFILE_COLORS[id] || "var(--accent)"; }
+
+// Väljer en profil (med lösenordslås vid byte till annan låst profil). true = bytt.
+async function selectProfile(id) {
+  const u = USERS.find((x) => x.id === id);
+  if (!u) return false;
+  if (u.lock && id !== currentUser) {
+    const pw = await askPassword(`Lösenord för ${u.name}`);
+    if (pw == null) return false;           // avbröt
+    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500); return false; }
+  }
+  setUser(id);
+  return true;
+}
+
+// Väljarlista (actionSheet) – används av "Byt användare" i inställningarna.
 async function pickUser() {
   const choice = await actionSheet("Vem är du?", USERS.map((u) => ({ label: u.name + (u.lock ? " 🔒" : ""), value: u.id })));
-  if (!choice) return;
-  const u = USERS.find((x) => x.id === choice);
-  if (u && u.lock && choice !== currentUser) {
-    const pw = await askPassword(`Lösenord för ${u.name}`);
-    if (pw == null) return;                 // avbröt
-    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500); return; }
-  }
-  setUser(choice);
+  if (choice) await selectProfile(choice);
+}
+
+// Välkomst-/väljarvy vid first launch (ingen profil vald).
+function welcomeHTML() {
+  const cards = USERS.map((u) =>
+    `<button class="welcome-card" data-profile="${u.id}" type="button">
+       <span class="wc-av" style="background:${profileColor(u.id)}">${esc(u.name.charAt(0))}</span>
+       <span class="wc-name">${esc(u.name)}</span>
+       ${u.lock ? '<span class="wc-lock">🔒</span>' : ""}
+     </button>`).join("");
+  return `<div class="welcome">
+      <div class="welcome-hero"><div class="welcome-logo">🃏</div>
+        <h2>Välkommen till Flippa</h2><p>Vem är du?</p></div>
+      <div class="welcome-list">${cards}</div>
+    </div>`;
+}
+
+// ---- Inställningsskärm (nås via avataren på ämnesskärmen) ----
+function renderSettingsScreen() {
+  const body = $("settings-body");
+  body.innerHTML = `
+    <div class="set-sec">Profil</div>
+    <div class="set-card set-prof">
+      <span class="set-av" style="background:${profileColor(currentUser)}">${esc(userName(currentUser).charAt(0))}</span>
+      <span class="set-prof-name">${esc(userName(currentUser))}</span>
+      <button class="set-switch-btn" id="set-switch" type="button">Byt</button>
+    </div>
+    <div class="set-sec">Träning</div>
+    <div class="set-card">
+      <button class="set-row" id="set-levels" type="button">
+        <span class="set-body"><span class="set-t">Mål & nivåer</span><span class="set-d">Kort/dag och veckomål</span></span>
+        <span class="set-chev">›</span></button>
+    </div>
+    <div class="set-sec">Data</div>
+    <div class="set-card">
+      <button class="set-row" id="set-backup" type="button">
+        <span class="set-body"><span class="set-t">Säkerhetskopiera</span><span class="set-d">Exportera / importera statistik</span></span>
+        <span class="set-chev">›</span></button>
+    </div>
+    <div class="set-sec">Om</div>
+    <div class="set-card">
+      <div class="set-row static">
+        <span class="set-body"><span class="set-t">Version</span><span class="set-d">Flippa ${APP_VERSION}</span></span></div>
+    </div>`;
+  $("set-switch").onclick = pickUser;
+  $("set-levels").onclick = openLevelsModal;
+  $("set-backup").onclick = openBackup;
+}
+function openSettings() {
+  if (!currentUser) return;
+  activeScreen = "settings";
+  renderSettingsScreen();
+  show("settings");
+  track("oppna-installningar");
+}
+// Backup av statistik (flyttad hit från gamla ⋯-menyn)
+async function openBackup() {
+  const a = await actionSheet("Backup av statistik", [
+    { label: "⬆︎ Exportera statistik", value: "export" },
+    { label: "⬇︎ Importera statistik", value: "import" },
+  ]);
+  if (a === "export") openExport();
+  else if (a === "import") openImport();
 }
 
 function openSubject(id) {
@@ -1327,8 +1405,9 @@ function enableBackSwipe(screenEl) {
   screenEl.addEventListener("pointerup", end);
   screenEl.addEventListener("pointercancel", () => { tracking = false; });
 }
-enableBackSwipe($("lessons-screen")); // ämne → huvudskärm
-enableBackSwipe($("editor-screen"));  // lektion → ämne
+enableBackSwipe($("lessons-screen"));  // ämne → huvudskärm
+enableBackSwipe($("editor-screen"));   // lektion → ämne
+enableBackSwipe($("settings-screen")); // inställningar → huvudskärm
 
 $("congrats-done").addEventListener("click", () => renderLessons());
 
@@ -3687,7 +3766,7 @@ async function deleteWord(cid) {
 }
 
 // Header-knappar
-$("user-pill").onclick = pickUser;
+$("profile-btn").onclick = openSettings;
 $("add-subject").onclick = async () => {
   if (!currentUser) { pickUser(); return; } // välj profil först
   const res = await askSubject("Nytt ämne", "", "", false);
@@ -4165,14 +4244,7 @@ function openImport() {
   };
 }
 
-$("menu-btn").onclick = async () => {
-  const a = await actionSheet("Backup av statistik", [
-    { label: "⬆︎ Exportera statistik", value: "export" },
-    { label: "⬇︎ Importera statistik", value: "import" },
-  ]);
-  if (a === "export") openExport();
-  else if (a === "import") openImport();
-};
+// (Backup nås numera via Inställningar → Data; se openBackup ovan.)
 
 // =========================================================================
 //  Handsfree-läge
@@ -4452,7 +4524,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v233";
+const APP_VERSION = "v234";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

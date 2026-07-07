@@ -36,9 +36,8 @@
     <header class="app-header">
       <h1><img src="icon-192.png" class="app-logo" alt="" /> Flippa</h1>
       <button id="add-subject" class="icon-btn" title="Nytt ämne">＋</button>
-      <button id="menu-btn" class="icon-btn" title="Backup">⋯</button>
+      <button id="profile-btn" class="avatar-btn hidden" title="Inställningar & profil" aria-label="Inställningar & profil"></button>
     </header>
-    <button id="user-pill" class="user-pill" type="button" aria-haspopup="true">👤 Vem är du? ▾</button>
     <div id="subjects-list" class="list"></div>
     <div id="version-tag" class="version-tag"></div>
   </section>
@@ -268,6 +267,15 @@
     <button id="congrats-done" class="primary-btn green">Klar</button>
     <button id="congrats-continue" class="primary-btn alt hidden"></button>
     <p id="congrats-undo-hint" class="congrats-undo-hint hidden"></p>
+  </section>
+
+  <!-- Inställningar (nås via avataren/kugghjulet på ämnesskärmen) -->
+  <section id="settings-screen" class="screen hidden">
+    <header class="app-header">
+      <button class="back-btn" data-back="subjects">←</button>
+      <h1>Inställningar</h1>
+    </header>
+    <div id="settings-body" class="settings-body"></div>
   </section>
 
   </div><!-- /#screens -->
