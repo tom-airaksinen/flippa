@@ -29,6 +29,7 @@
 ## Innehållshantering
 - [x] CRUD från mobilen? → **Svar:** Ja – skapa/redigera/ta bort/döpa om ämnen, lektioner, ord (2026-05-30)
 - [x] Snabbinmatning? → **Svar:** Klistra in flera rader `utländskt;svenskt`, en per ord (2026-05-30)
+- [ ] Enhetligt "Lägg till ord"-flöde? → Mockup [`mockups/lagg-till.html`](../mockups/lagg-till.html): en dialog med segment **Manuellt / Slå upp / AI** istället för spridda ingångar. AI-loopen (skicka → hämta svar → klistra in) görs tydlig i två förslag: **A allt-i-ett** (skicka-knappar + inklistringsruta i samma vy) och **B guide** (steg 1 skicka → steg 2 klistra in, visas automatiskt vid retur). **Öppet:** vilket förslag; ska AI-läget bara finnas i tomma lektioner eller alltid; bör vi läsa urklipp automatiskt vid retur ("hittade ett svar – klistra in?").
 - [ ] Ska man kunna flytta ord mellan lektioner, eller räcker lägg till/ta bort?
 - [ ] Import: slå ihop (merge) eller ersätta befintligt innehåll?
 - [x] Behövs export/import-JSON? → **Svar:** Ja, för SRS-statistiken (localStorage) inför ominstallation – content ligger i Firebase och är redan säkert. Byggt 2026-05-30 (export/import via menyn ⋯).

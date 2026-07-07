@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flippa – enhetlig "Lägg till ord" (förslag)</title>
+<style>
+  :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; }
+  html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#05080f; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; padding:20px 12px 60px; }
+  .head { max-width:900px; margin:0 auto 12px; }
+  h1 { font-size:1.25rem; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:.88rem; margin:0; line-height:1.5; max-width:720px; }
+  .bar { max-width:900px; margin:14px auto; display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .bar button { border:1px solid var(--line); background:#0d1426; color:var(--muted); font:inherit; font-size:.85rem; padding:8px 15px; border-radius:999px; cursor:pointer; }
+  .bar button.on { background:var(--accent); color:#fff; border-color:transparent; }
+  .stage { display:flex; justify-content:center; margin-top:22px; }
+  .phone { width:390px; min-height:720px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px; background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
+  /* modal-liknande dialog */
+  .sheet { margin:44px 12px 12px; background:var(--surface); border:1px solid var(--line); border-radius:20px; padding:18px 16px; flex:1; }
+  .sheet h3 { margin:0 0 14px; font-size:1.15rem; }
+  /* segmentkontroll */
+  .seg { display:flex; background:var(--surface-2); border-radius:12px; padding:4px; gap:4px; margin-bottom:16px; }
+  .seg button { flex:1; border:none; background:none; color:var(--muted); font:inherit; font-size:.9rem; font-weight:600; padding:9px 6px; border-radius:9px; cursor:pointer; }
+  .seg button.on { background:var(--accent); color:#fff; }
+  .hint { color:var(--muted); font-size:.85rem; line-height:1.5; margin:0 0 12px; }
+  .hint code { background:var(--surface-2); padding:1px 5px; border-radius:5px; font-size:.85em; }
+  textarea, input.txt { width:100%; background:var(--surface-2); border:1px solid var(--line); border-radius:11px; color:var(--text); font:inherit; font-size:1rem; padding:12px; }
+  textarea { min-height:120px; resize:none; }
+  input.txt:focus, textarea:focus { outline:none; border-color:var(--accent); }
+  .row { display:flex; gap:10px; margin-top:14px; }
+  .btn { flex:1; border:none; border-radius:12px; padding:13px 10px; font:inherit; font-weight:700; font-size:.95rem; cursor:pointer; }
+  .btn.primary { background:var(--accent); color:#fff; }
+  .btn.claude { background:#d97757; color:#fff; } .btn.gpt { background:#10a37f; color:#fff; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:7px; }
+  .stepper { display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--line); border-radius:10px; width:fit-content; overflow:hidden; }
+  .stepper button { width:44px; height:44px; border:none; background:none; color:var(--accent); font-size:1.4rem; cursor:pointer; }
+  .stepper .val { min-width:48px; text-align:center; font-weight:700; }
+  .divider { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; font-weight:700; margin:18px 0 12px; }
+  .divider::before, .divider::after { content:""; flex:1; height:1px; background:var(--line); }
+  .lookup-res { display:flex; align-items:center; gap:10px; background:var(--surface-2); border-radius:11px; padding:11px 13px; margin-top:10px; }
+  .lookup-res .w { flex:1; } .lookup-res .w b{ font-weight:600; } .lookup-res .w small{ color:var(--muted); display:block; }
+  .lookup-res .add { width:34px; height:34px; border-radius:50%; background:var(--accent); color:#fff; border:none; font-size:1.2rem; cursor:pointer; }
+  .step-ind { font-size:.76rem; color:var(--muted); margin-bottom:12px; }
+  .back-link { background:none;border:none;color:var(--accent);font:inherit;font-weight:600;cursor:pointer;padding:0;margin-top:12px; }
+  .note { max-width:390px; margin:12px auto 0; color:var(--muted); font-size:.8rem; text-align:center; line-height:1.5; }
+  .pulse { box-shadow:0 0 0 3px color-mix(in srgb, var(--good) 55%, transparent); }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>Enhetlig "Lägg till ord" – förslag</h1>
+  <p class="sub">En dialog med segment <b>Manuellt / Slå upp / AI</b> istället för spridda ingångar. Två förslag skiljer sig i AI-loopen (hur man skickar iväg och sen klistrar in svaret). Växla förslag, segment och tema nedan.</p>
+</div>
+<div class="bar">
+  <button data-prop="A" class="on">Förslag A · allt-i-ett</button>
+  <button data-prop="B">Förslag B · AI som guide</button>
+  <span style="flex:1"></span>
+  <button id="themeBtn">🌸 Rosa tema</button>
+</div>
+
+<div class="stage">
+  <div class="phone"><div class="notch"></div>
+    <div class="sheet">
+      <h3>Lägg till ord</h3>
+      <div class="seg" id="seg">
+        <button data-m="manual" class="on">Manuellt</button>
+        <button data-m="lookup">Slå upp</button>
+        <button data-m="ai">AI</button>
+      </div>
+      <div id="modeBody"></div>
+    </div>
+  </div>
+</div>
+<p class="note" id="note"></p>
+
+<script>
+let prop = "A", mode = "manual", aiStep = 1;
+const body = document.getElementById("modeBody");
+const note = document.getElementById("note");
+
+function manualHTML() {
+  return `<p class="hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfritt: prio (1–3) sist: <code>grazie;tack;1</code></p>
+    <textarea placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
+    <div class="row"><button class="btn primary">Lägg till</button></div>`;
+}
+function lookupHTML() {
+  return `<p class="hint">Skriv ett ord så slår appen upp översättningen – lägg till med ett tryck.</p>
+    <input class="txt" type="text" placeholder="t.ex. gelato" value="gelato" />
+    <div class="row"><button class="btn primary">Slå upp</button></div>
+    <div class="lookup-res"><span class="w"><b>gelato</b><small>glass</small></span><button class="add">＋</button></div>`;
+}
+function aiHTML() {
+  if (prop === "A") {
+    // Allt-i-ett: skicka + klistra-in i samma vy
+    return `<div class="field"><label>Antal ord/fraser</label>
+        <div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
+      <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart" /></div>
+      <div class="row"><button class="btn claude">Öppna i Claude</button><button class="btn gpt">Öppna i ChatGPT</button></div>
+      <div class="divider">När du fått svaret</div>
+      <textarea placeholder="Klistra in AI:ns svar här…"></textarea>
+      <div class="row"><button class="btn primary">Lägg till från svaret</button></div>`;
+  }
+  // Förslag B: guide i två steg
+  if (aiStep === 1) {
+    return `<div class="step-ind">Steg 1 av 2 · skicka frågan</div>
+      <div class="field"><label>Antal ord/fraser</label>
+        <div class="stepper"><button>−</button><span class="val">30</span><button>+</button></div></div>
+      <div class="field"><label>Tema</label><input class="txt" type="text" value="Sjöfart" /></div>
+      <div class="row"><button class="btn claude" data-go>Öppna i Claude</button><button class="btn gpt" data-go>Öppna i ChatGPT</button></div>`;
+  }
+  return `<div class="step-ind">Steg 2 av 2 · klistra in svaret</div>
+    <p class="hint">Kopiera AI:ns svar och klistra in här – appen plockar ut orden (och prio).</p>
+    <textarea class="pulse" placeholder="Klistra in AI:ns svar här…" autofocus></textarea>
+    <div class="row"><button class="btn primary">Lägg till från svaret</button></div>
+    <button class="back-link" data-back>← Skicka igen</button>`;
+}
+
+const NOTES = {
+  manual: "Manuellt: dagens inklistring, nu med prio-kolumnen synlig.",
+  lookup: "Slå upp: enstaka ord via översättning (dagens Slå upp-flöde).",
+  ai: prop => prop === "A"
+    ? "Förslag A: skicka iväg OCH klistra in i samma vy – när du kommer tillbaka ligger inklistringsrutan redan här."
+    : "Förslag B: guide i två steg. Efter att du skickat visas steg 2 (klistra in) automatiskt när du är tillbaka.",
+};
+function render() {
+  body.innerHTML = mode === "manual" ? manualHTML() : mode === "lookup" ? lookupHTML() : aiHTML();
+  note.textContent = mode === "ai" ? NOTES.ai(prop) : NOTES[mode];
+  if (mode === "ai" && prop === "B") {
+    body.querySelectorAll("[data-go]").forEach(b => b.onclick = () => { aiStep = 2; render(); });
+    const back = body.querySelector("[data-back]"); if (back) back.onclick = () => { aiStep = 1; render(); };
+  }
+}
+document.getElementById("seg").onclick = (e) => { const b = e.target.closest("[data-m]"); if (!b) return;
+  mode = b.dataset.m; aiStep = 1;
+  document.querySelectorAll("#seg button").forEach(x => x.classList.toggle("on", x === b)); render(); };
+document.querySelectorAll(".bar [data-prop]").forEach(b => b.onclick = () => {
+  prop = b.dataset.prop; aiStep = 1;
+  document.querySelectorAll(".bar [data-prop]").forEach(x => x.classList.toggle("on", x === b)); render(); });
+document.getElementById("themeBtn").onclick = () => { const r = document.documentElement.classList.toggle("rosa"); document.getElementById("themeBtn").textContent = r ? "🌙 Mörkt tema" : "🌸 Rosa tema"; };
+render();
+</script>
+</body>
+</html>
