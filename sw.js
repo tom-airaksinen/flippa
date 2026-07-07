@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v240";
+const CACHE = "flashcards-v241";
 const ASSETS = [
   "./",
   "./index.html",

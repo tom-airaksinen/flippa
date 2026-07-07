@@ -1469,8 +1469,14 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   /* Overlayn ligger utanför body:ns safe-area-padding → lägg till den själv,
      annars krockar rubrik/bakåtknapp med statusbaren på iPhone. */
   padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
+  /* Glid in/ut åt höger (samma push/pop-känsla som skärmnavigeringen). */
+  transform: translateX(100%);
+  transition: transform 220ms cubic-bezier(.4,0,.2,1);
+  will-change: transform;
 }
+.clog-overlay.open { transform: translateX(0); }
 .clog-overlay.hidden { display: none; }
+@media (prefers-reduced-motion: reduce) { .clog-overlay { transition: none; } }
 .clog-body {
   flex: 1; min-height: 0; overflow-y: auto; padding: 10px 16px 30px;
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);

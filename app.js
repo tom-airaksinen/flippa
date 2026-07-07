@@ -1278,8 +1278,23 @@ function renderChangelog() {
     $("clog-more").textContent = f.classList.contains("hidden") ? "Visa hela versionshistoriken" : "Dölj versionshistoriken";
   };
 }
-function openChangelog() { renderChangelog(); $("changelog-screen").classList.remove("hidden"); track("oppna-changelog"); }
-function closeChangelog() { $("changelog-screen").classList.add("hidden"); }
+function openChangelog() {
+  renderChangelog();
+  const el = $("changelog-screen");
+  el.classList.remove("hidden");
+  if (prefersReducedMotion) { el.classList.add("open"); }
+  else { void el.offsetWidth; el.classList.add("open"); } // reflow → transition triggar (glid in från höger)
+  track("oppna-changelog");
+}
+function closeChangelog() {
+  const el = $("changelog-screen");
+  if (prefersReducedMotion) { el.classList.remove("open"); el.classList.add("hidden"); return; }
+  el.classList.remove("open"); // glid ut åt höger
+  let done = false;
+  const finish = () => { if (done) return; done = true; el.classList.add("hidden"); el.removeEventListener("transitionend", finish); };
+  el.addEventListener("transitionend", finish);
+  setTimeout(finish, 300); // fallback om transitionend uteblir
+}
 
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
@@ -4720,7 +4735,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v240";
+const APP_VERSION = "v241";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
