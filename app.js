@@ -1092,7 +1092,7 @@ function renderSettingsScreen() {
     <div class="set-sec">Om</div>
     <div class="set-card">
       <button class="set-row" id="set-changelog" type="button">
-        <span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Flippa ${APP_VERSION} · se ändringar</span></span>
+        <span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Flippa ${APP_VERSION}${latestChangelogDate() ? " · senast " + latestChangelogDate() : ""}</span></span>
         <span class="set-chev">›</span></button>
     </div>`;
   $("set-switch").onclick = pickUser;
@@ -1240,6 +1240,12 @@ function notifSettingsHTML() {
 }
 
 // ---- Versionshistorik ("Vad är nytt") – höjdpunkter (C) + hela listan under fler-knapp (A) ----
+// Datum för senaste FRAMHÄVDA posten (visas på ingångsraderna).
+function latestChangelogDate() {
+  const log = (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : [];
+  const e = log.find((x) => x.items.some((i) => i.hi));
+  return e ? e.date : "";
+}
 function renderChangelog() {
   const log = (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : [];
   const hi = [];
@@ -3956,6 +3962,7 @@ document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.addEventListener(
 
 // Versionshistorik: ingångar (Hjälp + Om via set-changelog) + stäng (knapp/högersvep)
 $("help-whatsnew").onclick = openChangelog;
+{ const wnd = $("whatsnew-date"); if (wnd) wnd.textContent = latestChangelogDate(); }
 $("clog-back").onclick = closeChangelog;
 (function () {
   const el = $("changelog-screen"); let sx = 0, sy = 0, tracking = false, decided = false, horiz = false;
@@ -4701,9 +4708,13 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v238";
+const APP_VERSION = "v239";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
-if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
+if (versionTag) {
+  versionTag.textContent = "Flippa " + APP_VERSION;
+  versionTag.classList.add("tappable"); // klickbar → versionshistorik
+  versionTag.onclick = openChangelog;
+}
 
 // Ladda bara om för en ny version när det är ofarligt: på ämnes-/lektionslistan,
 // utan pågående pass, handsfree eller öppen modal. Annars väntar omladdningen tills

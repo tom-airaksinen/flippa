@@ -499,6 +499,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .modal .lvl-row input { width: 104px; flex: none; text-align: center; }
 .lvl-reset-wrap { margin: 14px 0 0; text-align: center; }
 .version-tag { margin-top: auto; text-align: center; color: var(--muted); font-size: 0.7rem; opacity: 0.55; padding: 10px 0 16px; }
+.version-tag.tappable { cursor: pointer; }
+.version-tag.tappable:active { opacity: 0.9; }
 
 /* Riktning + kort per pass – pills med utfällbar väljare (lektionsskärmen) */
 .opt-row { display: flex; gap: 10px; margin: 0 16px; }
@@ -1456,12 +1458,17 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   border-radius: 14px; cursor: pointer; margin: 4px 0 8px;
 }
 .whatsnew-btn:active { background: var(--surface-2); }
+.whatsnew-btn .wn-label { flex: 1; }
+.whatsnew-btn .wn-date { color: var(--muted); font-size: 0.8rem; font-weight: 400; margin-right: 8px; }
 .whatsnew-btn .wn-chev { color: var(--muted); font-size: 1.15rem; }
 
 /* Helskärms-overlay */
 .clog-overlay {
   position: fixed; inset: 0; z-index: 60; background: var(--bg);
   display: flex; flex-direction: column;
+  /* Overlayn ligger utanför body:ns safe-area-padding → lägg till den själv,
+     annars krockar rubrik/bakåtknapp med statusbaren på iPhone. */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left);
 }
 .clog-overlay.hidden { display: none; }
 .clog-body {
