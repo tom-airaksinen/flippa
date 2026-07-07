@@ -4768,7 +4768,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v245";
+const APP_VERSION = "v246";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
@@ -4788,6 +4788,10 @@ function maybeReloadForUpdate() {
   if (!pendingReload || swReloading) return;
   if (!isSafeToReloadForUpdate()) return;
   swReloading = true;
+  // Flagga att NÄSTA laddning är en uppdaterings-omladdning (ej vanlig kallstart) →
+  // splashen visar en lugn text så det inte ser ut som en krasch. sessionStorage
+  // överlever reload i samma flik men är tom vid äkta kallstart.
+  try { sessionStorage.setItem("flippa-updated", "1"); } catch (_) {}
   location.reload();
 }
 
@@ -4833,6 +4837,17 @@ const SPLASH_MIN_MS = 1800;
 (function () {
   const splash = document.getElementById("splash");
   if (!splash) return;
+  // Uppdaterings-omladdning (flagga satt i maybeReloadForUpdate) → lugn text så det
+  // inte ser ut som en krasch. Nollas direkt; syns inte vid vanlig kallstart.
+  try {
+    if (sessionStorage.getItem("flippa-updated")) {
+      sessionStorage.removeItem("flippa-updated");
+      const note = document.createElement("div");
+      note.className = "splash-note";
+      note.textContent = "Uppdaterar till senaste versionen…";
+      splash.appendChild(note);
+    }
+  } catch (_) {}
   const t0 = performance.now();
   const hide = () => { splash.classList.add("hide"); setTimeout(() => splash.remove(), 500); };
   const schedule = () => setTimeout(hide, Math.max(0, SPLASH_MIN_MS - (performance.now() - t0)));
