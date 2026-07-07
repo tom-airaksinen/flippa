@@ -1275,7 +1275,10 @@ function renderChangelog() {
      <div class="clog-full hidden" id="clog-full">${full}</div>`;
   $("clog-more").onclick = () => {
     const f = $("clog-full"); f.classList.toggle("hidden");
-    $("clog-more").textContent = f.classList.contains("hidden") ? "Visa hela versionshistoriken" : "Dölj versionshistoriken";
+    const open = !f.classList.contains("hidden");
+    $("clog-more").textContent = open ? "Dölj versionshistoriken" : "Visa hela versionshistoriken";
+    // Listan fälls ut nedanför det synliga → scrolla fram den så det syns att nåt hände.
+    if (open) requestAnimationFrame(() => $("clog-more").scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" }));
   };
 }
 function openChangelog() {
@@ -4764,7 +4767,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v242";
+const APP_VERSION = "v243";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
