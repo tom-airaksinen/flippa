@@ -1524,3 +1524,30 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .ai-btn.claude { background: #d97757; }
 .ai-btn.gpt { background: #10a37f; }
 .ai-copy-alt { text-align: center; margin: 15px 0 2px; }
+
+/* =========================================================================
+   Enhetlig "Lägg till ord"-dialog
+   ========================================================================= */
+.add-seg { margin-bottom: 14px; }
+#add-lesson-pick { margin-bottom: 6px; }
+#add-body .seg { margin-bottom: 10px; }         /* riktnings-toggle i Slå upp */
+.add-card { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; margin-top: 10px; }
+.add-card-f { margin-bottom: 8px; }
+.add-card-f label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+.add-card-f textarea { width: 100%; min-height: 40px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; color: var(--text); font: inherit; font-size: 0.95rem; padding: 8px 10px; resize: none; overflow: hidden; line-height: 1.35; }
+.add-card-f textarea:focus { outline: none; border-color: var(--accent); }
+.add-card-foot { display: flex; align-items: center; justify-content: space-between; }
+.add-rprio { display: inline-flex; align-items: center; gap: 5px; }
+.add-rprio .pl { color: var(--muted); font-size: 0.72rem; margin-right: 3px; }
+.add-rprio button { width: 32px; height: 32px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); font: inherit; font-weight: 700; font-size: 0.82rem; border-radius: 8px; cursor: pointer; }
+.add-rprio button.on[data-p="1"] { background: var(--prio1); border-color: transparent; color: #fff; }
+.add-rprio button.on[data-p="2"] { background: var(--prio2); border-color: transparent; color: #fff; }
+.add-rprio button.on[data-p="3"] { background: var(--prio3); border-color: transparent; color: #fff; }
+.add-rm { width: 30px; height: 30px; border: none; border-radius: 50%; background: var(--bg); color: var(--muted); cursor: pointer; font-size: 0.85rem; }
+.add-divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin: 18px 0 12px; }
+.add-divider::before, .add-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.tertiary-c { text-align: center; margin: 12px 0 2px; }
+.clip-btn2 { width: 100%; border: 1px solid var(--line); background: var(--surface-2); color: var(--text); font: inherit; font-weight: 600; font-size: 0.92rem; padding: 12px; border-radius: 11px; cursor: pointer; }
+.paste-msg { border-radius: 10px; padding: 10px 12px; font-size: 0.84rem; margin: 10px 0; }
+.paste-msg.ok { background: color-mix(in srgb, var(--good) 18%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--good) 45%, transparent); }
+.paste-msg.warn { background: color-mix(in srgb, var(--easy) 15%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--easy) 45%, transparent); }

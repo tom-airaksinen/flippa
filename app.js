@@ -1369,7 +1369,7 @@ function renderLessons(keepChoosers) {
     const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
     list.innerHTML = `<p class="empty">Inga lektioner matchar "${esc(raw)}".</p>`
       + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">🔎 Slå upp &amp; lägg till</button></p>` : "");
-    if (canLookUp) $("lookup-add").onclick = () => openTranslate(null, raw);
+    if (canLookUp) $("lookup-add").onclick = () => openAddDialog({ segment: "lookup", prefill: raw, pickLesson: true });
     return;
   }
   // Behärskning per lektion: andel ord i låda ≥ 4 ("inlärt"), på väg = låda 1–3, ny = låda 0.
@@ -3854,7 +3854,7 @@ function renderEditor() {
   const list = $("editor-list");
   if (!lesson.cards.length) {
     list.innerHTML = `<p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>`;
-    $("ai-help").onclick = openAiDialog; // dialog: antal + tema → förifyll i Claude/ChatGPT
+    $("ai-help").onclick = () => openAddDialog({ segment: "ai" }); // enhetlig dialog, AI-segmentet
     return;
   }
   const sorted = sortedCards(lesson);
@@ -3867,7 +3867,7 @@ function renderEditor() {
     const canLookUp = !!subjectLang(currentSubject);
     list.innerHTML = `<p class="empty">Inga träffar på "${esc(raw)}".</p>`
       + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add-editor">🔎 Slå upp &amp; lägg till</button></p>` : "");
-    if (canLookUp) $("lookup-add-editor").onclick = () => openTranslate(currentLessonId, raw);
+    if (canLookUp) $("lookup-add-editor").onclick = () => openAddDialog({ segment: "lookup", prefill: raw });
     return;
   }
   // Lådbadgen visas bara vid de riktningsbaserade "svagast"-sorteringarna.
@@ -4070,19 +4070,7 @@ togglePauseBtn.onclick = () => {
   updatePauseToggle(lesson.id);
   flash(on ? "Lektionen pausad – tyst i Dags att öva" : "Lektionen aktiverad igen", 2000);
 };
-$("add-words").onclick = async () => {
-  const lesson = getCurrentLesson();
-  if (!lesson) return;
-  const text = await askWords();
-  if (text == null) return;
-  const parsed = parseLines(text);
-  if (!parsed.length) { flash("Inga giltiga rader (format: ord;översättning)"); return; }
-  const cards = await confirmDuplicates(currentSubject, parsed);
-  if (!cards) return;                                          // avbröt
-  if (!cards.length) { flash("Inget nytt – alla fanns redan", 2500); return; }
-  await addCards(currentSubject.id, lesson.id, cards);
-  flash(`La till ${cards.length} ord ✓`, 2000);
-};
+$("add-words").onclick = () => openAddDialog({ segment: "manual" });
 
 // =========================================================================
 //  Översättning (MyMemory) + lägg till
@@ -4113,6 +4101,183 @@ function matchCase(src, target) {
     return low.charAt(0).toUpperCase() + low.slice(1);
   }
   return t; // blandat skiftläge – lämna som tjänsten gav
+}
+
+// =========================================================================
+//  Enhetlig "Lägg till ord"-dialog (Manuellt / Slå upp / AI) – lektionsskärmen.
+//  Mål = aktuell lektion. opts: { segment:'manual'|'lookup'|'ai', prefill }
+// =========================================================================
+function openAddDialog(opts = {}) {
+  if (!currentSubject) return;
+  currentSubject = freshSubject();
+  // Fast lektion (från en lektion) ELLER väljare (t.ex. no-hit i alla-lektioner-söket).
+  const pickLesson = !!opts.pickLesson;
+  const fixedLesson = pickLesson ? null : getCurrentLesson();
+  if (!pickLesson && !fixedLesson) return;
+  const fullLang = subjectLang(currentSubject);
+  const foreignCode = (fullLang || "").slice(0, 2);
+  const foreignLabel = fullLang ? langLabel(fullLang) : "Utländska";
+  const canLookUp = !!foreignCode;
+  let seg = opts.segment || "manual";
+  if (seg === "lookup" && !canLookUp) seg = "manual";
+  let luDir = "sv2for", luCards = [];
+
+  const m = openModal(`
+    <h3>Lägg till ord</h3>
+    <div class="seg add-seg" id="add-seg">
+      <button data-s="manual">Manuellt</button>
+      ${canLookUp ? `<button data-s="lookup">Slå upp</button>` : ""}
+      <button data-s="ai">AI</button>
+    </div>
+    <div id="add-lesson-pick"></div>
+    <div id="add-body"></div>`);
+  const bodyEl = m.querySelector("#add-body");
+
+  // Lektionsväljare (bara i väljar-läge) – alla ord hamnar i EN vald lektion.
+  let lessonSel = null, newLessonI = null;
+  if (pickLesson) {
+    const items = currentSubject.lessons.map((l) => ({ value: l.id, label: l.name })).concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
+    m.querySelector("#add-lesson-pick").innerHTML = `<label>Lägg till i</label><div id="add-lesson-mount"></div><input type="text" id="add-newlesson" class="hidden" placeholder="Namn på ny lektion" autocomplete="off" />`;
+    newLessonI = m.querySelector("#add-newlesson");
+    lessonSel = buildSelect(items, currentSubject.lessons[0] && currentSubject.lessons[0].id, (v) => { newLessonI.classList.toggle("hidden", v !== "__new__"); });
+    m.querySelector("#add-lesson-mount").appendChild(lessonSel.el);
+    if (!currentSubject.lessons.length) { lessonSel.value = "__new__"; newLessonI.classList.remove("hidden"); }
+  }
+  const lessonName = () => fixedLesson ? fixedLesson.name : ((currentSubject.lessons.find((l) => l.id === (lessonSel && lessonSel.value)) || {}).name || "");
+
+  async function commitCards(cards, singularMsg) {
+    cards = (cards || []).filter((c) => c && c.front && c.back);
+    if (!cards.length) { toast("Inget att lägga till", 2500); return; }
+    // Läs lektionsvalet INNAN dup-dialogen (som ersätter modalen).
+    let lid = fixedLesson ? fixedLesson.id : null, newName = null;
+    if (!lid) {
+      if (lessonSel.value === "__new__") { newName = (newLessonI.value || "").trim(); if (!newName) { toast("Ange namn på den nya lektionen", 3000); return; } }
+      else lid = lessonSel.value;
+      if (!lid && !newName) { toast("Välj en lektion", 3000); return; }
+    }
+    const finalCards = await confirmDuplicates(currentSubject, cards); // ersätter modalen
+    if (!finalCards) return;
+    if (!finalCards.length) { toast("Inget nytt – alla fanns redan", 3000); return; }
+    if (!lid) lid = createLessonReturning(currentSubject.id, newName);
+    addCards(currentSubject.id, lid, finalCards);
+    flash(finalCards.length === 1 ? (singularMsg || `La till "${finalCards[0].front}" ✓`) : `La till ${finalCards.length} ord ✓`, 2000);
+    closeModal();
+  }
+
+  // ---- Manuellt ----
+  function manualBody() {
+    return `<p class="modal-hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfri prio (1–3) sist: <code>grazie;tack;1</code></p>
+      <textarea id="add-manual" rows="4" autocapitalize="none" autocorrect="off" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
+      <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="add-manual-ok">Lägg till</button></div>`;
+  }
+
+  // ---- Slå upp (redigerbara kort) ----
+  function lookupBody() {
+    return `<div class="seg" id="lu-dir">
+        <button data-d="sv2for">Svenska → ${esc(foreignLabel)}</button>
+        <button data-d="for2sv">${esc(foreignLabel)} → Svenska</button>
+      </div>
+      <div class="t-row"><input type="text" id="lu-src" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go">🔎</button></div>
+      <div id="lu-cards"></div>
+      <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="lu-add">Lägg till</button></div>`;
+  }
+  function renderLuCards() {
+    const host = m.querySelector("#lu-cards");
+    host.innerHTML = luCards.map((c, i) => `
+      <div class="add-card">
+        <div class="add-card-f"><label>Utländskt</label><textarea rows="1" data-f="foreign" data-i="${i}">${esc(c.foreign)}</textarea></div>
+        <div class="add-card-f"><label>Svenska</label><textarea rows="1" data-f="swedish" data-i="${i}">${esc(c.swedish)}</textarea></div>
+        <div class="add-card-foot"><span class="add-rprio" data-i="${i}"><span class="pl">Prio</span>
+          <button data-p="1" class="${c.prio === 1 ? "on" : ""}">1</button><button data-p="2" class="${c.prio === 2 ? "on" : ""}">2</button><button data-p="3" class="${c.prio === 3 ? "on" : ""}">3</button></span>
+          ${luCards.length > 1 ? `<button class="add-rm" data-i="${i}" title="Ta bort">✕</button>` : ""}</div>
+      </div>`).join("");
+    host.querySelectorAll("textarea[data-f]").forEach((t) => {
+      const grow = () => { t.style.height = "auto"; t.style.height = t.scrollHeight + "px"; };
+      grow(); // väx så långa fraser syns helt (enstaka ord blir kompakta)
+      t.oninput = () => { luCards[+t.dataset.i][t.dataset.f] = t.value; grow(); };
+    });
+    host.querySelectorAll(".add-rprio").forEach((s) => s.querySelectorAll("button").forEach((btn) => btn.onclick = () => {
+      const i = +s.dataset.i, p = +btn.dataset.p; luCards[i].prio = luCards[i].prio === p ? null : p; renderLuCards();
+    }));
+    host.querySelectorAll(".add-rm").forEach((x) => x.onclick = () => { luCards.splice(+x.dataset.i, 1); renderLuCards(); });
+    const addBtn = m.querySelector("#lu-add"); if (addBtn) addBtn.disabled = !luCards.length;
+  }
+  async function doLookup() {
+    const parts = (m.querySelector("#lu-src").value || "").split(";").map((x) => x.trim()).filter(Boolean);
+    if (!parts.length) return;
+    const [from, to] = luDir === "sv2for" ? ["sv", foreignCode] : [foreignCode, "sv"];
+    const go = m.querySelector("#lu-go"); go.textContent = "…";
+    try {
+      const out = [];
+      for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
+        out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
+      luCards = out; renderLuCards();
+    } catch (e) { toast("Uppslag misslyckades: " + (e.message || e), 4000); }
+    go.textContent = "🔎";
+  }
+  function wireLookup() {
+    m.querySelectorAll("#lu-dir button").forEach((b) => {
+      b.classList.toggle("seg-on", b.dataset.d === luDir);
+      b.onclick = () => { luDir = b.dataset.d; luCards = []; renderBody(); m.querySelector("#lu-src").focus(); };
+    });
+    m.querySelector("#lu-go").onclick = doLookup;
+    const src = m.querySelector("#lu-src");
+    src.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doLookup(); } });
+    renderLuCards();
+    if (opts.prefill && !luCards.length && !src.value) { src.value = opts.prefill; doLookup(); }
+    else src.focus();
+  }
+
+  // ---- AI (allt-i-ett: skicka/kopiera + klistra in svaret) ----
+  function aiBody() {
+    return `<p class="modal-hint">Låt en AI föreslå ord. Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
+      <label>Antal ord/fraser</label>
+      <div class="ai-stepper" style="margin:0 0 12px"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
+      <label>Tema</label>
+      <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
+      <div class="ai-send"><button type="button" class="ai-btn claude" id="ai2-claude">Öppna i Claude</button><button type="button" class="ai-btn gpt" id="ai2-gpt">Öppna i ChatGPT</button></div>
+      <div class="tertiary-c"><button type="button" class="link-action" id="ai2-copy">⧉ Kopiera prompt (för annan AI)</button></div>
+      <div class="add-divider">När du fått svaret</div>
+      <button type="button" class="clip-btn2" id="ai2-clip">📋 Klistra in från urklipp</button>
+      <div id="ai2-clipmsg"></div>
+      <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="…eller klistra in AI:ns svar här"></textarea>
+      <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="ai2-add">Lägg till från svaret</button></div>`;
+  }
+  function wireAi() {
+    const theme = () => (m.querySelector("#ai2-theme").value || lessonName()).trim() || lessonName() || "temat";
+    const promptNow = () => buildAiPrompt(aiCount(), theme());
+    m.querySelector("#ai2-dec").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() - 5); };
+    m.querySelector("#ai2-inc").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() + 5); };
+    const openSite = (base, ev) => { const url = base + encodeURIComponent(promptNow()); track(ev); markExternalNav(); location.href = url; }; // behåll modalen → paste-rutan finns kvar vid retur
+    m.querySelector("#ai2-claude").onclick = () => openSite("https://claude.ai/new?q=", "ai-oppna/claude");
+    m.querySelector("#ai2-gpt").onclick = () => openSite("https://chatgpt.com/?q=", "ai-oppna/gpt");
+    m.querySelector("#ai2-copy").onclick = () => { const b = m.querySelector("#ai2-copy"); try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {} b.textContent = "Kopierat ✓ – klistra in i valfri AI"; track("ai-prompt-kopierad"); };
+    m.querySelector("#ai2-clip").onclick = async () => {
+      const msg = m.querySelector("#ai2-clipmsg"), ta = m.querySelector("#ai2-paste");
+      let text = "";
+      try { text = navigator.clipboard && navigator.clipboard.readText ? await navigator.clipboard.readText() : ""; }
+      catch (_) { msg.innerHTML = `<div class="paste-msg warn">Kunde inte läsa urklipp – klistra in manuellt i rutan nedan.</div>`; return; }
+      const rows = parseLines(text || "");
+      if (rows.length) { ta.value = text; msg.innerHTML = `<div class="paste-msg ok">✓ Hittade ${rows.length} ${rows.length === 1 ? "glosa" : "glosor"} – tryck Lägg till.</div>`; }
+      else { msg.innerHTML = `<div class="paste-msg warn">Det där ser inte ut som glosor. Kopiera AI:ns svar (raderna med <b>;</b>) och försök igen.</div>`; }
+    };
+    m.querySelector("#ai2-add").onclick = () => commitCards(parseLines(m.querySelector("#ai2-paste").value));
+  }
+
+  function renderBody() {
+    bodyEl.innerHTML = seg === "manual" ? manualBody() : seg === "lookup" ? lookupBody() : aiBody();
+    m.querySelector("#add-cancel").onclick = closeModal;
+    if (seg === "manual") m.querySelector("#add-manual-ok").onclick = () => commitCards(parseLines(m.querySelector("#add-manual").value));
+    else if (seg === "lookup") { m.querySelector("#lu-add").onclick = () => commitCards(luCards.map((c) => ({ front: (c.foreign || "").trim(), back: (c.swedish || "").trim(), prio: c.prio }))); wireLookup(); }
+    else wireAi();
+  }
+  function setSeg(s) {
+    seg = s;
+    m.querySelectorAll("#add-seg button").forEach((b) => b.classList.toggle("seg-on", b.dataset.s === s));
+    renderBody();
+  }
+  m.querySelectorAll("#add-seg button").forEach((b) => b.onclick = () => setSeg(b.dataset.s));
+  setSeg(seg);
 }
 
 function openTranslate(defaultLessonId, prefill) {
@@ -4225,8 +4390,8 @@ function openTranslate(defaultLessonId, prefill) {
   };
 }
 
-$("translate-subject").onclick = () => openTranslate(null);
-$("translate-words").onclick = () => openTranslate(currentLessonId);
+$("translate-subject").onclick = () => openTranslate(null); // lektionslistans ＋-meny (väljer lektion) – enas senare
+// (＋ Lägg till ord på lektionsskärmen går via openAddDialog; #translate-words-knappen borttagen)
 
 // =========================================================================
 //  CSV-import → lektioner (sektion;italienska;svenska;favorit;minnesregel)
@@ -4780,7 +4945,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v250";
+const APP_VERSION = "v251";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
