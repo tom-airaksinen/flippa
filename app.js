@@ -4120,7 +4120,7 @@ function openAddDialog(opts = {}) {
   const canLookUp = !!foreignCode;
   let seg = opts.segment || "manual";
   if (seg === "lookup" && !canLookUp) seg = "manual";
-  let luDir = "sv2for", luCards = [];
+  let luDir = "sv2for", luCards = [], luSrcVal = opts.prefill || "", luAutoDone = false;
 
   const m = openModal(`
     <h3>Lägg till ord</h3>
@@ -4177,16 +4177,17 @@ function openAddDialog(opts = {}) {
         <button data-d="sv2for">Svenska → ${esc(foreignLabel)}</button>
         <button data-d="for2sv">${esc(foreignLabel)} → Svenska</button>
       </div>
-      <div class="t-row"><input type="text" id="lu-src" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go">🔎</button></div>
+      <div class="t-row"><input type="text" id="lu-src" value="${esc(luSrcVal)}" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go">🔎</button></div>
       <div id="lu-cards"></div>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="lu-add">Lägg till</button></div>`;
   }
   function renderLuCards() {
     const host = m.querySelector("#lu-cards");
+    const fF = (c, i) => `<div class="add-card-f"><label>${esc(foreignLabel)}</label><textarea rows="1" data-f="foreign" data-i="${i}">${esc(c.foreign)}</textarea></div>`;
+    const fS = (c, i) => `<div class="add-card-f"><label>Svenska</label><textarea rows="1" data-f="swedish" data-i="${i}">${esc(c.swedish)}</textarea></div>`;
     host.innerHTML = luCards.map((c, i) => `
       <div class="add-card">
-        <div class="add-card-f"><label>Utländskt</label><textarea rows="1" data-f="foreign" data-i="${i}">${esc(c.foreign)}</textarea></div>
-        <div class="add-card-f"><label>Svenska</label><textarea rows="1" data-f="swedish" data-i="${i}">${esc(c.swedish)}</textarea></div>
+        ${luDir === "sv2for" ? fS(c, i) + fF(c, i) : fF(c, i) + fS(c, i)}
         <div class="add-card-foot"><span class="add-rprio" data-i="${i}"><span class="pl">Prio</span>
           <button data-p="1" class="${c.prio === 1 ? "on" : ""}">1</button><button data-p="2" class="${c.prio === 2 ? "on" : ""}">2</button><button data-p="3" class="${c.prio === 3 ? "on" : ""}">3</button></span>
           ${luCards.length > 1 ? `<button class="add-rm" data-i="${i}" title="Ta bort">✕</button>` : ""}</div>
@@ -4216,15 +4217,17 @@ function openAddDialog(opts = {}) {
     go.textContent = "🔎";
   }
   function wireLookup() {
+    const src = m.querySelector("#lu-src");
     m.querySelectorAll("#lu-dir button").forEach((b) => {
       b.classList.toggle("seg-on", b.dataset.d === luDir);
-      b.onclick = () => { luDir = b.dataset.d; luCards = []; renderBody(); m.querySelector("#lu-src").focus(); };
+      // Byt riktning UTAN att rensa sökfältet (bara resultaten, som är riktnings-specifika).
+      b.onclick = () => { luSrcVal = src.value; luDir = b.dataset.d; luCards = []; renderBody(); m.querySelector("#lu-src").focus(); };
     });
     m.querySelector("#lu-go").onclick = doLookup;
-    const src = m.querySelector("#lu-src");
+    src.oninput = () => { luSrcVal = src.value; };
     src.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); doLookup(); } });
     renderLuCards();
-    if (opts.prefill && !luCards.length && !src.value) { src.value = opts.prefill; doLookup(); }
+    if (!luAutoDone) { luAutoDone = true; if (luSrcVal) doLookup(); else src.focus(); } // auto-slå-upp bara vid första öppning (prefill)
     else src.focus();
   }
 
@@ -4946,7 +4949,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v252";
+const APP_VERSION = "v253";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

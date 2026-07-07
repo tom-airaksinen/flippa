@@ -1557,7 +1557,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .add-seg button, #lu-dir button { background: none; padding: 9px 6px; font-size: 0.88rem; font-weight: 600; border-radius: 9px; }
 .add-seg button.seg-on, #lu-dir button.seg-on { background: var(--accent); color: #fff; }
 /* Luftigare vertikal rytm i dialogen */
-.add-seg { margin-bottom: 16px; }
+.add-seg { margin-bottom: 8px; }              /* mindre luft under segmentkontrollen */
+#add-lesson-pick:empty { margin: 0; }          /* tom väljare (i lektion) tar ingen plats */
+#add-body .modal-actions { margin-top: 22px; } /* mer luft ovanför Stäng / Lägg till */
 #add-body .modal-hint { margin: 0 0 8px; }
 #add-body label { display: block; margin: 15px 0 6px; }
 #add-body .t-row { margin-top: 12px; }
