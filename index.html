@@ -295,6 +295,7 @@
       <h1>Hjälp</h1>
     </header>
     <div class="help-body">
+      <button id="help-whatsnew" class="whatsnew-btn" type="button">📰 Vad är nytt <span class="wn-chev">›</span></button>
       <h2>Vad är Flippa?</h2>
       <p>En glosapp med flippkort. Du svarar genom att svepa, och appen håller koll på vad du behöver repetera – så att du pluggar rätt ord vid rätt tillfälle i stället för allt om och om igen.</p>
 
@@ -373,12 +374,22 @@
   <div id="modal-root" class="hidden"></div>
 
   <!-- Firebase compat-SDK -->
+  <!-- Versionshistorik (helskärms-overlay, nås från Hjälp + versionsraden i Om) -->
+  <div id="changelog-screen" class="clog-overlay hidden">
+    <header class="app-header">
+      <button class="back-btn" id="clog-back" aria-label="Tillbaka">←</button>
+      <h1>Vad är nytt</h1>
+    </header>
+    <div id="clog-body" class="clog-body"></div>
+  </div>
+
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
   <script src="firebase-config.js"></script>
   <script src="data/seed.js"></script>
+  <script src="data/changelog.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

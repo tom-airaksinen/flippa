@@ -69,10 +69,10 @@
 ## Ikoner (ersätta emoji i UI) – mockup [`mockups/ikoner.html`](../mockups/ikoner.html)
 - [ ] Vilken ikonstil för de emoji-baserade knapparna (sök 🔍, uttala 🔊, ledtråd 💡, meny ⋯, redigera ✎, m.fl.)? → Tre familjer i mockupen: **A Linje**, **B Solid**, **C Mjuk duo**. Välj en familj → byts ut tema-medvetet (currentColor) i `index.html`/`app.js`. Kvar som emoji tills vidare: flaggor 🇮🇹, firande 🎉, prestationer 💪⚡️🥇🏆🔥, svepmarkörer ✓✗★ (gesterna 👈👆👉👇 i hjälpen kandiderar också).
 
-## Versionshistorik / "Vad är nytt" – mockup [`mockups/changelog.html`](../mockups/changelog.html)
-- [ ] Format? → Tre förslag (backfillade från git-historik, kurerade höjdpunkter): **A Versionslista** (datum + version + punkter, mest detalj), **B Nyheter** (kategori-chip Nytt/Förbättrat/Fixat på tidslinje, inga versionsnummer), **C Vad är nytt** (höjdpunktskort med ikon + mening + "visa äldre", minst detalj). Mål: visa vad som är nytt, inte varje fix.
-- [ ] Var bor den? → Kandidater: (a) **Hjälp-fliken** (alltid synlig i navbaren – mest upptäckbar), (b) **Inställningar → Om** (version-raden blir tappbar → changelog; diskret), (c) diskret "ny version"-notis/banner efter uppdatering som länkar in. Rek: primärt (a) Hjälp + sekundärt tappbar version i Om.
-- [ ] Källa/underhåll: handmatad kurerad lista (rekommenderas – git-meddelanden är för tekniska) vs auto ur git. Vem uppdaterar den vid nya släpp?
+## Versionshistorik / "Vad är nytt" – se [`data/changelog.js`](../data/changelog.js)
+- [x] Format? → **Byggt v238 (2026-07-07):** C+A – höjdpunktskort ("Vad är nytt") överst, hela versionslistan (datum + version + punkter) under en "Visa hela versionshistoriken"-knapp. Mockup: [`mockups/changelog.html`](../mockups/changelog.html).
+- [x] Var bor den? → **Byggt v238:** primärt **Hjälp → "Vad är nytt"**-knapp; sekundärt **Inställningar → Om** (versionsraden tappbar → changelog). Helskärms-overlay med bakåtknapp + högersvep. *(Valfritt kvar: diskret "ny version"-prick efter uppdatering – knyter an till nivå 2 i deploy-skydd-frågan.)*
+- [x] Källa/underhåll? → Handkurerad lista i `data/changelog.js`. **Regel i CLAUDE.md:** vid deploy (APP_VERSION-bump) läggs en användarvänlig post till om ändringen är synlig; interna ändringar hoppas över.
 
 ## Innehållsbibliotek (nivåindelat) – se [`innehallsbibliotek.md`](innehallsbibliotek.md)
 > **OBS (2026-07-06):** Nivå-per-lektion-upplägget nedan ersätts av prio per kort (se ovan). Planen ska skrivas om: en lektion per topic, prio-kolumn i CSV, nivåval via priofiltret.

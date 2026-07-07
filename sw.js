@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v237";
+const CACHE = "flashcards-v238";
 const ASSETS = [
   "./",
   "./index.html",
@@ -6,6 +6,7 @@ const ASSETS = [
   "./app.js",
   "./firebase-config.js",
   "./data/seed.js",
+  "./data/changelog.js",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",

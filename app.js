@@ -1091,10 +1091,13 @@ function renderSettingsScreen() {
     </div>
     <div class="set-sec">Om</div>
     <div class="set-card">
-      <div class="set-row static">
-        <span class="set-body"><span class="set-t">Version</span><span class="set-d">Flippa ${APP_VERSION}</span></span></div>
+      <button class="set-row" id="set-changelog" type="button">
+        <span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Flippa ${APP_VERSION} · se ändringar</span></span>
+        <span class="set-chev">›</span></button>
     </div>`;
   $("set-switch").onclick = pickUser;
+  const scl = $("set-changelog");
+  if (scl) scl.onclick = openChangelog;
   $("set-levels").onclick = openLevelsModal;
   $("set-backup").onclick = openBackup;
   const pt = $("push-toggle");
@@ -1235,6 +1238,30 @@ function notifSettingsHTML() {
   }
   return head + `<div class="set-card">${rows}</div>`;
 }
+
+// ---- Versionshistorik ("Vad är nytt") – höjdpunkter (C) + hela listan under fler-knapp (A) ----
+function renderChangelog() {
+  const log = (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : [];
+  const hi = [];
+  log.forEach((e) => e.items.forEach((i) => { if (i.hi) hi.push({ ...i, when: e.date }); }));
+  const cards = hi.slice(0, 6).map((i) =>
+    `<div class="c-card"><div class="c-ico">${i.ico || "✨"}</div>
+      <div><div class="c-title">${esc(i.t.split(" – ")[0])}<span class="c-when">${esc(i.when)}</span></div>
+      <div class="c-desc">${esc(i.desc || i.t)}</div></div></div>`).join("");
+  const full = log.map((e) =>
+    `<div class="a-entry"><div class="a-head"><span class="a-date">${esc(e.date)}</span><span class="a-ver">${esc(e.ver)}</span></div>
+      <ul class="a-bullets">${e.items.map((i) => `<li>${esc(i.t)}</li>`).join("")}</ul></div>`).join("");
+  $("clog-body").innerHTML =
+    `<div class="c-intro">De senaste större nyheterna i Flippa.</div>${cards}
+     <button class="clog-more" id="clog-more" type="button">Visa hela versionshistoriken</button>
+     <div class="clog-full hidden" id="clog-full">${full}</div>`;
+  $("clog-more").onclick = () => {
+    const f = $("clog-full"); f.classList.toggle("hidden");
+    $("clog-more").textContent = f.classList.contains("hidden") ? "Visa hela versionshistoriken" : "Dölj versionshistoriken";
+  };
+}
+function openChangelog() { renderChangelog(); $("changelog-screen").classList.remove("hidden"); track("oppna-changelog"); }
+function closeChangelog() { $("changelog-screen").classList.add("hidden"); }
 
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
@@ -3926,6 +3953,17 @@ document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.addEventListener(
   if (b.dataset.tab === "flippa" && activeTab === "flippa") flippaBackOne();
   else setTab(b.dataset.tab);
 }));
+
+// Versionshistorik: ingångar (Hjälp + Om via set-changelog) + stäng (knapp/högersvep)
+$("help-whatsnew").onclick = openChangelog;
+$("clog-back").onclick = closeChangelog;
+(function () {
+  const el = $("changelog-screen"); let sx = 0, sy = 0, tracking = false, decided = false, horiz = false;
+  el.addEventListener("pointerdown", (e) => { if (e.button != null && e.button > 0) return; sx = e.clientX; sy = e.clientY; tracking = true; decided = false; horiz = false; });
+  el.addEventListener("pointermove", (e) => { if (!tracking || decided) return; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return; decided = true; horiz = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.3; if (!horiz) tracking = false; });
+  el.addEventListener("pointerup", (e) => { const ok = tracking && horiz && (e.clientX - sx) > 70; tracking = false; if (ok) closeChangelog(); });
+  el.addEventListener("pointercancel", () => { tracking = false; });
+})();
 $("rename-lesson").onclick = async () => {
   const lesson = getCurrentLesson();
   if (!lesson) return;
@@ -4663,7 +4701,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v237";
+const APP_VERSION = "v238";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
