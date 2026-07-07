@@ -2134,18 +2134,21 @@ const DONE_LABELS = ["Grymt!", "Nice!", "Hell yeah!", "Snyggt!", "Kanon!", "Topp
 function remainingForContinue(cont) {
   const now = Date.now();
   if (cont.kind === "due") {
+    // Måste spegla startDueSession EXAKT: pausade lektioner hoppas över och
+    // stjärn-fokus respekteras – annars blir Klar-skärmens nämnare för hög.
     const dirMode = dirSelect.value;
     const newSet = new Set(todaysNewCards(currentSubject).map((c) => c.id));
+    const starred = onlyStarred();
     let n = 0;
-    currentSubject.lessons.forEach((l) =>
+    activeLessons(currentSubject).forEach((l) =>
       l.cards.forEach((c) => {
         if (runSeen.has(c.id)) return;
-        if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && prioAllowed(c)) n++;
+        if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && prioAllowed(c) && (!starred || isFav(c))) n++;
       })
     );
     return n;
   }
-  // lesson
+  // lesson – spegla startLessonSession: prioAllowed + aktiva-idag (om ej forcerat)
   const lesson = currentSubject.lessons.find((l) => l.id === cont.lessonId);
   if (!lesson) return 0;
   const dirMode = dirSelect.value;
@@ -2153,7 +2156,7 @@ function remainingForContinue(cont) {
     dirMode === "f2b" ? getEntry(c, "f2b").due <= now
     : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
     : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
-  return lesson.cards.filter((c) => !runSeen.has(c.id) && (cont.forced || activeToday(c))).length;
+  return lesson.cards.filter((c) => !runSeen.has(c.id) && prioAllowed(c) && (cont.forced || activeToday(c))).length;
 }
 
 // Sparas så man kan ångra sista svaret även EFTER att passet tagit slut (Klar-skärmen).
@@ -4777,7 +4780,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v249";
+const APP_VERSION = "v250";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

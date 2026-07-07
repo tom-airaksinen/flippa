@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "7 juli 2026", ver: "v250", items: [
+    { t: "Klar-skärmens antal räknar rätt – pausade lektioner och bortfiltrerade prio-nivåer räknades tidigare in i totalen", type: "fixed" },
+  ]},
   { date: "7 juli 2026", ver: "v242", items: [
     { t: "Smartare AI-hjälp – enklare dialog + prio-förslag", type: "improved", hi: true, ico: "✨",
       desc: "Ange antal och tema och öppna direkt i Claude/ChatGPT. AI:n graderar dessutom orden 1–3 efter hur centrala de är för temat." },
