@@ -1395,7 +1395,8 @@ function renderLessons(keepChoosers) {
       const pct = total ? Math.round((learned / total) * 100) : 0;
       const lw = total ? (learned / total) * 100 : 0;
       const gw = total ? (learning / total) * 100 : 0;
-      const cntLabel = prioActive ? `${total} av nivå` : `${total} ord`;
+      // Filter aktivt: "212 ord (320)" = 212 på valda nivåer av 320 totalt i lektionen.
+      const cntLabel = prioActive ? `${total} ord (${l.cards.length})` : `${total} ord`;
       return `<div class="row lesson-row${paused ? " paused" : ""}" data-lesson="${l.id}">
         <div class="row-l1">
           <span class="row-title"><span class="row-name">${esc(l.name)}</span>${pauseIco}</span>
@@ -4768,7 +4769,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v246";
+const APP_VERSION = "v247";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
