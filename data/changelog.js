@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "7 juli 2026", ver: "v242", items: [
+    { t: "Smartare AI-hjälp – enklare dialog + prio-förslag", type: "improved", hi: true, ico: "✨",
+      desc: "Ange antal och tema och öppna direkt i Claude/ChatGPT. AI:n graderar dessutom orden 1–3 efter hur centrala de är för temat." },
+  ]},
   { date: "7 juli 2026", ver: "v238", items: [
     { t: "Versionshistorik – se vad som är nytt i appen", type: "new", hi: true, ico: "📰",
       desc: "Hittas under Hjälp → ”Vad är nytt”, och via versionsraden i inställningarna." },

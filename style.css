@@ -1502,3 +1502,22 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .a-ver { font-size: 0.72rem; color: var(--muted); background: var(--surface-2); padding: 2px 8px; border-radius: 999px; font-variant-numeric: tabular-nums; }
 .a-bullets { margin: 0; padding-left: 18px; }
 .a-bullets li { font-size: 0.9rem; line-height: 1.55; margin-bottom: 3px; }
+
+/* =========================================================================
+   Fyll lektion med AI – dialog
+   ========================================================================= */
+.ai-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 14px 0; }
+.ai-field.col { flex-direction: column; align-items: stretch; gap: 7px; }
+.ai-field > span { font-size: 0.92rem; color: var(--text); }
+.ai-field.col > span { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 700; }
+.ai-field input { background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; color: var(--text); font: inherit; font-size: 1rem; padding: 11px 12px; }
+.ai-field input:focus { outline: none; border-color: var(--accent); }
+.ai-stepper { display: flex; align-items: center; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.ai-stepper button { width: 42px; height: 42px; border: none; background: none; color: var(--accent); font-size: 1.4rem; cursor: pointer; }
+.ai-stepper > span { min-width: 46px; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
+.ai-send { display: flex; gap: 10px; margin-top: 18px; }
+.ai-btn { flex: 1; border: none; border-radius: 12px; padding: 13px 10px; font: inherit; font-weight: 700; font-size: 0.95rem; color: #fff; cursor: pointer; }
+.ai-btn:active { filter: brightness(0.92); }
+.ai-btn.claude { background: #d97757; }
+.ai-btn.gpt { background: #10a37f; }
+.ai-copy-alt { text-align: center; margin: 15px 0 2px; }

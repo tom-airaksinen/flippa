@@ -3782,6 +3782,52 @@ function getCurrentLesson() {
   return s.lessons.find((l) => l.id === currentLessonId) || null;
 }
 
+// ---- Fyll lektion med AI (dialog → förifyll prompt i Claude/ChatGPT) ----
+const AI_COUNT_KEY = "flippa-ai-count"; // minns valt antal mellan gånger
+function aiCount() { const v = parseInt(localStorage.getItem(AI_COUNT_KEY), 10); return Number.isFinite(v) ? v : 30; }
+function setAiCount(v) { v = Math.max(5, Math.min(100, v)); localStorage.setItem(AI_COUNT_KEY, String(v)); return v; }
+// Sammansatt "avancerad" prompt: befintlig genus/artikel-mekanik + prio (3-kolumnsformat).
+function buildAiPrompt(count, theme) {
+  const lang = currentForeignLabel();
+  const note = genderPromptNote(subjectLang(currentSubject)); // börjar med mellanslag, eller ""
+  return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
+    + `Format: en rad per glosa – "ord/fras;svensk översättning;prio" med semikolon emellan.${note}\n\n`
+    + `Prio (1–3) = hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket i stort:\n`
+    + `1 = kärnord man måste kunna för temat\n2 = vanliga, nyttiga ord\n3 = mer perifera eller nischade ord\n\n`
+    + `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet. `
+    + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
+    + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
+    + `Exempel på radformat: la nave;fartyg;1`;
+}
+function openAiDialog() {
+  const lesson = getCurrentLesson();
+  if (!lesson) return;
+  const m = openModal(`
+    <h3>Fyll lektionen med AI</h3>
+    <p class="modal-hint">Låt en AI föreslå ord och fraser. Öppnas med prompten ifylld – kopiera svaret och klistra in via ＋ Lägg till.</p>
+    <label class="ai-field"><span>Antal ord/fraser</span>
+      <span class="ai-stepper"><button type="button" id="ai-dec">−</button><span id="ai-cnt">${aiCount()}</span><button type="button" id="ai-inc">+</button></span></label>
+    <label class="ai-field col"><span>Tema</span>
+      <input type="text" id="ai-theme" value="${esc(lesson.name)}" autocomplete="off" autocapitalize="sentences" /></label>
+    <div class="ai-send">
+      <button type="button" class="ai-btn claude" id="ai-claude">Öppna i Claude</button>
+      <button type="button" class="ai-btn gpt" id="ai-gpt">Öppna i ChatGPT</button>
+    </div>
+    <p class="ai-copy-alt"><button type="button" class="link-action" id="ai-copy-alt">eller kopiera prompten</button></p>`);
+  const themeVal = () => (m.querySelector("#ai-theme").value || lesson.name).trim() || lesson.name;
+  const promptNow = () => buildAiPrompt(aiCount(), themeVal());
+  m.querySelector("#ai-dec").onclick = () => { m.querySelector("#ai-cnt").textContent = setAiCount(aiCount() - 5); };
+  m.querySelector("#ai-inc").onclick = () => { m.querySelector("#ai-cnt").textContent = setAiCount(aiCount() + 5); };
+  m.querySelector("#ai-claude").onclick = () => { track("ai-oppna/claude"); openExternal("https://claude.ai/new?q=" + encodeURIComponent(promptNow())); closeModal(); };
+  m.querySelector("#ai-gpt").onclick = () => { track("ai-oppna/gpt"); openExternal("https://chatgpt.com/?q=" + encodeURIComponent(promptNow())); closeModal(); };
+  m.querySelector("#ai-copy-alt").onclick = () => {
+    const btn = m.querySelector("#ai-copy-alt");
+    try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {}
+    btn.textContent = "Kopierat ✓";
+    track("ai-prompt-kopierad");
+  };
+}
+
 function renderEditor() {
   const lesson = getCurrentLesson();
   if (!lesson) return renderLessons();
@@ -3791,25 +3837,8 @@ function renderEditor() {
   updatePauseToggle(lesson.id);
   const list = $("editor-list");
   if (!lesson.cards.length) {
-    const lang = currentForeignLabel();
-    const aiPrompt = `Kan du ge mig 30 bra ord och fraser på temat "${lesson.name}" på ${lang}? Formatet ska vara ord/fras på ${lang};svensk översättning, en per rad.${genderPromptNote(subjectLang(currentSubject))}`;
-    // Renare tomt läge: AI-prompten är dold tills man trycker "ta hjälp av en AI".
-    list.innerHTML = `
-      <p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>
-      <div class="ai-tip hidden" id="ai-tip">
-        <p class="ai-tip-lead">Ge denna prompt till <button type="button" class="ai-app-link" id="ai-open-gpt">ChatGPT</button>/<button type="button" class="ai-app-link" id="ai-open-claude">Claude</button>, kopiera sedan svaret och klistra in via ＋ Lägg till.</p>
-        <div class="ai-prompt-copy" id="ai-copy" role="button" tabindex="0" title="Tryck för att kopiera (eller markera manuellt)">
-          <span class="ai-cp-icon" id="ai-cp-icon">${COPY_ICON_SVG}</span>
-          <span class="ai-cp-text">${esc(aiPrompt)}</span>
-        </div>
-      </div>`;
-    $("ai-help").onclick = () => $("ai-tip").classList.toggle("hidden");
-    // Öppna native-appen (schema) med fallback till webben i Safari
-    $("ai-open-gpt").onclick = () => openAiApp("chatgpt://", "https://chatgpt.com");
-    $("ai-open-claude").onclick = () => openAiApp("claude://", "https://claude.ai");
-    // iOS tillåter clipboard-skrivning bara från ett riktigt tryck (click), inte
-    // pointerdown → kopiera vid klick. Texten är även markerbar som manuell reserv.
-    $("ai-copy").onclick = () => copyText(aiPrompt, $("ai-cp-icon"));
+    list.innerHTML = `<p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>`;
+    $("ai-help").onclick = openAiDialog; // dialog: antal + tema → förifyll i Claude/ChatGPT
     return;
   }
   const sorted = sortedCards(lesson);
@@ -4735,7 +4764,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v241";
+const APP_VERSION = "v242";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
