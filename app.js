@@ -4268,12 +4268,15 @@ function openAddDialog(opts = {}) {
     m.querySelector("#ai2-add").onclick = () => commitCards(parseLines(m.querySelector("#ai2-paste").value));
   }
 
+  const lessonPickEl = m.querySelector("#add-lesson-pick"); // flyttas in ovanför knapparna per läge
   function renderBody() {
+    if (pickLesson) m.appendChild(lessonPickEl); // parkera i modal-roten så innerHTML-bytet inte kastar bort select:en
     bodyEl.innerHTML = seg === "manual" ? manualBody() : seg === "lookup" ? lookupBody() : aiBody();
     m.querySelector("#add-cancel").onclick = closeModal;
     if (seg === "manual") m.querySelector("#add-manual-ok").onclick = () => commitCards(parseLines(m.querySelector("#add-manual").value));
     else if (seg === "lookup") { m.querySelector("#lu-add").onclick = () => commitCards(luCards.map((c) => ({ front: (c.foreign || "").trim(), back: (c.swedish || "").trim(), prio: c.prio }))); wireLookup(); }
     else wireAi();
+    if (pickLesson) { const acts = bodyEl.querySelector(".modal-actions"); bodyEl.insertBefore(lessonPickEl, acts); } // lektionsväljare direkt ovanför Stäng/Lägg till
   }
   function setSeg(s) {
     seg = s;
@@ -4949,7 +4952,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v254";
+const APP_VERSION = "v255";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
