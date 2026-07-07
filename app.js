@@ -4232,15 +4232,14 @@ function openAddDialog(opts = {}) {
   function aiBody() {
     return `<p class="modal-hint">Låt en AI föreslå ord. Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
       <label>Antal ord/fraser</label>
-      <div class="ai-stepper" style="margin:0 0 12px"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
+      <div class="ai-stepper" style="margin:2px 0 0"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
       <div class="ai-send"><button type="button" class="ai-btn claude" id="ai2-claude">Öppna i Claude</button><button type="button" class="ai-btn gpt" id="ai2-gpt">Öppna i ChatGPT</button></div>
       <div class="tertiary-c"><button type="button" class="link-action" id="ai2-copy">⧉ Kopiera prompt (för annan AI)</button></div>
       <div class="add-divider">När du fått svaret</div>
-      <button type="button" class="clip-btn2" id="ai2-clip">📋 Klistra in från urklipp</button>
       <div id="ai2-clipmsg"></div>
-      <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="…eller klistra in AI:ns svar här"></textarea>
+      <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="Klistra in AI:ns svar här"></textarea>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="ai2-add">Lägg till från svaret</button></div>`;
   }
   function wireAi() {
@@ -4252,7 +4251,9 @@ function openAddDialog(opts = {}) {
     m.querySelector("#ai2-claude").onclick = () => openSite("https://claude.ai/new?q=", "ai-oppna/claude");
     m.querySelector("#ai2-gpt").onclick = () => openSite("https://chatgpt.com/?q=", "ai-oppna/gpt");
     m.querySelector("#ai2-copy").onclick = () => { const b = m.querySelector("#ai2-copy"); try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {} b.textContent = "Kopierat ✓ – klistra in i valfri AI"; track("ai-prompt-kopierad"); };
-    m.querySelector("#ai2-clip").onclick = async () => {
+    // Urklipps-knappen är dold tills vidare (behåller koden – guardad om #ai2-clip saknas).
+    const clipBtn = m.querySelector("#ai2-clip");
+    if (clipBtn) clipBtn.onclick = async () => {
       const msg = m.querySelector("#ai2-clipmsg"), ta = m.querySelector("#ai2-paste");
       let text = "";
       try { text = navigator.clipboard && navigator.clipboard.readText ? await navigator.clipboard.readText() : ""; }
@@ -4945,7 +4946,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v251";
+const APP_VERSION = "v252";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

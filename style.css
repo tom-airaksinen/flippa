@@ -1551,3 +1551,16 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .paste-msg { border-radius: 10px; padding: 10px 12px; font-size: 0.84rem; margin: 10px 0; }
 .paste-msg.ok { background: color-mix(in srgb, var(--good) 18%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--good) 45%, transparent); }
 .paste-msg.warn { background: color-mix(in srgb, var(--easy) 15%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--easy) 45%, transparent); }
+
+/* Grupperad segmentkontroll (som prototypen) för toppvalen + riktningen */
+.add-seg, #lu-dir { background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.add-seg button, #lu-dir button { background: none; padding: 9px 6px; font-size: 0.88rem; font-weight: 600; border-radius: 9px; }
+.add-seg button.seg-on, #lu-dir button.seg-on { background: var(--accent); color: #fff; }
+/* Luftigare vertikal rytm i dialogen */
+.add-seg { margin-bottom: 16px; }
+#add-body .modal-hint { margin: 0 0 8px; }
+#add-body label { display: block; margin: 15px 0 6px; }
+#add-body .t-row { margin-top: 12px; }
+#add-body .add-divider { margin: 20px 0 14px; }
+/* Sorteringsknappen: samma höjd som ＋ Lägg till ord (+ lite bredare) */
+.editor-actions .icon-btn { width: 54px; height: auto; }
