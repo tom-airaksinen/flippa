@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Flippa – AI-prompt med prio (2 UX-varianter)</title>
+<title>Flippa – AI-prompt med prio (steg före + 2 UX-varianter)</title>
 <style>
   :root { --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; }
   html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; }
@@ -18,16 +18,28 @@
   .stage { display:flex; justify-content:center; margin-top:22px; }
   .phone { width:390px; min-height:760px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
   .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px; background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
-  .topbar { display:flex; align-items:center; gap:10px; padding:40px 16px 12px; border-bottom:1px solid var(--line); }
-  .topbar .ib { width:38px; height:38px; border-radius:10px; background:var(--surface); border:none; color:var(--text); display:inline-flex; align-items:center; justify-content:center; font-size:1.2rem; }
-  .topbar .title { font-weight:700; font-size:1.05rem; }
-  .body { padding:18px 16px 24px; overflow-y:auto; }
+  .scr { flex:1; display:flex; flex-direction:column; }
+
+  .topbar { display:flex; align-items:center; gap:10px; padding:40px 14px 12px; }
+  .topbar .ib { width:38px; height:38px; border-radius:10px; background:var(--surface); border:none; color:var(--text); display:inline-flex; align-items:center; justify-content:center; font-size:1.15rem; flex:none; cursor:pointer; }
+  .topbar .title { font-weight:700; font-size:1.15rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topbar.simple { border-bottom:1px solid var(--line); }
+  .topbar.simple .title { font-size:1.05rem; }
+
+  .body { padding:16px 16px 24px; overflow-y:auto; flex:1; }
+
+  /* Tom-lektion (Innan) */
+  .editor-actions { display:flex; align-items:center; gap:8px; padding:2px 14px 10px; }
+  .primary-btn { border:none; border-radius:11px; padding:11px 14px; font:inherit; font-weight:600; font-size:.92rem; cursor:pointer; background:var(--accent); color:#fff; flex:1; }
+  .primary-btn.alt { background:var(--surface-2); color:var(--text); }
+  .empty { color:var(--muted); font-size:.95rem; line-height:1.6; text-align:center; padding:34px 18px; }
+  .link-action { background:none; border:none; color:var(--accent); font:inherit; font-size:inherit; cursor:pointer; text-decoration:underline; padding:0; }
 
   /* Variant 1 – dialog */
   .lead { color:var(--muted); font-size:.9rem; line-height:1.5; margin:0 0 18px; }
   .field { margin-bottom:16px; }
   .field label { display:block; font-size:.78rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin-bottom:7px; }
-  .stepper { display:flex; align-items:center; gap:0; background:var(--surface); border:1px solid var(--line); border-radius:12px; width:fit-content; overflow:hidden; }
+  .stepper { display:flex; align-items:center; background:var(--surface); border:1px solid var(--line); border-radius:12px; width:fit-content; overflow:hidden; }
   .stepper button { width:46px; height:46px; border:none; background:none; color:var(--accent); font-size:1.5rem; cursor:pointer; }
   .stepper .val { min-width:54px; text-align:center; font-size:1.15rem; font-weight:700; font-variant-numeric:tabular-nums; }
   .txt { width:100%; background:var(--surface); border:1px solid var(--line); border-radius:12px; color:var(--text); font:inherit; font-size:1rem; padding:12px 13px; }
@@ -40,40 +52,37 @@
   .alt-copy button { background:none; border:none; color:var(--muted); font:inherit; font-size:.85rem; text-decoration:underline; cursor:pointer; }
   .hint2 { color:var(--muted); font-size:.78rem; line-height:1.5; margin-top:16px; padding-top:14px; border-top:1px solid var(--line); }
 
-  /* Variant 2 – lång prompt med expandering (dagens flöde) */
+  /* Variant 2 – lång prompt */
   .ai-tip-lead { color:var(--muted); font-size:.88rem; line-height:1.5; margin:0 0 14px; }
   .ai-app-link { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; cursor:pointer; padding:0; text-decoration:underline; }
-  .promptbox { position:relative; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px 14px 12px; }
+  .promptbox { position:relative; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:14px; }
   .promptbox pre { margin:0; white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:.86rem; line-height:1.55; color:var(--text); }
   .promptbox.collapsed pre { max-height:130px; overflow:hidden; -webkit-mask-image:linear-gradient(to bottom,#000 70%,transparent); mask-image:linear-gradient(to bottom,#000 70%,transparent); }
   .pb-actions { display:flex; align-items:center; justify-content:space-between; margin-top:10px; }
   .expand-btn { background:none; border:none; color:var(--accent); font:inherit; font-weight:600; font-size:.88rem; cursor:pointer; padding:0; }
   .copy-btn { display:inline-flex; align-items:center; gap:7px; background:var(--surface-2); border:none; color:var(--text); font:inherit; font-size:.85rem; font-weight:600; padding:8px 13px; border-radius:10px; cursor:pointer; }
+  .callout-note { max-width:390px; margin:10px auto 0; color:var(--muted); font-size:.8rem; text-align:center; }
 </style>
 </head>
 <body>
 <div class="head">
-  <h1>AI-prompt med prio – 2 UX-varianter</h1>
-  <p class="sub">Samma sammansatta "avancerade" prompt (befintlig genus/artikel-mekanik + prio), men två sätt att presentera den. Claude/ChatGPT-knapparna öppnar tjänsten på riktigt med prompten ifylld (bra att testa). Växla variant + tema nedan.</p>
+  <h1>AI-prompt med prio – steg före + 2 UX-varianter</h1>
+  <p class="sub">"Innan" visar tomma lektionen där man triggar AI-hjälpen. I appen: <b>förifylls</b> i Claude/ChatGPT (auto-skickar ej), och <b>språk visas inte</b> (kommer från ämnet). Växla flik + tema nedan; knapparna öppnar AI:n på riktigt med prompten ifylld.</p>
 </div>
 <div class="bar">
-  <button data-v="1" class="on">Variant 1 · Dialog → skicka</button>
-  <button data-v="2">Variant 2 · Lång prompt (expandera)</button>
+  <button data-v="0" class="on">Innan · tom lektion</button>
+  <button data-v="1">Variant 1 · Dialog → skicka</button>
+  <button data-v="2">Variant 2 · Lång prompt</button>
   <span style="flex:1"></span>
   <button id="themeBtn">🌸 Rosa tema</button>
 </div>
 
 <div class="stage">
-  <div class="phone">
-    <div class="notch"></div>
-    <div class="topbar"><button class="ib">←</button><span class="title" id="scrTitle">Fyll lektionen med AI</span></div>
-    <div class="body" id="scrBody"></div>
-  </div>
+  <div class="phone"><div class="notch"></div><div class="scr" id="scr"></div></div>
 </div>
+<p class="callout-note" id="note"></p>
 
 <script>
-// Sammansatt avancerad prompt (samma som skulle byggas i appen; genusNote per språk).
-// I appen sätts lang + genusNote från ämnet; här visar vi italienska (artikel-strategi).
 const GENDER_NOTE_IT = "För substantiv: ta med bestämd artikel så genus framgår, men håll den svenska sidan i obestämd form.";
 function buildPrompt(count, theme, lang, genderNote) {
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.
@@ -95,25 +104,50 @@ function getCount() { const v = parseInt(localStorage.getItem(CNT_KEY), 10); ret
 function setCount(v) { v = Math.max(5, Math.min(100, v)); localStorage.setItem(CNT_KEY, v); return v; }
 let theme = "Sjöfart";
 const LANG = "italienska";
-
 function currentPrompt() { return buildPrompt(getCount(), theme, LANG, GENDER_NOTE_IT); }
 function openAI(base) { window.open(base + encodeURIComponent(currentPrompt()), "_blank"); }
+const scr = document.getElementById("scr");
+const note = document.getElementById("note");
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/"/g,"&quot;");
+
+function renderBefore() {
+  note.textContent = "Så här ser tomma lektionen ut. Tryck ”ta hjälp av en AI” → öppnar dialogen (variant 1).";
+  scr.innerHTML = `
+    <div class="topbar">
+      <button class="ib">←</button>
+      <span class="title">${esc(theme)}</span>
+      <button class="ib" title="Pausa">⏸</button>
+      <button class="ib" title="Redigera lektion">✎</button>
+      <button class="ib" title="Filtrera">🔍</button>
+    </div>
+    <div class="editor-actions">
+      <button class="ib" title="Sortera">⇅</button>
+      <button class="primary-btn">＋ Lägg till ord</button>
+      <button class="primary-btn alt">🔎 Slå upp &amp; lägg till</button>
+    </div>
+    <div class="body">
+      <p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>
+    </div>`;
+  document.getElementById("ai-help").onclick = () => go("1");
+}
 
 function renderV1() {
-  document.getElementById("scrTitle").textContent = "Fyll lektionen med AI";
-  const b = document.getElementById("scrBody");
-  b.innerHTML = `
-    <p class="lead">Låt en AI föreslå ord och fraser för lektionen. Justera vid behov och öppna i din AI – prompten följer med ifylld.</p>
-    <div class="field"><label>Antal ord/fraser</label>
-      <div class="stepper"><button id="dec">−</button><span class="val" id="cntv">${getCount()}</span><button id="inc">+</button></div></div>
-    <div class="field"><label>Tema</label>
-      <input class="txt" id="theme" type="text" value="${theme.replace(/"/g,'&quot;')}" /></div>
-    <div class="send-row">
-      <button class="send-btn claude" id="toClaude"><span class="ai-ico">✳️</span> Öppna i Claude</button>
-      <button class="send-btn gpt" id="toGpt"><span class="ai-ico">🤖</span> Öppna i ChatGPT</button>
-    </div>
-    <div class="alt-copy"><button id="copyOnly">eller kopiera prompten</button></div>
-    <p class="hint2">Tips: öppnar AI:n på webben/i appen med prompten redan i skrivrutan. Kopiera sedan svaret och klistra in via ＋ Lägg till.</p>`;
+  note.textContent = "Dialogen: antal (minns ditt val) + tema (default lektionsnamnet). Knapparna öppnar AI:n med prompten ifylld.";
+  scr.innerHTML = `
+    <div class="topbar simple"><button class="ib">←</button><span class="title">Fyll lektionen med AI</span></div>
+    <div class="body">
+      <p class="lead">Låt en AI föreslå ord och fraser för lektionen. Justera vid behov och öppna i din AI – prompten följer med ifylld.</p>
+      <div class="field"><label>Antal ord/fraser</label>
+        <div class="stepper"><button id="dec">−</button><span class="val" id="cntv">${getCount()}</span><button id="inc">+</button></div></div>
+      <div class="field"><label>Tema</label>
+        <input class="txt" id="theme" type="text" value="${esc(theme)}" /></div>
+      <div class="send-row">
+        <button class="send-btn claude" id="toClaude"><span class="ai-ico">✳️</span> Öppna i Claude</button>
+        <button class="send-btn gpt" id="toGpt"><span class="ai-ico">🤖</span> Öppna i ChatGPT</button>
+      </div>
+      <div class="alt-copy"><button id="copyOnly">eller kopiera prompten</button></div>
+      <p class="hint2">Öppnar AI:n med prompten i skrivrutan (du trycker skicka själv). Kopiera sedan svaret och klistra in via ＋ Lägg till.</p>
+    </div>`;
   document.getElementById("dec").onclick = () => { document.getElementById("cntv").textContent = setCount(getCount() - 5); };
   document.getElementById("inc").onclick = () => { document.getElementById("cntv").textContent = setCount(getCount() + 5); };
   document.getElementById("theme").oninput = (e) => { theme = e.target.value || "lektionen"; };
@@ -123,14 +157,16 @@ function renderV1() {
 }
 
 function renderV2() {
-  document.getElementById("scrTitle").textContent = "Ta hjälp av en AI";
-  const b = document.getElementById("scrBody");
-  b.innerHTML = `
-    <p class="ai-tip-lead">Ge denna prompt till <button class="ai-app-link" id="toGpt2">ChatGPT</button>/<button class="ai-app-link" id="toClaude2">Claude</button>, kopiera sedan svaret och klistra in via ＋ Lägg till.</p>
-    <div class="promptbox collapsed" id="pbox"><pre id="ptext">${currentPrompt().replace(/</g,'&lt;')}</pre></div>
-    <div class="pb-actions">
-      <button class="expand-btn" id="expand">Visa hela prompten ▾</button>
-      <button class="copy-btn" id="copy2">⧉ Kopiera</button>
+  note.textContent = "Dagens flöde men prompten visas hopfälld tills man expanderar.";
+  scr.innerHTML = `
+    <div class="topbar simple"><button class="ib">←</button><span class="title">Ta hjälp av en AI</span></div>
+    <div class="body">
+      <p class="ai-tip-lead">Ge denna prompt till <button class="ai-app-link" id="toGpt2">ChatGPT</button>/<button class="ai-app-link" id="toClaude2">Claude</button>, kopiera sedan svaret och klistra in via ＋ Lägg till.</p>
+      <div class="promptbox collapsed" id="pbox"><pre>${esc(currentPrompt())}</pre></div>
+      <div class="pb-actions">
+        <button class="expand-btn" id="expand">Visa hela prompten ▾</button>
+        <button class="copy-btn" id="copy2">⧉ Kopiera</button>
+      </div>
     </div>`;
   document.getElementById("expand").onclick = () => {
     const pb = document.getElementById("pbox"); pb.classList.toggle("collapsed");
@@ -141,13 +177,14 @@ function renderV2() {
   document.getElementById("toGpt2").onclick = () => openAI("https://chatgpt.com/?q=");
 }
 
-const R = { "1": renderV1, "2": renderV2 };
-document.querySelectorAll(".bar [data-v]").forEach((b) => b.onclick = () => {
-  document.querySelectorAll(".bar [data-v]").forEach((x) => x.classList.toggle("on", x === b));
-  R[b.dataset.v]();
-});
+const R = { "0": renderBefore, "1": renderV1, "2": renderV2 };
+function go(v) {
+  document.querySelectorAll(".bar [data-v]").forEach((x) => x.classList.toggle("on", x.dataset.v === v));
+  R[v]();
+}
+document.querySelectorAll(".bar [data-v]").forEach((b) => b.onclick = () => go(b.dataset.v));
 document.getElementById("themeBtn").onclick = () => { const r = document.documentElement.classList.toggle("rosa"); document.getElementById("themeBtn").textContent = r ? "🌙 Mörkt tema" : "🌸 Rosa tema"; };
-renderV1();
+go("0");
 </script>
 </body>
 </html>
