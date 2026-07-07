@@ -1240,22 +1240,34 @@ function notifSettingsHTML() {
 }
 
 // ---- Versionshistorik ("Vad är nytt") – höjdpunkter (C) + hela listan under fler-knapp (A) ----
+function changelogLog() { return (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : []; }
+// Slå ihop poster med samma datum (max en per dag). Loggen är nyast först → första
+// förekomsten av ett datum bär senaste versionen den dagen; övriga items läggs under.
+function mergedByDay(log) {
+  const out = [], idx = {};
+  log.forEach((e) => {
+    if (idx[e.date] == null) { idx[e.date] = out.length; out.push({ date: e.date, ver: e.ver, items: e.items.slice() }); }
+    else out[idx[e.date]].items.push(...e.items);
+  });
+  return out;
+}
+// Håll ihop dag+månad (hårt mellanslag), men låt året få radbryta: "4 juli 2026" → "4 juli 2026".
+function nbspDate(d) { return String(d).replace(" ", " "); }
 // Datum för senaste FRAMHÄVDA posten (visas på ingångsraderna).
 function latestChangelogDate() {
-  const log = (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : [];
-  const e = log.find((x) => x.items.some((i) => i.hi));
+  const e = changelogLog().find((x) => x.items.some((i) => i.hi));
   return e ? e.date : "";
 }
 function renderChangelog() {
-  const log = (typeof CHANGELOG !== "undefined" && Array.isArray(CHANGELOG)) ? CHANGELOG : [];
+  const merged = mergedByDay(changelogLog());
   const hi = [];
-  log.forEach((e) => e.items.forEach((i) => { if (i.hi) hi.push({ ...i, when: e.date }); }));
+  merged.forEach((e) => e.items.forEach((i) => { if (i.hi) hi.push({ ...i, when: e.date }); }));
   const cards = hi.slice(0, 6).map((i) =>
     `<div class="c-card"><div class="c-ico">${i.ico || "✨"}</div>
-      <div><div class="c-title">${esc(i.t.split(" – ")[0])}<span class="c-when">${esc(i.when)}</span></div>
+      <div><div class="c-title">${esc(i.t.split(" – ")[0])}<span class="c-when">${esc(nbspDate(i.when))}</span></div>
       <div class="c-desc">${esc(i.desc || i.t)}</div></div></div>`).join("");
-  const full = log.map((e) =>
-    `<div class="a-entry"><div class="a-head"><span class="a-date">${esc(e.date)}</span><span class="a-ver">${esc(e.ver)}</span></div>
+  const full = merged.map((e) =>
+    `<div class="a-entry"><div class="a-head"><span class="a-date">${esc(nbspDate(e.date))}</span><span class="a-ver">${esc(e.ver)}</span></div>
       <ul class="a-bullets">${e.items.map((i) => `<li>${esc(i.t)}</li>`).join("")}</ul></div>`).join("");
   $("clog-body").innerHTML =
     `<div class="c-intro">De senaste större nyheterna i Flippa.</div>${cards}
@@ -4708,7 +4720,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v239";
+const APP_VERSION = "v240";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
