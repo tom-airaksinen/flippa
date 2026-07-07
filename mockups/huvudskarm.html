@@ -43,6 +43,9 @@
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239aa3b2' stroke-width='2.5'><circle cx='12' cy='12' r='3.2'/><path d='M12 4v2M12 18v2M4 12h2M18 12h2'/></svg>");
     background-size:11px; background-repeat:no-repeat; background-position:center; }
   .ring { box-shadow:0 0 0 3px var(--easy), 0 0 22px 4px color-mix(in srgb, var(--easy) 55%, transparent); }
+  .gear-btn { width:40px; height:40px; border-radius:11px; background:var(--surface); border:none; color:var(--text);
+    display:inline-flex; align-items:center; justify-content:center; cursor:pointer; flex:none; }
+  .gear-btn svg { width:22px; height:22px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
 
   .list { padding:8px 14px; }
   .subj-row { display:flex; align-items:center; gap:14px; background:var(--surface); border-radius:16px;
@@ -76,16 +79,17 @@
   <h1>Huvudskärm i inloggat läge</h1>
   <p class="sub">Tanken: dagens <b>⋯-meny (Backup)</b> uppe till höger försvinner. Istället blir <b>avataren</b> (din profilbokstav, med en liten kugg-markör) ingången till <b>Inställningar</b> – där profil/byt användare, notiser och backup bor. Ett kugghjul funkar lika bra; avataren har fördelen att den också visar vem du är just nu.</p>
   <button class="themeBtn" id="themeBtn">🌸 Rosa tema</button>
+  <button class="themeBtn" id="iconBtn">⚙ Visa kugghjul istället</button>
 </div>
 
 <div class="stage">
-  <div class="callout"><b>Avataren ersätter ⋯</b>Tryck → Inställningar & profil (byt användare, notiser, säkerhetskopiera). Kugg-pricken signalerar "inställningar".</div>
+  <div class="callout" id="callout"></div>
   <div class="phone">
     <div class="notch"></div>
     <div class="app-header">
       <h1 class="logo"><span class="card-ico">🃏</span> Flippa</h1>
       <button class="ib">＋</button>
-      <button class="avatar-btn ring" id="avatar">T</button>
+      <span id="entrySlot"></span>
     </div>
     <div class="list">
       <div class="subj-row">
@@ -121,8 +125,26 @@
   const tb=document.getElementById('themeBtn');
   tb.onclick=()=>{ const r=document.documentElement.classList.toggle('rosa');
     tb.textContent = r ? '🌙 Mörkt tema' : '🌸 Rosa tema';
-    // avatarens färg följer temats accent redan via var(--accent)
   };
+
+  const GEAR = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M4.2 7l2.6 1.5M17.2 15.5l2.6 1.5M4.2 17l2.6-1.5M17.2 8.5l2.6-1.5"/></svg>';
+  const slot=document.getElementById('entrySlot');
+  const callout=document.getElementById('callout');
+  const ib=document.getElementById('iconBtn');
+  let gear=false;
+  function renderEntry(){
+    if(gear){
+      slot.innerHTML = `<button class="gear-btn ring">${GEAR}</button>`;
+      callout.innerHTML = '<b>Kugghjulet ersätter ⋯</b>Tryck → Inställningar & profil (byt användare, notiser, säkerhetskopiera).';
+      ib.textContent = '👤 Visa avatar istället';
+    } else {
+      slot.innerHTML = `<button class="avatar-btn ring">T</button>`;
+      callout.innerHTML = '<b>Avataren ersätter ⋯</b>Tryck → Inställningar & profil (byt användare, notiser, säkerhetskopiera). Kugg-pricken signalerar "inställningar".';
+      ib.textContent = '⚙ Visa kugghjul istället';
+    }
+  }
+  ib.onclick=()=>{ gear=!gear; renderEntry(); };
+  renderEntry();
 </script>
 </body>
 </html>
