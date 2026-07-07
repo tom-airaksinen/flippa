@@ -38,6 +38,10 @@ let pendingReload = false, swReloading = false;
 const GC_ENDPOINT = "https://flippa.goatcounter.com/count";
 function track(path, opts) {
   opts = opts || {};
+  // Toms eget konto genererar aldrig statistik – han vill bara mäta ANDRAS användning.
+  // (Sidvisningar tystas separat i index.html via no_onload; detta täcker alla events,
+  // inkl. nav-eventen nedan som annars går direkt till endpointen förbi count.js.)
+  if (currentUser === "tom") return;
   try {
     if (opts.nav) {
       // Slå upp/Bildsök navigerar bort (location.href) → keepalive så eventet hinner iväg.
@@ -4524,7 +4528,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v234";
+const APP_VERSION = "v235";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 

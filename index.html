@@ -12,6 +12,11 @@
   <link rel="stylesheet" href="style.css" />
   <!-- Analytics: GoatCounter (cookielöst, GDPR-vänligt). Sidvisningar automatiskt;
        custom-events skickas från app.js via track(). -->
+  <!-- Toms egen enhet räknas aldrig (han vill bara mäta ANDRAS användning): no_onload
+       stänger av den automatiska sidvisningen. Events tystas i app.js track(). -->
+  <script>
+    try { if (localStorage.getItem("flippa-user") === "tom") window.goatcounter = { no_onload: true }; } catch (e) {}
+  </script>
   <script data-goatcounter="https://flippa.goatcounter.com/count"
           async src="//gc.zgo.at/count.js"></script>
 </head>
