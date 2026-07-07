@@ -69,6 +69,11 @@
 ## Ikoner (ersätta emoji i UI) – mockup [`mockups/ikoner.html`](../mockups/ikoner.html)
 - [ ] Vilken ikonstil för de emoji-baserade knapparna (sök 🔍, uttala 🔊, ledtråd 💡, meny ⋯, redigera ✎, m.fl.)? → Tre familjer i mockupen: **A Linje**, **B Solid**, **C Mjuk duo**. Välj en familj → byts ut tema-medvetet (currentColor) i `index.html`/`app.js`. Kvar som emoji tills vidare: flaggor 🇮🇹, firande 🎉, prestationer 💪⚡️🥇🏆🔥, svepmarkörer ✓✗★ (gesterna 👈👆👉👇 i hjälpen kandiderar också).
 
+## Versionshistorik / "Vad är nytt" – mockup [`mockups/changelog.html`](../mockups/changelog.html)
+- [ ] Format? → Tre förslag (backfillade från git-historik, kurerade höjdpunkter): **A Versionslista** (datum + version + punkter, mest detalj), **B Nyheter** (kategori-chip Nytt/Förbättrat/Fixat på tidslinje, inga versionsnummer), **C Vad är nytt** (höjdpunktskort med ikon + mening + "visa äldre", minst detalj). Mål: visa vad som är nytt, inte varje fix.
+- [ ] Var bor den? → Kandidater: (a) **Hjälp-fliken** (alltid synlig i navbaren – mest upptäckbar), (b) **Inställningar → Om** (version-raden blir tappbar → changelog; diskret), (c) diskret "ny version"-notis/banner efter uppdatering som länkar in. Rek: primärt (a) Hjälp + sekundärt tappbar version i Om.
+- [ ] Källa/underhåll: handmatad kurerad lista (rekommenderas – git-meddelanden är för tekniska) vs auto ur git. Vem uppdaterar den vid nya släpp?
+
 ## Innehållsbibliotek (nivåindelat) – se [`innehallsbibliotek.md`](innehallsbibliotek.md)
 > **OBS (2026-07-06):** Nivå-per-lektion-upplägget nedan ersätts av prio per kort (se ovan). Planen ska skrivas om: en lektion per topic, prio-kolumn i CSV, nivåval via priofiltret.
 - [ ] Nivåetiketter: "Nybörjare / Medel / Avancerad" eller "nybörjare / kan en del / avancerad"? (styr lektionsnamn)

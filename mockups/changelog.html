@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flippa – versionshistorik (3 format-förslag)</title>
+<style>
+  :root {
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8;
+    --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --easy:#f4c542; --fire:#ff8a3d; --line:#2c3c63;
+  }
+  html.rosa { --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6; --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#05080f; color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; -webkit-font-smoothing:antialiased; padding:20px 12px 60px; }
+  .head { max-width:900px; margin:0 auto 12px; }
+  h1 { font-size:1.25rem; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:.88rem; margin:0; line-height:1.5; max-width:680px; }
+  .bar { max-width:900px; margin:14px auto; display:flex; gap:8px; flex-wrap:wrap; }
+  .bar button { border:1px solid var(--line); background:#0d1426; color:var(--muted); font:inherit; font-size:.85rem; padding:8px 15px; border-radius:999px; cursor:pointer; }
+  .bar button.on { background:var(--accent); color:#fff; border-color:transparent; }
+
+  .stage { display:flex; justify-content:center; margin-top:22px; }
+  .phone { width:390px; height:820px; background:var(--bg); border-radius:38px; border:1px solid var(--line); overflow:hidden; position:relative; box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px; background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
+  .topbar { display:flex; align-items:center; gap:10px; padding:40px 16px 12px; border-bottom:1px solid var(--line); }
+  .topbar .ib { width:38px; height:38px; border-radius:10px; background:var(--surface); border:none; color:var(--text); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; font-size:1.2rem; }
+  .topbar .title { font-weight:700; font-size:1.1rem; }
+  .scroll { overflow-y:auto; flex:1; padding:8px 16px 30px;
+    -webkit-mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(to bottom,#000 calc(100% - 40px),transparent); }
+
+  /* Format A – versionslista */
+  .a-entry { padding:14px 0; border-bottom:1px solid rgba(255,255,255,.06); }
+  .a-entry:last-child { border-bottom:none; }
+  .a-head { display:flex; align-items:baseline; gap:10px; margin-bottom:8px; }
+  .a-date { font-weight:700; font-size:1rem; }
+  .a-ver { font-size:.72rem; color:var(--muted); background:var(--surface-2); padding:2px 8px; border-radius:999px; font-variant-numeric:tabular-nums; }
+  .a-bullets { margin:0; padding-left:18px; }
+  .a-bullets li { font-size:.9rem; line-height:1.55; color:var(--text); margin-bottom:3px; }
+
+  /* Format B – nyheter/tidslinje med kategori-chip */
+  .b-group { margin-bottom:18px; }
+  .b-date { font-size:.76rem; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); font-weight:700; margin:6px 0 10px; }
+  .b-item { display:flex; gap:11px; padding:2px 0 12px; position:relative; }
+  .b-line { position:relative; flex:none; width:12px; display:flex; justify-content:center; }
+  .b-dot { width:11px; height:11px; border-radius:50%; margin-top:4px; }
+  .b-item:not(:last-child) .b-line::after { content:""; position:absolute; top:16px; bottom:-12px; width:2px; background:var(--line); }
+  .b-body { flex:1; }
+  .b-chip { display:inline-block; font-size:.64rem; font-weight:700; text-transform:uppercase; letter-spacing:.03em; padding:2px 7px; border-radius:999px; margin-right:7px; vertical-align:1px; }
+  .chip-new { background:var(--good); color:#06210f; } .dot-new { background:var(--good); }
+  .chip-improved { background:var(--accent); color:#06122e; } .dot-improved { background:var(--accent); }
+  .chip-fixed { background:var(--surface-2); color:var(--muted); } .dot-fixed { background:var(--muted); }
+  .b-text { font-size:.9rem; line-height:1.5; }
+
+  /* Format C – vad är nytt (höjdpunktskort) */
+  .c-intro { font-size:.86rem; color:var(--muted); margin:6px 2px 14px; line-height:1.5; }
+  .c-card { display:flex; gap:14px; background:var(--surface); border-radius:16px; padding:14px 15px; margin-bottom:11px; }
+  .c-ico { font-size:1.7rem; flex:none; line-height:1; }
+  .c-title { font-weight:700; font-size:1rem; }
+  .c-when { font-size:.72rem; color:var(--muted); margin-left:6px; font-weight:400; }
+  .c-desc { font-size:.85rem; color:var(--muted); line-height:1.45; margin-top:3px; }
+  .c-more { width:100%; margin-top:6px; background:none; border:1px dashed var(--line); color:var(--muted); font:inherit; font-size:.86rem; padding:12px; border-radius:12px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>Versionshistorik – 3 format-förslag</h1>
+  <p class="sub">Backfillad från git-historiken (kurerade höjdpunkter, inte varje liten fix). Växla format nedan och tema uppe till höger. Titeln på skärmen ändras med formatet.</p>
+</div>
+<div class="bar">
+  <button data-fmt="a" class="on">A · Versionslista</button>
+  <button data-fmt="b">B · Nyheter (kategorier)</button>
+  <button data-fmt="c">C · Vad är nytt (höjdpunkter)</button>
+  <span style="flex:1"></span>
+  <button id="themeBtn">🌸 Rosa tema</button>
+</div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="topbar"><button class="ib">←</button><span class="title" id="clTitle">Versionshistorik</span></div>
+    <div class="scroll" id="clBody"></div>
+  </div>
+</div>
+
+<script>
+// Kurerad, backfillad historik (nyast först). type: new | improved | fixed. hi = höjdpunkt (Format C). ico för C.
+const LOG = [
+  { date:"7 juli 2026", ver:"v237", items:[
+    { t:"Daglig påminnelse (beta) – få en pushnotis vid vald tid", type:"new", hi:true, ico:"🔔", desc:"Slå på i inställningarna och välj när du vill bli påmind om dagens pass." },
+    { t:"Ny inställningssida via profilbilden – profil, mål och säkerhetskopiering samlat", type:"new", hi:true, ico:"⚙️", desc:"Tryck på din avatar uppe till höger. Byt profil, sätt mål och säkerhetskopiera." },
+    { t:"Tryck på Flippa-fliken igen för att backa ett steg", type:"improved" },
+  ]},
+  { date:"6 juli 2026", ver:"v232", items:[
+    { t:"Prio per ord (1/2/3) – styr vilka ord som körs och i vilken ordning", type:"new", hi:true, ico:"🎯", desc:"Märk de viktigaste orden och filtrera på nivå i KORT/PASS." },
+    { t:"Filtrera på prio-nivå i KORT/PASS", type:"new" },
+  ]},
+  { date:"5 juli 2026", ver:"v218", items:[
+    { t:"Behärskningsmätare per lektion – se hur långt du kommit", type:"new", hi:true, ico:"📊", desc:"En stapel per lektion visar hur stor andel av orden du lärt in." },
+    { t:"Renare kort och lektionslista", type:"improved" },
+    { t:"Anpassade AI-prompter per språk", type:"improved" },
+  ]},
+  { date:"4 juli 2026", ver:"v211", items:[
+    { t:"Slå upp & bildsök direkt från kortet", type:"new", hi:true, ico:"🔎", desc:"Kolla upp ett ord eller se bilder utan att lämna passet." },
+    { t:"Handsfree-läge (beta) – svara med rösten", type:"new", ico:"🎙" },
+    { t:"Appen laddar inte längre om mitt i ett pass", type:"fixed" },
+  ]},
+  { date:"29 juni 2026", ver:"v175", items:[
+    { t:"Statistik & prestationer – streak, kalender och nivåer", type:"new", hi:true, ico:"🔥", desc:"Följ din streak, se en aktivitetskalender och nå dagliga mål." },
+    { t:"Favoritmarkera ord (stjärnord) och pausa lektioner", type:"new" },
+    { t:"Rosa tema för Hedvigs profil", type:"new" },
+  ]},
+  { date:"17 juni 2026", ver:"v89", items:[
+    { t:"Profiler med lösenordslås (Tom, Hedvig, Wille, Gäst)", type:"new" },
+    { t:"Träningsstatistik börjar sparas", type:"new" },
+  ]},
+  { date:"14 juni 2026", ver:"v80", items:[
+    { t:"AI-hjälp för att fylla tomma lektioner med ord", type:"new", hi:true, ico:"✨", desc:"En färdig prompt att klistra in i din AI – få tillbaka ord att importera." },
+    { t:"Slå upp & lägg till flera ord samtidigt", type:"new" },
+    { t:"Minnesregler per ord", type:"new" },
+  ]},
+  { date:"30 maj 2026", ver:"v1", items:[
+    { t:"Första versionen av Flippa – flippkort med smart repetition", type:"new", hi:true, ico:"🃏", desc:"Svep dig genom glosor; appen håller koll på vad du behöver repetera (Leitner)." },
+  ]},
+];
+const TYPE_LABEL = { new:"Nytt", improved:"Förbättrat", fixed:"Fixat" };
+
+function renderA() {
+  return LOG.map(e => `<div class="a-entry">
+    <div class="a-head"><span class="a-date">${e.date}</span><span class="a-ver">${e.ver}</span></div>
+    <ul class="a-bullets">${e.items.map(i=>`<li>${i.t}</li>`).join("")}</ul></div>`).join("");
+}
+function renderB() {
+  return LOG.map(e => `<div class="b-group"><div class="b-date">${e.date}</div>
+    ${e.items.map(i=>`<div class="b-item">
+      <span class="b-line"><span class="b-dot dot-${i.type}"></span></span>
+      <span class="b-body"><span class="b-chip chip-${i.type}">${TYPE_LABEL[i.type]}</span><span class="b-text">${i.t}</span></span>
+    </div>`).join("")}</div>`).join("");
+}
+function renderC() {
+  const hi = [];
+  LOG.forEach(e => e.items.forEach(i => { if (i.hi) hi.push({ ...i, when:e.date }); }));
+  const top = hi.slice(0, 5);
+  return `<div class="c-intro">De senaste större nyheterna i Flippa.</div>` +
+    top.map(i=>`<div class="c-card"><div class="c-ico">${i.ico||"✨"}</div>
+      <div><div class="c-title">${i.t.split(" – ")[0]}<span class="c-when">${i.when}</span></div>
+      <div class="c-desc">${i.desc || i.t}</div></div></div>`).join("") +
+    `<button class="c-more">Visa äldre uppdateringar</button>`;
+}
+const TITLES = { a:"Versionshistorik", b:"Nyheter", c:"Vad är nytt" };
+const R = { a:renderA, b:renderB, c:renderC };
+function show(fmt) {
+  document.getElementById("clTitle").textContent = TITLES[fmt];
+  document.getElementById("clBody").innerHTML = R[fmt]();
+}
+document.querySelectorAll(".bar [data-fmt]").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".bar [data-fmt]").forEach(x=>x.classList.toggle("on", x===b));
+  show(b.dataset.fmt);
+});
+const tb = document.getElementById("themeBtn");
+tb.onclick = () => { const r = document.documentElement.classList.toggle("rosa"); tb.textContent = r ? "🌙 Mörkt tema" : "🌸 Rosa tema"; };
+show("a");
+</script>
+</body>
+</html>
