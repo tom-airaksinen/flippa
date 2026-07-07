@@ -3339,8 +3339,8 @@ function askWords() {
   return new Promise((resolve) => {
     const m = openModal(`
       <h3>Lägg till ord</h3>
-      <p class="modal-hint">Ett ord per rad: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code></p>
-      <textarea id="m-text" autocapitalize="none" autocorrect="off" placeholder="ciao;hej&#10;grazie;tack"></textarea>
+      <p class="modal-hint">Ett ord per rad: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>.<br>Valfritt: lägg prio (1–3) sist, t.ex. <code>grazie;tack;1</code></p>
+      <textarea id="m-text" autocapitalize="none" autocorrect="off" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Lägg till</button>
@@ -3823,8 +3823,16 @@ function openAiDialog() {
   const promptNow = () => buildAiPrompt(aiCount(), themeVal());
   m.querySelector("#ai-dec").onclick = () => { m.querySelector("#ai-cnt").textContent = setAiCount(aiCount() - 5); };
   m.querySelector("#ai-inc").onclick = () => { m.querySelector("#ai-cnt").textContent = setAiCount(aiCount() + 5); };
-  m.querySelector("#ai-claude").onclick = () => { track("ai-oppna/claude"); openExternal("https://claude.ai/new?q=" + encodeURIComponent(promptNow())); closeModal(); };
-  m.querySelector("#ai-gpt").onclick = () => { track("ai-oppna/gpt"); openExternal("https://chatgpt.com/?q=" + encodeURIComponent(promptNow())); closeModal(); };
+  // Överlämna via location.href (INTE window.open): i en installerad PWA öppnar en
+  // URL utanför scope en ren in-app Safari-vy som respekterar universal links (ChatGPT/
+  // Claude-appen öppnas om den finns) och "Klar" tar dig tillbaka – slipper den blanka
+  // spökfliken som window.open lämnar när sidan hoppar vidare till sin app.
+  const openAiSite = (base, ev) => {
+    const url = base + encodeURIComponent(promptNow()); // läs fälten INNAN modalen stängs
+    track(ev); closeModal(); markExternalNav(); location.href = url;
+  };
+  m.querySelector("#ai-claude").onclick = () => openAiSite("https://claude.ai/new?q=", "ai-oppna/claude");
+  m.querySelector("#ai-gpt").onclick = () => openAiSite("https://chatgpt.com/?q=", "ai-oppna/gpt");
   m.querySelector("#ai-copy-alt").onclick = () => {
     const btn = m.querySelector("#ai-copy-alt");
     try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {}
@@ -4769,7 +4777,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v248";
+const APP_VERSION = "v249";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
