@@ -2584,17 +2584,27 @@ function nearestFan(px,py){
   let ang = Math.atan2(dx,-dy)*180/Math.PI; if(ang<0) ang+=360; const angs = fanAngles(FAN_ITEMS.length); let best=-1, bd=999;
   angs.forEach((a,i)=>{ a=(a+360)%360; let d=Math.abs(((ang-a+540)%360)-180); if(d<bd){bd=d;best=i;} }); return bd<26?best:-1;
 }
+// Slå upp & Bildsök (C1): öppna helst i ny flik/sheet via window.open – på iOS bara
+// tillåtet från ett TAPP, så vid ett glid där returnerar den null och vi faller
+// tillbaka till samma flik (location.href). Ger fin sheet-upplevelse där det går
+// (tapp överallt, glid på Android/desktop) och samma-flik bara i iOS-glid-fallet.
+// OBS: inget "noopener" – det får window.open att returnera null ÄVEN vid lyckat
+// öppnande i vissa browsers, vilket skulle trigga en falsk fallback.
+function openExternal(url){
+  let w = null;
+  try { w = window.open(url, "_blank"); } catch(_) { w = null; }
+  if (w) return "tab";                       // ny flik/sheet – vi stannar kvar i appen
+  markExternalNav(); location.href = url;    // blockerad (iOS-glid) → samma flik
+  return "same";
+}
 function selectFan(i, src){
   if(i<0 || i>=FAN_ITEMS.length) return;
   const key = FAN_ITEMS[i].key, c = session && session.current;
   src = src || "tapp"; // 'glid' | 'tapp' – för analytics
   setFanHot(-1);
   if(!c){ closeFan(); return; }
-  // Slå upp & Bildsök (C1): navigera SAMMA flik via location.href → funkar även från
-  // ett glid på iOS (window.open får bara öppna ny flik från ett tapp). Lämnar appen
-  // tillfälligt; bakåt tar dig tillbaka.
-  if(key==="image"){ track("bildsok/"+src, {nav:true}); markExternalNav(); closeFan(); location.href = googleImageSearchUrl(c.front); return; }
-  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); markExternalNav(); closeFan(); location.href = googleAiExploreUrl(c.front); return; }
+  if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); openExternal(googleImageSearchUrl(c.front)); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front)); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
@@ -2651,8 +2661,8 @@ function updateCardActions(){
   // Fliken ska kontrastera mot kortytan bakom: baksidan (surface-2) → mörkare front-färg.
   moreBtn.classList.toggle("on-back", card.classList.contains("flipped"));
 }
-// Slå upp/Bildsök navigerar i samma flik (location.href) → Google-sidan hamnar i
-// FRAMÅT-historiken. På iOS kan ett vänstersvep på ett kort (som startar nära
+// Fallback-vägen i openExternal navigerar i samma flik (location.href) → Google-sidan
+// hamnar i FRAMÅT-historiken. På iOS kan ett vänstersvep på ett kort (som startar nära
 // högerkanten) då råka trigga Safaris framåt-gest och kasta tillbaka dig till AI-vyn.
 // markExternalNav() flaggar att vi lämnar frivilligt; vid retur nollar vi framåt-
 // stacken med en pushState (trunkerar framåt-historiken enligt spec) så det inte
@@ -4442,7 +4452,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v232";
+const APP_VERSION = "v233";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) versionTag.textContent = "Flippa " + APP_VERSION;
 
