@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Flippa – inställningar & användarväljare (mockup)</title>
+<style>
+  :root {
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8;
+    --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --fail:#e05a4f;
+    --easy:#f4c542; --line:#2c3c63;
+  }
+  html.rosa {
+    --bg:#2a1420; --surface:#3a1e2e; --surface-2:#4d2740; --text:#fdf0f6;
+    --muted:#d7a9bf; --accent:#ff3d8f; --good:#4bbf8a; --line:#5a2f45;
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { margin:0; background:#05080f; color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    -webkit-font-smoothing:antialiased; padding:20px 12px 60px; }
+  .head { max-width:900px; margin:0 auto 16px; }
+  h1 { font-size:1.25rem; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:.88rem; margin:0; line-height:1.5; }
+
+  /* kontrollpanel */
+  .controls { max-width:900px; margin:14px auto; display:flex; flex-wrap:wrap; gap:18px;
+    background:#0d1426; border:1px solid #1f2c4d; border-radius:14px; padding:14px 16px; }
+  .ctl-group { display:flex; flex-direction:column; gap:7px; }
+  .ctl-group .lbl { font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:700; }
+  .seg { display:inline-flex; gap:4px; background:#16203a; border:1px solid #2c3c63; border-radius:999px; padding:4px; }
+  .seg button { border:none; background:none; color:var(--muted); font:inherit; font-size:.82rem;
+    padding:6px 13px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+  .seg button.on { background:var(--accent); color:#fff; }
+  #envNote { font-size:.78rem; color:var(--muted); align-self:flex-end; max-width:230px; line-height:1.4; }
+
+  /* telefonram */
+  .stage { display:flex; justify-content:center; margin-top:26px; }
+  .phone { width:390px; height:800px; background:var(--bg); border-radius:38px;
+    border:1px solid var(--line); overflow:hidden; position:relative;
+    box-shadow:0 30px 80px rgba(0,0,0,.5); display:flex; flex-direction:column; }
+  .notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:140px; height:26px;
+    background:#05080f; border-radius:0 0 16px 16px; z-index:20; }
+
+  /* topbar */
+  .topbar { display:flex; align-items:center; gap:10px; padding:38px 16px 12px; border-bottom:1px solid var(--line); }
+  .topbar .ib { width:38px; height:38px; border-radius:10px; background:var(--surface); border:none;
+    color:var(--text); display:inline-flex; align-items:center; justify-content:center; cursor:pointer; }
+  .topbar .ib svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  .topbar .title { font-weight:700; font-size:1.05rem; }
+
+  .scroll { overflow-y:auto; flex:1; padding:14px 14px 30px; }
+
+  /* sektioner & rader */
+  .sec-lbl { font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; color:var(--muted);
+    font-weight:700; margin:20px 6px 8px; }
+  .sec-lbl:first-child { margin-top:4px; }
+  .card { background:var(--surface); border-radius:16px; overflow:hidden; }
+  .row { display:flex; align-items:center; gap:13px; padding:14px 15px; border-bottom:1px solid rgba(255,255,255,.05); }
+  .row:last-child { border-bottom:none; }
+  .row .ic { width:34px; height:34px; border-radius:9px; background:var(--surface-2); flex:none;
+    display:inline-flex; align-items:center; justify-content:center; color:var(--accent); }
+  .row .ic svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .row .body { flex:1; min-width:0; }
+  .row .body .t { font-size:.97rem; }
+  .row .body .d { font-size:.8rem; color:var(--muted); margin-top:2px; line-height:1.4; }
+  .row .body .d.warn { color:var(--easy); }
+  .row .body .d.bad { color:var(--fail); }
+  .row.disabled { opacity:.5; }
+  .chev { color:var(--muted); font-size:1.1rem; }
+
+  /* switch */
+  .sw { width:46px; height:28px; border-radius:999px; background:var(--surface-2); position:relative;
+    flex:none; cursor:pointer; transition:background .18s; border:1px solid var(--line); }
+  .sw::after { content:""; position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%;
+    background:#fff; transition:transform .18s; }
+  .sw.on { background:var(--good); border-color:transparent; }
+  .sw.on::after { transform:translateX(18px); }
+  .sw.dis { opacity:.4; cursor:not-allowed; }
+
+  .inline-btn { border:none; background:var(--surface-2); color:var(--accent); font:inherit; font-weight:600;
+    font-size:.85rem; padding:8px 14px; border-radius:10px; cursor:pointer; }
+  .time { font-variant-numeric:tabular-nums; background:var(--surface-2); color:var(--text);
+    padding:6px 12px; border-radius:9px; font-size:.95rem; font-weight:600; }
+  .preview-pill { margin:12px 15px 2px; background:var(--surface-2); border-radius:12px; padding:11px 13px;
+    display:flex; align-items:center; gap:10px; }
+  .preview-pill .ico { font-size:1.3rem; }
+  .preview-pill .txt { font-size:.85rem; }
+  .preview-pill .txt b { display:block; }
+  .preview-pill .txt small { color:var(--muted); }
+
+  .install-banner { margin:2px 0 0; background:linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 55%, #000));
+    border-radius:16px; padding:16px; color:#fff; }
+  .install-banner .t { font-weight:700; font-size:1rem; margin-bottom:5px; }
+  .install-banner .d { font-size:.85rem; opacity:.92; line-height:1.45; }
+  .install-banner .steps { font-size:.82rem; margin:9px 0 0; padding-left:18px; opacity:.92; line-height:1.5; }
+
+  .ghost { color:var(--muted); font-size:.78rem; text-align:center; margin:16px 8px 0; line-height:1.5; }
+  .coming { display:inline-block; font-size:.68rem; background:var(--surface-2); color:var(--muted);
+    padding:2px 8px; border-radius:999px; margin-left:6px; vertical-align:middle; }
+
+  /* profil-topprad i inställningar */
+  .prof-hero { display:flex; align-items:center; gap:14px; background:var(--surface); border-radius:16px; padding:15px; }
+  .avatar { width:52px; height:52px; border-radius:50%; background:var(--accent); color:#fff; flex:none;
+    display:inline-flex; align-items:center; justify-content:center; font-size:1.4rem; font-weight:700; }
+  .prof-hero .nm { font-size:1.15rem; font-weight:700; }
+  .prof-hero .role { color:var(--muted); font-size:.82rem; }
+
+  /* användarväljare */
+  .picker { padding:0 20px; display:flex; flex-direction:column; height:100%; }
+  .picker.first { justify-content:center; }
+  .welcome { text-align:center; margin-bottom:26px; }
+  .welcome .logo { font-size:2.6rem; }
+  .welcome h2 { margin:12px 0 4px; font-size:1.5rem; }
+  .welcome p { color:var(--muted); margin:0; font-size:.92rem; }
+  .picker.switch .sheet-head { display:flex; align-items:center; justify-content:space-between; padding:24px 0 14px; }
+  .picker.switch .sheet-head h2 { margin:0; font-size:1.2rem; }
+  .picker.switch .sheet-head .x { background:var(--surface); border:none; color:var(--text); width:34px; height:34px;
+    border-radius:50%; font-size:1.1rem; cursor:pointer; }
+  .u-list { display:flex; flex-direction:column; gap:10px; }
+  .u-card { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid transparent;
+    border-radius:16px; padding:14px 16px; cursor:pointer; }
+  .u-card:hover { border-color:var(--line); }
+  .u-card.current { border-color:var(--good); }
+  .u-card .av { width:44px; height:44px; border-radius:50%; flex:none; display:inline-flex; align-items:center;
+    justify-content:center; font-size:1.2rem; font-weight:700; color:#fff; }
+  .u-card .nm { font-size:1.05rem; font-weight:600; flex:1; }
+  .u-card .nm small { display:block; color:var(--muted); font-weight:400; font-size:.8rem; }
+  .u-card .lock { color:var(--muted); }
+  .u-card .badge { color:var(--good); font-size:.8rem; font-weight:700; }
+  .lockrow { margin-top:2px; background:var(--surface); border-radius:14px; padding:14px 16px; }
+  .lockrow .ll { font-size:.85rem; color:var(--muted); margin-bottom:9px; }
+  .lockrow .dots { display:flex; gap:9px; }
+  .lockrow .dots i { width:13px; height:13px; border-radius:50%; background:var(--surface-2); }
+  .lockrow .dots i.f { background:var(--accent); }
+  .logout-hint { margin-top:auto; padding:16px 0 8px; text-align:center; color:var(--muted); font-size:.78rem; }
+
+  /* toppnivå-vyväxlare */
+  .viewbar { max-width:900px; margin:0 auto 4px; display:flex; gap:8px; flex-wrap:wrap; }
+  .viewbar button { border:1px solid var(--line); background:#0d1426; color:var(--muted); font:inherit;
+    font-size:.85rem; padding:8px 15px; border-radius:999px; cursor:pointer; }
+  .viewbar button.on { background:var(--accent); color:#fff; border-color:transparent; }
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+<div class="head">
+  <h1>Inställningar & användarväljare – states</h1>
+  <p class="sub">Mockup, inget byggt. Växla vy nedan. I <b>Inställningar</b> kan du simulera miljö (webb/PWA) och notisstatus för att se hur notis-kortet ändrar sig. Temaväxlaren visar Hedvigs rosa läge.</p>
+</div>
+
+<div class="viewbar">
+  <button data-view="settings" class="on">⚙ Inställningar</button>
+  <button data-view="first">👋 Användarväljare – första start</button>
+  <button data-view="switch">🔄 Användarväljare – byt användare</button>
+  <span style="flex:1"></span>
+  <button id="themeBtn">🌸 Rosa tema</button>
+</div>
+
+<div class="controls" id="settingsControls">
+  <div class="ctl-group">
+    <span class="lbl">Miljö</span>
+    <div class="seg" id="segEnv">
+      <button data-env="web">Webbläsare</button>
+      <button data-env="pwa" class="on">Installerad (PWA)</button>
+    </div>
+  </div>
+  <div class="ctl-group">
+    <span class="lbl">Notisstatus</span>
+    <div class="seg" id="segPerm">
+      <button data-perm="default" class="on">Ej frågad</button>
+      <button data-perm="granted">Tillåten</button>
+      <button data-perm="denied">Nekad</button>
+    </div>
+  </div>
+  <div id="envNote"></div>
+</div>
+
+<div class="stage">
+  <div class="phone">
+    <div class="notch"></div>
+    <div id="screen"></div>
+  </div>
+</div>
+
+<script>
+const svg = {
+  back:'<svg viewBox="0 0 24 24"><line x1="19" y1="12" x2="6" y2="12"/><polyline points="12,6 6,12 12,18"/></svg>',
+  bell:'<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>',
+  speaker:'<svg viewBox="0 0 24 24"><path d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path d="M15.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>',
+  target:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/></svg>',
+  backup:'<svg viewBox="0 0 24 24"><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/><polyline points="8,10 12,14 16,10"/><line x1="12" y1="4" x2="12" y2="14"/></svg>',
+  user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>',
+  help:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 0 1 4 2c0 1.5-2 2-2 3"/><line x1="12" y1="17" x2="12" y2="17"/></svg>',
+  logout:'<svg viewBox="0 0 24 24"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><polyline points="9,8 5,12 9,16"/><line x1="5" y1="12" x2="15" y2="12"/></svg>',
+  trash:'<svg viewBox="0 0 24 24"><polyline points="4,7 20,7"/><path d="M6 7l1 13h10l1-13"/><path d="M9 7V4h6v3"/></svg>',
+};
+const USERS = [
+  { id:'tom', name:'Tom', role:'Vuxen · admin', locked:true, color:'#5b8cff' },
+  { id:'hedvig', name:'Hedvig', role:'Rosa tema', locked:true, color:'#ff3d8f' },
+  { id:'wille', name:'Wille', locked:true, color:'#5bbf72' },
+  { id:'guest', name:'Gäst', role:'Ingen låskod', locked:false, color:'#9aa3b2' },
+];
+
+let state = { view:'settings', env:'pwa', perm:'default' };
+const screen = document.getElementById('screen');
+
+function notifCard() {
+  // Webbläsare (ej installerad): på iOS krävs installation för web push
+  if (state.env === 'web') {
+    return `<div class="sec-lbl">Påminnelser</div>
+      <div class="install-banner">
+        <div class="t">📲 Lägg till Flippa på hemskärmen</div>
+        <div class="d">Dagliga påminnelser kräver att appen är installerad – särskilt på iPhone, där notiser bara funkar för hemskärms-appar.</div>
+        <ol class="steps"><li>Tryck på Dela-ikonen i Safari</li><li>Välj "Lägg till på hemskärmen"</li><li>Öppna Flippa därifrån – då dyker notis-valet upp här</li></ol>
+      </div>`;
+  }
+  // PWA: beror på permission
+  if (state.perm === 'granted') {
+    return `<div class="sec-lbl">Påminnelser</div>
+      <div class="card">
+        <div class="row">
+          <span class="ic">${svg.bell}</span>
+          <div class="body"><div class="t">Daglig påminnelse</div><div class="d">En knuff när det finns ord att öva</div></div>
+          <div class="sw on"></div>
+        </div>
+        <div class="row">
+          <span class="ic">${svg.target}</span>
+          <div class="body"><div class="t">Påminn mig klockan</div><div class="d">Skickas varje morgon</div></div>
+          <span class="time">08:00</span>
+        </div>
+        <div class="row">
+          <span class="ic">${svg.bell}</span>
+          <div class="body"><div class="t">Testa notisen</div><div class="d">Skicka en direkt till den här enheten</div></div>
+          <button class="inline-btn">Skicka</button>
+        </div>
+      </div>
+      <div class="preview-pill">
+        <span class="ico">🇮🇹</span>
+        <span class="txt"><b>Dags att plugga i Flippa!</b><small>12 italienska ord väntar på dig idag</small></span>
+      </div>`;
+  }
+  if (state.perm === 'denied') {
+    return `<div class="sec-lbl">Påminnelser</div>
+      <div class="card">
+        <div class="row disabled">
+          <span class="ic">${svg.bell}</span>
+          <div class="body"><div class="t">Daglig påminnelse</div><div class="d bad">Notiser är blockerade för Flippa</div></div>
+          <div class="sw dis"></div>
+        </div>
+      </div>
+      <div class="ghost">Du har tackat nej till notiser. Slå på igen i telefonens <b>Inställningar → Flippa → Notiser</b>, så dyker valen upp här.</div>`;
+  }
+  // default (ej frågad)
+  return `<div class="sec-lbl">Påminnelser</div>
+    <div class="card">
+      <div class="row">
+        <span class="ic">${svg.bell}</span>
+        <div class="body"><div class="t">Daglig påminnelse</div><div class="d warn">Slå på för en daglig knuff · frågar om lov</div></div>
+        <div class="sw"></div>
+      </div>
+    </div>
+    <div class="ghost">När du slår på frågar telefonen om lov att skicka notiser. Du kan alltid stänga av igen här.</div>`;
+}
+
+function renderSettings() {
+  screen.innerHTML = `
+    <div class="topbar"><button class="ib">${svg.back}</button><span class="title">Inställningar</span></div>
+    <div class="scroll">
+      <div class="sec-lbl">Profil</div>
+      <div class="prof-hero">
+        <span class="avatar">T</span>
+        <div style="flex:1"><div class="nm">Tom</div><div class="role">Vuxen · admin</div></div>
+        <button class="inline-btn">Byt</button>
+      </div>
+
+      ${notifCard()}
+
+      <div class="sec-lbl">Träning</div>
+      <div class="card">
+        <div class="row"><span class="ic">${svg.speaker}</span>
+          <div class="body"><div class="t">Automatisk uppläsning</div><div class="d">Läs upp det utländska ordet</div></div>
+          <div class="sw on"></div></div>
+        <div class="row"><span class="ic">${svg.target}</span>
+          <div class="body"><div class="t">Mål & nivåer</div><div class="d">Kort/dag och veckomål</div></div>
+          <span class="chev">›</span></div>
+      </div>
+
+      <div class="sec-lbl">Data</div>
+      <div class="card">
+        <div class="row"><span class="ic">${svg.backup}</span>
+          <div class="body"><div class="t">Säkerhetskopiera</div><div class="d">Exportera / importera statistik</div></div>
+          <span class="chev">›</span></div>
+      </div>
+
+      <div class="sec-lbl">Konto <span class="coming">kommer</span></div>
+      <div class="card">
+        <div class="row disabled"><span class="ic">${svg.logout}</span>
+          <div class="body"><div class="t">Logga in med Apple / Google</div><div class="d">Synka mellan enheter – när riktig inloggning finns</div></div>
+          <span class="chev">›</span></div>
+        <div class="row disabled"><span class="ic">${svg.trash}</span>
+          <div class="body"><div class="t">Radera mina data</div><div class="d">Exportera & radera (GDPR)</div></div>
+          <span class="chev">›</span></div>
+      </div>
+
+      <div class="sec-lbl">Om</div>
+      <div class="card">
+        <div class="row"><span class="ic">${svg.help}</span>
+          <div class="body"><div class="t">Hjälp & hur det funkar</div></div><span class="chev">›</span></div>
+        <div class="row"><span class="ic">${svg.user}</span>
+          <div class="body"><div class="t">Version</div><div class="d">Flippa v233</div></div></div>
+      </div>
+      <div class="ghost">Profillåsen (Tom/Hedvig/Wille) är bara på skoj – det är inte riktig inloggning ännu.</div>
+    </div>`;
+}
+
+function userCard(u, opts={}) {
+  const av = `<span class="av" style="background:${u.color}">${u.name[0]}</span>`;
+  const badge = opts.current ? `<span class="badge">✓ Inloggad nu</span>` : (u.locked ? `<span class="lock">🔒</span>` : '');
+  const sub = u.role ? `<small>${u.role}</small>` : '';
+  return `<div class="u-card ${opts.current?'current':''}">${av}<span class="nm">${u.name}${sub}</span>${badge}</div>`;
+}
+
+function renderFirst() {
+  screen.innerHTML = `
+    <div class="picker first">
+      <div class="welcome">
+        <div class="logo">🃏</div>
+        <h2>Välkommen till Flippa</h2>
+        <p>Vem är du? Välj din profil för att börja.</p>
+      </div>
+      <div class="u-list">${USERS.map(u=>userCard(u)).join('')}</div>
+      <div class="ghost">Ingen profil är vald ännu – det här är det första du möts av på en ny enhet. Inget annat i appen syns förrän du valt.</div>
+    </div>`;
+}
+
+function renderSwitch() {
+  screen.innerHTML = `
+    <div class="picker switch">
+      <div class="sheet-head"><h2>Byt användare</h2><button class="x">✕</button></div>
+      <div class="u-list">
+        ${userCard(USERS[0], {current:true})}
+        ${userCard(USERS[1])}
+        ${userCard(USERS[2])}
+        ${userCard(USERS[3])}
+      </div>
+      <div class="lockrow">
+        <div class="ll">🔒 Ange Hedvigs kod för att byta</div>
+        <div class="dots"><i class="f"></i><i class="f"></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="logout-hint">Här kommer även <b>Logga ut</b> att bo när riktig inloggning finns.</div>
+    </div>`;
+}
+
+const RENDER = { settings:renderSettings, first:renderFirst, switch:renderSwitch };
+const NOTES = {
+  web:'Webbläsare (ej installerad): på iPhone krävs "Lägg till på hemskärmen" innan push går att slå på.',
+  pwa:'Installerad app: notis-valet styrs av om användaren tillåtit notiser.'
+};
+
+function render() {
+  document.getElementById('settingsControls').classList.toggle('hidden', state.view!=='settings');
+  document.getElementById('envNote').textContent = NOTES[state.env];
+  RENDER[state.view]();
+}
+
+document.querySelectorAll('.viewbar [data-view]').forEach(b=>b.onclick=()=>{
+  state.view=b.dataset.view;
+  document.querySelectorAll('.viewbar [data-view]').forEach(x=>x.classList.toggle('on',x===b));
+  render();
+});
+document.getElementById('segEnv').onclick=e=>{ const b=e.target.closest('[data-env]'); if(!b)return;
+  state.env=b.dataset.env; document.querySelectorAll('#segEnv button').forEach(x=>x.classList.toggle('on',x===b)); render(); };
+document.getElementById('segPerm').onclick=e=>{ const b=e.target.closest('[data-perm]'); if(!b)return;
+  state.perm=b.dataset.perm; document.querySelectorAll('#segPerm button').forEach(x=>x.classList.toggle('on',x===b)); render(); };
+const tb=document.getElementById('themeBtn');
+tb.onclick=()=>{ const r=document.documentElement.classList.toggle('rosa'); tb.textContent = r ? '🌙 Mörkt tema' : '🌸 Rosa tema'; };
+
+render();
+</script>
+</body>
+</html>
