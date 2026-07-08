@@ -4467,6 +4467,9 @@ function openTranslate(defaultLessonId, prefill) {
   };
 }
 
+// #translate-subject är DOLT i ＋-menyn (se index.html) – dess "Slå upp & lägg till"
+// överlappar nu med Slå upp-segmentet i openAddDialog. Handlern behålls så länge så
+// den är redo om vi återinför den (antingen strykning, eller genväg in i openAddDialog).
 $("translate-subject").onclick = () => openTranslate(null); // lektionslistans ＋-meny (väljer lektion) – enas senare
 // (＋ Lägg till ord på lektionsskärmen går via openAddDialog; #translate-words-knappen borttagen)
 
@@ -5020,7 +5023,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v261";
+const APP_VERSION = "v262";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

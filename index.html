@@ -57,7 +57,12 @@
       <button id="lessons-search-btn" class="icon-btn" title="Sök i alla lektioner">🔍</button>
       <div id="add-menu" class="add-menu hidden" role="menu">
         <button id="add-lesson" class="add-menu-item" role="menuitem">＋ Ny lektion</button>
-        <button id="translate-subject" class="add-menu-item" role="menuitem">🔎 Slå upp &amp; lägg till ord</button>
+        <!-- Dold tills vidare: "Slå upp & lägg till ord" överlappar nu med "Slå upp"-
+             segmentet i den nya Lägg till ord-dialogen (openAddDialog). Behåll koden
+             (knapp + openTranslate + onclick) tills vi bestämt: antingen STRYK helt,
+             eller ta in i det enhetliga flödet (t.ex. som en genväg som öppnar
+             Lägg till ord direkt på Slå upp-segmentet med lektionsväljare). -->
+        <button id="translate-subject" class="add-menu-item hidden" role="menuitem">🔎 Slå upp &amp; lägg till ord</button>
         <button id="import-csv" class="add-menu-item" role="menuitem">⬆️ Importera CSV</button>
       </div>
     </header>
