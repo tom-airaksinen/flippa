@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="sv">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Positionering av Flippa – April Dunford</title>
+<style>
+  :root{--bg:#0d1426;--surface:#16203a;--surface-2:#1f2c4d;--text:#f2f4f8;--muted:#9aa3b2;--accent:#5b8cff;--good:#5bbf72;--easy:#f4c542;--line:#2c3c63;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6;}
+  .wrap{max-width:820px;margin:0 auto;padding:32px 20px 80px;}
+  header.top{margin-bottom:8px;}
+  .kicker{color:var(--accent);font-weight:700;font-size:.82rem;text-transform:uppercase;letter-spacing:.08em;}
+  h1{font-size:2rem;margin:6px 0 6px;letter-spacing:-.01em;}
+  .lede{color:var(--muted);font-size:1.02rem;margin:0 0 8px;}
+  .meta{color:var(--muted);font-size:.8rem;margin-bottom:26px;}
+  .take{background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 22%,var(--surface)),var(--surface));border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin:0 0 30px;}
+  .take h2{margin:0 0 8px;font-size:1.05rem;}
+  .take p{margin:0 0 8px;font-size:.94rem;color:#dfe4ee;}
+  .step{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-bottom:16px;position:relative;}
+  .step .num{position:absolute;top:-12px;left:20px;width:30px;height:30px;border-radius:50%;background:var(--accent);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.95rem;}
+  .step h3{margin:6px 0 4px;font-size:1.18rem;}
+  .step .sub{color:var(--muted);font-size:.85rem;margin:0 0 12px;}
+  .tag{display:inline-block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:999px;vertical-align:middle;margin-left:8px;}
+  .tag.draft{background:color-mix(in srgb,var(--easy) 22%,var(--surface-2));color:var(--easy);}
+  .tag.you{background:color-mix(in srgb,var(--accent) 22%,var(--surface-2));color:var(--accent);}
+  ul{margin:8px 0 4px;padding-left:20px;}li{margin-bottom:5px;font-size:.94rem;}
+  .draftbox{margin:4px 0 0;}
+  .youbox{margin-top:14px;padding:12px 14px;background:color-mix(in srgb,var(--accent) 10%,var(--surface-2));border-left:3px solid var(--accent);border-radius:0 10px 10px 0;font-size:.92rem;}
+  .youbox b{color:var(--accent);}
+  .opts .opt{background:var(--surface-2);border:1px solid var(--line);border-radius:11px;padding:11px 13px;margin-top:8px;font-size:.92rem;}
+  .opts .opt.lean{border-color:var(--good);} .opts .opt .pill{font-size:.66rem;font-weight:700;color:var(--good);text-transform:uppercase;letter-spacing:.04em;margin-left:6px;}
+  .stmt{background:var(--surface);border:1px dashed var(--accent);border-radius:16px;padding:20px 22px;margin-top:26px;}
+  .stmt h3{margin:0 0 10px;} .stmt .fill{color:var(--accent);font-weight:600;}
+  .stmt p{font-size:1rem;line-height:1.7;}
+  .foot{color:var(--muted);font-size:.82rem;margin-top:28px;text-align:center;line-height:1.6;}
+  code{background:var(--surface-2);padding:1px 6px;border-radius:5px;font-size:.85em;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="kicker">Positionering · April Dunford</div>
+    <h1>Vad är Flippa – egentligen?</h1>
+    <p class="lede">Ett arbetsdokument för att positionera Flippa enligt <em>Obviously Awesome</em>. Utkast fyllda av det vi byggt; öppna frågor märkta <span class="tag you" style="margin:0">Till dig</span>.</p>
+    <div class="meta">Levande dokument · v1 · 8 juli 2026 · förfinas vidare</div>
+  </header>
+
+  <div class="take">
+    <h2>Kort om ramverket &amp; min take</h2>
+    <p>Positionering är ett <b>medvetet val av kontext</b> som gör din styrka självklar – inte en slogan, utan grunden budskap, sida och onboarding vilar på. Byggstenar: konkurrensalternativ → unika egenskaper → värde (+bevis) → vem bryr sig mest → marknadskategori (→ ev. trend).</p>
+    <p><b>Hävstången är kategorivalet.</b> "Glosträningsapp" → jämförs med Quizlet/Anki och dränks. En vassare ram sätter spelplanen där Flippas styrkor (svensk-först, prio, riktig repetition, egna ord) är mitten.</p>
+    <p><b>Förbehåll:</b> ramverket är B2B-fött. För en familjeapp måste "värde" vara <em>upplevt</em> (barnen gör det självmant, mindre tjat, rätt ord), och alternativen är vanor + konsumentappar – inte en inköpsprocess.</p>
+  </div>
+
+  <div class="step">
+    <span class="num">1</span>
+    <h3>Konkurrensalternativ <span class="tag draft">Utkast</span></h3>
+    <p class="sub">Vad kunden faktiskt skulle göra om Flippa inte fanns.</p>
+    <div class="draftbox"><ul>
+      <li><b>Papperslista + förälder som förhör</b> (troligen huvudalternativet)</li>
+      <li><b>Quizlet</b> – populärt, men riktig repetition är paywall:ad/svagare</li>
+      <li><b>Anki</b> – kraftfull SRS men skrämmande/tung att sätta upp</li>
+      <li><b>Duolingo/Memrise</b> – fast kurs, hjälper inte med <em>nästa veckas</em> glosor</li>
+      <li><b>Skolans egen glostjänst</b> / <b>inget</b> (plugga i sista stund)</li>
+    </ul></div>
+    <div class="youbox"><b>Till dig:</b> Vad använde ni faktiskt före Flippa? Vad skulle barnen ta till om den försvann i morgon?</div>
+  </div>
+
+  <div class="step">
+    <span class="num">2</span>
+    <h3>Unika egenskaper <span class="tag draft">Utkast</span></h3>
+    <p class="sub">Det Flippa har som alternativen inte har.</p>
+    <div class="draftbox"><ul>
+      <li><b>Svensk-först</b> – byggd för svenska elever (glosförhör), inte en engelsk kurs</li>
+      <li><b>Prio per ord</b> (kärna/vanlig/nisch) – styr <em>vilka</em> ord som körs</li>
+      <li><b>Riktig spaced repetition</b> (Leitner) – rätt ord vid rätt tid, gratis</li>
+      <li><b>Egna ordlistor</b> – dina skolglosor, inte ett låst innehåll</li>
+      <li><b>AI-hjälp</b> som bygger listor med rätt genus/artikel per språk</li>
+      <li><b>Familjeprofiler</b>, <b>ingen inloggning/reklam</b>, <b>offline (PWA)</b>, swipe + <b>handsfree/uppläsning</b></li>
+    </ul></div>
+    <div class="youbox"><b>Till dig:</b> Rangordna – vilka känns faktiskt unika/viktiga? Något jag missat, eller överdriver?</div>
+  </div>
+
+  <div class="step">
+    <span class="num">3</span>
+    <h3>Värde &amp; bevis <span class="tag draft">Utkast</span></h3>
+    <p class="sub">Nyttan egenskaperna möjliggör – och vad som styrker den.</p>
+    <div class="draftbox"><ul>
+      <li>Pluggar <b>rätt ord</b> (prio + SRS) → mer effekt per minut</li>
+      <li>Barnen övar <b>självständigt</b> → mindre föräldratjat</li>
+      <li>Egna ord → <b>direkt relevant</b> för nästa förhör</li>
+      <li>Lågt motstånd (swipe, ingen setup) → man <b>kommer igång</b> och håller i (streak)</li>
+    </ul>
+    <p style="font-size:.88rem;color:var(--muted);margin:6px 0 0"><b>Bevis (idag):</b> era barn använder den dagligen; streak/statistik; noll krångel att komma igång.</p></div>
+    <div class="youbox"><b>Till dig:</b> Vilket värde har du <em>sett</em> hända (ett konkret aha)? Vad säger Hedvig/Wille?</div>
+  </div>
+
+  <div class="step">
+    <span class="num">4</span>
+    <h3>Vem bryr sig mest <span class="tag you">Till dig</span></h3>
+    <p class="sub">Segmentet där värdet är störst – hjälten i berättelsen.</p>
+    <div class="draftbox"><ul>
+      <li><b>A)</b> Svenska familjer med barn som har veckans glosförhör</li>
+      <li><b>B)</b> Den engagerade föräldern – vill slippa förhöra men se att det görs</li>
+      <li><b>C)</b> Egen-pluggaren (gymnasie/vuxen) som vill äga sina ordlistor</li>
+    </ul></div>
+    <div class="youbox"><b>Till dig:</b> Vem är kärnan – <b>föräldern eller barnet</b>? Vilken ålder/situation träffar bäst? (Detta styr hela tonen.)</div>
+  </div>
+
+  <div class="step">
+    <span class="num">5</span>
+    <h3>Marknadskategori / referensram <span class="tag you">Till dig</span></h3>
+    <p class="sub">Ramen som avgör vad Flippa jämförs med. Här ligger hävstången.</p>
+    <div class="opts">
+      <div class="opt">A · "Glosträningsapp" – bekant, men jämförs med Quizlet/Anki → svårt att sticka ut</div>
+      <div class="opt lean">B · "Smart glosförhör för familjen"<span class="pill">jag lutar hit</span> – äger familj + skol-kontext</div>
+      <div class="opt lean">D · "Glosappen som pluggar rätt ord åt dig"<span class="pill">…eller hit</span> – värde-fokus, äger prio+SRS</div>
+      <div class="opt">C · "Spaced repetition för dina egna ord – på svenska" – äger SRS + eget innehåll (lite nörderi)</div>
+    </div>
+    <div class="youbox"><b>Till dig:</b> Vilken ram känns sann? (Beror mycket på fråga 4 och på ambitionen: familjeverktyg vs skarp lansering.)</div>
+  </div>
+
+  <div class="step">
+    <span class="num">6</span>
+    <h3>Trend (valfritt, sparsamt) <span class="tag draft">Utkast</span></h3>
+    <p class="sub">Relevant medvind – bara om den förstärker, aldrig som huvudnummer.</p>
+    <div class="draftbox"><ul>
+      <li>AI-stöd i lärande (Flippa: AI bygger listorna, du äger dem)</li>
+      <li>"Nyttig skärmtid" – korta fokuserade pass vs oändlig scroll</li>
+    </ul></div>
+  </div>
+
+  <div class="stmt">
+    <h3>Positioneringssats – utkast att fylla</h3>
+    <p>För <span class="fill">svenska familjer med barn som har glosförhör</span> som tröttnat på <span class="fill">papperslistor och att förhöra själva</span>, är Flippa <span class="fill">en glosapp som med smart repetition ser till att man pluggar rätt ord vid rätt tid</span> – så barnen övar självständigt på <span class="fill">sina egna skolglosor</span>. Till skillnad från <span class="fill">Quizlet/Duolingo</span>, som saknar riktig repetition respektive egna ord.</p>
+  </div>
+
+  <div class="foot">
+    Nästa steg: du svarar på "Till dig"-frågorna (särskilt <b>ambition</b>, <b>hjälten</b> och <b>kategorin</b>), så skärper vi satsen och kan destillera den till budskap för en ev. landningssida / App Store-text.
+  </div>
+</div>
+</body>
+</html>
