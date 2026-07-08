@@ -1392,7 +1392,7 @@ function renderLessons(keepChoosers) {
     const raw = ($("lessons-search").value || "").trim();
     const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
     list.innerHTML = `<p class="empty">Inga lektioner matchar "${esc(raw)}".</p>`
-      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">🔎 Slå upp &amp; lägg till</button></p>` : "");
+      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">${IC_LOOKUP} Slå upp &amp; lägg till</button></p>` : "");
     if (canLookUp) $("lookup-add").onclick = () => openAddDialog({ segment: "lookup", prefill: raw, pickLesson: true });
     return;
   }
@@ -2849,11 +2849,12 @@ cardStack.appendChild(fanBg);
 // Stiliserade linjeikoner (samma som gamla ⋯-menyn) för Slå upp/Bildsök – inte färgemoji.
 const FAN_SVG_GLOBE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg>';
 const FAN_SVG_IMAGE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+const FAN_SVG_EDIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></svg>';
 const FAN_ITEMS = [
   { key: "image",  ic: FAN_SVG_IMAGE, label: "Bildsök" },
-  { key: "edit",   ic: "✎",           label: "Redigera" },
+  { key: "edit",   ic: FAN_SVG_EDIT,  label: "Redigera" },
   { key: "star",   ic: "☆",           label: "Stjärna" },
-  { key: "lookup", ic: FAN_SVG_GLOBE, label: "Slå upp" },
+  { key: "lookup", ic: FAN_SVG_GLOBE, label: "Webbsök" },
 ];
 const fanOpts = FAN_ITEMS.map((it, i) => {
   const el = document.createElement("div"); el.className = "fan-opt"; el.dataset.key = it.key;
@@ -3610,6 +3611,7 @@ const IC_EDIT   = `<svg ${_ICL}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/>
 const IC_MIC    = `<svg ${_ICL}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>`;
 const IC_LOCK   = `<svg ${_ICL}><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`;
 const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" y1="4" x2="12" y2="15"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>`;
+const IC_LOOKUP = `<svg ${_ICL}><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="10.5" y1="7.8" x2="10.5" y2="13.2"/><line x1="7.8" y1="10.5" x2="13.2" y2="10.5"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
 const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
@@ -3621,6 +3623,9 @@ const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" a
   set("rename-lesson", IC_EDIT);
   set("speak-btn", IC_SPEAK);
   set("import-csv", IC_IMPORT + " Importera CSV");
+  set("translate-subject", IC_LOOKUP + " Slå upp &amp; lägg till ord");
+  const asr = document.querySelector("#autospeak-row > span");
+  if (asr) asr.innerHTML = IC_SPEAK + " Automatisk uppläsning";
   const hf = document.querySelector('.mode-opt[data-mode="hf"]');
   if (hf) hf.innerHTML = IC_MIC + ' Handsfree <span class="beta">beta</span>';
 })();
@@ -3923,7 +3928,7 @@ function renderEditor() {
     const raw = (editorSearch.value || "").trim();
     const canLookUp = !!subjectLang(currentSubject);
     list.innerHTML = `<p class="empty">Inga träffar på "${esc(raw)}".</p>`
-      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add-editor">🔎 Slå upp &amp; lägg till</button></p>` : "");
+      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add-editor">${IC_LOOKUP} Slå upp &amp; lägg till</button></p>` : "");
     if (canLookUp) $("lookup-add-editor").onclick = () => openAddDialog({ segment: "lookup", prefill: raw });
     return;
   }
@@ -5010,7 +5015,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v258";
+const APP_VERSION = "v259";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
