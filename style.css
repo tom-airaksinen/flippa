@@ -1519,10 +1519,16 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .ai-stepper button { width: 42px; height: 42px; flex: none; border: none; background: none; color: var(--accent); font-size: 1.4rem; cursor: pointer; }
 .ai-stepper > span { flex: 1; text-align: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .ai-send { display: flex; gap: 10px; margin-top: 18px; }
-.ai-btn { flex: 1; border: none; border-radius: 12px; padding: 13px 10px; font: inherit; font-weight: 700; font-size: 0.95rem; color: #fff; cursor: pointer; }
-.ai-btn:active { filter: brightness(0.92); }
-.ai-btn.claude { background: #d97757; }
-.ai-btn.gpt { background: #10a37f; }
+/* Claude/ChatGPT: diskret, gemensam ton (dämpad accent → rosa i Hedvigs tema),
+   avvikande mot dialogens övriga knappar + logo som signalerar "öppnar annan app". */
+.ai-btn {
+  flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent); border-radius: 12px;
+  padding: 12px 10px; font: inherit; font-weight: 600; font-size: 0.95rem;
+  color: var(--text); background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); cursor: pointer;
+}
+.ai-btn:active { filter: brightness(1.12); }
+.ai-btn .ai-logo { width: 18px; height: 18px; flex: none; }
 .ai-copy-alt { text-align: center; margin: 15px 0 2px; }
 
 /* =========================================================================

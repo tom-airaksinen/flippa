@@ -703,6 +703,30 @@ function todaysNewCards(subject) {
   return out;
 }
 
+// Loosening (bocka i en nivå mitt på dagen): fyll på dagens nyords-set med nyss
+// tillåtna nivåers nya ord UPP TILL dagskvoten. Redan valda rörs ej (ingen churn),
+// och vi spränger inte "N nya/dag". Idempotent. Skärpning behöver inget – filtret
+// döljer live i todaysNewCards ovan. Mogna/förfallna ord räknas alltid live.
+function topUpTodaysNew(subject) {
+  if (!subject) return;
+  let ledger; try { ledger = JSON.parse(localStorage.getItem(NEW_INTRO_KEY) || "{}"); } catch { ledger = {}; }
+  const entry = ledger[subject.id];
+  if (!entry || entry.date !== todayStr()) { todaysNewCards(subject); return; } // inget för idag än → normal beräkning
+  const room = newPerDay() - entry.ids.length;
+  if (room <= 0) return; // dagskvoten redan fylld
+  const have = new Set(entry.ids);
+  const eligible = [];
+  activeLessons(subject).forEach((l) => l.cards.forEach((c) => {
+    if (isNewCard(c) && prioAllowed(c, subject.id) && !have.has(c.id)) eligible.push(c);
+  }));
+  if (!eligible.length) return;
+  const add = pickWeightedByPrio(eligible, Math.min(room, eligible.length)); // kärnord först
+  if (!add.length) return;
+  entry.ids = entry.ids.concat(add.map((c) => c.id));
+  ledger[subject.id] = entry;
+  localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+}
+
 // Migrera gammal statistik (nycklad på kort-ID "cardId:dir") till ordnyckeln.
 // Idempotent: kör säkert flera ggr; behåller starkaste posten vid krock.
 const SRS_MIGRATED_KEY = "flippa-srs-keyed-by-word";
@@ -1715,6 +1739,7 @@ $("prio-filter").addEventListener("click", (e) => {
   const next = cur.includes(lvl) ? cur.filter((x) => x !== lvl) : cur.concat(lvl);
   if (!next.length) return; // minst en nivå
   setPrioFilter(currentSubject.id, next);
+  topUpTodaysNew(currentSubject); // ibockning slår igenom direkt (nya ord upp till dagskvoten)
   track("priofilter/" + [1, 2, 3].filter((x) => next.includes(x)).join(""));
   syncOptionPills();
   if (activeScreen === "lessons") renderLessons(true); // uppdatera räknare + tom-not, behåll väljaren öppen
@@ -4238,7 +4263,10 @@ function openAddDialog(opts = {}) {
       <div class="ai-stepper" style="margin:2px 0 0"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
-      <div class="ai-send"><button type="button" class="ai-btn claude" id="ai2-claude">Öppna i Claude</button><button type="button" class="ai-btn gpt" id="ai2-gpt">Öppna i ChatGPT</button></div>
+      <div class="ai-send">
+        <button type="button" class="ai-btn" id="ai2-claude"><svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="3.5" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20.5"/><line x1="3.5" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20.5" y2="12"/><line x1="6" y1="6" x2="9.7" y2="9.7"/><line x1="14.3" y1="14.3" x2="18" y2="18"/><line x1="18" y1="6" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="6" y2="18"/></svg>Claude</button>
+        <button type="button" class="ai-btn" id="ai2-gpt"><svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.3 18.5 7v10L12 20.7 5.5 17V7z"/><path d="M12 11.4 18.2 7.8M12 11.4v7.1M12 11.4 5.8 7.8" opacity=".55"/></svg>ChatGPT</button>
+      </div>
       <div class="tertiary-c"><button type="button" class="link-action" id="ai2-copy">⧉ Kopiera prompt (för annan AI)</button></div>
       <div class="add-divider">När du fått svaret</div>
       <div id="ai2-clipmsg"></div>
@@ -4952,7 +4980,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v255";
+const APP_VERSION = "v256";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
