@@ -119,6 +119,7 @@ function subjectLang(s) {
 }
 // Flagga-emoji per språk (tomt om inget språk)
 const LANG_FLAG = {
+  "sv": "🇸🇪", "sv-SE": "🇸🇪",
   "it-IT": "🇮🇹", "de-DE": "🇩🇪", "fr-FR": "🇫🇷", "es-ES": "🇪🇸",
   "en-GB": "🇬🇧", "pt-PT": "🇵🇹", "uk-UA": "🇺🇦", "id-ID": "🇮🇩",
   // Franska varianter → franska flaggan (annars ger t.ex. fr-CA 🇨🇦 via regionkoden)
@@ -4235,11 +4236,14 @@ function openAddDialog(opts = {}) {
 
   // ---- Slå upp (redigerbara kort) ----
   function lookupBody() {
+    const svFlag = flagForLang("sv"), forFlag = flagForLang(fullLang);
+    const pre = (f) => (f ? f + " " : "");
     return `<div class="seg" id="lu-dir">
-        <button data-d="sv2for">Svenska → ${esc(foreignLabel)}</button>
-        <button data-d="for2sv">${esc(foreignLabel)} → Svenska</button>
+        <button data-d="sv2for">${pre(svFlag)}Svenska → ${esc(foreignLabel)}</button>
+        <button data-d="for2sv">${pre(forFlag)}${esc(foreignLabel)} → Svenska</button>
       </div>
-      <div class="t-row"><input type="text" id="lu-src" value="${esc(luSrcVal)}" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go">🔎</button></div>
+      <div class="t-row"><input type="text" id="lu-src" value="${esc(luSrcVal)}" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go" title="Slå upp" aria-label="Slå upp">${IC_SEARCH}</button></div>
+      <p class="lu-note">⚠️ Översättningen kommer från en enkel gratistjänst – granska orden (särskilt böjning och genus) innan du lägger till.</p>
       <div id="lu-cards"></div>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="lu-add">Lägg till</button></div>`;
   }
@@ -4270,13 +4274,14 @@ function openAddDialog(opts = {}) {
     if (!parts.length) return;
     const [from, to] = luDir === "sv2for" ? ["sv", foreignCode] : [foreignCode, "sv"];
     const go = m.querySelector("#lu-go"); go.textContent = "…";
+    go.classList.add("busy");
     try {
       const out = [];
       for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
         out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
       luCards = out; renderLuCards();
     } catch (e) { toast("Uppslag misslyckades: " + (e.message || e), 4000); }
-    go.textContent = "🔎";
+    go.classList.remove("busy"); go.innerHTML = IC_SEARCH;
   }
   function wireLookup() {
     const src = m.querySelector("#lu-src");
@@ -5015,7 +5020,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v259";
+const APP_VERSION = "v260";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

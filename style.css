@@ -639,7 +639,17 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .seg button.seg-on { background: var(--accent); color: #fff; }
 .t-row { display: flex; gap: 8px; }
 .t-row input { flex: 1; }
-.t-lookup { flex: none; width: 54px; padding: 0; font-size: 1.2rem; }
+.t-lookup {
+  flex: none; width: 50px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  color: var(--accent);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.t-lookup .ic-svg { width: 22px; height: 22px; color: var(--accent); }
+.t-lookup:active { background: var(--surface); }
+.t-lookup.busy { color: var(--muted); font-size: 1.2rem; }
 
 /* ---- Träning ---- */
 #train-bar {
@@ -1570,6 +1580,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* Grupperad segmentkontroll (som prototypen) för toppvalen + riktningen */
 .add-seg, #lu-dir { background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
 .add-seg button, #lu-dir button { background: none; padding: 9px 6px; font-size: 0.88rem; font-weight: 600; border-radius: 9px; }
+#lu-dir button { white-space: nowrap; font-size: 0.8rem; }
 .add-seg button.seg-on, #lu-dir button.seg-on { background: var(--accent); color: #fff; }
 /* Luftigare vertikal rytm i dialogen */
 .add-seg { margin-bottom: 8px; }              /* mindre luft under segmentkontrollen */
@@ -1578,6 +1589,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 #add-body .modal-hint { margin: 0 0 8px; }
 #add-body label { display: block; margin: 15px 0 6px; }
 #add-body .t-row { margin-top: 12px; }
+.lu-note {
+  display: flex; gap: 6px; align-items: flex-start;
+  margin: 8px 2px 2px; font-size: 0.72rem; line-height: 1.35;
+  color: var(--muted);
+}
 #add-body .add-divider { margin: 20px 0 14px; }
 /* Sorteringsknappen: samma höjd som ＋ Lägg till ord (+ lite bredare) */
 .editor-actions .icon-btn { width: 54px; height: auto; }
