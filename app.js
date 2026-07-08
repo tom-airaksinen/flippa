@@ -1081,7 +1081,7 @@ function welcomeHTML() {
     `<button class="welcome-card" data-profile="${u.id}" type="button">
        <span class="wc-av" style="background:${profileColor(u.id)}">${esc(u.name.charAt(0))}</span>
        <span class="wc-name">${esc(u.name)}</span>
-       ${u.lock ? '<span class="wc-lock">🔒</span>' : ""}
+       ${u.lock ? `<span class="wc-lock">${IC_LOCK}</span>` : ""}
      </button>`).join("");
   return `<div class="welcome">
       <div class="welcome-hero"><div class="welcome-logo">🃏</div>
@@ -1410,7 +1410,7 @@ function renderLessons(keepChoosers) {
       const paused = isLessonPaused(l.id);
       const d = dueCountForLessons([l]);
       const dueTag = d > 0 ? `<span class="due-tag">⏰ ${d}</span>` : "";
-      const pauseIco = paused ? ` <span class="lesson-paused-ico" title="Pausad" aria-label="Pausad">⏸</span>` : "";
+      const pauseIco = paused ? ` <span class="lesson-paused-ico" title="Pausad" aria-label="Pausad">${IC_PAUSE}</span>` : "";
       // Behärskning mäts mot valda prio-nivåer (filtret). Utan aktivt filter = alla ord.
       const scope = l.cards.filter((c) => prioAllowed(c));
       const total = scope.length;
@@ -3603,6 +3603,28 @@ const CHECK_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="no
 // Jordglob – samma motiv som globknappen på kortets baksida (Utforska)
 const GLOBE_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg>`;
 
+/* Stiliserade SVG-ikoner (utbyte av utvalda emoji). Storlek styrs via CSS (.ic-svg). */
+const _ICL = 'class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
+const IC_SEARCH = `<svg ${_ICL}><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>`;
+const IC_EDIT   = `<svg ${_ICL}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></svg>`;
+const IC_MIC    = `<svg ${_ICL}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>`;
+const IC_LOCK   = `<svg ${_ICL}><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`;
+const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" y1="4" x2="12" y2="15"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>`;
+const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
+const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
+const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
+(function setStaticIcons() {
+  const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
+  set("lessons-search-btn", IC_SEARCH);
+  set("editor-search-btn", IC_SEARCH);
+  set("edit-subject", IC_EDIT);
+  set("rename-lesson", IC_EDIT);
+  set("speak-btn", IC_SPEAK);
+  set("import-csv", IC_IMPORT + " Importera CSV");
+  const hf = document.querySelector('.mode-opt[data-mode="hf"]');
+  if (hf) hf.innerHTML = IC_MIC + ' Handsfree <span class="beta">beta</span>';
+})();
+
 // Tydlig, flytande bekräftelse längst ner
 function toast(msg, ms = 1700) {
   const t = document.createElement("div");
@@ -4094,7 +4116,7 @@ $("rename-lesson").onclick = async () => {
 const togglePauseBtn = $("toggle-pause");
 function updatePauseToggle(lid) {
   const paused = isLessonPaused(lid);
-  togglePauseBtn.textContent = paused ? "▶" : "⏸";
+  togglePauseBtn.innerHTML = paused ? IC_PLAY : IC_PAUSE;
   togglePauseBtn.title = paused ? "Återuppta lektionen" : "Pausa lektionen (tyst i Dags att öva)";
   togglePauseBtn.classList.toggle("paused", paused);
 }
@@ -4988,7 +5010,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v257";
+const APP_VERSION = "v258";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

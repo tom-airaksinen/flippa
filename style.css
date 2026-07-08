@@ -263,6 +263,15 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .icon-btn:active { background: var(--surface-2); }
 
+/* Stiliserade SVG-ikoner – enhetlig storlek per kontext (så t.ex. Redigera
+   blir lika stor som Sök/Pausa bredvid) */
+.ic-svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
+.icon-btn .ic-svg, .corner-btn .ic-svg { width: 20px; height: 20px; vertical-align: middle; }
+.add-menu-item .ic-svg { width: 19px; height: 19px; vertical-align: -0.28em; margin-right: 1px; }
+.mode-opt .ic-svg { width: 17px; height: 17px; vertical-align: -0.18em; }
+.lesson-paused-ico .ic-svg { width: 15px; height: 15px; vertical-align: -0.15em; }
+.wc-lock .ic-svg { width: 17px; height: 17px; vertical-align: -0.2em; }
+
 .back-btn {
   background: var(--surface);
   color: var(--text);
