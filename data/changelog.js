@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "8 juli 2026", ver: "v257", items: [
+    { t: "Automatisk uppläsning missade ibland allra första ordet i ett pass (om man svepte direkt utan att vända kortet) – fixat", type: "fixed" },
+  ]},
   { date: "8 juli 2026", ver: "v251", items: [
     { t: "Nytt sätt att lägga till ord – en dialog med Manuellt, Slå upp och AI", type: "improved", hi: true, ico: "➕",
       desc: "”＋ Lägg till ord” samlar allt: klistra in, slå upp & översätt (redigerbart, med prio per ord) eller be en AI om förslag." },

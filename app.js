@@ -2113,6 +2113,7 @@ function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, con
               statsSubject: currentSubject ? currentSubject.name : null, statsUser: currentUser || null };
   undoStack = []; // ny session → inget att ångra
   requestMotionPermissionOnce(); // sker inom klick-gesten (krav på iOS)
+  unlockSpeech(); // lås upp TTS i samma gest → första kortets autospeak funkar även vid direktsvep
   show("training");
   activeScreen = "training";
   updateAutospeakRow();
@@ -2587,6 +2588,15 @@ const AUTO_SPEAK_KEY = "flippa-autospeak";
 // Default PÅ på ny enhet (saknad nyckel). Ett uttryckligt val att stänga av ("0") respekteras.
 let autoSpeak = localStorage.getItem(AUTO_SPEAK_KEY) !== "0";
 function saveAutoSpeak() { localStorage.setItem(AUTO_SPEAK_KEY, autoSpeak ? "1" : "0"); }
+
+// iOS låser talsyntesen tills speak() körts i en användargest. Ett tyst (volume:0)
+// uttalande i gesten låser upp den – annars blockeras första autouppspelningen, som
+// vid svep triggas i en fördröjd callback (flyOut → answer) utanför gesten. Kalla vid
+// passtart (klick-gesten) så första kortets uppläsning funkar även om man sveper direkt.
+function unlockSpeech() {
+  if (!("speechSynthesis" in window)) return;
+  try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
+}
 
 function speak(text, lang, onEnd) {
   if (!text || !("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
@@ -4765,10 +4775,8 @@ let hfMicGranted = false;
 async function startHandsfree() {
   if (!session || !session.current) return;
   // iOS låser talsyntesen tills den körts i en användargest. Lås upp TTS synkront HÄR,
-  // i tryck-gesten, med ett tyst uttalande (görs alltid, även om getUserMedia saknas).
-  if ("speechSynthesis" in window) {
-    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
-  }
+  // i tryck-gesten (görs alltid, även om getUserMedia saknas).
+  unlockSpeech();
   // Säkra mikrofonen INNAN vi läser upp något. Annars läses ordet upp och passet
   // "dör" tyst så fort taligenkänningen nekas (knappen släcks) – förvirrande. Fela
   // hellre tidigt, med ett åtgärdbart meddelande, och läs inte upp ordet i onödan.
@@ -4980,7 +4988,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v256";
+const APP_VERSION = "v257";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
