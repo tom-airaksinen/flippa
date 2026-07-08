@@ -3607,12 +3607,12 @@ const GLOBE_ICON_SVG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="no
 
 /* Stiliserade SVG-ikoner (utbyte av utvalda emoji). Storlek styrs via CSS (.ic-svg). */
 const _ICL = 'class="ic-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"';
-const IC_SEARCH = `<svg ${_ICL}><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/></svg>`;
-const IC_EDIT   = `<svg ${_ICL}><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></svg>`;
+const IC_SEARCH = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/></svg>`;
+const IC_EDIT   = `<svg ${_ICL}><g transform="translate(2.05 0.1) scale(0.88)"><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></g></svg>`;
 const IC_MIC    = `<svg ${_ICL}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>`;
 const IC_LOCK   = `<svg ${_ICL}><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`;
 const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" y1="4" x2="12" y2="15"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>`;
-const IC_LOOKUP = `<svg ${_ICL}><circle cx="10.5" cy="10.5" r="6.5"/><line x1="15.5" y1="15.5" x2="21" y2="21"/><line x1="10.5" y1="7.8" x2="10.5" y2="13.2"/><line x1="7.8" y1="10.5" x2="13.2" y2="10.5"/></svg>`;
+const IC_LOOKUP = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/><line x1="11" y1="8.4" x2="11" y2="13.6"/><line x1="8.4" y1="11" x2="13.6" y2="11"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
 const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
@@ -5020,7 +5020,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v260";
+const APP_VERSION = "v261";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
