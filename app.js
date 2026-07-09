@@ -4700,6 +4700,69 @@ lessonsSearchBtn.onclick = () => {
   else if ($("lessons-search").value) { $("lessons-search").value = ""; if (activeScreen === "lessons") renderLessons(); }
 };
 
+// Öppna (utan att stänga) – för pull-to-search-gesten.
+function openLessonsSearch() {
+  const wasHidden = lessonsToolbar.classList.contains("hidden");
+  lessonsToolbar.classList.remove("hidden");
+  lessonsSearchBtn.classList.add("active");
+  $("lessons-search").focus();
+  if (wasHidden && navigator.vibrate) navigator.vibrate(8);
+}
+function openEditorSearch() {
+  const wasHidden = editorToolbar.classList.contains("hidden");
+  editorToolbar.classList.remove("hidden");
+  editorSearchBtn.classList.add("active");
+  editorSearch.focus();
+  if (wasHidden && navigator.vibrate) navigator.vibrate(8);
+}
+
+// Dra-neråt-för-att-söka (som Things m.fl.): när listan står i toppen och man drar
+// ner förbi en tröskel avslöjas sökningen. En liten hint-remsa växer med draget och
+// ger fysisk återkoppling; släpp förbi tröskeln → öppna sök. Rör inte drag-omordning
+// (som avbryts vid rörelse) eller vanlig scroll (vi agerar bara vid scrollTop 0 + neråt).
+function enablePullToSearch(listEl, openFn, isOpenFn, trackEv) {
+  if (!listEl) return;
+  const hint = document.createElement("div");
+  hint.className = "pull-hint";
+  hint.innerHTML = IC_SEARCH;
+  listEl.parentNode.insertBefore(hint, listEl);
+  const MAX = 66, TRIGGER = 52;
+  let startY = null, atTop = false, pulling = false, pull = 0;
+  listEl.addEventListener("touchstart", (e) => {
+    if (e.touches.length !== 1 || isOpenFn()) { startY = null; return; }
+    startY = e.touches[0].clientY;
+    atTop = listEl.scrollTop <= 0;
+    pulling = false; pull = 0;
+    hint.style.transition = "none";
+  }, { passive: true });
+  listEl.addEventListener("touchmove", (e) => {
+    if (startY == null || !atTop || isOpenFn()) return;
+    const dy = e.touches[0].clientY - startY;
+    if (dy <= 0 || listEl.scrollTop > 0) {
+      if (pulling) { pulling = false; pull = 0; hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready"); }
+      return;
+    }
+    pulling = true;
+    e.preventDefault(); // stoppa rubber-band – vi driver egen reveal
+    pull = Math.min(MAX, dy * 0.6);
+    hint.style.height = pull + "px";
+    hint.style.opacity = String(Math.min(1, pull / TRIGGER));
+    hint.classList.toggle("ready", pull >= TRIGGER);
+  }, { passive: false });
+  const end = () => {
+    if (startY == null) return;
+    const trigger = pulling && pull >= TRIGGER;
+    startY = null; pulling = false;
+    hint.style.transition = "height .2s ease, opacity .2s ease";
+    hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready");
+    if (trigger) { if (trackEv) track(trackEv); openFn(); }
+  };
+  listEl.addEventListener("touchend", end);
+  listEl.addEventListener("touchcancel", end);
+}
+enablePullToSearch($("lessons-list"), openLessonsSearch, () => !lessonsToolbar.classList.contains("hidden"), "pulltosearch/lektioner");
+enablePullToSearch($("editor-list"), openEditorSearch, () => !editorToolbar.classList.contains("hidden"), "pulltosearch/lektion");
+
 // =========================================================================
 //  Backup: exportera / importera SRS-statistik (localStorage)
 // =========================================================================
@@ -5077,7 +5140,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v264";
+const APP_VERSION = "v265";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
