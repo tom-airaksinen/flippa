@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "9 juli 2026", ver: "v275", items: [
+    { t: "Enhetligare aviseringar – bekräftelser och fel visas nu likadant (en bredare ruta nere), med röd markering för fel", type: "improved" },
+  ]},
   { date: "9 juli 2026", ver: "v274", items: [
     { t: "Nya ord du redan kan räknas inte mot dagskvoten – svarar du ”kan” eller ”kan väldigt bra” på ett nytt ord matas nästa nya in i stället", type: "improved", hi: true, ico: "🎯",
       desc: "Så fastnar du inte på några få repetitioner när du egentligen vill ta in fler nya ord – dagskvoten går åt till det du faktiskt behöver lära dig." },

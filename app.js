@@ -518,9 +518,9 @@ function openLevelsModal() {
     const d = [0, 1, 2].map((i) => parseInt(m.querySelector(`#lvl-d${i}`).value, 10));
     const w = parseInt(m.querySelector("#lvl-w").value, 10);
     if (d.some((n) => !Number.isFinite(n) || n < 1) || !Number.isFinite(w) || w < 1) {
-      toast("Fyll i positiva heltal på alla nivåer", 3500); return;
+      toast("Fyll i positiva heltal på alla nivåer", 3500, "error"); return;
     }
-    if (!(d[0] < d[1] && d[1] < d[2])) { toast("Dagsnivåerna måste öka: nivå 1 < 2 < 3", 4000); return; }
+    if (!(d[0] < d[1] && d[1] < d[2])) { toast("Dagsnivåerna måste öka: nivå 1 < 2 < 3", 4000, "error"); return; }
     saveLevels(d, w);
     closeModal();
     renderStats(); // uppdatera trösklar + räknare direkt
@@ -1089,7 +1089,7 @@ async function selectProfile(id) {
   if (u.lock && id !== currentUser) {
     const pw = await askPassword(`Lösenord för ${u.name}`);
     if (pw == null) return false;           // avbröt
-    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500); return false; }
+    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500, "error"); return false; }
   }
   setUser(id);
   return true;
@@ -1211,12 +1211,12 @@ function urlB64ToUint8(b64) {
 
 async function enablePush(time) {
   time = time || "08:00";
-  if (!pushSupported()) { toast("Notiser stöds inte i den här webbläsaren", 3500); return; }
-  if (!isStandalone()) { toast("Lägg till Flippa på hemskärmen först – notiser kräver den installerade appen", 4500); return; }
+  if (!pushSupported()) { toast("Notiser stöds inte i den här webbläsaren", 3500, "error"); return; }
+  if (!isStandalone()) { toast("Lägg till Flippa på hemskärmen först – notiser kräver den installerade appen", 4500, "error"); return; }
   let perm;
   try { perm = await Notification.requestPermission(); } catch (_) { perm = Notification.permission; }
   if (perm !== "granted") {
-    toast(perm === "denied" ? "Notiser är blockerade – slå på i telefonens inställningar" : "Du nekade notiser", 4000);
+    toast(perm === "denied" ? "Notiser är blockerade – slå på i telefonens inställningar" : "Du nekade notiser", 4000, "error");
     renderSettingsScreen(); return;
   }
   try {
@@ -1231,7 +1231,7 @@ async function enablePush(time) {
     });
     setPushLocal({ enabled: true, time });
     track("push-pa");
-  } catch (e) { console.error(e); toast("Kunde inte slå på notiser", 3500); }
+  } catch (e) { console.error(e); toast("Kunde inte slå på notiser", 3500, "error"); }
   renderSettingsScreen();
 }
 async function disablePush() {
@@ -1249,7 +1249,7 @@ async function testPush() {
   try {
     const reg = await navigator.serviceWorker.ready;
     await reg.showNotification("Dags att flippa!", { body: "Kör ett pass direkt", icon: "./icon-192.png", badge: "./icon-192.png", tag: "flippa-test" });
-  } catch (_) { toast("Kunde inte visa testnotis", 3000); }
+  } catch (_) { toast("Kunde inte visa testnotis", 3000, "error"); }
 }
 // Notis-tryck → hoppa in i senast valda ämne (annars huvudskärmen).
 function openLastSubjectFromPush() {
@@ -3618,10 +3618,9 @@ function parseLines(text) {
     .filter(Boolean);
 }
 
-function flash(msg, ms = 3000) {
-  showStatus(msg);
-  setTimeout(() => showStatus(null), ms);
-}
+// flash = flyktig bekräftelse. Går numera till den enhetliga snackbaren nere (info),
+// i stället för den tunna topp-raden (#status-banner, som nu bara visar systemstatus).
+function flash(msg, ms = 2000) { toast(msg, ms); }
 
 // Achievement-banner som glider in ovanifrån vid milstolpe. kind: "day" | "week".
 let achTimer = null;
@@ -3777,10 +3776,11 @@ const lessonsSearchCtl = setupScrollSearch($("lessons-scroll"), $("lessons-searc
 const editorSearchCtl = setupScrollSearch($("editor-scroll"), $("editor-search-row"), $("editor-search"), $("editor-search-btn"), "pulltosearch/lektion");
 
 // Tydlig, flytande bekräftelse längst ner
-function toast(msg, ms = 1700) {
+// Enhetlig snackbar nere. type: undefined/"info" = accent; "error" = röd + ⚠️.
+function toast(msg, ms = 1700, type) {
   const t = document.createElement("div");
-  t.className = "toast";
-  t.textContent = msg;
+  t.className = "toast" + (type === "error" ? " toast-error" : "");
+  t.innerHTML = (type === "error" ? '<span class="toast-ico" aria-hidden="true">⚠️</span>' : "") + `<span class="toast-msg">${esc(msg)}</span>`;
   document.body.appendChild(t);
   requestAnimationFrame(() => t.classList.add("show"));
   setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 250); }, ms);
@@ -3792,7 +3792,7 @@ function copyText(text, iconEl) {
     toast("Kopierat till urklipp ✓");
     if (iconEl) { iconEl.innerHTML = CHECK_ICON_SVG; setTimeout(() => { iconEl.innerHTML = COPY_ICON_SVG; }, 1300); }
   };
-  const fail = () => flash("Kunde inte kopiera – markera och kopiera manuellt", 3000);
+  const fail = () => toast("Kunde inte kopiera – markera och kopiera manuellt", 3000, "error");
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(text).then(done).catch(fail);
     return;
@@ -3829,7 +3829,7 @@ const TS = firebase.database.ServerValue.TIMESTAMP;
 
 function writeError(err) {
   console.error(err);
-  flash("Fel: " + (err.code || err.message), 4000);
+  toast("Fel: " + (err.code || err.message), 4000, "error");
 }
 
 function addSubject(name, lang, owner) {
@@ -4355,9 +4355,9 @@ function openAddDialog(opts = {}) {
     // Läs lektionsvalet INNAN dup-dialogen (som ersätter modalen).
     let lid = fixedLesson ? fixedLesson.id : null, newName = null;
     if (!lid) {
-      if (lessonSel.value === "__new__") { newName = (newLessonI.value || "").trim(); if (!newName) { toast("Ange namn på den nya lektionen", 3000); return; } }
+      if (lessonSel.value === "__new__") { newName = (newLessonI.value || "").trim(); if (!newName) { toast("Ange namn på den nya lektionen", 3000, "error"); return; } }
       else lid = lessonSel.value;
-      if (!lid && !newName) { toast("Välj en lektion", 3000); return; }
+      if (!lid && !newName) { toast("Välj en lektion", 3000, "error"); return; }
     }
     const finalCards = await confirmDuplicates(currentSubject, cards); // ersätter modalen
     if (!finalCards) return;
@@ -4421,7 +4421,7 @@ function openAddDialog(opts = {}) {
       for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
         out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
       luCards = out; renderLuCards();
-    } catch (e) { toast("Uppslag misslyckades: " + (e.message || e), 4000); }
+    } catch (e) { toast("Uppslag misslyckades: " + (e.message || e), 4000, "error"); }
     go.classList.remove("busy"); go.innerHTML = IC_SEARCH;
   }
   function wireLookup() {
@@ -4504,7 +4504,7 @@ function openTranslate(defaultLessonId, prefill) {
   const fullLang = subjectLang(currentSubject);
   const foreignCode = fullLang.slice(0, 2);
   if (!foreignCode) {
-    flash("Sätt ett språk på ämnet först (redigera ämnet ✎)", 4000);
+    toast("Sätt ett språk på ämnet först (redigera ämnet ✎)", 4000, "error");
     return;
   }
   const foreignLabel = fullLang ? langLabel(fullLang) : "Utländska";
@@ -4572,7 +4572,7 @@ function openTranslate(defaultLessonId, prefill) {
       dstI.value = out.join("; "); // flera → samma ordning, separerade med ;
     } catch (e) {
       dstI.value = "";
-      toast("Översättning misslyckades: " + e.message, 4000); // toast syns ovanför modalen
+      toast("Översättning misslyckades: " + e.message, 4000, "error"); // toast syns ovanför modalen
     }
   }
   m.querySelector("#t-lookup").onclick = lookup;
@@ -4585,9 +4585,9 @@ function openTranslate(defaultLessonId, prefill) {
   m.querySelector("#t-add").onclick = async () => {
     const srcParts = splitTerms(srcI.value);
     const dstParts = splitTerms(dstI.value);
-    if (!srcParts.length || !dstParts.length) { toast("Fyll i båda fälten (slå upp eller skriv själv)", 3000); return; }
+    if (!srcParts.length || !dstParts.length) { toast("Fyll i båda fälten (slå upp eller skriv själv)", 3000, "error"); return; }
     if (srcParts.length !== dstParts.length) {
-      toast(`Olika antal ord: ${srcParts.length} mot ${dstParts.length}. Lika många på båda sidor (separera med ;).`, 4500);
+      toast(`Olika antal ord: ${srcParts.length} mot ${dstParts.length}. Lika många på båda sidor (separera med ;).`, 4500, "error");
       return;
     }
     // para ihop term för term → en glosa per par (front = utländskt, back = svenska)
@@ -4597,7 +4597,7 @@ function openTranslate(defaultLessonId, prefill) {
     });
     // läs lektionsval INNAN dubblettdialogen (som ersätter denna modal)
     const newName = lessonSel.value === "__new__" ? newLessonI.value.trim() : null;
-    if (lessonSel.value === "__new__" && !newName) { toast("Ange namn på den nya lektionen", 3000); return; }
+    if (lessonSel.value === "__new__" && !newName) { toast("Ange namn på den nya lektionen", 3000, "error"); return; }
     const finalCards = await confirmDuplicates(currentSubject, cards);
     if (!finalCards) return;                                   // avbröt
     if (!finalCards.length) { toast("Inget nytt – alla fanns redan", 3000); return; }
@@ -4731,8 +4731,8 @@ async function startCsvImport(files) {
   if (!subject) return;
   let records;
   try { records = await readCsvFiles(files); }
-  catch (e) { toast("Kunde inte läsa filen: " + e.message, 4000); return; }
-  if (!records.length) { toast("Hittade inga giltiga rader (sektion;italienska;svenska)", 4000); return; }
+  catch (e) { toast("Kunde inte läsa filen: " + e.message, 4000, "error"); return; }
+  if (!records.length) { toast("Hittade inga giltiga rader (sektion;italienska;svenska)", 4000, "error"); return; }
   const plan = buildImportPlan(subject, records);
   if (!plan.wordCount) { toast("Inget nytt att importera – allt fanns redan", 4000); return; }
 
@@ -4755,7 +4755,7 @@ async function startCsvImport(files) {
     if (plan.list.some((s) => s.cards.some((c) => c.prio))) track("import-med-prio");
     commitImport(subject, plan)
       .then(() => flash(`Importerade ${plan.wordCount} ord i ${plan.list.length} lektioner ✓`, 3000))
-      .catch((e) => { writeError(e); toast("Importen misslyckades: " + (e.code || e.message), 5000); });
+      .catch((e) => { writeError(e); toast("Importen misslyckades: " + (e.code || e.message), 5000, "error"); });
   };
 }
 
@@ -4827,7 +4827,7 @@ function openExport() {
       flash("Kopierat ✓", 1500);
     } catch {
       m.querySelector("#exp-text").select();
-      flash("Markera och kopiera manuellt");
+      toast("Markera och kopiera manuellt", 3000, "error");
     }
   };
   m.querySelector("#exp-download").onclick = () => downloadBackup(data);
@@ -4854,11 +4854,11 @@ function openImport() {
   m.querySelector("#m-cancel").onclick = closeModal;
   m.querySelector("#imp-go").onclick = () => {
     const txt = ta.value.trim();
-    if (!txt) { flash("Välj en fil eller klistra in JSON först"); return; }
+    if (!txt) { toast("Välj en fil eller klistra in JSON först", 3000, "error"); return; }
     let obj;
-    try { obj = JSON.parse(txt); } catch { flash("Ogiltig JSON"); return; }
+    try { obj = JSON.parse(txt); } catch { toast("Ogiltig JSON", 3000, "error"); return; }
     const imported = obj && obj.srs;
-    if (!imported || typeof imported !== "object") { flash("Hittar ingen statistik i filen"); return; }
+    if (!imported || typeof imported !== "object") { toast("Hittar ingen statistik i filen", 3000, "error"); return; }
     let n = 0;
     for (const k in imported) { srs[k] = imported[k]; n++; }
     saveSRS();
@@ -4952,7 +4952,7 @@ async function startHandsfree() {
   // hellre tidigt, med ett åtgärdbart meddelande, och läs inte upp ordet i onödan.
   if (!hfMicGranted) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      flash("Den här enheten ger inte appen mikrofon för handsfree. Prova att öppna Flippa i Safari i stället för från hemskärmen.", 5500);
+      toast("Den här enheten ger inte appen mikrofon för handsfree. Prova att öppna Flippa i Safari i stället för från hemskärmen.", 5500, "error");
       return;
     }
     try {
@@ -4960,7 +4960,7 @@ async function startHandsfree() {
       stream.getTracks().forEach((t) => t.stop()); // behöver inte strömmen – taligenkänningen sköter sin egen
       hfMicGranted = true;
     } catch (_) {
-      flash("Mikrofonåtkomst nekad. Tillåt mikrofonen i Inställningar (eller öppna Flippa i Safari) för att köra handsfree.", 5500);
+      toast("Mikrofonåtkomst nekad. Tillåt mikrofonen i Inställningar (eller öppna Flippa i Safari) för att köra handsfree.", 5500, "error");
       return;
     }
     if (!session || !session.current) return; // sessionen kan ha hunnit avslutas under await
@@ -5158,7 +5158,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v274";
+const APP_VERSION = "v275";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
