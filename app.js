@@ -3057,6 +3057,17 @@ function updateCardActions(){
 // finns någon sida att svepa fram till. Scoped till just den resan – vanlig
 // navigering rörs inte.
 function markExternalNav(){ try { sessionStorage.setItem("flippa-ext-nav", "1"); } catch(_){} }
+// Skyddsnät mot vit/död skärm: om appen kommer tillbaka från en extern utflykt (t.ex.
+// Webbsök i in-app-browsern) och hamnat i ett läge där INGEN skärm är synlig – stäng
+// ev. kvarhängande modal/fjäder och rendera om till ett säkert läge i stället för att
+// fastna. Utlöses bara när det faktiskt ser trasigt ut, så normal navigering rörs inte.
+function uiLooksBroken(){ return !document.querySelector(".screen:not(.hidden)"); }
+function recoverUI(){
+  try { closeModal(); } catch(_){}
+  try { closeFan(); } catch(_){}
+  if (currentUser && currentSubject) renderLessons(); else renderSubjects();
+}
+function maybeRecoverUI(){ if (uiLooksBroken()) recoverUI(); }
 // Säkerställ att fjädern är stängd när man kommer tillbaka (t.ex. från Google via C1,
 // bfcache-återställning). Annars kan menyn ligga kvar öppen.
 window.addEventListener("pageshow", () => {
@@ -3067,7 +3078,9 @@ window.addEventListener("pageshow", () => {
       history.pushState(null, "", location.href); // trunkerar framåt-stacken (Google-sidan)
     }
   } catch(_){}
+  maybeRecoverUI();
 });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") maybeRecoverUI(); });
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
 function closeCardMenu() { closeFan(); }
@@ -3535,7 +3548,9 @@ function askWord(front, back, hint, opts = {}) {
       if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ _delete: true }); };
       if (explore) m.querySelector("#m-globe").onclick = () => {
         const v = vals();
-        googleAiExplore(v.f || f); // Google AI (samma som kortets Slå upp); redigeringsrutan ligger kvar bakom
+        // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
+        // markExternalNav) i stället för rå window.open – annars kunde retur ge vit skärm.
+        openExternal(googleAiExploreUrl(v.f || f)); // redigeringsrutan ligger kvar bakom vid window.open
       };
       m.querySelector("#m-ok").onclick = () => {
         const v = vals();
@@ -5158,7 +5173,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v276";
+const APP_VERSION = "v277";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
