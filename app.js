@@ -3686,7 +3686,10 @@ function attachScrollShadow(scrollEl) {
   const strip = document.createElement("div");
   strip.className = "scroll-shadow";
   scrollEl.parentNode.insertBefore(strip, scrollEl);
-  const sync = () => strip.classList.toggle("on", scrollEl.scrollTop > (scrollEl._shadowBase ? scrollEl._shadowBase() : 0) + 2);
+  scrollEl._shadowStrip = strip;
+  // Baslinje + buffert (6px) så skuggan aldrig blinkar till över ett just framscrollat
+  // sökfält (t.ex. vid en liten iOS-scrollknuff när fältet visas/får fokus).
+  const sync = () => strip.classList.toggle("on", scrollEl.scrollTop > (scrollEl._shadowBase ? scrollEl._shadowBase() : 0) + 6);
   scrollEl.addEventListener("scroll", sync, { passive: true });
   scrollEl._shadowSync = sync;
 }
@@ -3704,8 +3707,11 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
   const revealed = () => scrollEl.scrollTop < fieldH() - 4;
   const smooth = () => (prefersReducedMotion ? "auto" : "smooth");
   const reveal = (focus) => {
+    // Fokusera SYNKRONT i gesten (annars visar iOS inget tangentbord) + preventScroll så
+    // fokus inte knuffar scrollen. Sen mjuk in-scroll. Skuggan tvingas av (fältet är framme).
+    if (focus) { try { inputEl.focus({ preventScroll: true }); } catch (_) { inputEl.focus(); } }
     scrollEl.scrollTo({ top: 0, behavior: smooth() });
-    if (focus) setTimeout(() => inputEl.focus(), prefersReducedMotion ? 0 : 200);
+    if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on");
     syncBtn();
   };
   const hide = () => { inputEl.blur(); ensureScrollable(); scrollEl.scrollTo({ top: fieldH(), behavior: smooth() }); syncBtn(); };
@@ -3715,12 +3721,12 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
   const listEl = scrollEl.querySelector(".list");
   const ensureScrollable = () => { if (listEl) listEl.style.minHeight = scrollEl.clientHeight + "px"; };
   const syncBtn = () => btnEl.classList.toggle("active", revealed() || !!inputEl.value);
-  btnEl.onclick = () => {
-    if (!revealed()) reveal(true);
-    else if (!inputEl.value) hide();
-    else inputEl.focus();
-  };
+  // Tryck på 🔍 = tydlig avsikt att söka → visa fältet OCH ge fokus (tangentbord upp).
+  // Stäng gör man genom att scrolla bort fältet (eller ✕ när det finns text).
+  btnEl.onclick = () => reveal(true);
   scrollEl.addEventListener("scroll", syncBtn, { passive: true });
+  // Medan fältet har fokus ska rubrikskuggan aldrig ligga över det.
+  inputEl.addEventListener("focus", () => { if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on"); });
   // Hårt drag (överdrag i toppen, scrollTop ≤ 0 + neråt) → fokus, med växande hint.
   const hint = document.createElement("div");
   hint.className = "pull-hint"; hint.innerHTML = IC_SEARCH;
@@ -5135,7 +5141,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v268";
+const APP_VERSION = "v269";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
