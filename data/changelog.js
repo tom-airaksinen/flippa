@@ -58,7 +58,7 @@ const CHANGELOG = [
     { t: "Anpassade AI-prompter per språk för att få med bestämd artikel eller genusmarkör där det är relevant", type: "improved" },
   ]},
   { date: "4 juli 2026", ver: "v211", items: [
-    { t: "Slå upp & bildsök direkt från kortet", type: "new", hi: true, ico: "🔍",
+    { t: "Webbsök & bildsök direkt från kortet", type: "new", hi: true, ico: "🔍",
       desc: "Kolla upp ett ord eller se bilder utan att lämna passet." },
     { t: "Handsfree-läge (beta) – svara med rösten", type: "new", ico: "🎙" },
     { t: "Appen laddar inte längre om mitt i ett pass", type: "fixed" },
