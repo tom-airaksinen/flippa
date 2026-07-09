@@ -11,8 +11,8 @@
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
   { date: "9 juli 2026", ver: "v268", items: [
-    { t: "Sökfältet bor nu överst i listan – dra ner eller tryck 🔍 för att ta fram det, scrolla bort för att stänga", type: "improved", hi: true, ico: "🔍",
-      desc: "Som i många iOS-appar: sökrutan ligger dold högst upp i lektions- och ordlistan. Dra ner (eller tryck förstoringsglaset) för att söka; drar du hårt kommer tangentbordet upp direkt." },
+    { t: "Sökfältet bor nu överst i listan – scrolla upp eller tryck 🔍 för att söka, tryck igen för att stänga", type: "improved", hi: true, ico: "🔍",
+      desc: "Som i många iOS-appar ligger sökrutan högst upp i lektions- och ordlistan. Scrolla upp till den eller tryck förstoringsglaset; tryck igen för att stänga och rensa sökningen." },
   ]},
   { date: "9 juli 2026", ver: "v264", items: [
     { t: "Sök i alla lektioner visar nu de matchande orden direkt, grupperade per lektion – tryck på ett ord för att redigera det direkt", type: "improved", hi: true, ico: "🔍",

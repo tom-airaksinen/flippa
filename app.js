@@ -3714,42 +3714,30 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
     if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on");
     syncBtn();
   };
-  const hide = () => { inputEl.blur(); ensureScrollable(); scrollEl.scrollTo({ top: fieldH(), behavior: smooth() }); syncBtn(); };
+  // Stäng = gå UT ur sökläge: rensa fältet (→ tillbaka till vanlig lista), blur:a och
+  // scrolla bort det. Rensningen triggar input-eventet så listan ritas om normalt.
+  const hide = () => {
+    if (inputEl.value) { inputEl.value = ""; inputEl.dispatchEvent(new Event("input", { bubbles: true })); }
+    inputEl.blur();
+    ensureScrollable();
+    scrollEl.scrollTo({ top: fieldH(), behavior: smooth() });
+    syncBtn();
+  };
   const hideAtRest = () => { ensureScrollable(); scrollEl.scrollTop = fieldH(); if (scrollEl._shadowSync) scrollEl._shadowSync(); syncBtn(); };
   // Garantera att fältet alltid GÅR att scrolla bort: listan får minst container-höjd,
   // så det finns minst fieldH att scrolla även på korta listor (annars fastnar fältet synligt).
   const listEl = scrollEl.querySelector(".list");
   const ensureScrollable = () => { if (listEl) listEl.style.minHeight = scrollEl.clientHeight + "px"; };
   const syncBtn = () => btnEl.classList.toggle("active", revealed() || !!inputEl.value);
-  // Tryck på 🔍 = växla: dolt → visa fältet + fokus (tangentbord upp); synligt → scrolla
-  // bort (stäng). Så man kan öppna OCH stänga sökningen med samma knapp.
+  // Tryck på 🔍 = växla: dolt → visa fältet + fokus (tangentbord upp); synligt → stäng
+  // (rensa + scrolla bort = tillbaka till vanligt läge).
   btnEl.onclick = () => { if (revealed()) hide(); else reveal(true); };
   scrollEl.addEventListener("scroll", syncBtn, { passive: true });
   // Medan fältet har fokus ska rubrikskuggan aldrig ligga över det.
   inputEl.addEventListener("focus", () => { if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on"); });
-  // Hårt drag neråt i toppen → exakt samma som 🔍-knappen (visa + fokus). Fältet glider in
-  // via vanlig scroll när man drar upp; vid överdrag i toppen PINNAR vi (preventDefault) så
-  // ingen rubber-band lämnar fältet förskjutet mitt i vyn och fokus inte hamnar på en
-  // överdragen layout (vilket gav strandad markör). Ingen layout-påverkande hint.
-  let lastY = null, baseY = null, armed = false;
-  scrollEl.addEventListener("touchstart", (e) => { armed = false; baseY = null; lastY = e.touches.length === 1 ? e.touches[0].clientY : null; }, { passive: true });
-  scrollEl.addEventListener("touchmove", (e) => {
-    if (lastY == null) return;
-    const y = e.touches[0].clientY, down = y > lastY; lastY = y;
-    if (scrollEl.scrollTop <= 0 && down) {
-      if (baseY == null) baseY = y;
-      const over = y - baseY;
-      if (over > 4) e.preventDefault(); // pinna vid toppen – ingen rubber-band-förskjutning
-      if (over > 44) armed = true;
-    } else if (scrollEl.scrollTop > 0) { baseY = null; armed = false; }
-  }, { passive: false });
-  const end = () => {
-    const fire = armed;
-    lastY = null; baseY = null; armed = false;
-    if (fire) { if (trackEv) track(trackEv); reveal(true); }
-  };
-  scrollEl.addEventListener("touchend", end);
-  scrollEl.addEventListener("touchcancel", end);
+  // OBS: "hårt drag för att söka" är borttaget – det gav envisa iOS-glitchar (fältet
+  // hamnade mitt i vyn / markören strandade vid överdrag+fokus). Fältet nås i stället
+  // genom att scrolla upp till det (det ligger överst i listan) + trycka, eller via 🔍.
   return { reveal, hide, hideAtRest, revealed };
 }
 attachScrollShadow($("subjects-list")); // vanlig lista (ingen sök)
@@ -5138,7 +5126,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v272";
+const APP_VERSION = "v273";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
