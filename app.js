@@ -1337,9 +1337,9 @@ function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
   localStorage.setItem(LAST_SUBJECT_KEY, id); // för deep-link vid notis-tryck
   $("lessons-search").value = "";
-  $("lessons-toolbar").classList.add("hidden");        // söket börjar hopfällt
-  $("lessons-search-btn").classList.remove("active");
+  syncLessonsClear();
   renderLessons();
+  requestAnimationFrame(() => lessonsSearchCtl && lessonsSearchCtl.hideAtRest()); // sökfältet dolt vid entré
 }
 
 function dueCountForLessons(lessons, starredOnly) {
@@ -1386,7 +1386,7 @@ function renderLessons(keepChoosers) {
   $("prio-empty-note").classList.toggle("hidden", !(due === 0 && hasExcluded));
 
   const list = $("lessons-list");
-  clearListShadow(list);
+  clearListShadow($("lessons-scroll"));
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
   if (!currentSubject.lessons.length) {
     list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
@@ -3677,22 +3677,81 @@ const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" a
   if (hf) hf.innerHTML = IC_MIC + ' Handsfree <span class="beta">beta</span>';
 })();
 
-// Scroll-skugga i toppen av listor. En egen 0-höjds-remsa (.scroll-shadow) läggs
-// PRECIS före varje lista – utanför listans bottenmask, som annars klipper bort en
-// skugga ritad inuti listan. Remsan togglar klassen "on" när listan scrollats.
-// Listelementen består mellan omritningar (bara innerHTML byts) → lyssnare en gång.
-(function initListShadows() {
-  document.querySelectorAll(".list").forEach((el) => {
-    const strip = document.createElement("div");
-    strip.className = "scroll-shadow";
-    el.parentNode.insertBefore(strip, el);
-    el._shadowStrip = strip;
-    el.addEventListener("scroll", () => {
-      strip.classList.toggle("on", el.scrollTop > 2);
-    }, { passive: true });
-  });
-})();
-function clearListShadow(el) { if (el && el._shadowStrip) el._shadowStrip.classList.remove("on"); } // innerHTML-byte nollar scrollTop
+// Scroll-skugga i toppen av en scrollcontainer. En egen 0-höjds-remsa (.scroll-shadow)
+// läggs PRECIS före containern – utanför dess bottenmask, som annars klipper bort en
+// skugga ritad inuti. Baslinjen kan förskjutas (_shadowBase) för listor med dolt sökfält
+// vid vila, så skuggan inte ligger på i viloläget.
+function attachScrollShadow(scrollEl) {
+  if (!scrollEl || scrollEl._shadowSync) return;
+  const strip = document.createElement("div");
+  strip.className = "scroll-shadow";
+  scrollEl.parentNode.insertBefore(strip, scrollEl);
+  const sync = () => strip.classList.toggle("on", scrollEl.scrollTop > (scrollEl._shadowBase ? scrollEl._shadowBase() : 0) + 2);
+  scrollEl.addEventListener("scroll", sync, { passive: true });
+  scrollEl._shadowSync = sync;
+}
+function clearListShadow(el) { if (el && el._shadowSync) el._shadowSync(); } // re-synka skuggan efter omritning
+
+// Sökfält som lever överst i den scrollande listan (iOS-stil, à la Things/Mail): dolt
+// vid vila (listan startar scrollad förbi fältet), scrolla fram det / tryck knappen för
+// att visa, hårt drag i toppen ger fokus (med den lilla förstoringsglas-hinten). Stäng =
+// scrolla bort fältet igen. Fältet ligger utanför listans innerHTML → överlever omritning.
+function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
+  if (!scrollEl || !rowEl) return null;
+  attachScrollShadow(scrollEl);
+  const fieldH = () => rowEl.offsetHeight || 52;
+  scrollEl._shadowBase = fieldH;                          // skuggans baslinje = dolt-fält-offset
+  const revealed = () => scrollEl.scrollTop < fieldH() - 4;
+  const smooth = () => (prefersReducedMotion ? "auto" : "smooth");
+  const reveal = (focus) => {
+    scrollEl.scrollTo({ top: 0, behavior: smooth() });
+    if (focus) setTimeout(() => inputEl.focus(), prefersReducedMotion ? 0 : 200);
+    syncBtn();
+  };
+  const hide = () => { inputEl.blur(); ensureScrollable(); scrollEl.scrollTo({ top: fieldH(), behavior: smooth() }); syncBtn(); };
+  const hideAtRest = () => { ensureScrollable(); scrollEl.scrollTop = fieldH(); if (scrollEl._shadowSync) scrollEl._shadowSync(); syncBtn(); };
+  // Garantera att fältet alltid GÅR att scrolla bort: listan får minst container-höjd,
+  // så det finns minst fieldH att scrolla även på korta listor (annars fastnar fältet synligt).
+  const listEl = scrollEl.querySelector(".list");
+  const ensureScrollable = () => { if (listEl) listEl.style.minHeight = scrollEl.clientHeight + "px"; };
+  const syncBtn = () => btnEl.classList.toggle("active", revealed() || !!inputEl.value);
+  btnEl.onclick = () => {
+    if (!revealed()) reveal(true);
+    else if (!inputEl.value) hide();
+    else inputEl.focus();
+  };
+  scrollEl.addEventListener("scroll", syncBtn, { passive: true });
+  // Hårt drag (överdrag i toppen, scrollTop ≤ 0 + neråt) → fokus, med växande hint.
+  const hint = document.createElement("div");
+  hint.className = "pull-hint"; hint.innerHTML = IC_SEARCH;
+  scrollEl.parentNode.insertBefore(hint, scrollEl);
+  const MAX = 66, TRIGGER = 52;
+  let lastY = null, baseY = null, pull = 0, active = false;
+  const resetHint = () => { active = false; baseY = null; pull = 0; hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready"); };
+  scrollEl.addEventListener("touchstart", (e) => { if (e.touches.length !== 1) { lastY = null; return; } lastY = e.touches[0].clientY; baseY = null; pull = 0; active = false; hint.style.transition = "none"; }, { passive: true });
+  scrollEl.addEventListener("touchmove", (e) => {
+    if (lastY == null) return;
+    const y = e.touches[0].clientY, down = y > lastY; lastY = y;
+    if (scrollEl.scrollTop <= 0 && down) {
+      if (baseY == null) baseY = y;
+      pull = Math.min(MAX, (y - baseY) * 0.7);
+      if (pull > 0) { active = true; e.preventDefault(); hint.style.height = pull + "px"; hint.style.opacity = String(Math.min(1, pull / TRIGGER)); hint.classList.toggle("ready", pull >= TRIGGER); }
+    } else if (active && (!down || scrollEl.scrollTop > 0)) { resetHint(); }
+  }, { passive: false });
+  const end = () => {
+    if (lastY == null) return;
+    const fire = active && pull >= TRIGGER;
+    lastY = null;
+    hint.style.transition = "height .2s ease, opacity .2s ease"; resetHint();
+    if (fire) { if (trackEv) track(trackEv); inputEl.focus(); }
+  };
+  scrollEl.addEventListener("touchend", end);
+  scrollEl.addEventListener("touchcancel", end);
+  return { reveal, hide, hideAtRest, revealed };
+}
+attachScrollShadow($("subjects-list")); // vanlig lista (ingen sök)
+const lessonsSearchCtl = setupScrollSearch($("lessons-scroll"), $("lessons-search-row"), $("lessons-search"), $("lessons-search-btn"), "pulltosearch/lektioner");
+const editorSearchCtl = setupScrollSearch($("editor-scroll"), $("editor-search-row"), $("editor-search"), $("editor-search-btn"), "pulltosearch/lektion");
 
 // Tydlig, flytande bekräftelse längst ner
 function toast(msg, ms = 1700) {
@@ -3833,16 +3892,9 @@ function setupSearchClear(inputEl, onChange) {
 }
 const syncEditorClear = setupSearchClear(editorSearch, () => { if (activeScreen === "editor") renderEditor(); });
 
-// 🔍 fäller ut/in "Filtrera ord" i editorn (dolt som standard → frigör en rad).
-const editorSearchBtn = $("editor-search-btn"), editorToolbar = $("editor-toolbar");
-editorSearchBtn.onclick = () => {
-  const show = editorToolbar.classList.contains("hidden");
-  editorToolbar.classList.toggle("hidden", !show);
-  editorSearchBtn.classList.toggle("active", show);
-  if (show) { editorSearch.focus(); }
-  else if (editorSearch.value) { editorSearch.value = ""; syncEditorClear(); if (activeScreen === "editor") renderEditor(); }
-};
-setupSearchClear($("lessons-search"), () => { if (activeScreen === "lessons") renderLessons(); });
+// 🔍-knappen i editorn hanteras nu av setupScrollSearch (editorSearchCtl) – sökfältet
+// lever överst i den scrollande ordlistan i stället för i en egen utfällbar toolbar.
+const syncLessonsClear = setupSearchClear($("lessons-search"), () => { if (activeScreen === "lessons") renderLessons(); });
 
 let editorSort = "added"; // added | front-az | back-az | weak-front | weak-back
 
@@ -3851,11 +3903,13 @@ function openEditor(lessonId) {
   editorSearch.value = ($("lessons-search").value || "").trim();
   syncEditorClear();
   editorSort = "added";
-  // Filtret börjar hopfällt – utom när ett filter följde med hit (från lektionslistans sök).
-  const hasFilter = !!editorSearch.value;
-  $("editor-toolbar").classList.toggle("hidden", !hasFilter);
-  $("editor-search-btn").classList.toggle("active", hasFilter);
   renderEditor();
+  // Sökfältet ligger framme om ett filter följde med hit (från globala söket), annars dolt.
+  const hasFilter = !!editorSearch.value;
+  requestAnimationFrame(() => {
+    if (!editorSearchCtl) return;
+    if (hasFilter) editorSearchCtl.reveal(false); else editorSearchCtl.hideAtRest();
+  });
 }
 
 // Språknamn för etiketter (gemener), t.ex. "italienska"
@@ -3978,7 +4032,7 @@ function renderEditor() {
   $("editor-title").textContent = lesson.name;
   updatePauseToggle(lesson.id);
   const list = $("editor-list");
-  clearListShadow(list);
+  clearListShadow($("editor-scroll"));
   if (!lesson.cards.length) {
     list.innerHTML = `<p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>`;
     $("ai-help").onclick = () => openAddDialog({ segment: "ai" }); // enhetlig dialog, AI-segmentet
@@ -4700,78 +4754,9 @@ document.addEventListener("click", (e) => {
   if (!addMenu.classList.contains("hidden") && !addMenu.contains(e.target) && e.target !== addMenuBtn) closeAddMenu();
 });
 
-// 🔍 fäller ut/in "Sök i alla lektioner" (dolt som standard – frigör en rad).
-const lessonsSearchBtn = $("lessons-search-btn"), lessonsToolbar = $("lessons-toolbar");
-lessonsSearchBtn.onclick = () => {
-  const show = lessonsToolbar.classList.contains("hidden");
-  lessonsToolbar.classList.toggle("hidden", !show);
-  lessonsSearchBtn.classList.toggle("active", show);
-  if (show) { $("lessons-search").focus(); }
-  else if ($("lessons-search").value) { $("lessons-search").value = ""; if (activeScreen === "lessons") renderLessons(); }
-};
-
-// Öppna (utan att stänga) – för pull-to-search-gesten.
-function openLessonsSearch() {
-  const wasHidden = lessonsToolbar.classList.contains("hidden");
-  lessonsToolbar.classList.remove("hidden");
-  lessonsSearchBtn.classList.add("active");
-  $("lessons-search").focus();
-  if (wasHidden && navigator.vibrate) navigator.vibrate(8);
-}
-function openEditorSearch() {
-  const wasHidden = editorToolbar.classList.contains("hidden");
-  editorToolbar.classList.remove("hidden");
-  editorSearchBtn.classList.add("active");
-  editorSearch.focus();
-  if (wasHidden && navigator.vibrate) navigator.vibrate(8);
-}
-
-// Dra-neråt-för-att-söka (som Things m.fl.): när listan står i toppen och man drar
-// ner förbi en tröskel avslöjas sökningen. En liten hint-remsa växer med draget och
-// ger fysisk återkoppling; släpp förbi tröskeln → öppna sök. Rör inte drag-omordning
-// (som avbryts vid rörelse) eller vanlig scroll (vi agerar bara vid scrollTop 0 + neråt).
-function enablePullToSearch(listEl, openFn, isOpenFn, trackEv) {
-  if (!listEl) return;
-  const hint = document.createElement("div");
-  hint.className = "pull-hint";
-  hint.innerHTML = IC_SEARCH;
-  listEl.parentNode.insertBefore(hint, listEl);
-  const MAX = 66, TRIGGER = 52;
-  let startY = null, atTop = false, pulling = false, pull = 0;
-  listEl.addEventListener("touchstart", (e) => {
-    if (e.touches.length !== 1 || isOpenFn()) { startY = null; return; }
-    startY = e.touches[0].clientY;
-    atTop = listEl.scrollTop <= 0;
-    pulling = false; pull = 0;
-    hint.style.transition = "none";
-  }, { passive: true });
-  listEl.addEventListener("touchmove", (e) => {
-    if (startY == null || !atTop || isOpenFn()) return;
-    const dy = e.touches[0].clientY - startY;
-    if (dy <= 0 || listEl.scrollTop > 0) {
-      if (pulling) { pulling = false; pull = 0; hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready"); }
-      return;
-    }
-    pulling = true;
-    e.preventDefault(); // stoppa rubber-band – vi driver egen reveal
-    pull = Math.min(MAX, dy * 0.6);
-    hint.style.height = pull + "px";
-    hint.style.opacity = String(Math.min(1, pull / TRIGGER));
-    hint.classList.toggle("ready", pull >= TRIGGER);
-  }, { passive: false });
-  const end = () => {
-    if (startY == null) return;
-    const trigger = pulling && pull >= TRIGGER;
-    startY = null; pulling = false;
-    hint.style.transition = "height .2s ease, opacity .2s ease";
-    hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready");
-    if (trigger) { if (trackEv) track(trackEv); openFn(); }
-  };
-  listEl.addEventListener("touchend", end);
-  listEl.addEventListener("touchcancel", end);
-}
-enablePullToSearch($("lessons-list"), openLessonsSearch, () => !lessonsToolbar.classList.contains("hidden"), "pulltosearch/lektioner");
-enablePullToSearch($("editor-list"), openEditorSearch, () => !editorToolbar.classList.contains("hidden"), "pulltosearch/lektion");
+// Sök i lektions- och ordlistan hanteras nu av setupScrollSearch (lessonsSearchCtl /
+// editorSearchCtl) längre upp: fältet lever överst i den scrollande listan, knappen
+// visar/döljer det, och ett hårt drag i toppen ger fokus.
 
 // =========================================================================
 //  Backup: exportera / importera SRS-statistik (localStorage)
@@ -5150,7 +5135,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v267";
+const APP_VERSION = "v268";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

@@ -10,9 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
-  { date: "9 juli 2026", ver: "v265", items: [
-    { t: "Dra neråt i listan för att söka – som i många iOS-appar", type: "improved", hi: true, ico: "🔍",
-      desc: "Står du i toppen av lektions- eller ordlistan och drar ner en bit fälls sökrutan ut automatiskt." },
+  { date: "9 juli 2026", ver: "v268", items: [
+    { t: "Sökfältet bor nu överst i listan – dra ner eller tryck 🔍 för att ta fram det, scrolla bort för att stänga", type: "improved", hi: true, ico: "🔍",
+      desc: "Som i många iOS-appar: sökrutan ligger dold högst upp i lektions- och ordlistan. Dra ner (eller tryck förstoringsglaset) för att söka; drar du hårt kommer tangentbordet upp direkt." },
   ]},
   { date: "9 juli 2026", ver: "v264", items: [
     { t: "Sök i alla lektioner visar nu de matchande orden direkt, grupperade per lektion – tryck på ett ord för att redigera det direkt", type: "improved", hi: true, ico: "🔍",

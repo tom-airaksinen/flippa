@@ -297,6 +297,20 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
 }
+/* Scrollcontainer för lektions-/ordlistan: innehåller ett bestående sökfält överst
+   (som scrollar med innehållet, iOS-stil) + själva listan. Listan inuti tappar sin
+   egen scroll/mask – scrollen sköts av .scroll-area. #subjects-list är kvar som en
+   vanlig scrollande .list (ingen sök där). */
+.scroll-area {
+  flex: 1; min-height: 0; overflow-y: auto;
+  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+  mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
+}
+.scroll-area > .list {
+  flex: none; overflow: visible; min-height: 0;
+  -webkit-mask-image: none; mask-image: none;
+}
+.list-search { padding: 8px 16px 4px; }
 /* Diskret skugga i listans topp – syns först när man börjat scrolla, så den hårda
    klippkanten under den fasta toppen mjukas av. Egen 0-höjds-remsa PRECIS ovanför
    listan (utanför listans mask, som annars äter skuggan); z-index lägger skuggan
