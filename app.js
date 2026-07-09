@@ -3727,17 +3727,22 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
   scrollEl.addEventListener("scroll", syncBtn, { passive: true });
   // Medan fältet har fokus ska rubrikskuggan aldrig ligga över det.
   inputEl.addEventListener("focus", () => { if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on"); });
-  // Hårt drag neråt i toppen → exakt samma som 🔍-knappen (visa + fokus). Ingen egen
-  // layout-påverkande hint (den kunde lämna en glipa som knuffade ner fältet) – vi låter
-  // den naturliga överdrags-studsen ge återkopplingen och triggar reveal vid släpp.
+  // Hårt drag neråt i toppen → exakt samma som 🔍-knappen (visa + fokus). Fältet glider in
+  // via vanlig scroll när man drar upp; vid överdrag i toppen PINNAR vi (preventDefault) så
+  // ingen rubber-band lämnar fältet förskjutet mitt i vyn och fokus inte hamnar på en
+  // överdragen layout (vilket gav strandad markör). Ingen layout-påverkande hint.
   let lastY = null, baseY = null, armed = false;
   scrollEl.addEventListener("touchstart", (e) => { armed = false; baseY = null; lastY = e.touches.length === 1 ? e.touches[0].clientY : null; }, { passive: true });
   scrollEl.addEventListener("touchmove", (e) => {
     if (lastY == null) return;
     const y = e.touches[0].clientY, down = y > lastY; lastY = y;
-    if (scrollEl.scrollTop <= 0 && down) { if (baseY == null) baseY = y; if (y - baseY > 56) armed = true; }
-    else if (scrollEl.scrollTop > 0) { baseY = null; armed = false; }
-  }, { passive: true });
+    if (scrollEl.scrollTop <= 0 && down) {
+      if (baseY == null) baseY = y;
+      const over = y - baseY;
+      if (over > 4) e.preventDefault(); // pinna vid toppen – ingen rubber-band-förskjutning
+      if (over > 44) armed = true;
+    } else if (scrollEl.scrollTop > 0) { baseY = null; armed = false; }
+  }, { passive: false });
   const end = () => {
     const fire = armed;
     lastY = null; baseY = null; armed = false;
@@ -5133,7 +5138,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v271";
+const APP_VERSION = "v272";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
