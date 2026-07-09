@@ -1547,6 +1547,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 
 /* C – höjdpunktskort */
 .c-intro { font-size: 0.86rem; color: var(--muted); margin: 4px 2px 14px; line-height: 1.5; }
+/* Månadsavgränsare bland höjdpunkterna – samma stil som lektionsrubrikerna i globala sök */
+.c-month { padding: 6px 4px 8px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); }
+.c-intro + .c-month { padding-top: 0; }
 .c-card { display: flex; gap: 14px; background: var(--surface); border-radius: 16px; padding: 14px 15px; margin-bottom: 11px; }
 .c-ico { font-size: 1.7rem; flex: none; line-height: 1; }
 .c-title { font-weight: 700; font-size: 1rem; }

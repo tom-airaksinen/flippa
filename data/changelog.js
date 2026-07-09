@@ -15,8 +15,8 @@ const CHANGELOG = [
       desc: "Står du i toppen av lektions- eller ordlistan och drar ner en bit fälls sökrutan ut automatiskt." },
   ]},
   { date: "9 juli 2026", ver: "v264", items: [
-    { t: "Sök i alla lektioner visar nu de matchande orden direkt, grupperade per lektion – tryck på ett ord för att öppna lektionen där", type: "improved", hi: true, ico: "🔎",
-      desc: "Slå på sök på ämnesskärmen och skriv – du ser orden på en gång i stället för att leta lektion för lektion." },
+    { t: "Sök i alla lektioner visar nu de matchande orden direkt, grupperade per lektion – tryck på ett ord för att redigera det direkt", type: "improved", hi: true, ico: "🔍",
+      desc: "Slå på sök på ämnesskärmen och skriv – du ser orden på en gång i stället för att leta lektion för lektion, och kan trycka för att redigera." },
   ]},
   { date: "9 juli 2026", ver: "v263", items: [
     { t: "Höjer du ”Nya kort per dag” gäller det direkt (fyller på dagens nya ord på studs) – sänkning gäller som förr från imorgon", type: "improved" },
@@ -58,7 +58,7 @@ const CHANGELOG = [
     { t: "Anpassade AI-prompter per språk för att få med bestämd artikel eller genusmarkör där det är relevant", type: "improved" },
   ]},
   { date: "4 juli 2026", ver: "v211", items: [
-    { t: "Slå upp & bildsök direkt från kortet", type: "new", hi: true, ico: "🔎",
+    { t: "Slå upp & bildsök direkt från kortet", type: "new", hi: true, ico: "🔍",
       desc: "Kolla upp ett ord eller se bilder utan att lämna passet." },
     { t: "Handsfree-läge (beta) – svara med rösten", type: "new", ico: "🎙" },
     { t: "Appen laddar inte längre om mitt i ett pass", type: "fixed" },

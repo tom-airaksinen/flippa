@@ -1288,10 +1288,18 @@ function renderChangelog() {
   const merged = mergedByDay(changelogLog());
   const hi = [];
   merged.forEach((e) => e.items.forEach((i) => { if (i.hi) hi.push({ ...i, when: e.date }); }));
-  const cards = hi.map((i) => // visa ALLA höjdpunkter (ej bara senaste X) – vi släpper nytt ofta
-    `<div class="c-card"><div class="c-ico">${i.ico || "✨"}</div>
+  // Visa ALLA höjdpunkter (ej bara senaste X) – vi släpper nytt ofta. Små
+  // månadsavgränsare (samma stil som lektionsrubrikerna i globala sök) delar upp dem.
+  let curMonth = "";
+  const cards = hi.map((i) => {
+    const parts = String(i.when).split(" "); // "9 juli 2026" → ["9","juli","2026"]
+    const mk = parts.length >= 3 ? parts[1] + " " + parts[2] : i.when;
+    let sep = "";
+    if (mk !== curMonth) { curMonth = mk; sep = `<div class="c-month">${esc(mk)}</div>`; }
+    return sep + `<div class="c-card"><div class="c-ico">${i.ico || "✨"}</div>
       <div><div class="c-title">${esc(i.t.split(" – ")[0])}<span class="c-when">${esc(nbspDate(i.when))}</span></div>
-      <div class="c-desc">${esc(i.desc || i.t)}</div></div></div>`).join("");
+      <div class="c-desc">${esc(i.desc || i.t)}</div></div></div>`;
+  }).join("");
   const full = merged.map((e) =>
     `<div class="a-entry"><div class="a-head"><span class="a-date">${esc(nbspDate(e.date))}</span><span class="a-ver">${esc(e.ver)}</span></div>
       <ul class="a-bullets">${e.items.map((i) => `<li>${esc(i.t)}</li>`).join("")}</ul></div>`).join("");
@@ -1385,9 +1393,10 @@ function renderLessons(keepChoosers) {
     return;
   }
   // Global sök: visa matchande ORD direkt (platt lista grupperad per lektion) i stället
-  // för att filtrera lektionslistan. Tak på antal träffar skyddar mot skenande listor
-  // vid korta/breda sökningar. Tryck på en träff → öppnar lektionen (openEditor läser
-  // #lessons-search och förifyller editorns filter, så ordet ligger framme direkt).
+  // för att filtrera lektionslistan. Lektionerna sorteras alfabetiskt (ingen relevans-
+  // viktning – alla substrängsträffar är likvärdiga, så alfabetiskt är mest förutsägbart).
+  // Tak på antal träffar skyddar mot skenande listor. Tryck på en träff → öppnar ordets
+  // redigeringsdialog direkt (lektionen renderas bakom, så Stäng → editorn, Bakåt → listan).
   if (filter) {
     const raw = ($("lessons-search").value || "").trim();
     const CAP = 50;
@@ -1398,6 +1407,7 @@ function renderLessons(keepChoosers) {
         c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter));
       if (hits.length) { groups.push({ l, hits }); totalMatches += hits.length; }
     });
+    groups.sort((a, b) => sortCollator.compare(a.l.name, b.l.name)); // alfabetiskt per lektionsnamn
     if (!totalMatches) {
       const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
       list.innerHTML = `<p class="empty">Inga ord matchar "${esc(raw)}".</p>`
@@ -1416,7 +1426,7 @@ function renderLessons(keepChoosers) {
       let rows = "";
       for (const c of g.hits) {
         if (shown >= CAP) { truncated = true; break; }
-        rows += `<div class="row search-hit" data-lesson="${g.l.id}"><span class="sh-front">${hl(c.front)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
+        rows += `<div class="row search-hit" data-lesson="${g.l.id}" data-card="${c.id}"><span class="sh-front">${hl(c.front)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
         shown++;
       }
       html += `<div class="search-group"><span class="sg-name">${esc(g.l.name)}</span><span class="sg-count">${g.hits.length}</span></div>` + rows;
@@ -1424,7 +1434,7 @@ function renderLessons(keepChoosers) {
     if (truncated) html += `<p class="search-more">+ ${totalMatches - shown} till – förfina sökningen</p>`;
     list.innerHTML = html;
     list.querySelectorAll(".search-hit").forEach((row) =>
-      row.addEventListener("click", () => openEditor(row.dataset.lesson)));
+      row.addEventListener("click", () => { openEditor(row.dataset.lesson); editWord(row.dataset.card); }));
     return;
   }
   const lessonsToShow = currentSubject.lessons;
@@ -5140,7 +5150,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v266";
+const APP_VERSION = "v267";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
