@@ -3721,36 +3721,26 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
   const listEl = scrollEl.querySelector(".list");
   const ensureScrollable = () => { if (listEl) listEl.style.minHeight = scrollEl.clientHeight + "px"; };
   const syncBtn = () => btnEl.classList.toggle("active", revealed() || !!inputEl.value);
-  // Tryck på 🔍 = tydlig avsikt att söka → visa fältet OCH ge fokus (tangentbord upp).
-  // Stäng gör man genom att scrolla bort fältet (eller ✕ när det finns text).
-  btnEl.onclick = () => reveal(true);
+  // Tryck på 🔍 = växla: dolt → visa fältet + fokus (tangentbord upp); synligt → scrolla
+  // bort (stäng). Så man kan öppna OCH stänga sökningen med samma knapp.
+  btnEl.onclick = () => { if (revealed()) hide(); else reveal(true); };
   scrollEl.addEventListener("scroll", syncBtn, { passive: true });
   // Medan fältet har fokus ska rubrikskuggan aldrig ligga över det.
   inputEl.addEventListener("focus", () => { if (scrollEl._shadowStrip) scrollEl._shadowStrip.classList.remove("on"); });
-  // Hårt drag (överdrag i toppen, scrollTop ≤ 0 + neråt) → fokus, med växande hint.
-  const hint = document.createElement("div");
-  hint.className = "pull-hint"; hint.innerHTML = IC_SEARCH;
-  scrollEl.parentNode.insertBefore(hint, scrollEl);
-  const MAX = 66, TRIGGER = 52;
-  let lastY = null, baseY = null, pull = 0, active = false;
-  const resetHint = () => { active = false; baseY = null; pull = 0; hint.style.height = "0px"; hint.style.opacity = "0"; hint.classList.remove("ready"); };
-  scrollEl.addEventListener("touchstart", (e) => { if (e.touches.length !== 1) { lastY = null; return; } lastY = e.touches[0].clientY; baseY = null; pull = 0; active = false; hint.style.transition = "none"; }, { passive: true });
+  // Hårt drag neråt i toppen → exakt samma som 🔍-knappen (visa + fokus). Ingen egen
+  // layout-påverkande hint (den kunde lämna en glipa som knuffade ner fältet) – vi låter
+  // den naturliga överdrags-studsen ge återkopplingen och triggar reveal vid släpp.
+  let lastY = null, baseY = null, armed = false;
+  scrollEl.addEventListener("touchstart", (e) => { armed = false; baseY = null; lastY = e.touches.length === 1 ? e.touches[0].clientY : null; }, { passive: true });
   scrollEl.addEventListener("touchmove", (e) => {
     if (lastY == null) return;
     const y = e.touches[0].clientY, down = y > lastY; lastY = y;
-    if (scrollEl.scrollTop <= 0 && down) {
-      if (baseY == null) baseY = y;
-      pull = Math.min(MAX, (y - baseY) * 0.7);
-      if (pull > 0) { active = true; e.preventDefault(); hint.style.height = pull + "px"; hint.style.opacity = String(Math.min(1, pull / TRIGGER)); hint.classList.toggle("ready", pull >= TRIGGER); }
-    } else if (active && (!down || scrollEl.scrollTop > 0)) { resetHint(); }
-  }, { passive: false });
+    if (scrollEl.scrollTop <= 0 && down) { if (baseY == null) baseY = y; if (y - baseY > 56) armed = true; }
+    else if (scrollEl.scrollTop > 0) { baseY = null; armed = false; }
+  }, { passive: true });
   const end = () => {
-    if (lastY == null) return;
-    const fire = active && pull >= TRIGGER;
-    lastY = null;
-    hint.style.transition = "height .2s ease, opacity .2s ease"; resetHint();
-    // Trigga exakt samma sak som 🔍-knappen (reveal med preventScroll + scroll till listans
-    // topp) i stället för rå focus() – annars drar iOS upp fältet under statusfältet.
+    const fire = armed;
+    lastY = null; baseY = null; armed = false;
     if (fire) { if (trackEv) track(trackEv); reveal(true); }
   };
   scrollEl.addEventListener("touchend", end);
@@ -5143,7 +5133,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v270";
+const APP_VERSION = "v271";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
