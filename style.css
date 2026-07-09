@@ -334,6 +334,21 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
    (flex:none) alltid ryms och pilen aldrig trycks utanför skärmen. */
 .row-title { font-size: 1.05rem; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .row-meta { color: var(--muted); font-size: 0.85rem; white-space: nowrap; flex: none; }
+
+/* Global sök – platt ordträfflista grupperad per lektion */
+.search-group {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  padding: 14px 6px 6px; font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted);
+}
+.search-group:first-child { padding-top: 4px; }
+.search-group .sg-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-group .sg-count { flex: none; opacity: 0.75; }
+.search-hit { padding: 12px 16px; margin-bottom: 6px; gap: 12px; }
+.search-hit .sh-front { font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.search-hit .sh-back { color: var(--muted); flex: none; max-width: 45%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+.search-hit mark, .search-group mark { background: color-mix(in srgb, var(--accent) 38%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
+.search-more { color: var(--muted); font-size: 0.8rem; text-align: center; padding: 6px 0 4px; }
 .due-tag {
   background: var(--easy);
   color: #0d1426;

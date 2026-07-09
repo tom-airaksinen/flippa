@@ -1384,21 +1384,50 @@ function renderLessons(keepChoosers) {
     list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
     return;
   }
-  const lessonsToShow = filter
-    ? currentSubject.lessons.filter((l) =>
-        l.cards.some((c) =>
-          c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter)
-        )
-      )
-    : currentSubject.lessons;
-  if (!lessonsToShow.length) {
+  // Global sök: visa matchande ORD direkt (platt lista grupperad per lektion) i stället
+  // för att filtrera lektionslistan. Tak på antal träffar skyddar mot skenande listor
+  // vid korta/breda sökningar. Tryck på en träff → öppnar lektionen (openEditor läser
+  // #lessons-search och förifyller editorns filter, så ordet ligger framme direkt).
+  if (filter) {
     const raw = ($("lessons-search").value || "").trim();
-    const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
-    list.innerHTML = `<p class="empty">Inga lektioner matchar "${esc(raw)}".</p>`
-      + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">${IC_LOOKUP} Slå upp &amp; lägg till</button></p>` : "");
-    if (canLookUp) $("lookup-add").onclick = () => openAddDialog({ segment: "lookup", prefill: raw, pickLesson: true });
+    const CAP = 50;
+    const groups = [];
+    let totalMatches = 0;
+    currentSubject.lessons.forEach((l) => {
+      const hits = l.cards.filter((c) =>
+        c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter));
+      if (hits.length) { groups.push({ l, hits }); totalMatches += hits.length; }
+    });
+    if (!totalMatches) {
+      const canLookUp = !!subjectLang(currentSubject); // uppslag kräver att ämnet har ett språk
+      list.innerHTML = `<p class="empty">Inga ord matchar "${esc(raw)}".</p>`
+        + (canLookUp ? `<p class="empty"><button type="button" class="link-action" id="lookup-add">${IC_LOOKUP} Slå upp &amp; lägg till</button></p>` : "");
+      if (canLookUp) $("lookup-add").onclick = () => openAddDialog({ segment: "lookup", prefill: raw, pickLesson: true });
+      return;
+    }
+    const hl = (text) => { // markera första träffen (skydda mot HTML i speglat innehåll via esc)
+      const i = text.toLowerCase().indexOf(filter);
+      if (i < 0) return esc(text);
+      return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + filter.length)) + "</mark>" + esc(text.slice(i + filter.length));
+    };
+    let shown = 0, truncated = false, html = "";
+    for (const g of groups) {
+      if (shown >= CAP) { truncated = true; break; }
+      let rows = "";
+      for (const c of g.hits) {
+        if (shown >= CAP) { truncated = true; break; }
+        rows += `<div class="row search-hit" data-lesson="${g.l.id}"><span class="sh-front">${hl(c.front)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
+        shown++;
+      }
+      html += `<div class="search-group"><span class="sg-name">${esc(g.l.name)}</span><span class="sg-count">${g.hits.length}</span></div>` + rows;
+    }
+    if (truncated) html += `<p class="search-more">+ ${totalMatches - shown} till – förfina sökningen</p>`;
+    list.innerHTML = html;
+    list.querySelectorAll(".search-hit").forEach((row) =>
+      row.addEventListener("click", () => openEditor(row.dataset.lesson)));
     return;
   }
+  const lessonsToShow = currentSubject.lessons;
   // Behärskning per lektion: andel ord i låda ≥ 4 ("inlärt"), på väg = låda 1–3, ny = låda 0.
   // Riktningen följer den valda dir-selecten (blandat = svagaste av de två riktningarna),
   // samma logik som Leitner-stapeln på statistikfliken. Icke-muterande läsning ur srs.
@@ -5048,7 +5077,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v263";
+const APP_VERSION = "v264";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
