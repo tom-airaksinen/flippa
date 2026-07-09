@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "9 juli 2026", ver: "v263", items: [
+    { t: "Höjer du ”Nya kort per dag” gäller det direkt (fyller på dagens nya ord på studs) – sänkning gäller som förr från imorgon", type: "improved" },
+  ]},
   { date: "8 juli 2026", ver: "v257", items: [
     { t: "Automatisk uppläsning missade ibland allra första ordet i ett pass (om man svepte direkt utan att vända kortet) – fixat", type: "fixed" },
   ]},

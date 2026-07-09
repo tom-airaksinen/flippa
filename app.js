@@ -1011,6 +1011,7 @@ function renderSubjects() {
   activeScreen = "subjects";
   show("subjects");
   const list = $("subjects-list");
+  clearListShadow(list);
   // Avataren (→ inställningar) speglar vald användare; ＋ och avatar döljs tills man valt
   const av = $("profile-btn");
   av.classList.toggle("hidden", !currentUser);
@@ -1377,6 +1378,7 @@ function renderLessons(keepChoosers) {
   $("prio-empty-note").classList.toggle("hidden", !(due === 0 && hasExcluded));
 
   const list = $("lessons-list");
+  clearListShadow(list);
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
   if (!currentSubject.lessons.length) {
     list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
@@ -1726,11 +1728,16 @@ $("limit-segs").addEventListener("click", (e) => {
   sessionLimitSel.dispatchEvent(new Event("change")); // sparar SESSION_LIMIT_KEY
   syncOptionPills(); closeChoosers();
 });
-// Nya kort per dag – stäng INTE väljaren så noteringen ("gäller från imorgon") syns
+// Nya kort per dag – höjning slår igenom DIREKT (som prio-filtret): topUpTodaysNew
+// fyller på dagens nyord upp till nya kvoten. Sänkning kan inte av-introducera redan
+// visade ord → topUp gör inget då, så en sänkning gäller i praktiken från imorgon.
 $("newperday-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   localStorage.setItem(NEW_PER_DAY_KEY, b.dataset.v);
+  if (currentSubject) topUpTodaysNew(currentSubject);
+  track("newperday/" + b.dataset.v);
   syncOptionPills();
+  if (activeScreen === "lessons") renderLessons(true); // uppdatera räknare, behåll väljaren öppen
 });
 // Priofilter – toggla nivå (minst en måste vara vald). Stäng inte väljaren.
 $("prio-filter").addEventListener("click", (e) => {
@@ -3631,6 +3638,23 @@ const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" a
   if (hf) hf.innerHTML = IC_MIC + ' Handsfree <span class="beta">beta</span>';
 })();
 
+// Scroll-skugga i toppen av listor. En egen 0-höjds-remsa (.scroll-shadow) läggs
+// PRECIS före varje lista – utanför listans bottenmask, som annars klipper bort en
+// skugga ritad inuti listan. Remsan togglar klassen "on" när listan scrollats.
+// Listelementen består mellan omritningar (bara innerHTML byts) → lyssnare en gång.
+(function initListShadows() {
+  document.querySelectorAll(".list").forEach((el) => {
+    const strip = document.createElement("div");
+    strip.className = "scroll-shadow";
+    el.parentNode.insertBefore(strip, el);
+    el._shadowStrip = strip;
+    el.addEventListener("scroll", () => {
+      strip.classList.toggle("on", el.scrollTop > 2);
+    }, { passive: true });
+  });
+})();
+function clearListShadow(el) { if (el && el._shadowStrip) el._shadowStrip.classList.remove("on"); } // innerHTML-byte nollar scrollTop
+
 // Tydlig, flytande bekräftelse längst ner
 function toast(msg, ms = 1700) {
   const t = document.createElement("div");
@@ -3915,6 +3939,7 @@ function renderEditor() {
   $("editor-title").textContent = lesson.name;
   updatePauseToggle(lesson.id);
   const list = $("editor-list");
+  clearListShadow(list);
   if (!lesson.cards.length) {
     list.innerHTML = `<p class="empty">Inga ord än. Lägg till eller slå upp här ovanför, eller <button type="button" class="link-action" id="ai-help">ta hjälp av en AI</button>.</p>`;
     $("ai-help").onclick = () => openAddDialog({ segment: "ai" }); // enhetlig dialog, AI-segmentet
@@ -5023,7 +5048,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v262";
+const APP_VERSION = "v263";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

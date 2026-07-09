@@ -297,6 +297,17 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
 }
+/* Diskret skugga i listans topp – syns först när man börjat scrolla, så den hårda
+   klippkanten under den fasta toppen mjukas av. Egen 0-höjds-remsa PRECIS ovanför
+   listan (utanför listans mask, som annars äter skuggan); z-index lägger skuggan
+   ovanpå listraderna, och den är liten nog att inte täcka första raden i viloläge. */
+.scroll-shadow {
+  height: 1px; margin-bottom: -1px; /* 1px krävs för att kasta skugga, negativ marg = ingen layoutpåverkan */
+  flex: none; position: relative; z-index: 3; pointer-events: none;
+  box-shadow: 0 0 0 rgba(0,0,0,0);
+  transition: box-shadow .18s ease;
+}
+.scroll-shadow.on { box-shadow: 0 6px 10px 0 rgba(0,0,0,0.62); }
 .row {
   display: flex;
   align-items: center;
