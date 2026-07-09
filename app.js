@@ -1288,7 +1288,7 @@ function renderChangelog() {
   const merged = mergedByDay(changelogLog());
   const hi = [];
   merged.forEach((e) => e.items.forEach((i) => { if (i.hi) hi.push({ ...i, when: e.date }); }));
-  const cards = hi.slice(0, 6).map((i) =>
+  const cards = hi.map((i) => // visa ALLA höjdpunkter (ej bara senaste X) – vi släpper nytt ofta
     `<div class="c-card"><div class="c-ico">${i.ico || "✨"}</div>
       <div><div class="c-title">${esc(i.t.split(" – ")[0])}<span class="c-when">${esc(nbspDate(i.when))}</span></div>
       <div class="c-desc">${esc(i.desc || i.t)}</div></div></div>`).join("");
@@ -1296,7 +1296,7 @@ function renderChangelog() {
     `<div class="a-entry"><div class="a-head"><span class="a-date">${esc(nbspDate(e.date))}</span><span class="a-ver">${esc(e.ver)}</span></div>
       <ul class="a-bullets">${e.items.map((i) => `<li>${esc(i.t)}</li>`).join("")}</ul></div>`).join("");
   $("clog-body").innerHTML =
-    `<div class="c-intro">De senaste större nyheterna i Flippa.</div>${cards}
+    `<div class="c-intro">Större nyheter i Flippa.</div>${cards}
      <button class="clog-more" id="clog-more" type="button">Visa hela versionshistoriken</button>
      <div class="clog-full hidden" id="clog-full">${full}</div>`;
   $("clog-more").onclick = () => {
@@ -5140,7 +5140,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v265";
+const APP_VERSION = "v266";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
