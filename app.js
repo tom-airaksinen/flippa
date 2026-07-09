@@ -3749,7 +3749,9 @@ function setupScrollSearch(scrollEl, rowEl, inputEl, btnEl, trackEv) {
     const fire = active && pull >= TRIGGER;
     lastY = null;
     hint.style.transition = "height .2s ease, opacity .2s ease"; resetHint();
-    if (fire) { if (trackEv) track(trackEv); inputEl.focus(); }
+    // Trigga exakt samma sak som 🔍-knappen (reveal med preventScroll + scroll till listans
+    // topp) i stället för rå focus() – annars drar iOS upp fältet under statusfältet.
+    if (fire) { if (trackEv) track(trackEv); reveal(true); }
   };
   scrollEl.addEventListener("touchend", end);
   scrollEl.addEventListener("touchcancel", end);
@@ -5141,7 +5143,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v269";
+const APP_VERSION = "v270";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
@@ -5215,10 +5217,8 @@ const SPLASH_MIN_MS = 1800;
   try {
     if (sessionStorage.getItem("flippa-updated")) {
       sessionStorage.removeItem("flippa-updated");
-      const note = document.createElement("div");
-      note.className = "splash-note";
-      note.textContent = "Uppdaterar till senaste versionen…";
-      splash.appendChild(note);
+      const note = document.getElementById("splash-note"); // finns redan (tom platshållare)
+      if (note) note.textContent = "Uppdaterar till senaste versionen…";
     }
   } catch (_) {}
   const t0 = performance.now();
