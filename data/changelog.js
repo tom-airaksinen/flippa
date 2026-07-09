@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "9 juli 2026", ver: "v274", items: [
+    { t: "Nya ord du redan kan räknas inte mot dagskvoten – svarar du ”kan” eller ”kan väldigt bra” på ett nytt ord matas nästa nya in i stället", type: "improved", hi: true, ico: "🎯",
+      desc: "Så fastnar du inte på några få repetitioner när du egentligen vill ta in fler nya ord – dagskvoten går åt till det du faktiskt behöver lära dig." },
+    { t: "Klickar du på en lektion där allt redan är inlärt får du välja: repetera inlärda ord eller öva alla prio-nivåer", type: "improved" },
+  ]},
   { date: "9 juli 2026", ver: "v268", items: [
     { t: "Sökfältet bor nu överst i listan – scrolla upp eller tryck 🔍 för att söka, tryck igen för att stänga", type: "improved", hi: true, ico: "🔍",
       desc: "Som i många iOS-appar ligger sökrutan högst upp i lektions- och ordlistan. Scrolla upp till den eller tryck förstoringsglaset; tryck igen för att stänga och rensa sökningen." },

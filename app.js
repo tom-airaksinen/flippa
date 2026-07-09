@@ -294,7 +294,12 @@ function gradeCard(card, dir, grade) {
   }
   e.lastSeen = now;
   saveSRS();
-  if (wasNew) markFirstStudied(card); // stämpla första studietillfället (en gång per kort)
+  if (wasNew) {
+    markFirstStudied(card); // stämpla första studietillfället (en gång per kort)
+    // Kunde du ett nytt ord direkt (kan/kan bra) räknas det INTE mot dagskvoten – det
+    // friar en plats så nästa nya ord kan flöda in (auto-passet "Dags att öva").
+    if (grade === "good" || grade === "easy") freeNewCardSlot(card);
+  }
 }
 
 // Ett kort är "nytt" (aldrig tränat) när BÅDA riktningarna ligger i låda 0.
@@ -690,7 +695,7 @@ function todaysNewCards(subject) {
         shuffled.slice(0, alloc[i]).forEach((c) => ids.push(c.id));
       });
     });
-    entry = { date: today, ids };
+    entry = { date: today, ids, freed: 0, freedIds: [] };
     ledger[subject.id] = entry;
     localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
   }
@@ -713,7 +718,8 @@ function topUpTodaysNew(subject) {
   let ledger; try { ledger = JSON.parse(localStorage.getItem(NEW_INTRO_KEY) || "{}"); } catch { ledger = {}; }
   const entry = ledger[subject.id];
   if (!entry || entry.date !== todayStr()) { todaysNewCards(subject); return; } // inget för idag än → normal beräkning
-  const room = newPerDay() - entry.ids.length;
+  // Rum = kvot − introducerade + friade (nya ord man kunde direkt frigör sin plats).
+  const room = newPerDay() - entry.ids.length + (entry.freed || 0);
   if (room <= 0) return; // dagskvoten redan fylld
   const have = new Set(entry.ids);
   const eligible = [];
@@ -726,6 +732,24 @@ function topUpTodaysNew(subject) {
   entry.ids = entry.ids.concat(add.map((c) => c.id));
   ledger[subject.id] = entry;
   localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+}
+
+// Ett av dagens nya ord besvarades kan/kan bra → det "kunde du redan", så det ska inte
+// belasta dagskvoten. Räkna det som friat (en gång) och fyll direkt på med nästa nya ord,
+// så auto-passet "Dags att öva" fortsätter mata nya i stället för att fastna på 0.
+function freeNewCardSlot(card) {
+  if (!currentSubject) return;
+  let ledger; try { ledger = JSON.parse(localStorage.getItem(NEW_INTRO_KEY) || "{}"); } catch { return; }
+  const entry = ledger[currentSubject.id];
+  if (!entry || entry.date !== todayStr()) return;
+  if (!entry.ids.includes(card.id)) return;      // bara ord som introducerats via dagskvoten
+  entry.freedIds = entry.freedIds || [];
+  if (entry.freedIds.includes(card.id)) return;  // räkna varje ord högst en gång (skydd mot ångra/omsvar)
+  entry.freedIds.push(card.id);
+  entry.freed = (entry.freed || 0) + 1;
+  ledger[currentSubject.id] = entry;
+  localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+  topUpTodaysNew(currentSubject); // öppna platsen direkt → nästa nya ord blir tillgängligt
 }
 
 // Migrera gammal statistik (nycklad på kort-ID "cardId:dir") till ordnyckeln.
@@ -1808,7 +1832,7 @@ function shuffleInPlace(a) {
   return a;
 }
 
-async function startLessonSession(lessonId, force = false, continuing = false) {
+async function startLessonSession(lessonId, force = false, continuing = false, ignorePrio = false) {
   const lesson = currentSubject.lessons.find((l) => l.id === lessonId);
   if (!lesson) return;
   if (!lesson.cards.length) {
@@ -1824,19 +1848,26 @@ async function startLessonSession(lessonId, force = false, continuing = false) {
     dirMode === "f2b" ? getEntry(c, "f2b").due <= now
     : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
     : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
-  // Priofiltret gäller även manuell träning: vill man t.ex. bara nivå 1 av Sjöfart.
-  const pool = (force ? [...lesson.cards] : lesson.cards.filter(activeToday)).filter((c) => !runSeen.has(c.id) && prioAllowed(c));
+  // Priofiltret gäller även manuell träning (vill man t.ex. bara nivå 1). ignorePrio =
+  // "Öva alla nivåer"-valet i tom-dialogen kör förbi filtret för just den sessionen.
+  const allow = (c) => ignorePrio || prioAllowed(c);
+  const pool = (force ? [...lesson.cards] : lesson.cards.filter(activeToday)).filter((c) => !runSeen.has(c.id) && allow(c));
   if (!pool.length) {
-    if (!lesson.cards.some((c) => prioAllowed(c))) {
-      toast("Inga ord på valda prio-nivåer i den här lektionen – ändra i KORT/PASS", 4000);
-      return;
-    }
-    const yes = await confirmPrimary(
-      "Inget kvar att öva idag",
-      `Du har redan lärt in alla ord (på valda prio-nivåer) i "${lesson.name}" idag. Köra igenom lektionen ändå?`,
-      "Kör ändå!"
-    );
-    if (yes) startLessonSession(lessonId, true);
+    // Tom lektion → dialog i stället för toast: repetera inlärda / öva alla nivåer.
+    // (Nya ord visas redan i vanlig lektionsträning, så "kör nya" är inte relevant här.)
+    const filterActive = !!prioFilterFor(currentSubject.id);
+    const canWiden = !ignorePrio && filterActive && lesson.cards.some((c) => !prioAllowed(c));
+    const canRepeat = lesson.cards.some((c) => allow(c) && !runSeen.has(c.id)); // finns inlärda ord i scope
+    const actions = [];
+    if (canRepeat) actions.push({ label: "🔁 Repetera inlärda ord", value: "repeat" });
+    if (canWiden) actions.push({ label: "Öva alla prio-nivåer", value: "widen" });
+    if (!actions.length) { toast("Inget att öva i den här lektionen just nu", 3500); return; }
+    const msg = canRepeat
+      ? `Du har redan lärt in alla ord ${filterActive && !ignorePrio ? "(på valda prio-nivåer) " : ""}i "${lesson.name}" idag.`
+      : `Inga ord på valda prio-nivåer i "${lesson.name}" – vidga för att öva.`;
+    const choice = await actionSheet("Inget kvar att öva", actions, msg);
+    if (choice === "repeat") { track("lektion-tom/repetera"); startLessonSession(lessonId, true, false, ignorePrio); } // kör igenom (inlärda), svagast först
+    else if (choice === "widen") { track("lektion-tom/vidga"); startLessonSession(lessonId, false, false, true); }   // förbi prio-filtret
     return;
   }
   // Urval: svagast först (lägsta låda). I boxen där kort/pass-taket nås görs
@@ -3545,12 +3576,13 @@ function confirmDanger(title, message, okLabel = "Ta bort") {
   });
 }
 
-function actionSheet(title, actions) {
+function actionSheet(title, actions, message) {
   return new Promise((resolve) => {
     const btns = actions
       .map((a, i) => `<button class="sheet-btn ${a.danger ? "danger" : ""}" data-i="${i}">${esc(a.label)}</button>`)
       .join("");
-    const m = openModal(`<h3>${esc(title)}</h3>${btns}
+    const msg = message ? `<p class="modal-hint">${esc(message)}</p>` : "";
+    const m = openModal(`<h3>${esc(title)}</h3>${msg}${btns}
       <div class="modal-actions"><button class="btn-secondary" id="m-cancel">Avbryt</button></div>`);
     m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
     m.querySelectorAll(".sheet-btn").forEach((b) => {
@@ -5126,7 +5158,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v273";
+const APP_VERSION = "v274";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
