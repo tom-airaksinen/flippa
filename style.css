@@ -772,6 +772,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .corner-speak { top: 12px; right: 12px; }
 .corner-hint  { bottom: 12px; right: 12px; }
 .corner-btn:active { background: var(--accent); }
+/* Osynlig, något större träffyta runt högtalaren och ⋯-fliken – lättare att pricka.
+   Måttlig (≈12–14 px) så den inte äter flipp/svep. */
+.corner-speak::before { content: ""; position: absolute; inset: -12px; }
+.menu-tab::before { content: ""; position: absolute; inset: -14px -14px 0; }
 
 .menu-tab {
   position: absolute; z-index: 16; bottom: 0; left: 50%; transform: translateX(-50%);
