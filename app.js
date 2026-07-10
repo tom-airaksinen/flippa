@@ -1,7 +1,7 @@
 "use strict";
 
 /* =========================================================================
-   Flashcards – generisk glosapp
+   Flippa – generisk glosapp
    Innehåll i Firebase (delas, synkas), SRS i localStorage (per enhet).
    ========================================================================= */
 
