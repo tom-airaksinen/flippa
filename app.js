@@ -2576,7 +2576,7 @@ function answer(grade) {
 
 // ---- Feedback ----
 function showFeedback(grade) {
-  const map = { fail: ["✗", "#e05a4f"], good: ["✓", "#5bbf72"], easy: ["★", "#f4c542"], hard: ["⇊", "#b06bf0"] };
+  const map = { fail: ["✗", "#e05a4f"], good: ["✓", "#5bbf72"], easy: ["⇈", "#f4c542"], hard: ["⇊", "#b06bf0"] };
   const [sym, color] = map[grade];
   feedbackEl.textContent = sym;
   feedbackEl.style.color = color;
@@ -5185,7 +5185,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v279";
+const APP_VERSION = "v280";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
