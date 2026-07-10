@@ -7,6 +7,9 @@
 - [x] Ny Firebase-databas/nytt projekt, eller återanvänd kassa-appens? → **Svar:** Nytt separat projekt – ren separation, egna regler; enda nackdel ~5 min engångssetup (2026-05-30)
 - [x] Vilka säkerhetsregler ska Firebase ha? → **Svar:** Anonym inloggning + regel "kräver inloggad" (tyst, ingen login-ruta; blockar slumpmässiga skrivningar) (2026-05-30)
 
+- [ ] Moln-SR (löpande synk mellan enheter, per profil utom Gäst) – **design klar, pausad** tills Tom är vid dator/andra enhet (cross-device kan inte valideras på enbart mobil). Fullständig byggspec (invariant, 7 risker+skydd, auto-backup, Tom-först-grind, synk-status-rad, test-nod-alternativ) i [`framtida-utveckling.md`](framtida-utveckling.md) §11. **Öppet beslut när vi kör:** skarpt mot `/userdata/tom` direkt, eller via test-nod `/userdata-test/tom` först? (2026-07-10)
+- [x] Lösenord i klartext i repot? → **Svar:** Bytt till `salt` + `SHA-256(salt+lösenord)` (v279, 2026-07-10). Obfuskering ej säkerhet; klartext kvar i git-historik → rotera om det ska bli osökbart. Se [`framtida-utveckling.md`](framtida-utveckling.md) §12.
+
 ## SRS-modell
 - [x] Leitner eller SM-2? → **Svar:** Graderad Leitner med datum (passar swipe; SM-2 kräver glidande ease factor) (2026-05-30)
 - [x] Hur många utfall/gester? → **Svar:** Tre – 👈 kan inte (→låda 1), 👉 kan (+1 låda), 👆 kan väldigt bra (+2 lådor) (2026-05-30)

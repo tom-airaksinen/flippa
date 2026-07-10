@@ -430,6 +430,107 @@ slår upp många ord (rate limits).
 
 ---
 
+## 11) Moln-SR (löpande synk mellan enheter) – KLAR ATT BYGGA
+
+**Status (2026-07-10): design godkänd, PAUSAD** tills Tom är vid dator / har en
+andra enhet (cross-device går inte att validera på enbart mobil). Detta är den
+"riktiga" nyttan bakom multi-user: progress följer med mellan enheter. Avsnitt 6
+täcker engångs-migreringen; det här avsnittet är den **löpande synken** – redo att
+starta. (Lösenordsfixen, avsnitt 12, är redan gjord.)
+
+### Mål
+SRS + statistik följer med mellan enheter, **per profil, UTOM Gäst**.
+
+### Strukturfynd (måste förstås först)
+- SRS (`flashcards-srs-v1`) är idag **per enhet**, nyckel `front|back|dir` →
+  `{box,due,lastSeen}` – **inte per profil**. Funkar bara för att var och en har
+  egen enhet.
+- Stats (`flippa-stats-v1`) = array av passloggar, varje post taggad med `user`;
+  statistikvyn filtrerar per profil.
+- Alltså: synk = **spegla enhetens lokala SRS till rätt profils moln-nod**. På
+  separata enheter korrekt. Delad enhet mellan två *icke-gäst*-profiler = risk för
+  korskontaminering (familjens uppsättning = separata enheter, så ok – men notera).
+
+### Design (blob-baserad – enkel + säker)
+- Molnväg per profil: `/userdata/<profil>/srsBlob` = JSON-sträng av srs-objektet,
+  `/userdata/<profil>/statsBlob` = JSON av den profilens passloggar. Blob (sträng)
+  undviker Firebase-nyckelproblem (orden innehåller `.` `/` m.m. som är olagliga
+  child-keys). Gäst synkar aldrig.
+- Återanvänder befintlig anonym auth + `db`. Reglerna tillåter redan inloggad
+  läs/skriv i roten (som innehållet) → troligen ingen konsoländring, men
+  **verifiera att regeln täcker `/userdata`**.
+
+### Invariant (gör dataförlust omöjlig – detta är hela poängen)
+- **Lokalt = arbetskopia** (träning sker mot lokalt, funkar offline). Molnet =
+  additiv spegel.
+- Merge = **union, nyaste `lastSeen` vinner** (lika → högsta `box`). Tappar ALDRIG
+  en nyckel.
+- **Tomt/saknat/äldre moln skriver ALDRIG över icke-tomt/nyare lokalt.**
+- **Radera ALDRIG lokalt.** Skriv bara `set` på just blob-pathen, aldrig `set` på
+  profilroten.
+- Värsta rimliga fel = **"synk hände inte"**, inte "data borta".
+
+### Flöde
+- Vid auth/DB-klar (icke-gäst, i utrullningslistan): `snapshotBeforeSync()` (en
+  gång) → `cloudPull()` (läs blobbar, merge in i lokalt, spara, rendera om räknare).
+- Vid `saveSRS()` / `commitSessionStats()`: **debounced** `cloudPush()` (skriv
+  blob = union-mergad lokal). Stats-blob = filtrera lokal array på currentUser.
+
+### Säkerhet / utrullning
+- **Auto-backup före första synken:** kopiera srs+stats till
+  `flippa-presync-backup` en gång = räddningspunkt.
+- **Tom-först-grind:** `CLOUD_SYNC_PROFILES = ["tom"]` – bara Toms profil synkar
+  först; utöka rad för rad när validerat. Hedvig/Wille orörda tills "det funkar".
+- **Versionera schemat** (t.ex. `v: 1` i blobben) så framtida ändringar inte
+  klottrar.
+- Skriv bara barn-/blob-paths med `set`/`update`, aldrig på förälder-roten.
+
+### 7 reella risker + skydd (från genomgången 2026-07-10)
+1. Migrering skriver över bra data med tomt → migrera lokalt→moln först; tomt moln rör aldrig lokalt.
+2. Två enheter klottrar över varandra → merge per ord (union, nyaste vinner), inte helobjekts-replace.
+3. Tom-läsning vid start → ladda lokalt direkt; reconcile mot moln med merge, inte replace.
+4. Offline → lokal är arbetskopia; nätet får aldrig blockera träning.
+5. Fel profil skrivs → härled molnväg strikt från vald profil; Gäst skriver aldrig.
+6. Bred radering (`set` på förälder) → skriv bara blob-pathen.
+7. Ordnyckel ändras vid redigering → post blir föräldralös (redan sant idag, ingen förlust).
+
+### Hur vi VET att det funkar (observerbarhet – viktigt)
+- Cross-device är hela poängen och kräver **≥2 enheter** → går INTE att validera på
+  enbart mobil.
+- Bygg en tillfällig **synk-status-rad** i Inställningar: "senast upp kl X (N ord) ·
+  senast ner (N ord) · N i molnet · backup: ja · ev. felrad". Så syns plumbningen
+  på telefonen utan Firebase-konsolen.
+- **Verify headless:** merge-funktionerna (union, ingen post tappas, nyaste vinner)
+  + backup-logiken. Den *skarpa* synken kan INTE köras i verify-harnessen (blockar
+  Firebase) → valideras på enhet.
+- **Riktiga beviset:** öva på enhet A → öppna på enhet B → progressen syns.
+- Extra försiktigt (valfritt): peka första synken mot **test-nod**
+  `/userdata-test/tom`, verifiera läs/skriv/merge live, peka sen om till
+  `/userdata/tom`. **OBS:** test-noden skyddar bara MOLN-datan; lokal-merge körs
+  likadant → lokal-säkerheten kommer från invarianten + backupen, inte noden.
+
+### När vi kör igång (ordning)
+1. Bygg ofarliga grunden (merge-fns, auto-backup, synk-status-rad) – rör inget
+   live, verifiera headless.
+2. Wire:a live-synk bakom Tom-grinden (ev. test-nod först).
+3. Tom validerar på 2 enheter → utöka `CLOUD_SYNC_PROFILES` till hedvig/wille.
+
+---
+
+## 12) Profillås – nuläge + rotering (gjort 2026-07-10, v279)
+
+- Låsen lagras nu som `salt` + `SHA-256(salt+lösenord)` i `USERS` (app.js),
+  verifieras via Web Crypto (`verifyLock`). **Samma lösenord som förr, ingen
+  utloggning** (inloggat = vald profil + anonym session, hänger inte på lösenordet).
+- **Obfuskering, INTE säkerhet:** kontrollen sker i klienten (kan kringgås av en
+  utvecklare) och svaga lösenord kan gissas från hashen. Koppla aldrig riktig
+  säkerhet till profillåset.
+- **Kvarstår:** klartexten finns i **git-historiken** (tidigare commits). Vill man
+  göra den osökbar → **rotera** till nya lösenord och hasha dem. Riktig
+  data-isolering kräver server-sidig auth per uid (avsnitt 1).
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
