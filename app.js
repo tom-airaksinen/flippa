@@ -57,12 +57,24 @@ function track(path, opts) {
 // Varje område har en ägare (owner). Vald profil filtrerar vilka områden som visas.
 // Lektioner ärver områdets ägare automatiskt. Lätt att utöka med fler profiler.
 const USERS = [
-  // lock = enkelt lösenordslås vid byte TILL profilen (asså jag fattar att du som snokar här hittar lösenordet enkelt, men det här är lite på skoj, okej?!)
-  { id: "tom", name: "Tom", lock: "phl1ppzter" },
-  { id: "hedvig", name: "Hedvig", lock: "horselove" },
-  { id: "wille", name: "Wille", lock: "full4br0mmapappor" },
+  // Lösenordslås vid byte TILL profilen. Lagras som salt + SHA-256(salt+lösenord) i
+  // stället för klartext – så lösenordet inte ligger öppet i repot. OBS: detta är
+  // obfuskering, INTE säkerhet (kontrollen sker i klienten och kan kringgås av en
+  // utvecklare; svaga lösenord kan gissas från hashen). Samma lösenord som förr.
+  { id: "tom", name: "Tom", salt: "d500d5ba8b664b2c", lock: "9a8852d56d74c20688eadeffd44240fc13e931577bb63295d2275e6bca6b2142" },
+  { id: "hedvig", name: "Hedvig", salt: "b3f757332b7f47af", lock: "2e60a8c419cc3ceba5348a34cd30a3aa05d3c8fcb118f04b39d07c10b5162fc7" },
+  { id: "wille", name: "Wille", salt: "03a070125fe335a6", lock: "e4fa98ef9be108372f1bd359251f534a4116570f1c1d85222cf01fad25e09041" },
   { id: "guest", name: "Gäst" },
 ];
+// Verifierar inknappat lösenord mot salt+hash (Web Crypto SHA-256). Async.
+async function verifyLock(u, pw) {
+  if (!u || !u.lock) return true;
+  try {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode((u.salt || "") + pw));
+    const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    return hex === u.lock;
+  } catch (_) { return false; }
+}
 const USER_KEY = "flippa-user";
 let currentUser = localStorage.getItem(USER_KEY) || null; // null = ingen vald (ny enhet)
 applyTheme(); // sätt ev. rosa tema direkt (innan splash/render) om Hedvig är vald
@@ -1089,7 +1101,7 @@ async function selectProfile(id) {
   if (u.lock && id !== currentUser) {
     const pw = await askPassword(`Lösenord för ${u.name}`);
     if (pw == null) return false;           // avbröt
-    if (pw.trim() !== u.lock) { toast("Fel lösenord", 2500, "error"); return false; }
+    if (!(await verifyLock(u, pw.trim()))) { toast("Fel lösenord", 2500, "error"); return false; }
   }
   setUser(id);
   return true;
@@ -5173,7 +5185,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v278";
+const APP_VERSION = "v279";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
