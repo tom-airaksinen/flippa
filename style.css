@@ -442,8 +442,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .toast {
   position: fixed;
   left: 50%;
-  bottom: calc(32px + env(safe-area-inset-bottom));
-  transform: translate(-50%, 12px);
+  bottom: calc(72px + env(safe-area-inset-bottom)); /* lyft ovanför navbaren = eget lager */
+  transform: translate(-50%, 28px) scale(0.96);
   max-width: min(90vw, 440px);
   box-sizing: border-box;
   display: flex;
@@ -453,21 +453,27 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   background: var(--surface-2);
   color: var(--text);
   border: 1px solid rgba(255,255,255,0.10);
+  border-left: 3px solid var(--accent); /* färgstripe drar blicken (röd vid fel) */
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 11px 16px;
+  padding: 11px 16px 11px 14px;
   border-radius: 9px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  box-shadow: 0 8px 22px rgba(0,0,0,0.5);
   z-index: 400;
   pointer-events: none;
   opacity: 0;
-  transition: opacity 0.22s ease, transform 0.22s ease;
+  /* Piggare entré: glider upp längre + lätt studs/pop (overshoot-bezier) */
+  transition: opacity 0.2s ease, transform 0.34s cubic-bezier(0.2,0.85,0.25,1.2);
   text-align: center;
   line-height: 1.3;
 }
-.toast.show { opacity: 1; transform: translate(-50%, 0); }
-.toast-error { border-left: 3px solid var(--fail); padding-left: 14px; }
+.toast.show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.toast-error { border-left-color: var(--fail); }
 .toast-ico { flex: none; font-size: 1rem; }
+@media (prefers-reduced-motion: reduce) {
+  .toast { transform: translate(-50%, 0); transition: opacity 0.2s ease; }
+  .toast.show { transform: translate(-50%, 0); }
+}
 
 /* Achievement-banner: glider in ovanifrån, sitter i överkant nästan fullbredd */
 .ach-banner {
