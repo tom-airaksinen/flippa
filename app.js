@@ -3530,7 +3530,7 @@ function askWord(front, back, hint, opts = {}) {
       </div>`);
       let lessonSel = null;
       if (showLesson) {
-        lessonSel = buildSelect(lessons.map((l) => ({ value: l.id, label: l.name })), lessonId, null);
+        lessonSel = buildSelect(lessons.slice().sort((a, b) => sortCollator.compare(a.name, b.name)).map((l) => ({ value: l.id, label: l.name })), lessonId, null);
         m.querySelector("#m-lesson-mount").appendChild(lessonSel.el);
       }
       const vals = () => ({
@@ -4367,10 +4367,11 @@ function openAddDialog(opts = {}) {
   // Lektionsväljare (bara i väljar-läge) – alla ord hamnar i EN vald lektion.
   let lessonSel = null, newLessonI = null;
   if (pickLesson) {
-    const items = currentSubject.lessons.map((l) => ({ value: l.id, label: l.name })).concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
+    const sorted = currentSubject.lessons.slice().sort((a, b) => sortCollator.compare(a.name, b.name)); // alfabetiskt i väljaren
+    const items = sorted.map((l) => ({ value: l.id, label: l.name })).concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
     m.querySelector("#add-lesson-pick").innerHTML = `<label>Lägg till i</label><div id="add-lesson-mount"></div><input type="text" id="add-newlesson" class="hidden" placeholder="Namn på ny lektion" autocomplete="off" />`;
     newLessonI = m.querySelector("#add-newlesson");
-    lessonSel = buildSelect(items, currentSubject.lessons[0] && currentSubject.lessons[0].id, (v) => { newLessonI.classList.toggle("hidden", v !== "__new__"); });
+    lessonSel = buildSelect(items, sorted[0] && sorted[0].id, (v) => { newLessonI.classList.toggle("hidden", v !== "__new__"); });
     m.querySelector("#add-lesson-mount").appendChild(lessonSel.el);
     if (!currentSubject.lessons.length) { lessonSel.value = "__new__"; newLessonI.classList.remove("hidden"); }
   }
@@ -4538,6 +4539,7 @@ function openTranslate(defaultLessonId, prefill) {
   let dir = "sv2for";
 
   const lessonItems = currentSubject.lessons
+    .slice().sort((a, b) => sortCollator.compare(a.name, b.name)) // alfabetiskt i väljaren
     .map((l) => ({ value: l.id, label: l.name }))
     .concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
 
@@ -5185,7 +5187,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v282";
+const APP_VERSION = "v283";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
