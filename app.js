@@ -985,6 +985,8 @@ let activeScreen = "subjects";
 // ---- Bottenflikar (Flippa / Statistik) ----
 let activeTab = "flippa";
 let statsScope = null; // ämnes-id eller "all"
+let statsPrioPopOpen = false;    // PRIO-dropdownen i statistikens Leitner-rad öppen?
+let statsPrioOutsideBound = false; // dokument-lyssnare för utsidesklick bunden en gång
 
 function setTab(tab) {
   activeTab = tab;
@@ -995,6 +997,7 @@ function setTab(tab) {
   if (tab === "stats") {
     // Default: ämnet man har aktivt i Flippa-fliken, annars Alla ämnen
     statsScope = currentSubject ? currentSubject.id : "all";
+    statsPrioPopOpen = false; // PRIO-dropdownen börjar stängd
     renderStats();
   }
   updateTabbar();
@@ -2155,8 +2158,13 @@ function renderStats() {
     <div class="st-sec">SENASTE 18 VECKORNA</div>
     <div class="st-heatwrap"><div class="st-heat">${heat}</div></div>
     <div class="st-legend"><span>mindre</span><span class="st-d"></span><span class="st-d l1"></span><span class="st-d l2"></span><span class="st-d l3"></span><span class="st-d l4"></span><span>mer</span></div>
-    <div class="st-sec">LEITNER · ${ltTotal} kort</div>
-    <div class="st-prio" id="st-prio">${[1, 2, 3].map((l) => `<button type="button" data-lvl="${l}" class="${stPrioSel.includes(l) ? "on" : ""}"><span class="prio-dot p${l}"></span>Prio ${l}</button>`).join("")}</div>
+    <div class="st-sec st-leitner-head">
+      <span>LEITNER · ${ltTotal} kort</span>
+      <div class="st-prio-wrap">
+        <button type="button" class="st-prio-pill" id="st-prio-pill" aria-haspopup="true">PRIO<span class="limit-dots">${[1, 2, 3].map((l) => `<i class="p${l}${stPrioSel.includes(l) ? "" : " off"}"></i>`).join("")}</span></button>
+        <div class="st-prio-pop${statsPrioPopOpen ? "" : " hidden"}" id="st-prio-pop">${[1, 2, 3].map((l) => `<button type="button" data-lvl="${l}" class="${stPrioSel.includes(l) ? "on" : ""}"><span class="prio-dot p${l}"></span>Prio ${l}</button>`).join("")}</div>
+      </div>
+    </div>
     <div class="st-leitner">${leitner}</div>
     <div class="st-sec">PRESTATIONER</div>
     <div class="st-achv">${achTiles}</div>
@@ -2164,18 +2172,33 @@ function renderStats() {
 
   body.querySelector("#achv-edit").onclick = openLevelsModal;
 
-  // Prio-filter för Leitner-fördelningen (fristående; minst en nivå måste vara vald).
-  const stPrioEl = body.querySelector("#st-prio");
-  if (stPrioEl) stPrioEl.addEventListener("click", (e) => {
-    const b = e.target.closest("button"); if (!b) return;
-    const lvl = Number(b.dataset.lvl);
-    const cur = statsPrioLevels();
-    const next = cur.includes(lvl) ? cur.filter((x) => x !== lvl) : cur.concat(lvl);
-    if (!next.length) return; // minst en
-    setStatsPrio(next);
-    track("stats-prio/" + next.slice().sort().join(""));
-    renderStats();
-  });
+  // Diskret PRIO-väljare på Leitner-raden: pill (med prickar) → liten dropdown med toggles.
+  const stPill = body.querySelector("#st-prio-pill");
+  const stPop = body.querySelector("#st-prio-pop");
+  if (stPill && stPop) {
+    stPill.onclick = () => { statsPrioPopOpen = !statsPrioPopOpen; stPop.classList.toggle("hidden", !statsPrioPopOpen); };
+    stPop.addEventListener("click", (e) => {
+      const b = e.target.closest("button"); if (!b) return;
+      const lvl = Number(b.dataset.lvl);
+      const cur = statsPrioLevels();
+      const next = cur.includes(lvl) ? cur.filter((x) => x !== lvl) : cur.concat(lvl);
+      if (!next.length) return; // minst en nivå
+      setStatsPrio(next);
+      track("stats-prio/" + next.slice().sort().join(""));
+      statsPrioPopOpen = true; // håll dropdownen öppen medan man togglar
+      renderStats();
+    });
+  }
+  // Stäng dropdownen vid klick utanför (bind dokument-lyssnaren en gång).
+  if (!statsPrioOutsideBound) {
+    statsPrioOutsideBound = true;
+    document.addEventListener("pointerdown", (e) => {
+      if (!statsPrioPopOpen) return;
+      if (e.target.closest("#st-prio-pill") || e.target.closest("#st-prio-pop")) return;
+      statsPrioPopOpen = false;
+      const p = document.getElementById("st-prio-pop"); if (p) p.classList.add("hidden");
+    });
+  }
 
   const segs = body.querySelector("#st-period");
   const grid = body.querySelector("#st-grid");
@@ -5217,7 +5240,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v284";
+const APP_VERSION = "v285";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
