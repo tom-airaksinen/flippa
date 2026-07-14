@@ -555,6 +555,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 
 /* Leitner-stapeldiagram (antal kort per låda) – samma färger som styrkebadgen */
 .st-leitner { display: flex; align-items: flex-end; gap: 6px; height: 110px; }
+/* Prio-filter över Leitner-fördelningen i statistikvyn */
+.st-prio { display: flex; gap: 8px; justify-content: center; margin: 2px 0 12px; }
+.st-prio button { display: inline-flex; align-items: center; gap: 6px; background: var(--surface-2); color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 6px 13px; font-size: 0.8rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.st-prio button.on { color: var(--text); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, var(--surface-2)); }
+.st-prio button:not(.on) .prio-dot { opacity: 0.45; }
 .lt-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 5px; }
 .lt-num { font-size: 0.66rem; color: var(--text); font-weight: 600; min-height: 0.8em; }
 .lt-bar { width: 72%; min-height: 0; border-radius: 5px 5px 0 0; background: rgba(255, 255, 255, 0.08); }

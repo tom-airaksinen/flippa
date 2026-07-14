@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "14 juli 2026", ver: "v284", items: [
+    { t: "Statistik: filtrera Leitner-fördelningen på prio-nivå – se t.ex. bara nivå 1 eller 2–3", type: "improved" },
+  ]},
   { date: "9 juli 2026", ver: "v277", items: [
     { t: "Rättat: kunde fastna på en vit skärm om man öppnade Webbsök från Redigera-dialogen mitt i ett pass och sen stängde webbvyn – nu återhämtar sig appen automatiskt", type: "fixed" },
   ]},
