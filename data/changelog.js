@@ -10,9 +10,6 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
-  { date: "14 juli 2026", ver: "v286", items: [
-    { t: "Rättat: Webbsök/Bildsök kunde kasta ut appen till en tom sida (särskilt om Flippa startats från en notis) så man fastnade – öppnas nu i en ruta man alltid kan stänga och komma tillbaka från", type: "fixed" },
-  ]},
   { date: "14 juli 2026", ver: "v284", items: [
     { t: "Statistik: filtrera Leitner-fördelningen på prio-nivå – se t.ex. bara nivå 1 eller 2–3", type: "improved" },
   ]},

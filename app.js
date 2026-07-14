@@ -3048,16 +3048,24 @@ function nearestFan(px,py){
 // OVERLAY – appen navigerar ALDRIG bort, så man alltid kan stänga och är kvar i Flippa
 // (inga vita/fastlåsta skärmar). Den gamla location.href-fallbacken kunde kasta ut hela
 // appen till en tom Google-sida, särskilt vid notis-start (window.open = null i PWA).
-function openExternal(url){
-  try {
-    const a = document.createElement("a");
-    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.style.display = "none";
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => { try { a.remove(); } catch(_){} }, 0);
-  } catch(_) {
-    try { window.open(url, "_blank"); } catch(__) {} // sista utväg – aldrig location.href (ingen fälla)
+// viaTap = utlöst av en ÄKTA tapp (click) → försök öppna in-app-browsern som OVERLAY
+// via en <a target="_blank">-klick (appen stannar kvar; det här är "sheet"-läget).
+// GLID (släpp-för-att-välja) är INGEN gest → overlay/window.open blockeras, så där
+// (viaTap=false) navigerar vi i samma flik med location.href – enda som funkar utan
+// gest. Det lämnar appen (kan i sällsynta fall kräva force-quit) men glid-sök funkar.
+function openExternal(url, viaTap){
+  if (viaTap) {
+    try {
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { try { a.remove(); } catch(_){} }, 0);
+      return;
+    } catch(_) {}
   }
+  markExternalNav();
+  location.href = url;
 }
 function selectFan(i, src){
   if(i<0 || i>=FAN_ITEMS.length) return;
@@ -3065,8 +3073,8 @@ function selectFan(i, src){
   src = src || "tapp"; // 'glid' | 'tapp' – för analytics
   setFanHot(-1);
   if(!c){ closeFan(); return; }
-  if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); openExternal(googleImageSearchUrl(c.front)); return; }
-  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front)); return; }
+  if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); openExternal(googleImageSearchUrl(c.front), src === "tapp"); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front), src === "tapp"); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
@@ -3631,7 +3639,7 @@ function askWord(front, back, hint, opts = {}) {
         const v = vals();
         // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
         // markExternalNav) i stället för rå window.open – annars kunde retur ge vit skärm.
-        openExternal(googleAiExploreUrl(v.f || f)); // redigeringsrutan ligger kvar bakom vid window.open
+        openExternal(googleAiExploreUrl(v.f || f), true); // knapptryck = äkta tapp → overlay
       };
       m.querySelector("#m-ok").onclick = () => {
         const v = vals();
@@ -5256,7 +5264,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v286";
+const APP_VERSION = "v287";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
