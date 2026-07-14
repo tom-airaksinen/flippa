@@ -3043,12 +3043,21 @@ function nearestFan(px,py){
 // (tapp överallt, glid på Android/desktop) och samma-flik bara i iOS-glid-fallet.
 // OBS: inget "noopener" – det får window.open att returnera null ÄVEN vid lyckat
 // öppnande i vissa browsers, vilket skulle trigga en falsk fallback.
+// Öppna extern URL (Google-sök m.m.). Använder en <a target="_blank">-klick i stället
+// för window.open/location.href: i en installerad PWA öppnas då in-app-browsern som en
+// OVERLAY – appen navigerar ALDRIG bort, så man alltid kan stänga och är kvar i Flippa
+// (inga vita/fastlåsta skärmar). Den gamla location.href-fallbacken kunde kasta ut hela
+// appen till en tom Google-sida, särskilt vid notis-start (window.open = null i PWA).
 function openExternal(url){
-  let w = null;
-  try { w = window.open(url, "_blank"); } catch(_) { w = null; }
-  if (w) return "tab";                       // ny flik/sheet – vi stannar kvar i appen
-  markExternalNav(); location.href = url;    // blockerad (iOS-glid) → samma flik
-  return "same";
+  try {
+    const a = document.createElement("a");
+    a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer"; a.style.display = "none";
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { try { a.remove(); } catch(_){} }, 0);
+  } catch(_) {
+    try { window.open(url, "_blank"); } catch(__) {} // sista utväg – aldrig location.href (ingen fälla)
+  }
 }
 function selectFan(i, src){
   if(i<0 || i>=FAN_ITEMS.length) return;
@@ -3126,7 +3135,14 @@ function markExternalNav(){ try { sessionStorage.setItem("flippa-ext-nav", "1");
 // Webbsök i in-app-browsern) och hamnat i ett läge där INGEN skärm är synlig – stäng
 // ev. kvarhängande modal/fjäder och rendera om till ett säkert läge i stället för att
 // fastna. Utlöses bara när det faktiskt ser trasigt ut, så normal navigering rörs inte.
-function uiLooksBroken(){ return !document.querySelector(".screen:not(.hidden)"); }
+function uiLooksBroken(){
+  if (!document.querySelector(".screen:not(.hidden)")) return true; // ingen skärm alls
+  // Träningsskärmen synlig men ingen aktiv session (t.ex. efter en oväntad omladdning
+  // mitt i ett pass) = trasigt läge → återställ till ett säkert.
+  const tr = document.getElementById("training-screen");
+  if (tr && !tr.classList.contains("hidden") && !session) return true;
+  return false;
+}
 function recoverUI(){
   try { closeModal(); } catch(_){}
   try { closeFan(); } catch(_){}
@@ -5240,7 +5256,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v285";
+const APP_VERSION = "v286";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
