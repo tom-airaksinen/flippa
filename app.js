@@ -2993,11 +2993,13 @@ cardStack.appendChild(fanBg);
 const FAN_SVG_GLOBE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3c2.5 2.6 3.9 5.7 3.9 9s-1.4 6.4-3.9 9c-2.5-2.6-3.9-5.7-3.9-9s1.4-6.4 3.9-9z"/></svg>';
 const FAN_SVG_IMAGE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
 const FAN_SVG_EDIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></svg>';
+// AI-stjärnor (fylld, vit via currentColor) för "AI-kontext" (öppnar Googles AI-läge).
+const AI_STARS_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></svg>';
 const FAN_ITEMS = [
   { key: "image",  ic: FAN_SVG_IMAGE, label: "Bildsök" },
   { key: "edit",   ic: FAN_SVG_EDIT,  label: "Redigera" },
   { key: "star",   ic: "☆",           label: "Stjärna" },
-  { key: "lookup", ic: FAN_SVG_GLOBE, label: "Webbsök" },
+  { key: "lookup", ic: AI_STARS_SVG,  label: "AI-kontext" },
 ];
 const fanOpts = FAN_ITEMS.map((it, i) => {
   const el = document.createElement("div"); el.className = "fan-opt"; el.dataset.key = it.key;
@@ -3580,7 +3582,7 @@ function askWord(front, back, hint, opts = {}) {
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
     const open = (f, b, h) => {
-      const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="Utforska ordet" aria-label="Utforska ordet">${GLOBE_ICON_SVG}</button>` : "";
+      const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
       const lessonBlock = showLesson ? `
       <label>Lektion</label>
@@ -5264,7 +5266,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v287";
+const APP_VERSION = "v288";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
