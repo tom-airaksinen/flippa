@@ -2126,12 +2126,12 @@ function renderStats() {
   const ach = getAchievements(ltSubjects);
   const lv = levels();
   const achTiles = [
-    { ico: "💪", n: ach.days[0], thr: `${lv.days[0]}+`, unit: "dagar" },
-    { ico: "⚡️", n: ach.days[1], thr: `${lv.days[1]}+`, unit: "dagar" },
-    { ico: "🥇", n: ach.days[2], thr: `${lv.days[2]}+`, unit: "dagar" },
-    { ico: "🏆", n: ach.weeks, thr: `${lv.week}+`, unit: "veckor", gold: true },
+    { ico: "💪", n: ach.days[0], thr: `${lv.days[0]}+`, unit: "dagar", unit1: "dag" },
+    { ico: "⚡️", n: ach.days[1], thr: `${lv.days[1]}+`, unit: "dagar", unit1: "dag" },
+    { ico: "🥇", n: ach.days[2], thr: `${lv.days[2]}+`, unit: "dagar", unit1: "dag" },
+    { ico: "🏆", n: ach.weeks, thr: `${lv.week}+`, unit: "veckor", unit1: "vecka", gold: true },
   ].map((t) =>
-    `<div class="st-ach ${t.n ? (t.gold ? "gold" : "on") : "zero"}"><div class="ach-ico">${t.ico}</div><div class="ach-num">${t.n}</div><div class="ach-thr">${t.thr}</div><div class="ach-unit">${t.unit}</div></div>`
+    `<div class="st-ach ${t.n ? (t.gold ? "gold" : "on") : "zero"}"><div class="ach-ico">${t.ico}</div><div class="ach-num">${t.n}</div><div class="ach-thr">${t.thr}</div><div class="ach-unit">${t.n === 1 ? t.unit1 : t.unit}</div></div>`
   ).join("");
 
   // Periodvalet kommer ihåg sig tills man byter
@@ -5266,7 +5266,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v289";
+const APP_VERSION = "v290";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
