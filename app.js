@@ -64,6 +64,7 @@ const USERS = [
   { id: "tom", name: "Tom", salt: "d500d5ba8b664b2c", lock: "9a8852d56d74c20688eadeffd44240fc13e931577bb63295d2275e6bca6b2142" },
   { id: "hedvig", name: "Hedvig", salt: "b3f757332b7f47af", lock: "2e60a8c419cc3ceba5348a34cd30a3aa05d3c8fcb118f04b39d07c10b5162fc7" },
   { id: "wille", name: "Wille", salt: "03a070125fe335a6", lock: "e4fa98ef9be108372f1bd359251f534a4116570f1c1d85222cf01fad25e09041" },
+  { id: "karin", name: "Karin E", salt: "b2e4c8c9cacc19b6", lock: "47138489aa57b251761df5827680fc024f7212564b71e192fe5f4a24b7c05bf9" },
   { id: "guest", name: "Gäst" },
 ];
 // Verifierar inknappat lösenord mot salt+hash (Web Crypto SHA-256). Async.
@@ -1094,7 +1095,7 @@ function renderSubjects() {
 
 // Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
 // Profilfärg för avatar/väljare (matchar mockupen). Fallback = accent.
-const PROFILE_COLORS = { tom: "#5b8cff", hedvig: "#ff3d8f", wille: "#5bbf72", guest: "#9aa3b2" };
+const PROFILE_COLORS = { tom: "#5b8cff", hedvig: "#ff3d8f", wille: "#5bbf72", karin: "#c77dff", guest: "#9aa3b2" };
 function profileColor(id) { return PROFILE_COLORS[id] || "var(--accent)"; }
 
 // Väljer en profil (med lösenordslås vid byte till annan låst profil). true = bytt.
@@ -5266,7 +5267,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v290";
+const APP_VERSION = "v291";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
