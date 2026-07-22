@@ -1126,7 +1126,7 @@ function welcomeHTML() {
        ${u.lock ? `<span class="wc-lock">${IC_LOCK}</span>` : ""}
      </button>`).join("");
   return `<div class="welcome">
-      <div class="welcome-hero"><div class="welcome-logo">🃏</div>
+      <div class="welcome-hero"><div class="welcome-logo"><img src="./icon-192.png" alt="Flippa"></div>
         <h2>Välkommen till Flippa</h2><p>Vem är du?</p></div>
       <div class="welcome-list">${cards}</div>
     </div>`;
@@ -5267,7 +5267,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v291";
+const APP_VERSION = "v292";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

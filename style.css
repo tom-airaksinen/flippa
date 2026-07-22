@@ -1472,7 +1472,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* First launch */
 .welcome { padding: 24px 6px 8px; }
 .welcome-hero { text-align: center; margin: 10px 0 26px; }
-.welcome-logo { font-size: 2.6rem; }
+.welcome-logo img { width: 62px; height: 62px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
 .welcome-hero h2 { margin: 12px 0 4px; font-size: 1.5rem; }
 .welcome-hero p { margin: 0; color: var(--muted); font-size: 0.95rem; }
 .welcome-list { display: flex; flex-direction: column; gap: 10px; }
