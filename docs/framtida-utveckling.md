@@ -531,6 +531,41 @@ SRS + statistik följer med mellan enheter, **per profil, UTOM Gäst**.
 
 ---
 
+## 13) Pålitligare push-trigger – extern cron mot GitHub (framtida)
+
+Problem (upptäckt 2026-07-22): dagliga push-påminnelser kommer ofta **~1 timme
+sent**. Det är **INTE en tidszonsbugg** – `scripts/send-push.js` räknar korrekt
+svensk tid med `Intl.DateTimeFormat(..., { timeZone: "Europe/Stockholm" })` (DST
+ingår) och jämför mot den lokala `HH:MM`-strängen användaren valt.
+
+### Rotorsak: GitHub struntar i cron-schemat
+Workflowen (`.github/workflows/push-reminders.yml`) är satt till `*/15 * * * *`
+(var 15:e min), men `gh run list` visar att den i praktiken kör **ungefär en gång
+i timmen, ibland glesare** (uppmätta gap: 56 min upp till ~2,7 h). Schemalagda
+GitHub Actions-workflows är "best-effort" och stryps/hoppas över hårt vid hög last.
+Notisen fyras därför vid **första faktiska körningen ≥ vald tid** – ställer man 16:00
+och närmaste körning är 16:42/17:00 ser det ut som "en timme sent".
+
+### Fix (vald väg: A) – extern cron pingar GitHub
+- Gratis extern schemaläggare (t.ex. [cron-job.org](https://cron-job.org)) anropar
+  var 15:e min GitHub-API:t `POST /repos/tom-airaksinen/flippa/actions/workflows/push-reminders.yml/dispatches`
+  (`workflow_dispatch`) → körningen startar på minuten oavsett GitHubs interna cron.
+- **All logik i `send-push.js` lämnas orörd** – enda ändringen är triggern.
+- **Kräver:** konto på cron-job.org + en fine-grained GitHub-token med enbart
+  `actions:write` på just detta repo, lagrad i cron-tjänsten (Authorization-header).
+  Token klistras **aldrig** in i chatten.
+- Behåll gärna GitHubs egna `schedule:`-cron kvar som backup (skadar inte).
+
+### Alternativ (om det skalas)
+- **B) Cloudflare Worker med Cron Trigger** som gör hela sändningen (pålitligt på
+  minuten, GitHub helt ur bilden) – mer jobb: VAPID-signering i Web Crypto + secrets
+  flyttas. Överväg om push blir en central funktion.
+- **C) Låt vara** – beta, "ungefär rätt" kan räcka.
+
+Status: **beslut taget (väg A), ej implementerat** – Tom gör det när han hinner.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
