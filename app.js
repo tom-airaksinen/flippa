@@ -1058,6 +1058,8 @@ function renderSubjects() {
   av.textContent = currentUser ? userName(currentUser).charAt(0) : "";
   av.style.background = currentUser ? profileColor(currentUser) : "";
   $("add-subject").classList.toggle("hidden", !currentUser);
+  // Välkomstvyn har egen logga+rubrik → dölj den vanliga "Flippa"-headern där (sparar höjd)
+  $("subjects-screen").classList.toggle("welcome-active", !currentUser);
 
   // Ingen profil vald (t.ex. ny enhet) → välkomst-/väljarvy
   if (!currentUser) {
@@ -5267,7 +5269,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v292";
+const APP_VERSION = "v293";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

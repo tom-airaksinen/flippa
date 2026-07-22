@@ -1470,6 +1470,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .avatar-btn:active { transform: scale(0.94); }
 
 /* First launch */
+#subjects-screen.welcome-active .app-header { display: none; }
 .welcome { padding: 24px 6px 8px; }
 .welcome-hero { text-align: center; margin: 10px 0 26px; }
 .welcome-logo img { width: 62px; height: 62px; border-radius: 15px; box-shadow: 0 8px 24px rgba(0,0,0,.45); }
