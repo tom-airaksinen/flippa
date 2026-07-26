@@ -562,7 +562,16 @@ och närmaste körning är 16:42/17:00 ser det ut som "en timme sent".
   flyttas. Överväg om push blir en central funktion.
 - **C) Låt vara** – beta, "ungefär rätt" kan räcka.
 
-Status: **beslut taget (väg A), ej implementerat** – Tom gör det när han hinner.
+Status: **under uppsättning (2026-07-26)** – Tom har skapat cron-job.org-konto +
+GitHub-token; cronjobben konfigureras.
+
+> ⚠️ **TOKEN FÖRNYAS SENAST 25 JULI 2027.** Den fine-grained GitHub-token
+> (`flippa-push-cron`, behörighet `Actions: Read and write` på repot `flippa`)
+> som cron-job.org använder går ut **25 juli 2027**. När den löper ut slutar den
+> externa triggern fungera och pushnotiserna hamnar tillbaka i GitHubs opålitliga
+> cron (~1h sena). **Skapa en ny token före det datumet** och uppdatera
+> Authorization-headern i cron-job.org-jobbet. (Om notiserna plötsligt börjar
+> komma sent igen ~juli 2027 → misstänk utgången token först.)
 
 ---
 
