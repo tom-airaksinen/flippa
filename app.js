@@ -4872,6 +4872,7 @@ async function startCsvImport(files) {
 }
 
 $("import-csv").onclick = () => { const inp = $("csv-file"); inp.value = ""; inp.click(); };
+{ const dl = $("dl-template"); if (dl) dl.addEventListener("click", () => track("csv-mall")); }
 $("csv-file").addEventListener("change", (e) => { startCsvImport(e.target.files); });
 
 // ＋-meny: samlar Ny lektion / Slå upp & lägg till ord / Importera CSV under en knapp.
@@ -5270,7 +5271,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v294";
+const APP_VERSION = "v295";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

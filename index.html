@@ -66,6 +66,7 @@
              Lägg till ord direkt på Slå upp-segmentet med lektionsväljare). -->
         <button id="translate-subject" class="add-menu-item hidden" role="menuitem">🔎 Slå upp &amp; lägg till ord</button>
         <button id="import-csv" class="add-menu-item" role="menuitem">⬆️ Importera CSV</button>
+        <a id="dl-template" class="add-menu-item add-menu-sub" href="mall.csv" download role="menuitem">📄 Ladda ner CSV-mall</a>
       </div>
     </header>
     <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" multiple class="hidden" />
@@ -364,6 +365,35 @@
         <li><b>AI</b> – ange tema och antal, öppna i ChatGPT/Claude och klistra tillbaka förslagen.</li>
       </ul>
       <p class="help-note">Översättningen i "Slå upp" kommer från en enkel gratistjänst – granska gärna böjning och genus innan du sparar.</p>
+
+      <details class="help-details">
+        <summary>📥 Importera många ord från en CSV-fil</summary>
+        <div class="help-details-body">
+          <p>Har du redan en ordlista, eller vill mata in många ord på en gång? Skapa en CSV-fil och importera via <b>＋ → ⬆️ Importera CSV</b> i en lektion. Varje rad blir ett kort. Kolumnerna i ordning:</p>
+          <table class="help-table">
+            <tr><th>#</th><th>Kolumn</th><th>Beskrivning</th></tr>
+            <tr><td>1</td><td><b>Sektion</b></td><td>Lektionens namn (obligatoriskt). Rader med samma namn hamnar i samma lektion.</td></tr>
+            <tr><td>2</td><td><b>Ord</b></td><td>Ordet som ska läras in (obligatoriskt).</td></tr>
+            <tr><td>3</td><td><b>Översättning</b></td><td>Svenska översättningen (obligatoriskt).</td></tr>
+            <tr><td>4</td><td>Favorit</td><td>Stjärnmärk ordet. Lämna tomt för nej, skriv <i>ja</i> eller <i>1</i> för ja.</td></tr>
+            <tr><td>5</td><td>Minnesregel</td><td>En egen minnesregel för kortet.</td></tr>
+            <tr><td>6</td><td>Prio</td><td><i>1</i>, <i>2</i> eller <i>3</i>. Lämna tomt om det inte spelar roll.</td></tr>
+          </table>
+          <ul>
+            <li><b>Avgränsare:</b> semikolon <code>;</code> eller komma <code>,</code> funkar – appen känner av vilket. Tips: använd <code>;</code>, det matchar hur svenska Excel/Numbers sparar CSV.</li>
+            <li><b>Rubrikrad</b> är valfri: börjar första raden med <i>Sektion</i> hoppas den över.</li>
+            <li>Rader som saknar sektion, ord eller översättning hoppas tyst över.</li>
+            <li><b>Dubbletter</b> (ord som redan finns i ämnet) hoppas över automatiskt.</li>
+            <li>Innehåller själva ordet <code>;</code> eller <code>,</code>? Omge fältet med citattecken: <code>"la casa, el hogar"</code>.</li>
+            <li>Spara som <code>.csv</code> i <b>UTF-8</b> så åäö och accenter blir rätt. Du kan välja flera filer samtidigt.</li>
+          </ul>
+          <p>Exempel (med <code>;</code>):</p>
+          <pre class="help-code">Sektion;Ord;Översättning;Favorit;Minnesregel;Prio
+Mat;la manzana;äpple;;;1
+Resa;el aeropuerto;flygplats;ja;"låter som airport";2</pre>
+          <p><a class="help-link" href="mall.csv" download>📄 Ladda ner en färdig mall-fil</a> att utgå från.</p>
+        </div>
+      </details>
 
       <h2>På kortet – tryck ⋯ för fler val</h2>
       <p>Nederst på kortet i ett pass finns en <b>⋯-meny</b>. Ta fram den för snabba genvägar utan att lämna passet:</p>

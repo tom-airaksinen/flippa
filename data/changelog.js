@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 juli 2026", ver: "v295", items: [
+    { t: "Hjälpen har nu ett avsnitt om att importera många ord från en CSV-fil, och du kan ladda ner en färdig mall (även via ＋-menyn i en lektion)", type: "improved" },
+  ]},
   { date: "18 juli 2026", ver: "v288", items: [
     { t: "”Webbsök” heter nu ”AI-kontext” och har en AI-stjärnor-ikon – öppnar ordet i en AI-sökning (etymologi, nyanser, exempel)", type: "improved" },
   ]},

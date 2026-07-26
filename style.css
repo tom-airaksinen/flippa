@@ -175,6 +175,18 @@ body {
 .help-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 4px 0 10px; }
 .help-table th, .help-table td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; color: var(--muted); }
 .help-table th { color: var(--text); font-weight: 600; }
+.help-details { background: var(--surface); border-radius: 10px; margin: 14px 0; overflow: hidden; }
+.help-details > summary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 0.9rem; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
+.help-details > summary::-webkit-details-marker { display: none; }
+.help-details > summary::after { content: "›"; color: var(--muted); font-size: 1.1rem; transition: transform 0.15s; }
+.help-details[open] > summary::after { transform: rotate(90deg); }
+.help-details-body { padding: 0 14px 12px; }
+.help-details-body ul { margin: 4px 0 10px; padding-left: 18px; }
+.help-details-body li { font-size: 0.82rem; line-height: 1.5; color: var(--muted); margin-bottom: 5px; }
+.help-details-body b { color: var(--text); }
+.help-details-body code { background: var(--surface-2); border-radius: 4px; padding: 1px 5px; font-size: 0.8rem; }
+.help-code { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; line-height: 1.5; color: var(--text); overflow-x: auto; white-space: pre; margin: 4px 0 10px; }
+.help-link { color: var(--accent); font-weight: 600; font-size: 0.86rem; }
 
 /* Bottenflikar – diskret: samma bakgrund som sidan, bara en tunn avdelare.
    FIXED mot visuella viewportens botten → immun mot iOS standalone cold-launch-
@@ -244,6 +256,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .add-menu-item + .add-menu-item { margin-top: 2px; }
 .add-menu-item:active { background: var(--surface-2); }
+.add-menu-sub { font-size: 0.82rem; color: var(--muted); text-decoration: none; }
 .app-header h1 { font-size: 1.3rem; font-weight: 700; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 9px; }
 /* Rena texttitlar (lektion/ord-listan) trunkeras med … – display:flex ovan
    stoppar annars text-overflow; dessa har ingen logo så block fungerar. */
