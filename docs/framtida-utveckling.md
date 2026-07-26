@@ -562,16 +562,27 @@ och närmaste körning är 16:42/17:00 ser det ut som "en timme sent".
   flyttas. Överväg om push blir en central funktion.
 - **C) Låt vara** – beta, "ungefär rätt" kan räcka.
 
-Status: **under uppsättning (2026-07-26)** – Tom har skapat cron-job.org-konto +
-GitHub-token; cronjobben konfigureras.
+Status: **KLART & VERIFIERAT (2026-07-26).** cron-job.org-jobb "Flippa push
+reminder" kör var 15:e min: `POST` mot
+`api.github.com/repos/tom-airaksinen/flippa/actions/workflows/push-reminders.yml/dispatches`,
+body `{"ref":"main"}`, headers Authorization `Bearer <token>` + Accept
+`application/vnd.github+json` + X-GitHub-Api-Version `2022-11-28` + Content-Type
+`application/json`. Testkörning gav **204 No Content** och en `workflow_dispatch`-
+körning syntes i GitHub Actions (completed/success). `send-push.js` orört.
 
-> ⚠️ **TOKEN FÖRNYAS SENAST 25 JULI 2027.** Den fine-grained GitHub-token
+> ⚠️ **TOKEN FÖRNYAS SENAST 24 JULI 2027.** Den fine-grained GitHub-token
 > (`flippa-push-cron`, behörighet `Actions: Read and write` på repot `flippa`)
-> som cron-job.org använder går ut **25 juli 2027**. När den löper ut slutar den
-> externa triggern fungera och pushnotiserna hamnar tillbaka i GitHubs opålitliga
-> cron (~1h sena). **Skapa en ny token före det datumet** och uppdatera
-> Authorization-headern i cron-job.org-jobbet. (Om notiserna plötsligt börjar
-> komma sent igen ~juli 2027 → misstänk utgången token först.)
+> som cron-job.org använder går ut **2027-07-24 22:00 UTC** (midnatt in mot 25 juli
+> svensk sommartid). När den löper ut slutar den externa triggern fungera och
+> pushnotiserna hamnar tillbaka i GitHubs opålitliga cron (~1h sena). **Skapa en ny
+> token före det datumet** och uppdatera Authorization-headern i
+> cron-job.org-jobbet. (Om notiserna plötsligt börjar komma sent igen ~juli 2027 →
+> misstänk utgången token först.)
+
+> 🔧 **API-version bumpas före 10 mars 2028.** Svaret hade en `Sunset`-header
+> `10 mars 2028` för REST-API-versionen `2022-11-28` som vi skickar i
+> `X-GitHub-Api-Version`. Byt till en nyare version i cron-jobbets header innan dess
+> (låg prio, men noterat).
 
 ---
 
