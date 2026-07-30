@@ -445,7 +445,9 @@ function uniqueUnitsInPeriod(subjects, cutoff) {
 // Livstidshistorik som INTE rensas (unitcount rensas ~140 dagar). user → subject →
 // { d:{datum:maxdagssiffra}, w:{ISO-vecka:maxveckosiffra} }. Skrivs vid varje flipp.
 const ACHV_KEY = "flippa-achv-v1";
-const ACHV_BACKFILL_KEY = "flippa-achv-backfilled-v1";
+// v2: kör om backfillen en gång till – läker prestationsräknare som nollats medan
+// dagshistoriken (unitcount) är intakt. Idempotent (Math.max), skadar inte intakta.
+const ACHV_BACKFILL_KEY = "flippa-achv-backfilled-v2";
 
 // ISO-veckonyckel "ÅÅÅÅ-Www" (måndagsstart, torsdagen avgör år/vecka)
 function isoWeekKey(date) {
@@ -5537,7 +5539,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v304";
+const APP_VERSION = "v305";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
