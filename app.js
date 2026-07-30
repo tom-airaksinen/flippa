@@ -861,8 +861,9 @@ function applyOutbox(base, ops) {
 // (skriv direkt, ingen outbox). Grind PÅ = optimistisk lokal skrivning +
 // durabel outbox + flush vid återanslutning. Kill-switch: localStorage
 // "flippa-offline-edit" = "0".
+// Utrullad för alla (v303). Kill-switch kvar: localStorage "flippa-offline-edit"="0".
 function offlineEditEnabled() {
-  return currentUser === "tom" && localStorage.getItem("flippa-offline-edit") !== "0";
+  return localStorage.getItem("flippa-offline-edit") !== "0";
 }
 
 // OBS: tidigare fanns här en RÅ innehållscache (flippa-content-raw-v1) vid sidan av
@@ -5516,7 +5517,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v302";
+const APP_VERSION = "v303";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
