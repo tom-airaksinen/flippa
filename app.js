@@ -915,19 +915,31 @@ function enqueue(ops) {
   return Promise.resolve();
 }
 
+// Ersätt server-value-sentinels ({".sv":...}) med klientklocka. En serialiserad
+// TIMESTAMP-sentinel blir ett rått objekt med "."-nyckel som Firebase kan avvisa
+// vid skrivning → byt mot ett vanligt tal (createdAt är bara metadata).
+function sanitizeServerValues(v) {
+  if (v === null || typeof v !== "object") return v;
+  if (v[".sv"] !== undefined) return Date.now();
+  if (Array.isArray(v)) return v.map(sanitizeServerValues);
+  const out = {};
+  for (const k of Object.keys(v)) out[k] = sanitizeServerValues(v[k]);
+  return out;
+}
+
 // Skickar EN op till Firebase (returnerar promisen; resolvar först när servern nås).
 function flushOne(op) {
-  if (op.op === "batch") return db.ref("content/subjects").update(op.updates);
+  if (op.op === "batch") return db.ref("content/subjects").update(sanitizeServerValues(op.updates));
   const ref = db.ref("content/subjects" + (op.path ? "/" + op.path : ""));
-  if (op.op === "set") return ref.set(op.value);
-  if (op.op === "update") return ref.update(op.value);
+  if (op.op === "set") return ref.set(sanitizeServerValues(op.value));
+  if (op.op === "update") return ref.update(sanitizeServerValues(op.value));
   if (op.op === "remove") return ref.remove();
   return Promise.resolve();
 }
 
-let dbConnected = false, flushing = false;
+let dbConnected = false, flushing = false, lastFlushError = null;
 async function flushOutbox() {
-  if (flushing || !offlineEditEnabled() || !dbConnected) return;
+  if (flushing || !offlineEditEnabled() || !dbConnected || !auth.currentUser) return;
   let ops = loadOutbox();
   if (!ops.length) { updatePendingStatus(); return; }
   flushing = true;
@@ -936,12 +948,14 @@ async function flushOutbox() {
       await flushOne(ops[0]);          // väntar tills skrivningen når servern
       ops = loadOutbox(); ops.shift(); // ta bort den flushade (nya ops läggs sist)
       saveOutbox(ops);
+      lastFlushError = null;
       updatePendingStatus();
     }
   } catch (e) {
     // Nätfel → sluta, försök igen vid nästa connected-event. Permanent fel (t.ex.
-    // PERMISSION_DENIED) ligger kvar i kön (ytas i konsolen; kräver åtgärd).
-    console.warn("flush stoppad:", e && (e.code || e.message));
+    // PERMISSION_DENIED) ligger kvar i kön; ytas nu i inspektorn.
+    lastFlushError = (e && (e.code || e.message)) || String(e);
+    console.warn("flush stoppad:", lastFlushError);
   } finally {
     flushing = false;
     updatePendingStatus();
@@ -993,11 +1007,15 @@ function showOutboxDetail() {
       }).join("")
     : "<li class=\"dup-lesson\">Kön är tom.</li>";
   const persist = persistGranted === true ? "ja ✓" : persistGranted === false ? "NEJ ⚠️ (risk för dataförlust vid iOS-rensning)" : "okänt/ej stött";
+  const errLine = lastFlushError ? `<p class="modal-hint" style="color:#ff8a8a">Senaste synkfel: <b>${esc(lastFlushError)}</b></p>` : "";
+  const conn = `${dbConnected ? "ansluten" : "offline"}${auth.currentUser ? "" : " · ej inloggad"}`;
   const m = openModal(`<h3>Synk-kö (${ops.length})</h3>
-    <p class="modal-hint">Beständig lagring: <b>${persist}</b> · ${dbConnected ? "ansluten" : "offline"}</p>
+    <p class="modal-hint">Beständig lagring: <b>${persist}</b> · ${conn}</p>
+    ${errLine}
     <ul class="dup-list">${rows}</ul>
-    <div class="modal-actions"><button class="btn-primary" id="ob-close">Stäng</button></div>`);
+    <div class="modal-actions"><button class="btn-secondary" id="ob-retry">Försök synka nu</button><button class="btn-primary" id="ob-close">Stäng</button></div>`);
   m.querySelector("#ob-close").onclick = closeModal;
+  m.querySelector("#ob-retry").onclick = () => { lastFlushError = null; closeModal(); flushOutbox().then(() => setTimeout(showOutboxDetail, 500)); };
 }
 
 // Kopplas upp i boot(): .info/connected driver flush, window-online som backup.
@@ -1070,6 +1088,7 @@ function boot() {
   auth.onAuthStateChanged((user) => {
     if (!user) return;
     listenContent();
+    flushOutbox(); // inloggad → försök tömma ev. kö (undviker auth-race på .info/connected)
   });
 }
 
@@ -5488,7 +5507,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v298";
+const APP_VERSION = "v299";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
