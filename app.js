@@ -978,11 +978,13 @@ async function ensurePersistentStorage() {
   } catch (_) { persistGranted = null; }
 }
 
-// Liten badge (bara när grinden är på). Tryckbar → visar kön + lagringsstatus.
+// Liten badge – syns BARA när det finns osynkade ändringar (annars inget brus).
+// Tryckbar → kö-inspektor. Röd bara när pending + lagring ej beständig (verklig risk).
 function updatePendingStatus() {
   if (!offlineEditEnabled()) return;
   const n = loadOutbox().length;
   let b = document.getElementById("sync-badge");
+  if (!n) { if (b) b.style.display = "none"; return; } // inget i kö → dölj helt
   if (!b) {
     b = document.createElement("div");
     b.id = "sync-badge";
@@ -991,13 +993,13 @@ function updatePendingStatus() {
     document.body.appendChild(b);
   }
   b.style.display = "";
-  const warn = persistGranted === false; // eviction-risk → gör badgen röd som varning
+  const warn = persistGranted === false; // osynkat + vräkbar lagring = varna (rött)
   b.style.background = warn ? "#5a1f1f" : "var(--surface-2,#1f2c4d)";
   b.style.border = "1px solid " + (warn ? "#a33" : "var(--line,#2c3c63)");
   b.style.color = "var(--text,#f2f4f8)";
   const s = n > 1 ? "ar" : "";
-  if (n) b.textContent = dbConnected ? `Synkar ${n} ändring${s}…` : `${n} ändring${s} väntar på nät`;
-  else b.textContent = warn ? "⚠︎ lagring ej beständig" : (dbConnected ? "✓ synkad" : "offline – inget i kö");
+  const base = dbConnected ? `Synkar ${n} ändring${s}…` : `${n} ändring${s} väntar på nät`;
+  b.textContent = warn ? `⚠︎ ${base} (lagring ej beständig)` : base;
 }
 
 // Inspektera synk-kön (och lagringsstatus) – observerbarhet under testning.
@@ -5510,7 +5512,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v300";
+const APP_VERSION = "v301";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
