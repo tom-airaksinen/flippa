@@ -586,7 +586,13 @@ körning syntes i GitHub Actions (completed/success). `send-push.js` orört.
 
 ---
 
-## 14) Offlineredigering av innehåll (durabel outbox) – AKTIV, bygg nu
+## 14) Offlineredigering av innehåll (durabel outbox) – ✅ UTRULLAD (v303)
+
+> **Klar 2026-07-30 (v303):** validerad cross-device av Tom, Tom-grinden borttagen
+> → aktiv för alla profiler (kill-switch `flippa-offline-edit`="0" kvar).
+> Changelog-höjdpunkt + hjälpavsnitt "Funkar offline" + Om-punkt uppdaterade.
+> Historiken nedan bevaras som beslutsunderlag.
+
 
 **Status (2026-07-30): steg 1–3 byggda bakom Tom-grind (v297), väntar på
 enhetsvalidering (steg 4).** Grund + wiring + flush/connectivity/status klart.
