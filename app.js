@@ -984,7 +984,9 @@ function updatePendingStatus() {
   if (!offlineEditEnabled()) return;
   const n = loadOutbox().length;
   let b = document.getElementById("sync-badge");
-  if (!n) { if (b) b.style.display = "none"; return; } // inget i kö → dölj helt
+  // Dölj under pass och på Klar-skärmen (i vägen där; man är snart på lektionslistan igen).
+  const hideHere = shownScreen === "training" || shownScreen === "congrats";
+  if (!n || hideHere) { if (b) b.style.display = "none"; return; }
   if (!b) {
     b = document.createElement("div");
     b.id = "sync-badge";
@@ -1183,6 +1185,7 @@ function show(screenName) {
     setOnlyScreen(screenName);
     shownScreen = screenName;
     updateTabbar();
+    updatePendingStatus();
     return;
   }
   const dir = (SCREEN_DEPTH[screenName] ?? 0) >= (SCREEN_DEPTH[from] ?? 0) ? 1 : -1;
@@ -1206,6 +1209,7 @@ function show(screenName) {
   outEl.style.opacity = "0";
   shownScreen = screenName;
   updateTabbar();
+  updatePendingStatus();
 
   const cleanup = () => {
     navCleanup = null;
@@ -5512,7 +5516,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v301";
+const APP_VERSION = "v302";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
