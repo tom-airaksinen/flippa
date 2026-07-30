@@ -651,6 +651,24 @@ förälder (atomiskt).
 Lokalt = arbetskopia, nätet = additiv spegel, värsta rimliga fel = "synk hände inte",
 aldrig "data borta". Fixar även `front/back`-buggen (allt blir optimistiskt lokalt).
 
+### ⚠️ Kritisk risk: iOS vräker localStorage (funnen 2026-07-30, v298)
+Tom testade: offline → skapade lektion + ord → force-quit → återstart (offline) →
+appen fastnade i "Ansluter…" med **tomt** innehåll, och efter nät-på var han
+**utloggad** och ändringarna **borta** (ingen "N väntar"-badge). Alla tre
+localStorage-nycklar (innehåll-cache, outbox, användare) hade försvunnit samtidigt
+→ **iOS hade vräkt PWA:ns script-skrivbara lagring**. Koden nollar inget
+(verifierat) och headless-testet bevisar att outboxen överlever reload – det var
+iOS, inte en kod-bugg. **Hela outbox-durabiliteten vilar på att localStorage
+överlever app-död.**
+- **Mildring (v298):** `navigator.storage.persist()` vid boot. Installerad PWA på
+  iOS 16.4+ beviljar oftast → skyddar mot vräkning. Sync-badgen visar nu
+  lagringsstatus (röd "⚠︎ lagring ej beständig" om ej beviljat).
+- **MÅSTE verifieras på enhet:** tryck badgen → "Beständig lagring: ja/NEJ". Är det
+  NEJ kvarstår risken och vi måste tänka om (t.ex. varna vid offline-redigering,
+  eller acceptera risken medvetet). Beviljas det → durabiliteten håller.
+- Notera: IndexedDB hjälper inte i sig (samma ITP-vräkning); `persist()` är rätt
+  spak. Grundgarantin är ändå "få upp till servern snabbt" – offline kan inte det.
+
 ### Konfliktmodell
 Delat innehållsträd, **last-write-wins per fält** vid återuppspelning. Låg
 konfliktrisk för familj + ett par testare. Dokumentera; verklig CRDT/konflikt-UI är
