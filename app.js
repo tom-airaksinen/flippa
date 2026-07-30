@@ -948,25 +948,61 @@ async function flushOutbox() {
   }
 }
 
-// Liten diskret badge (skapas vid behov, bara när grinden är på).
+// Beställ beständig lagring så iOS inte vräker ut outboxen (viktigt för offline-
+// durabilitet – installerad PWA på iOS 16.4+ beviljar oftast). null = okänt/ej stött.
+let persistGranted = null;
+async function ensurePersistentStorage() {
+  try {
+    if (navigator.storage && navigator.storage.persist) {
+      const already = navigator.storage.persisted ? await navigator.storage.persisted() : false;
+      persistGranted = already ? true : await navigator.storage.persist();
+      updatePendingStatus();
+    }
+  } catch (_) { persistGranted = null; }
+}
+
+// Liten badge (bara när grinden är på). Tryckbar → visar kön + lagringsstatus.
 function updatePendingStatus() {
   if (!offlineEditEnabled()) return;
   const n = loadOutbox().length;
   let b = document.getElementById("sync-badge");
-  if (!n) { if (b) b.style.display = "none"; return; }
   if (!b) {
     b = document.createElement("div");
     b.id = "sync-badge";
-    b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:60;background:var(--surface-2,#1f2c4d);color:var(--text,#f2f4f8);border:1px solid var(--line,#2c3c63);border-radius:20px;padding:6px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;";
+    b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:60;border-radius:20px;padding:6px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);cursor:pointer;max-width:80vw;";
+    b.onclick = showOutboxDetail;
     document.body.appendChild(b);
   }
   b.style.display = "";
+  const warn = persistGranted === false; // eviction-risk → gör badgen röd som varning
+  b.style.background = warn ? "#5a1f1f" : "var(--surface-2,#1f2c4d)";
+  b.style.border = "1px solid " + (warn ? "#a33" : "var(--line,#2c3c63)");
+  b.style.color = "var(--text,#f2f4f8)";
   const s = n > 1 ? "ar" : "";
-  b.textContent = dbConnected ? `Synkar ${n} ändring${s}…` : `${n} ändring${s} väntar på nät`;
+  if (n) b.textContent = dbConnected ? `Synkar ${n} ändring${s}…` : `${n} ändring${s} väntar på nät`;
+  else b.textContent = warn ? "⚠︎ lagring ej beständig" : (dbConnected ? "✓ synkad" : "offline – inget i kö");
+}
+
+// Inspektera synk-kön (och lagringsstatus) – observerbarhet under testning.
+function showOutboxDetail() {
+  const ops = loadOutbox();
+  const rows = ops.length
+    ? ops.map((o) => {
+        const label = o.op === "batch" ? `batch · ${Object.keys(o.updates || {}).length} paths` : `${o.op} · ${o.path}`;
+        return `<li><code>${esc(label)}</code></li>`;
+      }).join("")
+    : "<li class=\"dup-lesson\">Kön är tom.</li>";
+  const persist = persistGranted === true ? "ja ✓" : persistGranted === false ? "NEJ ⚠️ (risk för dataförlust vid iOS-rensning)" : "okänt/ej stött";
+  const m = openModal(`<h3>Synk-kö (${ops.length})</h3>
+    <p class="modal-hint">Beständig lagring: <b>${persist}</b> · ${dbConnected ? "ansluten" : "offline"}</p>
+    <ul class="dup-list">${rows}</ul>
+    <div class="modal-actions"><button class="btn-primary" id="ob-close">Stäng</button></div>`);
+  m.querySelector("#ob-close").onclick = closeModal;
 }
 
 // Kopplas upp i boot(): .info/connected driver flush, window-online som backup.
 function setupConnectivity() {
+  ensurePersistentStorage();
   try {
     db.ref(".info/connected").on("value", (s) => { dbConnected = !!s.val(); updatePendingStatus(); if (dbConnected) flushOutbox(); });
   } catch (_) {}
@@ -5452,7 +5488,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v297";
+const APP_VERSION = "v298";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
