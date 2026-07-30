@@ -807,6 +807,50 @@ function cacheContent(c) {
   localStorage.setItem(CACHE_KEY, JSON.stringify(c));
 }
 
+// =========================================================================
+// Offlineredigering – durabel outbox (docs/framtida-utveckling.md avsnitt 14).
+// STEG 1: ren grund (ingen wiring än). Ops lagras med path RELATIVT
+// "content/subjects" (t.ex. "<sid>/lessons/<lid>/cards/<cid>"). Tre idempotenta
+// primitiver: set / update / remove. Lokal vy räknas (i steg 2) som
+// content = normalize(applyOutbox(serverRaw, outbox)).
+const OUTBOX_KEY = "flippa-outbox-v1";
+function loadOutbox() { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)) || []; } catch { return []; } }
+function saveOutbox(ops) { localStorage.setItem(OUTBOX_KEY, JSON.stringify(ops)); }
+function splitPath(path) { return String(path || "").split("/").filter(Boolean); }
+
+// Applicerar EN op på ett rått trädobjekt (muterar in-place, returnerar roten).
+// Skapar mellanled vid behov. remove på saknad path = no-op.
+function applyOpInPlace(root, op) {
+  const segs = splitPath(op.path);
+  if (op.op === "set" && segs.length === 0) return op.value; // ersätt hela roten
+  if (op.op === "remove") {
+    let o = root;
+    for (let i = 0; i < segs.length - 1; i++) { if (!o || typeof o !== "object") return root; o = o[segs[i]]; }
+    if (o && typeof o === "object") delete o[segs[segs.length - 1]];
+    return root;
+  }
+  let o = root;
+  for (let i = 0; i < segs.length - 1; i++) {
+    if (o[segs[i]] == null || typeof o[segs[i]] !== "object") o[segs[i]] = {};
+    o = o[segs[i]];
+  }
+  const key = segs[segs.length - 1];
+  if (op.op === "set") o[key] = op.value;
+  else if (op.op === "update") {
+    if (o[key] == null || typeof o[key] !== "object") o[key] = {};
+    Object.assign(o[key], op.value || {});
+  }
+  return root;
+}
+
+// Foldar hela outboxen ovanpå en (djupkopierad) rå server-snapshot. Rör aldrig
+// indatat. Idempotent: samma outbox två ggr ger samma resultat.
+function applyOutbox(serverRaw, ops) {
+  let acc = serverRaw ? JSON.parse(JSON.stringify(serverRaw)) : {};
+  for (const op of (ops || [])) acc = applyOpInPlace(acc, op);
+  return acc;
+}
+
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
 
 function normalize(subjectsObj) {
