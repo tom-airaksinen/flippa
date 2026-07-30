@@ -103,7 +103,7 @@ function migrateOwners() {
       : (n === "bahasa indonesia" || n === "ukrainska") ? "guest"
       : "tom";
     s.owner = owner; // sätt lokalt direkt så filtret funkar innan Firebase ekar tillbaka
-    db.ref(`content/subjects/${s.id}/owner`).set(owner).catch(writeError);
+    enqueue([{ op: "set", path: `${s.id}/owner`, value: owner }]);
   });
   localStorage.setItem(OWNER_MIGRATED_KEY, "1");
 }
@@ -821,6 +821,11 @@ function splitPath(path) { return String(path || "").split("/").filter(Boolean);
 // Applicerar EN op på ett rått trädobjekt (muterar in-place, returnerar roten).
 // Skapar mellanled vid behov. remove på saknad path = no-op.
 function applyOpInPlace(root, op) {
+  if (op.op === "batch") { // flera path→värde i ett svep (null = radera); matchar Firebase multi-path update
+    const u = op.updates || {};
+    for (const p of Object.keys(u)) applyOpInPlace(root, u[p] === null ? { op: "remove", path: p } : { op: "set", path: p, value: u[p] });
+    return root;
+  }
   const segs = splitPath(op.path);
   if (op.op === "set" && segs.length === 0) return op.value; // ersätt hela roten
   if (op.op === "remove") {
@@ -845,10 +850,127 @@ function applyOpInPlace(root, op) {
 
 // Foldar hela outboxen ovanpå en (djupkopierad) rå server-snapshot. Rör aldrig
 // indatat. Idempotent: samma outbox två ggr ger samma resultat.
-function applyOutbox(serverRaw, ops) {
-  let acc = serverRaw ? JSON.parse(JSON.stringify(serverRaw)) : {};
+function applyOutbox(base, ops) {
+  let acc = base ? JSON.parse(JSON.stringify(base)) : {};
   for (const op of (ops || [])) acc = applyOpInPlace(acc, op);
   return acc;
+}
+
+// -------------------------------------------------------------------------
+// STEG 2+3: wiring bakom Tom-först-grind. Grind AV = exakt dagens beteende
+// (skriv direkt, ingen outbox). Grind PÅ = optimistisk lokal skrivning +
+// durabel outbox + flush vid återanslutning. Kill-switch: localStorage
+// "flippa-offline-edit" = "0".
+function offlineEditEnabled() {
+  return currentUser === "tom" && localStorage.getItem("flippa-offline-edit") !== "0";
+}
+
+const RAW_CACHE_KEY = "flippa-content-raw-v1"; // rå Firebase-formad spegel (för offline-recompute)
+function loadRawCache() { try { return JSON.parse(localStorage.getItem(RAW_CACHE_KEY)) || null; } catch { return null; } }
+function cacheRaw(raw) { localStorage.setItem(RAW_CACHE_KEY, JSON.stringify(raw || {})); }
+
+// Invers av normalize(): array → Firebase-format. Används som fallback när rå
+// cache saknas men vi har en äldre normaliserad cache (t.ex. direkt efter deploy).
+function denormalize(arr) {
+  const out = {};
+  (arr || []).forEach((s) => {
+    out[s.id] = { name: s.name, order: s.order ?? 0, lang: s.lang || null, owner: s.owner || null, lessons: {} };
+    (s.lessons || []).forEach((l) => {
+      const lo = { name: l.name, order: l.order ?? 0, cards: {} };
+      (l.cards || []).forEach((c) => {
+        const card = { front: c.front, back: c.back, order: c.order ?? 0 };
+        if (c.hint) card.hint = c.hint;
+        if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio;
+        lo.cards[c.id] = card;
+      });
+      out[s.id].lessons[l.id] = lo;
+    });
+  });
+  return out;
+}
+
+let serverRaw = loadRawCache() || (content.length ? denormalize(content) : null);
+
+// Lokal vy = normalize(serverRaw + outbox). Anropas vid varje mutate och server-eko.
+function recomputeContent() {
+  content = normalize(applyOutbox(serverRaw || {}, loadOutbox()));
+  cacheContent(content);
+  renderCurrentScreen();
+}
+
+let opSeq = 0;
+function stampOp(op) { return { id: "op" + Date.now() + "_" + (opSeq++), ts: Date.now(), ...op }; }
+
+// Choke-point för ALLA innehållsskrivningar.
+function enqueue(ops) {
+  if (!Array.isArray(ops)) ops = [ops];
+  if (!offlineEditEnabled()) {
+    // Grind AV → skriv direkt (dagens beteende, byte-för-byte).
+    return Promise.all(ops.map((op) => flushOne(op).catch(writeError)));
+  }
+  saveOutbox(loadOutbox().concat(ops.map(stampOp)));
+  recomputeContent();      // optimistisk lokal syn direkt
+  updatePendingStatus();
+  flushOutbox();           // försök skicka om vi är anslutna
+  return Promise.resolve();
+}
+
+// Skickar EN op till Firebase (returnerar promisen; resolvar först när servern nås).
+function flushOne(op) {
+  if (op.op === "batch") return db.ref("content/subjects").update(op.updates);
+  const ref = db.ref("content/subjects" + (op.path ? "/" + op.path : ""));
+  if (op.op === "set") return ref.set(op.value);
+  if (op.op === "update") return ref.update(op.value);
+  if (op.op === "remove") return ref.remove();
+  return Promise.resolve();
+}
+
+let dbConnected = false, flushing = false;
+async function flushOutbox() {
+  if (flushing || !offlineEditEnabled() || !dbConnected) return;
+  let ops = loadOutbox();
+  if (!ops.length) { updatePendingStatus(); return; }
+  flushing = true;
+  try {
+    while (ops.length && dbConnected) {
+      await flushOne(ops[0]);          // väntar tills skrivningen når servern
+      ops = loadOutbox(); ops.shift(); // ta bort den flushade (nya ops läggs sist)
+      saveOutbox(ops);
+      updatePendingStatus();
+    }
+  } catch (e) {
+    // Nätfel → sluta, försök igen vid nästa connected-event. Permanent fel (t.ex.
+    // PERMISSION_DENIED) ligger kvar i kön (ytas i konsolen; kräver åtgärd).
+    console.warn("flush stoppad:", e && (e.code || e.message));
+  } finally {
+    flushing = false;
+    updatePendingStatus();
+  }
+}
+
+// Liten diskret badge (skapas vid behov, bara när grinden är på).
+function updatePendingStatus() {
+  if (!offlineEditEnabled()) return;
+  const n = loadOutbox().length;
+  let b = document.getElementById("sync-badge");
+  if (!n) { if (b) b.style.display = "none"; return; }
+  if (!b) {
+    b = document.createElement("div");
+    b.id = "sync-badge";
+    b.style.cssText = "position:fixed;left:50%;transform:translateX(-50%);bottom:64px;z-index:60;background:var(--surface-2,#1f2c4d);color:var(--text,#f2f4f8);border:1px solid var(--line,#2c3c63);border-radius:20px;padding:6px 14px;font-size:12px;box-shadow:0 8px 24px rgba(0,0,0,.4);pointer-events:none;";
+    document.body.appendChild(b);
+  }
+  b.style.display = "";
+  const s = n > 1 ? "ar" : "";
+  b.textContent = dbConnected ? `Synkar ${n} ändring${s}…` : `${n} ändring${s} väntar på nät`;
+}
+
+// Kopplas upp i boot(): .info/connected driver flush, window-online som backup.
+function setupConnectivity() {
+  try {
+    db.ref(".info/connected").on("value", (s) => { dbConnected = !!s.val(); updatePendingStatus(); if (dbConnected) flushOutbox(); });
+  } catch (_) {}
+  window.addEventListener("online", flushOutbox);
 }
 
 const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
@@ -890,9 +1012,15 @@ function showStatus(msg) {
 
 function boot() {
   backfillAchvOnce(); // så in befintlig dagshistorik i prestationsräknarna en gång
+  setupConnectivity();
+  // Vid grind PÅ: väv in ev. osynkade offline-ändringar redan innan render.
+  if (offlineEditEnabled() && (serverRaw || loadOutbox().length)) {
+    content = normalize(applyOutbox(serverRaw || {}, loadOutbox()));
+  }
   // Visa cachat innehåll direkt (funkar offline)
   if (content.length) renderSubjects();
   else showStatus("Ansluter …");
+  updatePendingStatus();
 
   auth.signInAnonymously().catch((err) => {
     console.error(err);
@@ -918,7 +1046,11 @@ function listenContent() {
         seedIfEmpty();
         return;
       }
-      content = normalize(val);
+      serverRaw = val;
+      cacheRaw(serverRaw);
+      // Reconciliation: lägg ev. osynkade outbox-ops ovanpå serverns tillstånd
+      // (grind AV → outbox tom → identiskt med normalize(val)).
+      content = normalize(applyOutbox(serverRaw, loadOutbox()));
       if (!localStorage.getItem(SRS_MIGRATED_KEY)) {
         migrateSrsKeys(content);
         localStorage.setItem(SRS_MIGRATED_KEY, "1");
@@ -927,6 +1059,7 @@ function listenContent() {
       cacheContent(content);
       showStatus(null);
       renderCurrentScreen();
+      flushOutbox(); // hört från servern → försök tömma ev. kö
       if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
     },
     (err) => {
@@ -1688,8 +1821,8 @@ function persistLessonOrder(orderedIds) {
   currentSubject = subj;
   renderLessons(); // optimistisk omritning
   const updates = {};
-  orderedIds.forEach((id, i) => (updates[`${id}/order`] = i));
-  db.ref(`content/subjects/${subj.id}/lessons`).update(updates).catch(writeError);
+  orderedIds.forEach((id, i) => (updates[`${subj.id}/lessons/${id}/order`] = i));
+  enqueue([{ op: "batch", updates }]);
 }
 
 function persistSubjectOrder(orderedIds) {
@@ -1701,7 +1834,7 @@ function persistSubjectOrder(orderedIds) {
   renderSubjects(); // optimistisk omritning
   const updates = {};
   orderedIds.forEach((id, i) => (updates[`${id}/order`] = i));
-  db.ref("content/subjects").update(updates).catch(writeError);
+  enqueue([{ op: "batch", updates }]);
 }
 
 // Back-knappar
@@ -3986,60 +4119,64 @@ function writeError(err) {
   toast("Fel: " + (err.code || err.message), 4000, "error");
 }
 
+// Alla innehållsskrivningar går via enqueue() (choke-point). Paths är relativa
+// "content/subjects". push().key genereras klientside → riktiga id:n även offline.
 function addSubject(name, lang, owner) {
-  db.ref("content/subjects").push({ name, order: Date.now(), createdAt: TS, lang: lang || null, owner: owner || null }).catch(writeError);
+  const k = db.ref("content/subjects").push().key;
+  enqueue([{ op: "set", path: k, value: { name, order: Date.now(), createdAt: TS, lang: lang || null, owner: owner || null } }]);
 }
 function updateSubject(sid, name, lang, owner) {
-  db.ref(`content/subjects/${sid}`).update({ name, lang: lang || null, owner: owner || null }).catch(writeError);
+  enqueue([{ op: "update", path: sid, value: { name, lang: lang || null, owner: owner || null } }]);
 }
 function removeSubject(sid) {
-  db.ref(`content/subjects/${sid}`).remove().catch(writeError);
+  enqueue([{ op: "remove", path: sid }]);
 }
 function addLesson(sid, name) {
-  db.ref(`content/subjects/${sid}/lessons`).push({ name, order: Date.now(), createdAt: TS }).catch(writeError);
+  const k = db.ref(`content/subjects/${sid}/lessons`).push().key;
+  enqueue([{ op: "set", path: `${sid}/lessons/${k}`, value: { name, order: Date.now(), createdAt: TS } }]);
 }
 // Skapar lektion och returnerar dess nyckel direkt (för att kunna lägga kort i den på en gång)
 function createLessonReturning(sid, name) {
-  const ref = db.ref(`content/subjects/${sid}/lessons`).push({ name, order: Date.now(), createdAt: TS });
-  ref.then(undefined, writeError);
-  return ref.key;
+  const k = db.ref(`content/subjects/${sid}/lessons`).push().key;
+  enqueue([{ op: "set", path: `${sid}/lessons/${k}`, value: { name, order: Date.now(), createdAt: TS } }]);
+  return k;
 }
 function renameLesson(sid, lid, name) {
-  db.ref(`content/subjects/${sid}/lessons/${lid}/name`).set(name).catch(writeError);
+  enqueue([{ op: "update", path: `${sid}/lessons/${lid}`, value: { name } }]);
 }
 function removeLesson(sid, lid) {
-  db.ref(`content/subjects/${sid}/lessons/${lid}`).remove().catch(writeError);
+  enqueue([{ op: "remove", path: `${sid}/lessons/${lid}` }]);
 }
 function addCards(sid, lid, cards) {
   const base = db.ref(`content/subjects/${sid}/lessons/${lid}/cards`);
-  const updates = {};
+  const value = {};
   const order = Date.now();
   cards.forEach((c, i) => {
     const card = { front: c.front, back: c.back, order: order + i, createdAt: TS };
     if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio; // default (2) skrivs aldrig
-    updates[base.push().key] = card;
+    value[base.push().key] = card;
   });
-  return base.update(updates).catch(writeError);
+  return enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards`, value }]);
 }
 function updateCard(sid, lid, cid, front, back, hint, prio) {
   // prio: 1/2/3 sparas; null/övrigt tar bort fältet (default 2 lagras aldrig).
-  const upd = { front, back, hint: hint || null, prio: (prio === 1 || prio === 2 || prio === 3) ? prio : null };
-  db.ref(`content/subjects/${sid}/lessons/${lid}/cards/${cid}`).update(upd).catch(writeError);
+  const value = { front, back, hint: hint || null, prio: (prio === 1 || prio === 2 || prio === 3) ? prio : null };
+  enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards/${cid}`, value }]);
 }
 function removeCard(sid, lid, cid) {
-  db.ref(`content/subjects/${sid}/lessons/${lid}/cards/${cid}`).remove().catch(writeError);
+  enqueue([{ op: "remove", path: `${sid}/lessons/${lid}/cards/${cid}` }]);
 }
 // Flytta ett kort till en annan lektion (atomiskt: lägg till nytt + ta bort gammalt).
 // SRS följer med automatiskt eftersom inlärningen nycklas på ordet, inte kort-id:t.
 // prio måste däremot skickas med explicit – annars tappas den vid flytt.
 function moveCard(sid, fromLid, toLid, cid, front, back, hint, prio) {
   const newKey = db.ref(`content/subjects/${sid}/lessons/${toLid}/cards`).push().key;
-  const updates = {};
   const card = { front, back, hint: hint || null, order: Date.now(), createdAt: TS };
   if (prio === 1 || prio === 2 || prio === 3) card.prio = prio;
-  updates[`content/subjects/${sid}/lessons/${toLid}/cards/${newKey}`] = card;
-  updates[`content/subjects/${sid}/lessons/${fromLid}/cards/${cid}`] = null;
-  db.ref().update(updates).catch(writeError);
+  enqueue([{ op: "batch", updates: {
+    [`${sid}/lessons/${toLid}/cards/${newKey}`]: card,
+    [`${sid}/lessons/${fromLid}/cards/${cid}`]: null,
+  } }]);
 }
 
 // =========================================================================
@@ -4862,23 +4999,23 @@ function commitImport(subject, plan) {
     let lid = s.existing && s.existing.id;
     if (!lid) {
       lid = db.ref(`content/subjects/${sid}/lessons`).push().key;
-      updates[`content/subjects/${sid}/lessons/${lid}/name`] = s.name;
-      updates[`content/subjects/${sid}/lessons/${lid}/order`] = order0 + si;
-      updates[`content/subjects/${sid}/lessons/${lid}/createdAt`] = TS;
+      updates[`${sid}/lessons/${lid}/name`] = s.name;
+      updates[`${sid}/lessons/${lid}/order`] = order0 + si;
+      updates[`${sid}/lessons/${lid}/createdAt`] = TS;
       newLessonIds.push(lid);
     }
     s.cards.forEach((rec, ci) => {
       const ck = db.ref(`content/subjects/${sid}/lessons/${lid}/cards`).push().key;
       const card = { front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS };
       if (rec.prio === 1 || rec.prio === 2 || rec.prio === 3) card.prio = rec.prio;
-      updates[`content/subjects/${sid}/lessons/${lid}/cards/${ck}`] = card;
+      updates[`${sid}/lessons/${lid}/cards/${ck}`] = card;
       if (rec.fav) favKeys.push(`${normPart(rec.front)}|${normPart(rec.back)}`);
     });
   });
   // Stjärnmärken (personligt) + nya lektioner pausade (personligt) – innan skrivningen ekar tillbaka
   favKeys.forEach((k) => setFavKey(k, true));
   newLessonIds.forEach((lid) => setLessonPaused(lid, true));
-  return db.ref().update(updates);
+  return enqueue([{ op: "batch", updates }]); // paths relativa content/subjects
 }
 
 async function startCsvImport(files) {
@@ -5315,7 +5452,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v296";
+const APP_VERSION = "v297";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
