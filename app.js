@@ -865,12 +865,14 @@ function offlineEditEnabled() {
   return currentUser === "tom" && localStorage.getItem("flippa-offline-edit") !== "0";
 }
 
-const RAW_CACHE_KEY = "flippa-content-raw-v1"; // rå Firebase-formad spegel (för offline-recompute)
-function loadRawCache() { try { return JSON.parse(localStorage.getItem(RAW_CACHE_KEY)) || null; } catch { return null; } }
-function cacheRaw(raw) { localStorage.setItem(RAW_CACHE_KEY, JSON.stringify(raw || {})); }
+// OBS: tidigare fanns här en RÅ innehållscache (flippa-content-raw-v1) vid sidan av
+// den normaliserade – dubbel lagring som sprängde iOS localStorage-kvot (~5 MB) →
+// QuotaExceededError (kod 22) → outboxen kunde inte sparas. Borttagen i v300; vi
+// härleder i stället serverRaw ur den normaliserade cachen via denormalize().
+const RAW_CACHE_KEY = "flippa-content-raw-v1"; // behålls bara för engångsrensning i boot()
 
-// Invers av normalize(): array → Firebase-format. Används som fallback när rå
-// cache saknas men vi har en äldre normaliserad cache (t.ex. direkt efter deploy).
+// Invers av normalize(): array → Firebase-format. Ger serverRaw-bas ur cachen.
+// applyOutbox är idempotent, så att basen redan innehåller köade ändringar gör inget.
 function denormalize(arr) {
   const out = {};
   (arr || []).forEach((s) => {
@@ -889,7 +891,7 @@ function denormalize(arr) {
   return out;
 }
 
-let serverRaw = loadRawCache() || (content.length ? denormalize(content) : null);
+let serverRaw = content.length ? denormalize(content) : null;
 
 // Lokal vy = normalize(serverRaw + outbox). Anropas vid varje mutate och server-eko.
 function recomputeContent() {
@@ -953,8 +955,9 @@ async function flushOutbox() {
     }
   } catch (e) {
     // Nätfel → sluta, försök igen vid nästa connected-event. Permanent fel (t.ex.
-    // PERMISSION_DENIED) ligger kvar i kön; ytas nu i inspektorn.
-    lastFlushError = (e && (e.code || e.message)) || String(e);
+    // PERMISSION_DENIED / QuotaExceededError) ligger kvar i kön; ytas i inspektorn.
+    const quota = e && (e.code === 22 || /quota/i.test(e.name || "") || /quota/i.test(e.message || ""));
+    lastFlushError = quota ? "lagring full (QuotaExceededError) – frigör utrymme" : ((e && (e.code || e.message)) || String(e));
     console.warn("flush stoppad:", lastFlushError);
   } finally {
     flushing = false;
@@ -1066,6 +1069,7 @@ function showStatus(msg) {
 
 function boot() {
   backfillAchvOnce(); // så in befintlig dagshistorik i prestationsräknarna en gång
+  try { localStorage.removeItem(RAW_CACHE_KEY); } catch (_) {} // återvinn utrymmet från v297–299:s dubbla cache
   setupConnectivity();
   // Vid grind PÅ: väv in ev. osynkade offline-ändringar redan innan render.
   if (offlineEditEnabled() && (serverRaw || loadOutbox().length)) {
@@ -1102,7 +1106,6 @@ function listenContent() {
         return;
       }
       serverRaw = val;
-      cacheRaw(serverRaw);
       // Reconciliation: lägg ev. osynkade outbox-ops ovanpå serverns tillstånd
       // (grind AV → outbox tom → identiskt med normalize(val)).
       content = normalize(applyOutbox(serverRaw, loadOutbox()));
@@ -5507,7 +5510,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v299";
+const APP_VERSION = "v300";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
