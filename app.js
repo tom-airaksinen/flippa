@@ -445,9 +445,6 @@ function uniqueUnitsInPeriod(subjects, cutoff) {
 // Livstidshistorik som INTE rensas (unitcount rensas ~140 dagar). user → subject →
 // { d:{datum:maxdagssiffra}, w:{ISO-vecka:maxveckosiffra} }. Skrivs vid varje flipp.
 const ACHV_KEY = "flippa-achv-v1";
-// v2: kör om backfillen en gång till – läker prestationsräknare som nollats medan
-// dagshistoriken (unitcount) är intakt. Idempotent (Math.max), skadar inte intakta.
-const ACHV_BACKFILL_KEY = "flippa-achv-backfilled-v2";
 
 // ISO-veckonyckel "ÅÅÅÅ-Www" (måndagsstart, torsdagen avgör år/vecka)
 function isoWeekKey(date) {
@@ -476,18 +473,20 @@ function recordAchv(user, sid, dayCount, weekCount) {
   localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
 }
 
-// Engångs: så in befintliga dagssiffror (unitcount, ~140 dagar) i livstidshistoriken
-// så att räknarna inte börjar på noll. Veckor kan inte återskapas exakt → börjar tomt.
-function backfillAchvOnce() {
-  if (localStorage.getItem(ACHV_BACKFILL_KEY)) return;
+// Självläkande: bygg prestationernas DAG-räknare ur unitcount (~140 dgr) vid VARJE
+// start. Idempotent (Math.max) → nollställs de nånsin (t.ex. localStorage-vräkning)
+// men dagshistoriken finns kvar, återställs de automatiskt. Veckor kan inte återskapas
+// (bara distinkt-per-vecka räknas, och den detaljen sparas bara för innevarande
+// vecka) → de ackumuleras live framåt.
+function backfillAchvDays() {
   const counts = loadLS(UNITCOUNT_KEY);
   const achv = loadLS(ACHV_KEY);
+  let changed = false;
   Object.keys(counts).forEach((user) => Object.keys(counts[user]).forEach((sid) => {
     const a = achvSlot(achv, user, sid), cs = counts[user][sid];
-    Object.keys(cs).forEach((d) => { a.d[d] = Math.max(a.d[d] || 0, cs[d]); });
+    Object.keys(cs).forEach((d) => { const v = Math.max(a.d[d] || 0, cs[d]); if (v !== (a.d[d] || 0)) { a.d[d] = v; changed = true; } });
   }));
-  localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
-  localStorage.setItem(ACHV_BACKFILL_KEY, "1");
+  if (changed) localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
 }
 
 // Räkna prestationer för en scope (summerar per-ämnessiffror per dag/vecka)
@@ -1075,7 +1074,7 @@ function showStatus(msg) {
 }
 
 function boot() {
-  backfillAchvOnce(); // så in befintlig dagshistorik i prestationsräknarna en gång
+  backfillAchvDays(); // självläkande: bygg dag-räknarna ur dagshistoriken varje start
   try { localStorage.removeItem(RAW_CACHE_KEY); } catch (_) {} // återvinn utrymmet från v297–299:s dubbla cache
   setupConnectivity();
   // Vid grind PÅ: väv in ev. osynkade offline-ändringar redan innan render.
@@ -5539,7 +5538,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v305";
+const APP_VERSION = "v306";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
