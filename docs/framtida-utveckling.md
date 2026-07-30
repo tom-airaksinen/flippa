@@ -669,6 +669,21 @@ iOS, inte en kod-bugg. **Hela outbox-durabiliteten vilar på att localStorage
 - Notera: IndexedDB hjälper inte i sig (samma ITP-vräkning); `persist()` är rätt
   spak. Grundgarantin är ändå "få upp till servern snabbt" – offline kan inte det.
 
+### Följdbuggar under enhetstest (2026-07-30)
+1. **Serialiserad `ServerValue.TIMESTAMP` (v299).** `createdAt: TS` blev
+   `{".sv":"timestamp"}` i outbox-JSON → Firebase avvisar `.`-nyckel vid skrivning →
+   ops fastnade tyst. Fix: `sanitizeServerValues()` byter sentinels mot klientklocka
+   vid flush. Lärdom: headless blockerar Firebase → flush-vägen måste enhetstestas.
+2. **QuotaExceededError kod 22 (v300).** v297 lade en RÅ innehållscache
+   (`flippa-content-raw-v1`) *utöver* den normaliserade → dubbel lagring sprängde iOS
+   ~5 MB-kvot → `saveOutbox` kastade kod 22 → kön kunde inte uppdateras. Fix: härled
+   `serverRaw` ur den normaliserade cachen via `denormalize()` (idempotent) i stället
+   för en andra kopia; rensa den gamla råcachen i boot. Lärdom: dubblera aldrig hela
+   innehållsträdet i localStorage.
+3. **Observerbarhet:** sync-badgen är tryckbar → visar kön, beständig-lagring-status
+   och senaste synkfel + "Försök synka nu". Ovärderligt för att diagnosticera 1 & 2
+   på telefon utan konsol.
+
 ### Konfliktmodell
 Delat innehållsträd, **last-write-wins per fält** vid återuppspelning. Låg
 konfliktrisk för familj + ett par testare. Dokumentera; verklig CRDT/konflikt-UI är
