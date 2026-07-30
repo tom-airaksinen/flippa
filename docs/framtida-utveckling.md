@@ -588,7 +588,14 @@ körning syntes i GitHub Actions (completed/success). `send-push.js` orört.
 
 ## 14) Offlineredigering av innehåll (durabel outbox) – AKTIV, bygg nu
 
-**Status (2026-07-30): beslutad, full paritet, byggs nu.** Tom tappade en
+**Status (2026-07-30): steg 1–3 byggda bakom Tom-grind (v297), väntar på
+enhetsvalidering (steg 4).** Grund + wiring + flush/connectivity/status klart.
+Grind: `offlineEditEnabled()` = `currentUser==="tom"` && localStorage
+`flippa-offline-edit` !== "0" (kill-switch). Grind AV = byte-för-byte dagens
+beteende. Verifierat headless offline: 15/15 (alla redigeringstyper överlever
+app-omstart; `front/back`-buggen fixad). Kvar: live-flush + reconciliation mot
+riktig server-snapshot bevisas på enhet (flygplansläge → återanslutning); rulla
+sedan ut brett (ta bort tom-grinden) + changelog-post. Tom tappade en
 innehållsändring på en promenad utan täckning; vill ha offlineredigering före en
 Italienresa. Beslut: **detta går före** moln-SRS (avsnitt 11), som blir separat
 spår efteråt. Offlineredigering är oberoende av SRS-synk, är det som gör ont, är
