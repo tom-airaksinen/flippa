@@ -66,7 +66,7 @@
              Lägg till ord direkt på Slå upp-segmentet med lektionsväljare). -->
         <button id="translate-subject" class="add-menu-item hidden" role="menuitem">🔎 Slå upp &amp; lägg till ord</button>
         <button id="import-csv" class="add-menu-item" role="menuitem">⬆️ Importera CSV</button>
-        <a id="dl-template" class="add-menu-item add-menu-sub" href="mall.csv" download target="_blank" rel="noopener" role="menuitem">📄 Ladda ner CSV-mall</a>
+        <a id="dl-template" class="add-menu-item add-menu-sub" href="mall.csv" target="_blank" rel="noopener" role="menuitem">📄 Ladda ner CSV-mall</a>
       </div>
     </header>
     <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" multiple class="hidden" />
@@ -391,7 +391,7 @@
           <pre class="help-code">Sektion;Ord;Översättning;Favorit;Minnesregel;Prio
 Mat;la manzana;äpple;;;1
 Resa;el aeropuerto;flygplats;ja;"låter som airport";2</pre>
-          <p><a class="help-link" href="mall.csv" download target="_blank" rel="noopener">📄 Ladda ner en färdig mall-fil</a> att utgå från.</p>
+          <p><a id="dl-template-help" class="help-link" href="mall.csv" target="_blank" rel="noopener">📄 Ladda ner en färdig mall-fil</a> att utgå från.</p>
         </div>
       </details>
 

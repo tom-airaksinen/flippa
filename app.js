@@ -5118,7 +5118,27 @@ async function startCsvImport(files) {
 }
 
 $("import-csv").onclick = () => { const inp = $("csv-file"); inp.value = ""; inp.click(); };
-{ const dl = $("dl-template"); if (dl) dl.addEventListener("click", () => track("csv-mall")); }
+// Öppna CSV-mallen utan att navigera webviewen (iOS-PWA gav vit sida med target=_blank).
+// Bygg filen och öppna delningsbladet (Spara i Filer m.m.); desktop → vanlig nedladdning.
+async function downloadTemplate(e) {
+  if (e) e.preventDefault();
+  track("csv-mall");
+  try {
+    const blob = await (await fetch("mall.csv")).blob();
+    const file = new File([blob], "mall.csv", { type: "text/csv" });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: "Flippa CSV-mall" }); } catch (_) {}
+      return; // delat eller avbrutet – lämna aldrig appen
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = "mall.csv";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);
+  } catch (_) {
+    window.open("mall.csv", "_blank"); // sista utväg
+  }
+}
+["dl-template", "dl-template-help"].forEach((id) => { const el = $(id); if (el) el.addEventListener("click", downloadTemplate); });
 $("csv-file").addEventListener("change", (e) => { startCsvImport(e.target.files); });
 
 // ＋-meny: samlar Ny lektion / Slå upp & lägg till ord / Importera CSV under en knapp.
@@ -5517,7 +5537,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v303";
+const APP_VERSION = "v304";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
