@@ -586,6 +586,86 @@ körning syntes i GitHub Actions (completed/success). `send-push.js` orört.
 
 ---
 
+## 14) Offlineredigering av innehåll (durabel outbox) – AKTIV, bygg nu
+
+**Status (2026-07-30): beslutad, full paritet, byggs nu.** Tom tappade en
+innehållsändring på en promenad utan täckning; vill ha offlineredigering före en
+Italienresa. Beslut: **detta går före** moln-SRS (avsnitt 11), som blir separat
+spår efteråt. Offlineredigering är oberoende av SRS-synk, är det som gör ont, är
+flygrelevant, och kan **valideras på EN enhet** (flygplansläge) – till skillnad
+från SRS-synk som kräver ≥2 enheter.
+
+### Rotorsak (bekräftad i kod 2026-07-30)
+- Firebase RTDB:s **webb-SDK har ingen disk-persistens** (finns inte ens i webb-
+  SDK:n; `firebase-config.js`, `app.js:9-11`). Offline-skrivningar köas bara **i
+  minnet medan fliken lever**.
+- **iOS fryser/dödar PWA:er** vid lås → minneskön tappas → skrivningen når aldrig
+  servern.
+- Skrivningarna är i de flesta fall **reaktiva**: `content` uppdateras först när
+  servern ekar via `.on("value")` (`app.js:877`). T.ex. `editWord` (`app.js:4296-4302`)
+  uppdaterar `hint`/`prio` lokalt men **inte** `front`/`back` → offline-ändring av
+  ordet syns inte ens lokalt och skrivs över av servern vid återanslutning.
+- Ingen outbox, ingen `navigator.onLine`, ingen `.info/connected`-lyssnare, inget
+  `onDisconnect`. Vid fel: bara en toast, sen borta.
+
+### Arkitektur (kärnidén – gör full paritet hanterbar)
+**Alla skrivningar går genom en outbox, och lokal vy = `normalize(applyOutbox(serverSnapshot))`.**
+Varje redigering reduceras till en av tre generiska, **idempotenta** primitiver mot
+en Firebase-path:
+- `set(path, value)` · `update(path, {…})` · `remove(path)`
+- (`push` = `set` på en **lokalt genererad** nyckel – RTDB `ref(path).push().key`
+  skapas klientside utan serveranrop, så nyskapade kort/lektioner/ämnen får riktiga
+  id:n direkt offline.)
+
+Move/omordning/radering faller ut ur samma primitiver: omordning = `update` av
+`order`-fält; radering = `remove`; flytt av kort = multi-path `update` på gemensam
+förälder (atomiskt).
+
+### Delar att bygga
+1. **Rå spegel:** håll `serverRaw` (Firebase-format) från `.on("value")` separat
+   från renderad `content`.
+2. **Outbox** i localStorage (`flippa-outbox-v1`): ordnad FIFO av
+   `{id, ts, op, path, value?}`.
+3. **`applyOp(obj, op)`** – path-baserad set/update/remove på ett JS-objekt.
+   **Lokal vy** räknas alltid om som `content = normalize(applyOutbox(serverRaw))`.
+4. **Choke-point `mutate(op, path, value)`** ersätter de spridda
+   `db.ref(...).set/update/remove(...).catch(writeError)`: appendar till outbox →
+   räknar om lokal vy → cachar → triggar flush. **Anropar inte Firebase direkt.**
+5. **Flush** när `.info/connected === true` (+ `online`-event): spela upp outbox
+   FIFO, `await` varje skrivning (promisen resolvar bara när ansluten), poppa vid
+   success, backoff/stopp vid nätfel, yta permanenta fel (t.ex. PERMISSION_DENIED).
+6. **Reconciliation:** när server-snapshot kommer, lägg pending outbox-ops ovanpå
+   innan render/cache → servern klottrar aldrig osynkade ändringar. Dubbel-applicering
+   är ofarlig tack vare idempotens.
+7. **Synlig status:** "N ändringar väntar på synk" (återanvänd `#status-banner` /
+   liten header-indikator) → dödar den tysta dataförlusten som är själva smärtan.
+
+### Invariant (samma som avsnitt 11)
+Lokalt = arbetskopia, nätet = additiv spegel, värsta rimliga fel = "synk hände inte",
+aldrig "data borta". Fixar även `front/back`-buggen (allt blir optimistiskt lokalt).
+
+### Konfliktmodell
+Delat innehållsträd, **last-write-wins per fält** vid återuppspelning. Låg
+konfliktrisk för familj + ett par testare. Dokumentera; verklig CRDT/konflikt-UI är
+overkill här.
+
+### Validering
+- **Headless (verify):** `applyOp`/`applyOutbox` (idempotens, ingen op tappas),
+  reconciliation (server-snapshot klottrar inte pending), outbox-persistens.
+- **På enhet (det riktiga beviset):** flygplansläge på → lägg till/redigera/radera/
+  ordna om → döda appen → öppna igen (ändringar kvar + "N väntar") → nät på → outbox
+  töms → servern matchar.
+
+### Bygg-ordning (stegvis, checkpointa)
+1. Ofarlig grund headless-verifierbar: outbox-modul, `applyOp`/`applyOutbox`,
+   `serverRaw`-separation, statusindikator. Rör inte live-skrivvägarna än.
+2. Väx in `mutate()` som choke-point; koppla om alla skrivare (add/edit/delete/
+   reorder/move) en i taget.
+3. Flush + reconciliation live bakom flygplansläge-test.
+4. Toms enhet validerar hela cykeln före resan.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
