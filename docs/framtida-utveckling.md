@@ -712,6 +712,46 @@ overkill här.
 
 ---
 
+## 15) Firebase "insecure rules"-mejlen (beslut 2026-08-15: gör inget nu)
+
+Återkommande mejl från Firebase: *"Realtime Database … has insecure rules – any
+logged-in user can read/write your entire database."* Fråga: hur meckigt att bli av
+med dem? **Beslut: inget just nu** – resonemanget sparas här.
+
+### Varför de kommer
+Appen använder **anonym inloggning** + regler i stil med `{".read":"auth!=null",
+".write":"auth!=null"}`. Anonym inloggning är öppen → vem som helst som hittar
+databas-URL:en kan logga in anonymt och nå allt. Firebase flaggar precis det.
+
+### Faktisk risk (låg men ≠ noll)
+- **Innehållsträdet** (glosorna): inte känsligt, men kan vandaliseras/raderas.
+  Återställbart via lokal cache/offline-kopia, men obekvämt.
+- **Push-prenumerationer** (`push/…`: device-id + user-agent): mild integritetsgrej,
+  läsbar.
+- **SRS/statistik ligger lokalt**, inte i molnet → exponeras inte.
+
+### Tre vägar (och om de tystar mejlet)
+- **A) Låt vara + Gmail-filter (~5 min, 0 kod).** Auto-arkivera varningen. Reglerna
+  orörda; öppenheten kvarstår. Rimligt för en familjeapp.
+- **B) Härda reglerna (~1–2 h).** Lås roten, tillåt bara kända grenar (`content`,
+  `push`) med typ-/storleksvalidering, förbjud nya toppnycklar, tak på payload.
+  Minskar risken på riktigt (ingen kan nuka strukturen). MEN: offlineredigeringen
+  kräver att vilken anonym användare som helst kan **skriva** till innehållet →
+  detektorn flaggar bred `auth != null` ändå → **mejlet slutar troligen INTE**.
+  ⚠️ Felskriven regel kan låsa ute hela familjen → måste testas noga.
+- **C) Riktig fix = det stora projektet.** Per-uid-auth (Apple/Google), data per
+  `uid`, regler mot `auth.uid`. Stoppar mejlet OCH säkrar databasen – men det är
+  **avsnitt 1** (auth + GDPR + SRS→moln). Veckor av jobb; overkill bara för mejlet.
+- **Mellanväg:** [App Check](https://firebase.google.com/docs/app-check) (reCAPTCHA)
+  låser åtkomst till bara appen utan per-user-auth. Måttligt jobb; **osäkert** om det
+  tystar just *regel*-mejlet (annan vektor).
+
+### Rekommendation
+Familjeapp → **A nu** (filtrera), håll **C** på kartan tills multi-user ändå byggs.
+B ger genuin riskminskning men troligen inte tystnad. Kopplar till avsnitt 1.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
