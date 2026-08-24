@@ -1972,6 +1972,7 @@ const cardHint = $("card-hint");
 const dirSelect = $("dir-select");
 const progressPill = $("progress-pill");
 const feedbackEl = $("swipe-feedback");
+const feedbackLabelEl = $("swipe-feedback-label");
 
 let session = null; // { queue:[card], dirMode, current, shownDir }
 let undoStack = [];  // shake-to-undo: snapshots av state före varje svar i sessionen
@@ -2494,8 +2495,10 @@ function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, con
   closeChoosers(); // stäng ev. öppen riktnings-/kortväljare så popover/bakgrund inte ligger kvar
   blurActiveInput();
   // nollställ ev. kvarvarande svep-feedback så den inte blinkar till vid sessionsstart
-  feedbackEl.classList.remove("show");
+  feedbackEl.classList.remove("show", "undo-show", "from-hint");
   feedbackEl.textContent = "";
+  feedbackLabelEl.classList.remove("show", "from-hint");
+  clearSwipeHint();
   session = { queue: queue.slice(), dirMode, total: queue.length, done: 0, label, note: note || "",
               graded: new Set(), kind: kind || null, lessonId: lessonId || null, forced: forced || false, continueLimit: continueLimit || 0,
               // träningsstatistik (loggas lokalt per pass)
@@ -2875,14 +2878,82 @@ function answer(grade) {
 }
 
 // ---- Feedback ----
-function showFeedback(grade) {
-  const map = { fail: ["✗", "#e05a4f"], good: ["✓", "#5bbf72"], easy: ["⇈", "#f4c542"], hard: ["⇊", "#b06bf0"] };
-  const [sym, color] = map[grade];
-  feedbackEl.textContent = sym;
-  feedbackEl.style.color = color;
+// Symbol, färg och ord per betyg. Ordet är samma formulering som handsfree-kommandona,
+// så svep och röst benämner utfallen likadant.
+const GRADE_CUE = {
+  fail: { sym: "✗", color: "#e05a4f", label: "kan inte" },
+  good: { sym: "✓", color: "#5bbf72", label: "kan" },
+  easy: { sym: "⇈", color: "#f4c542", label: "kan bra" },
+  hard: { sym: "⇊", color: "#b06bf0", label: "hopplöst" },
+};
+
+// fromHint = svepet hade redan tonat fram symbolen → bekräftelsen fortsätter från DEN
+// nivån (pop-confirm) i stället för att starta om från noll. Handsfree/röst saknar
+// förhandsvisning och får den vanliga pop-kurvan.
+function showFeedback(grade, fromHint) {
+  const cue = GRADE_CUE[grade];
+  feedbackEl.classList.remove("hint");
+  feedbackEl.textContent = cue.sym;
+  feedbackEl.style.color = cue.color;
+  feedbackEl.style.opacity = "";      // animationen äger uttrycket härifrån
+  feedbackEl.style.transform = "";
+  feedbackEl.classList.toggle("from-hint", !!fromHint);
   feedbackEl.classList.remove("show", "undo-show");
   void feedbackEl.offsetWidth;
   feedbackEl.classList.add("show");
+
+  feedbackLabelEl.classList.remove("hint");
+  feedbackLabelEl.textContent = cue.label;
+  feedbackLabelEl.style.color = cue.color;
+  feedbackLabelEl.style.opacity = "";
+  feedbackLabelEl.style.transform = "";
+  feedbackLabelEl.classList.toggle("from-hint", !!fromHint);
+  feedbackLabelEl.classList.remove("show");
+  void feedbackLabelEl.offsetWidth;
+  feedbackLabelEl.classList.add("show");
+}
+
+// Städa när pop-animationen är klar. Utan detta blir .show kvar för alltid och
+// förhandsvisningen (som läser tillståndet) slutar fungera efter första svepet.
+feedbackEl.addEventListener("animationend", () => {
+  feedbackEl.classList.remove("show", "undo-show", "from-hint", "hint");
+  feedbackEl.style.opacity = "";
+  feedbackEl.style.transform = "";
+});
+feedbackLabelEl.addEventListener("animationend", () => {
+  feedbackLabelEl.classList.remove("show", "from-hint", "hint");
+  feedbackLabelEl.style.opacity = "";
+  feedbackLabelEl.style.transform = "";
+  feedbackLabelEl.textContent = "";
+});
+
+// Förhandsvisning under svepet: samma symbol och ord som bekräftelsen, men nedtonade
+// och följsamma med draget. Ligger mitt på kortet, där blicken redan är – till skillnad
+// från de gamla tipsen i sidfoten, som satt utanför kortet och aldrig lästes.
+function showSwipeHint(grade, prog) {
+  const cue = GRADE_CUE[grade];
+  const ready = prog >= 1;
+  const op = ready ? 0.85 : 0.6 * prog;
+  const scale = ready ? 1.05 : 0.62 + 0.38 * prog;
+  feedbackEl.textContent = cue.sym;
+  feedbackEl.style.color = cue.color;
+  feedbackEl.classList.add("hint");
+  feedbackEl.style.opacity = op;
+  feedbackEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  feedbackLabelEl.textContent = cue.label;
+  feedbackLabelEl.style.color = cue.color;
+  feedbackLabelEl.classList.add("hint");
+  feedbackLabelEl.style.opacity = op;
+  feedbackLabelEl.style.transform = `translate(-50%, -50%) scale(${scale}) translateY(58px)`;
+}
+function clearSwipeHint() {
+  feedbackEl.classList.remove("hint");
+  feedbackEl.style.opacity = "";
+  feedbackEl.style.transform = "";
+  feedbackLabelEl.classList.remove("hint");
+  feedbackLabelEl.style.opacity = "";
+  feedbackLabelEl.style.transform = "";
+  feedbackLabelEl.textContent = "";
 }
 
 // =========================================================================
@@ -2920,6 +2991,10 @@ function undoLastAnswer() {
 }
 
 function showUndoFeedback() {
+  clearSwipeHint();
+  feedbackLabelEl.classList.remove("show", "from-hint");
+  feedbackLabelEl.textContent = "";
+  feedbackEl.classList.remove("from-hint");
   feedbackEl.textContent = "↩️";
   feedbackEl.style.color = "#5b8cff";
   feedbackEl.classList.remove("show", "undo-show");
@@ -3477,6 +3552,21 @@ async function editCurrentCard() {
 let startX = 0, startY = 0, dragging = false, didSwipe = false, animating = false;
 const THRESH = 80;
 const ROT = 0.06;
+const HINT_MIN = 14; // rörelse innan förhandsvisningen tänds – ett tapp ska inte blinka
+
+// Vilket betyg ett svep i riktningen (dx,dy) motsvarar. Delas av förhandsvisningen
+// under draget och av beslutet vid släppet, så de aldrig kan säga emot varandra.
+// Ger samma utfall som den tidigare if-kedjan: dominerande axel avgör riktning,
+// och den axelns sträcka jämförs mot THRESH.
+function swipeGrade(dx, dy) {
+  if (Math.abs(dy) > Math.abs(dx)) return dy < 0 ? "easy" : "hard";
+  return dx > 0 ? "good" : "fail";
+}
+function swipeAxis(grade, dx, dy) {
+  return (grade === "easy" || grade === "hard") ? Math.abs(dy) : Math.abs(dx);
+}
+function swipePassed(grade, dx, dy) { return swipeAxis(grade, dx, dy) > THRESH; }
+function swipeProgress(grade, dx, dy) { return Math.min(1, swipeAxis(grade, dx, dy) / THRESH); }
 
 function setDrag(dx, dy) {
   const deg = dx * ROT;
@@ -3519,6 +3609,9 @@ card.addEventListener("pointerdown", (e) => {
   startY = e.clientY;
   dragging = true;
   didSwipe = false;
+  feedbackEl.classList.remove("show", "undo-show", "from-hint");
+  feedbackLabelEl.classList.remove("show", "from-hint");
+  clearSwipeHint(); // rent läge inför draget
   hideCardActions(); // dölj kort-knapparna direkt när man tar i kortet
   closeFan();
   card.setPointerCapture(e.pointerId);
@@ -3526,7 +3619,14 @@ card.addEventListener("pointerdown", (e) => {
 
 card.addEventListener("pointermove", (e) => {
   if (!dragging || animating) return;
-  setDrag(e.clientX - startX, e.clientY - startY);
+  const dx = e.clientX - startX, dy = e.clientY - startY;
+  setDrag(dx, dy);
+  if (Math.hypot(dx, dy) < HINT_MIN) {
+    clearSwipeHint();
+  } else {
+    const g = swipeGrade(dx, dy);
+    showSwipeHint(g, swipeProgress(g, dx, dy));
+  }
 });
 
 card.addEventListener("pointerup", (e) => {
@@ -3534,22 +3634,14 @@ card.addEventListener("pointerup", (e) => {
   dragging = false;
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  const adx = Math.abs(dx), ady = Math.abs(dy);
+  const g = swipeGrade(dx, dy);
 
-  if (ady > THRESH && ady > adx) {
+  if (swipePassed(g, dx, dy)) {
     didSwipe = true;
-    const g = dy < 0 ? "easy" : "hard";
-    showFeedback(g);
+    showFeedback(g, true); // förhandsvisningen är redan uppe → fortsätt därifrån
     flyOut(g);
-  } else if (dx > THRESH) {
-    didSwipe = true;
-    showFeedback("good");
-    flyOut("good");
-  } else if (dx < -THRESH) {
-    didSwipe = true;
-    showFeedback("fail");
-    flyOut("fail");
   } else {
+    clearSwipeHint();
     snapBack();
   }
 });
@@ -3557,6 +3649,7 @@ card.addEventListener("pointerup", (e) => {
 card.addEventListener("pointercancel", () => {
   if (!dragging) return;
   dragging = false;
+  clearSwipeHint();
   snapBack();
 });
 
@@ -5610,7 +5703,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v307";
+const APP_VERSION = "v308";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

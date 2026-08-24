@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v308", items: [
+    { t: "Du ser nu vad ditt svep kommer att bli medan du drar kortet – symbolen och ordet (\u201dkan bra\u201d, \u201dhopplöst\u201d …) tonas fram mitt på kortet, så du hinner ändra dig innan du släpper", type: "new", hi: true, ico: "\ud83d\udc46",
+      desc: "Tidigare fick man veta vad som hände först efter att man släppt. Nu växer symbolen fram med draget, mitt på kortet där blicken redan är – drar du åt fel håll är det bara att dra tillbaka." },
+  ]},
   { date: "25 augusti 2026", ver: "v307", items: [
     { t: "AI-lektion: prompten är tydligare om att varje glosa ska stå på sin egen rad, och exemplen visas nu på språket du lär dig i stället för alltid italienska", type: "fixed" },
   ]},

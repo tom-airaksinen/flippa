@@ -973,6 +973,49 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
   100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
 }
+/* Ordet under svep-symbolen ("kan bra", "hopplöst" …). Samma formulering som
+   handsfree-kommandona. Skalas med SAMMA faktor som symbolen, så de rör sig som en
+   enhet både under svepet och i bekräftelsen. */
+#swipe-feedback-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%) translateY(58px);
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 40;
+}
+/* Under själva svepet följer symbol + ord draget (kort transition, ingen animation).
+   Opacitet och skala sätts inline från svep-logiken. */
+#swipe-feedback.hint, #swipe-feedback-label.hint {
+  transition: opacity 0.08s linear, transform 0.08s linear;
+}
+#swipe-feedback-label.show { animation: pop-lbl 0.5s ease-out; }
+@keyframes pop-lbl {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) translateY(58px); }
+  30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1) translateY(58px); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1) translateY(58px); }
+}
+/* Kom släppet från ett svep ligger symbolen redan uppe (förhandsvisad). Då startar
+   bekräftelsen från DEN nivån i stället för från noll – annars slocknar allt ett
+   ögonblick innan symbolen blinkar fram igen. Handsfree saknar förhandsvisning och
+   får därför den vanliga pop-kurvan. */
+#swipe-feedback.show.from-hint { animation: pop-confirm 0.5s ease-out; }
+#swipe-feedback-label.show.from-hint { animation: pop-confirm-lbl 0.5s ease-out; }
+@keyframes pop-confirm {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.3); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12); }
+}
+@keyframes pop-confirm-lbl {
+  0% { opacity: 0.85; transform: translate(-50%, -50%) scale(1.05) translateY(58px); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) translateY(58px); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.12) translateY(58px); }
+}
+
 /* Tydligare, längre overlay för ångra-pilen */
 /* ↩️ poppar upp direkt, ligger kvar genom hela pausen (0,7s) och tonar bort
    medan kortet glider in. Total 1,4s = 0,7s paus + 0,7s inglidning. */
