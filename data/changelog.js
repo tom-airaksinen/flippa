@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v307", items: [
+    { t: "AI-lektion: prompten är tydligare om att varje glosa ska stå på sin egen rad, och exemplen visas nu på språket du lär dig i stället för alltid italienska", type: "fixed" },
+  ]},
   { date: "30 juli 2026", ver: "v303", items: [
     { t: "Redigera offline! Lägg till, ändra, flytta och ordna om ord även utan internet – ändringarna sparas lokalt och synkas automatiskt när du är uppkopplad igen", type: "new", hi: true, ico: "📶",
       desc: "Ingen mer förlorad ändring när täckningen tryter (t.ex. på tunnelbanan eller flyget). Du ser en liten notis när något väntar på synk, och den försvinner så fort allt är uppe." },

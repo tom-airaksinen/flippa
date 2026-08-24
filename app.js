@@ -4354,18 +4354,90 @@ function getCurrentLesson() {
 const AI_COUNT_KEY = "flippa-ai-count"; // minns valt antal mellan gånger
 function aiCount() { const v = parseInt(localStorage.getItem(AI_COUNT_KEY), 10); return Number.isFinite(v) ? v : 30; }
 function setAiCount(v) { v = Math.max(5, Math.min(100, v)); localStorage.setItem(AI_COUNT_KEY, String(v)); return v; }
+// Exempelrader i AI-prompten, per språk: ett ENSAMT ord + en FLERORDSFRAS. Paret är
+// medvetet valt så – två rader där den andra innehåller ett mellanslag visar skillnaden
+// mellan mellanslag (inuti en glosa) och radbrytning (mellan glosor). Med bara ett
+// enradsexempel packade mål-LLM:er ibland flera glosor på samma rad.
+// Raderna MÅSTE vara konsistenta med GENDER_STRATEGY/GENDER_RULE ovan: bestämd artikel
+// för "article"-språk, (m/f/n) för "marker"-språk utan regel, bar form när GENDER_RULE
+// redan täcker ordet. Språklistan är dynamisk (allt enheten kan uttala), så språk som
+// saknas här får en schematisk fallback i stället – aldrig ett annat språks ord.
+const AI_EXAMPLES = {
+  // Artikelspråk – exemplet bär bestämd artikel, svenska sidan obestämd form
+  it: ["il pane;bröd;1", "buon viaggio;god resa;2"],
+  fr: ["le pain;bröd;1", "bonne journée;ha en bra dag;2"],
+  es: ["el pan;bröd;1", "buenos días;god morgon;2"],
+  pt: ["o pão;bröd;1", "bom dia;god morgon;2"],
+  ca: ["el pa;bröd;1", "bon dia;god dag;2"],
+  gl: ["o pan;bröd;1", "bo día;god dag;2"],
+  de: ["das Brot;bröd;1", "guten Morgen;god morgon;2"],
+  nl: ["het brood;bröd;1", "goedemorgen;god morgon;2"],
+  el: ["το ψωμί;bröd;1", "καλημέρα;god morgon;2"],
+  // Marker-språk med GENDER_RULE – ordet följer regeln, alltså ingen genusmarkering
+  ru: ["хлеб;bröd;1", "доброе утро;god morgon;2"],
+  uk: ["хліб;bröd;1", "доброго ранку;god morgon;2"],
+  pl: ["chleb;bröd;1", "dzień dobry;god dag;2"],
+  // Marker-språk utan regel – genus anges i parentes
+  cs: ["chléb (m);bröd;1", "dobrý den;god dag;2"],
+  sk: ["chlieb (m);bröd;1", "dobrý deň;god dag;2"],
+  sl: ["kruh (m);bröd;1", "dober dan;god dag;2"],
+  hr: ["kruh (m);bröd;1", "dobar dan;god dag;2"],
+  bs: ["hljeb (m);bröd;1", "dobar dan;god dag;2"],
+  sr: ["хлеб (m);bröd;1", "добар дан;god dag;2"],
+  bg: ["хляб (m);bröd;1", "добър ден;god dag;2"],
+  mk: ["леб (m);bröd;1", "добар ден;god dag;2"],
+  lt: ["duona (f);bröd;1", "laba diena;god dag;2"],
+  lv: ["maize (f);bröd;1", "laba diena;god dag;2"],
+  ro: ["pâine (f);bröd;1", "bună ziua;god dag;2"],
+  is: ["brauð (n);bröd;1", "góðan dag;god dag;2"],
+  hi: ["रोटी (f);bröd;1", "शुभ प्रभात;god morgon;2"],
+  ar: ["خبز (m);bröd;1", "صباح الخير;god morgon;2"],
+  he: ["לחם (m);bröd;1", "בוקר טוב;god morgon;2"],
+  // Språk utan grammatiskt genus – bar form
+  en: ["bread;bröd;1", "good morning;god morgon;2"],
+  da: ["brød;bröd;1", "god morgen;god morgon;2"],
+  nb: ["brød;bröd;1", "god morgen;god morgon;2"],
+  no: ["brød;bröd;1", "god morgen;god morgon;2"],
+  fi: ["leipä;bröd;1", "hyvää päivää;god dag;2"],
+  et: ["leib;bröd;1", "tere hommikust;god morgon;2"],
+  hu: ["kenyér;bröd;1", "jó napot;god dag;2"],
+  tr: ["ekmek;bröd;1", "günaydın;god morgon;2"],
+  id: ["roti;bröd;1", "selamat pagi;god morgon;2"],
+  ms: ["roti;bröd;1", "selamat pagi;god morgon;2"],
+  sw: ["mkate;bröd;1", "habari za asubuhi;god morgon;2"],
+  fa: ["نان;bröd;1", "صبح بخیر;god morgon;2"],
+  vi: ["nước;vatten;1", "xin chào;hej;2"],
+  th: ["ขนมปัง;bröd;1", "สวัสดี;hej;2"],
+  ja: ["パン;bröd;1", "おはようございます;god morgon;2"],
+  zh: ["面包;bröd;1", "早上好;god morgon;2"],
+  ko: ["빵;bröd;1", "안녕하세요;hej;2"],
+};
+// Två exempelrader på MÅLSPRÅKET (tidigare alltid italienska "la nave", vilket krockade
+// med prompten när man bad om ett annat språk). Saknas språket i tabellen visas i
+// stället radformatet schematiskt, så att formen syns utan felaktiga ord.
+function aiExampleLines(label) {
+  const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
+  const ex = AI_EXAMPLES[base];
+  if (ex) return ex.join("\n");
+  const l = base ? label : "målspråket";
+  return `[ord på ${l}];bröd;1\n[kort fras på ${l}];god morgon;2`;
+}
 // Sammansatt "avancerad" prompt: befintlig genus/artikel-mekanik + prio (3-kolumnsformat).
 function buildAiPrompt(count, theme) {
   const lang = currentForeignLabel();
   const note = genderPromptNote(subjectLang(currentSubject)); // börjar med mellanslag, eller ""
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
-    + `Format: en rad per glosa – "ord/fras;svensk översättning;prio" med semikolon emellan.${note}\n\n`
+    + `Format: en glosa per rad – "ord/fras;svensk översättning;prio" med semikolon emellan.\n`
+    + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
+    + `och aldrig radbrytning inuti en glosa (fraser med flera ord står kvar på samma rad).\n`
+    + `Svara med enbart glosraderna – ingen numrering, inga punktlistor, ingen tabell, `
+    + `ingen inledande eller avslutande text.${note}\n\n`
     + `Prio (1–3) = hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket i stort:\n`
     + `1 = kärnord man måste kunna för temat\n2 = vanliga, nyttiga ord\n3 = mer perifera eller nischade ord\n\n`
     + `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet. `
     + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
     + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
-    + `Exempel på radformat: la nave;fartyg;1`;
+    + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
 }
 function openAiDialog() {
   const lesson = getCurrentLesson();
@@ -5538,7 +5610,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v306";
+const APP_VERSION = "v307";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
