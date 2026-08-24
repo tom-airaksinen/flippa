@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v309", items: [
+    { t: "Svep-tipsen under kortet är borta – riktningarna visas i stället på kortet medan du drar, och gloskortet blir högre", type: "improved" },
+  ]},
   { date: "25 augusti 2026", ver: "v308", items: [
     { t: "Du ser nu vad ditt svep kommer att bli medan du drar kortet – symbolen och ordet (\u201dkan bra\u201d, \u201dhopplöst\u201d …) tonas fram mitt på kortet, så du hinner ändra dig innan du släpper", type: "new", hi: true, ico: "\ud83d\udc46",
       desc: "Tidigare fick man veta vad som hände först efter att man släppt. Nu växer symbolen fram med draget, mitt på kortet där blicken redan är – drar du åt fel håll är det bara att dra tillbaka." },

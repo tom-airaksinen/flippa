@@ -1036,13 +1036,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   color: var(--muted);
   font-size: 0.8rem;
 }
-/* Svep-tipsen är avsiktligt diskreta; handsfree-orden (cues-hf) hålls läsbara. */
-.cues-swipe { opacity: 0.4; }
-/* Reservera höjd så inget hoppar när status-texten pulsar; hålls nu stramare
-   (mindre död luft under svep-tipsen → mer höjd åt gloskortet). */
-.cues-swipe, .cues-hf { min-height: 64px; box-sizing: border-box; }
-.train-footer .hint-row { display: flex; justify-content: space-around; }
-.train-footer .hint-down { justify-content: center; }
+/* Reservera höjd så inget hoppar när status-texten pulsar. Gäller bara handsfree –
+   svep-tipsen är borta (v309), och i svep-läge kollapsar foten så gloskortet får
+   höjden i stället. Bottenmarginalen mot hemindikatorn ägs av .mode-switch. */
+.cues-hf { min-height: 64px; box-sizing: border-box; }
 
 /* Toggle: automatisk uppläsning */
 .autospeak-row {

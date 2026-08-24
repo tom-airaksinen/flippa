@@ -5444,7 +5444,6 @@ const modeHandle = $("mode-handle");
 const modeHandleLbl = $("mode-handle-lbl");
 const modeSlide = $("mode-slide");
 const modeSeg = $("mode-seg");
-const cuesSwipe = document.querySelector(".cues-swipe");
 const cuesHf = document.querySelector(".cues-hf");
 
 // Synka hela UI:t mot om handsfree är aktivt (anropas när HF startar/stoppar –
@@ -5452,7 +5451,6 @@ const cuesHf = document.querySelector(".cues-hf");
 function setModeUI(hf) {
   modeSeg.classList.toggle("hf", hf);
   modeSeg.querySelectorAll(".mode-opt").forEach((o) => o.classList.toggle("on", (o.dataset.mode === "hf") === hf));
-  cuesSwipe.classList.toggle("hidden", hf);
   cuesHf.classList.toggle("hidden", !hf);
   modeHandleLbl.textContent = "Läge: " + (hf ? "Handsfree" : "Svep");
   if (!hf) hfStatusEl.textContent = "Lyssnar…"; // återställ inför nästa gång
@@ -5703,7 +5701,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v308";
+const APP_VERSION = "v309";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
