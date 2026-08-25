@@ -163,6 +163,35 @@
   .pros li::before{content:"+";position:absolute;left:0;color:var(--good);font-weight:700}
   .tip{max-width:720px;margin:32px auto 0;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:15px 18px;font-size:.88rem;color:var(--muted)}
   .tip b{color:var(--text)}
+
+  /* ---- Ordlistan: varianter för hur prio syns (tillagt 25 aug 2026) ---- */
+  .ol-wrap{max-width:720px;margin:0 auto}
+  .ol-tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:0 0 10px}
+  .ol-tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:7px 13px;font-size:.8rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .ol-tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .ol-opt{display:flex;gap:7px;align-items:center;justify-content:center;color:var(--muted);
+    font-size:.78rem;margin:0 0 16px;cursor:pointer}
+  /* Alternativ palett: byter bara ut variablerna, inget annat */
+  .ol-wrap.alt{--p1:#5b8cff; --p2:#c98a3f; --p3:#5c6577}
+
+  /* Idag: 9 px punkt efter ordet (exakt som .word-prio i appen) */
+  .ol-dot{display:inline-block;width:9px;height:9px;border-radius:50%;vertical-align:middle;margin-left:5px}
+  /* A: samma plats, men punkten bär siffran */
+  .ol-num{display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;
+    border-radius:50%;font-size:.63rem;font-weight:800;color:#fff;vertical-align:middle;margin-left:6px}
+  /* B och C: i samma spår som Leitner-brickan, till vänster om stjärnan */
+  .ol-badge{flex:none;text-align:center;padding:3px 7px;border-radius:8px;
+    font-size:.72rem;font-weight:700;color:#fff;min-width:26px}
+  .ol-badge.wide{min-width:52px;font-size:.68rem}
+  .ol-p1{background:var(--p1)} .ol-p2{background:var(--p2)} .ol-p3{background:var(--p3)}
+  .ol-note{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px 18px;margin:16px auto 0;font-size:.86rem;color:var(--muted)}
+  .ol-note b{color:var(--text)}
+  .ol-note ul{margin:8px 0 0;padding-left:18px}
+  .ol-note li{margin:4px 0}
+  .ol-probe{display:inline-flex;gap:3px;vertical-align:middle;margin:0 4px}
+  .ol-probe i{width:9px;height:9px;border-radius:50%;display:inline-block}
 </style>
 </head>
 <body>
@@ -457,5 +486,100 @@
   });
 })();
 </script>
+<h2 class="vsec-h">Ordlistan – hur prio syns</h2>
+<p class="sub">Den färgade punkten funkar när man redan vet vad den betyder, men den är tyst om
+sig själv – och nyanserna ligger nära varandra: <span class="ol-probe"><i style="background:#5b8cff"></i><i style="background:#6f7fc0"></i><i style="background:#48557a"></i></span>
+är prio 1, 2 och 3 i skarp storlek. Här är tre alternativ. Bocka i
+<b>mer separerade färger</b> för att se hur mycket som beror på paletten och hur mycket på
+själva sättet att visa.</p>
+
+<div class="ol-wrap" id="ol">
+  <div class="ol-tabs" id="ol-tabs">
+    <button data-v="now" class="on">Idag · bara punkt</button>
+    <button data-v="a">A · Siffran i punkten</button>
+    <button data-v="b">B · Bricka vid stjärnan</button>
+    <button data-v="c">C · &rdquo;Prio 1&rdquo; utskrivet</button>
+  </div>
+  <label class="ol-opt"><input type="checkbox" id="ol-alt"> mer separerade färger</label>
+
+  <div class="phone"><div class="screen">
+    <div class="hdr"><button class="back">&larr;</button><h3>Mat &amp; dryck</h3><button class="ic">&#9208;</button><button class="ic">&#9998;</button><button class="ic">&#128269;</button></div>
+    <div class="wl-sort"><span id="ol-sort">Sortera: F&ouml;rst tillagda &#9662;</span></div>
+    <div class="rows" id="ol-rows"></div>
+  </div></div>
+
+  <div class="ol-note" id="ol-note"></div>
+</div>
+
+<script>
+(function(){
+  var ORD = [
+    ["pane","br\u00f6d",1,true], ["acqua","vatten",1,false], ["tovagliolo","servett",2,false],
+    ["posate","bestick",2,true], ["radicchio","r\u00f6dsallat",3,false], ["strutto","ister",3,false]
+  ];
+  var NAMN = {1:"K\u00e4rna",2:"Vanlig",3:"Nisch"};
+  var rows = document.getElementById("ol-rows");
+  var sortEl = document.getElementById("ol-sort");
+  var noteEl = document.getElementById("ol-note");
+  var wrap = document.getElementById("ol");
+  var variant = "now";
+
+  var NOTER = {
+    now: '<b>Idag</b> \u2013 en 9 px punkt efter ordet, med prio-namnet som tooltip. ' +
+      'Tooltip n\u00e5s inte p\u00e5 telefon, s\u00e5 i praktiken \u00e4r punkten helt tyst. ' +
+      '<ul><li>Diskret \u2013 tar ingen plats och st\u00f6r inte l\u00e4sningen av ordet.</li>' +
+      '<li>Men: m\u00e5ste l\u00e4ras utantill, och de tre nyanserna \u00e4r samma f\u00e4rgton i ' +
+      'fallande m\u00e4ttnad. Prio 3 mot m\u00f6rk bakgrund syns knappt alls.</li></ul>',
+    a: '<b>A \u00b7 Siffran i punkten</b> \u2013 samma plats, men punkten v\u00e4xer till 16 px och b\u00e4r sin siffra. ' +
+      '<ul><li>Sj\u00e4lvf\u00f6rklarande utan att flytta n\u00e5got: siffran b\u00e4r betydelsen, f\u00e4rgen blir en genv\u00e4g.</li>' +
+      '<li>Funkar \u00e4ven om man inte kan skilja f\u00e4rgerna \u00e5t \u2013 pr\u00f6va med paletten p\u00e5 och av.</li>' +
+      '<li>Att v\u00e4ga: 16 px bredvid ordet drar mer blick \u00e4n 9 px, och konkurrerar med \ud83d\udca1-flaggan.</li></ul>',
+    b: '<b>B \u00b7 Bricka vid stj\u00e4rnan</b> \u2013 indikatorn flyttar till h\u00f6ger, i samma sp\u00e5r som ' +
+      'Leitner-brickan anv\u00e4nder n\u00e4r man sorterar p\u00e5 svagast. ' +
+      '<ul><li>Ordet och \u00f6vers\u00e4ttningen blir helt rena \u2013 inget mellan ord och ' +
+      '\ud83d\udca1-flagga.</li><li>Alla brickor hamnar i en lodr\u00e4t linje, s\u00e5 man kan skanna kolumnen ' +
+      'i st\u00e4llet f\u00f6r att leta punkt f\u00f6r punkt.</li>' +
+      '<li>Att v\u00e4ga: prio och Leitner delar plats. Sorterar man p\u00e5 svagast beh\u00f6ver de samsas \u2013 ' +
+      'antingen tv\u00e5 brickor bredvid varandra, eller att bara den sorteringen g\u00e4ller f\u00e5r synas.</li></ul>',
+    c: '<b>C \u00b7 &rdquo;Prio 1&rdquo; utskrivet</b> \u2013 speglar hur Leitner-brickan fungerar idag: den syns ' +
+      '<em>bara</em> n\u00e4r man sorterat p\u00e5 prio, och d\u00e5 med ordet utskrivet. ' +
+      '<ul><li>Noll inl\u00e4rning: sorterar man p\u00e5 prio st\u00e5r det vad varje rad \u00e4r.</li>' +
+      '<li><b>&rdquo;Prio \u2013 fallande&rdquo; finns redan</b> som sorteringsval i appen (app.js:4415), men till ' +
+      'skillnad fr\u00e5n &rdquo;svagast&rdquo; avsl\u00f6jar den ingenting. Den h\u00e4r varianten t\u00e4pper till den luckan.</li>' +
+      '<li>Att v\u00e4ga: syns inte i normall\u00e4get, s\u00e5 den l\u00f6ser inte &rdquo;vad betyder punkten&rdquo; \u2013 ' +
+      'den kombineras b\u00e4st med A eller B.</li></ul>'
+  };
+
+  function render(){
+    sortEl.innerHTML = variant === "c" ? "Sortera: Prio \u2013 fallande \u25be" : "Sortera: F\u00f6rst tillagda \u25be";
+    rows.innerHTML = ORD.map(function(o){
+      var ord = o[0], sv = o[1], pr = o[2], fav = o[3];
+      var titel = "Prio " + pr + " \u00b7 " + NAMN[pr];
+      var iOrdet = "", iHoger = "";
+      if (variant === "now") iOrdet = '<span class="ol-dot ol-p' + pr + '" title="' + titel + '"></span>';
+      if (variant === "a")   iOrdet = '<span class="ol-num ol-p' + pr + '" title="' + titel + '">' + pr + '</span>';
+      if (variant === "b")   iHoger = '<span class="ol-badge ol-p' + pr + '" title="' + titel + '">' + pr + '</span>';
+      if (variant === "c")   iHoger = '<span class="ol-badge wide ol-p' + pr + '">Prio ' + pr + '</span>';
+      return '<div class="wrow"><div class="wt"><div class="wf">' + ord + iOrdet +
+             '</div><div class="wb">' + sv + '</div></div>' + iHoger +
+             '<span class="star"' + (fav ? ' style="color:#f4c542;opacity:1"' : '') + '>' +
+             (fav ? "\u2605" : "\u2606") + '</span></div>';
+    }).join("");
+    noteEl.innerHTML = NOTER[variant];
+  }
+
+  document.getElementById("ol-tabs").addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    variant = b.dataset.v;
+    [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+    render();
+  });
+  document.getElementById("ol-alt").addEventListener("change", function(){
+    wrap.classList.toggle("alt", this.checked);
+  });
+  render();
+})();
+</script>
+
 </body>
 </html>
