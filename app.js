@@ -4599,20 +4599,24 @@ function renderEditor() {
   const showBox = editorSort === "weak-front" || editorSort === "weak-back";
   list.innerHTML = cards
     .map((c) => {
+      // Ett indikatorspår till vänster om stjärnan. Sorterar man på svagast tar
+      // Leitner-lådan platsen – då är det den man är där för att läsa. Annars visas
+      // prio. Brickan står kvar i sin kolumn även när ordet bryter till flera rader,
+      // till skillnad från den gamla punkten som följde med ut på sista raden.
+      const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
       let badge = "";
       if (showBox) {
         const box = strengthBox(c);
         badge = `<span class="box-badge b${box}" title="${box === 0 ? "Aldrig tränat (ny)" : `Låda ${box} av 7 – ju högre desto starkare`}">${box === 0 ? "Ny" : box}</span>`;
+      } else if (c.prio === 1 || c.prio === 2 || c.prio === 3) {
+        badge = `<span class="prio-badge p${c.prio}" title="Prio ${c.prio} · ${PRIO_NAMES[c.prio]}">${c.prio}</span>`;
       }
       const fav = isFav(c);
-      const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
-      const prioDot = (c.prio === 1 || c.prio === 2 || c.prio === 3)
-        ? ` <span class="word-prio p${c.prio}" title="Prio ${c.prio} · ${PRIO_NAMES[c.prio]}"></span>` : "";
       return `<div class="word-row" data-id="${c.id}">
         <button class="word-row-del" data-del="${c.id}" aria-label="Ta bort ord" title="Ta bort ord">${TRASH_ICON_SVG}</button>
         <div class="word-row-main">
           <div class="word-texts">
-            <div class="word-front">${esc(c.front)}${prioDot}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
+            <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
             <div class="word-back">${esc(c.back)}</div>
           </div>
           ${badge}
@@ -5707,7 +5711,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v310";
+const APP_VERSION = "v311";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

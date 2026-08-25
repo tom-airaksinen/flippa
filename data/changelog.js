@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v311", items: [
+    { t: "Prio syns nu som en siffra i en bricka vid stjärnan i stället för en liten färgprick inne i ordet – lättare att läsa, och den står kvar på sin plats även för långa fraser. Sorterar du på svagast visas Leitner-lådan där i stället", type: "improved" },
+  ]},
   { date: "25 augusti 2026", ver: "v310", items: [
     { t: "Pausa en lektion är inte längre en gömd ikon: överst i ordlistan står det nu i klartext om lektionen är aktiv eller pausad, med knappen bredvid. Remsan följer med när du scrollar, så orden får plats", type: "improved" },
   ]},
