@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v317", items: [
+    { t: "Hjälpen är omgjord: fem områden du fäller ut i stället för en lång vägg av text, kortare texter, och ett nytt avsnitt ”Grundtankar” som förklarar varför appen fungerar som den gör", type: "improved", hi: true, ico: "❓",
+      desc: "Förut fick man scrolla igenom allt för att hitta en sak. Nu ser du alla områden direkt och öppnar det du undrar över – och läser du Grundtankar förstår du tanken bakom lådorna, prio och minnesreglerna." },
+  ]},
   { date: "25 augusti 2026", ver: "v316", items: [
     { t: "Uppdateringar till en ny version kan nu ske även när du står i en lektions ordlista – och du hamnar tillbaka i samma lektion efteråt", type: "improved" },
   ]},
