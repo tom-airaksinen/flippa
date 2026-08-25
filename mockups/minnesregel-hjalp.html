@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – hjälp att skriva minnesregler</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --good:#5bbf72; --line:#2c3c63; --gold:#f4c542; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 18px;max-width:660px;font-size:.9rem}
+  code{font-size:.85em;color:var(--text)}
+
+  .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+  .tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:8px 13px;font-size:.82rem;cursor:pointer;font-weight:600;font-family:inherit}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .words{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:0 0 18px;
+    color:var(--muted);font-size:.78rem;align-items:center}
+  .words button{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:5px 12px;font-size:.78rem;cursor:pointer;font-family:inherit}
+  .words button.on{border-color:var(--accent);color:var(--text);background:var(--surface-2)}
+
+  /* ---- modalen, faithful mot .modal i style.css ---- */
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:34px;padding:11px;
+    box-shadow:0 22px 55px rgba(0,0,0,.6)}
+  .screen{position:relative;width:360px;height:700px;background:var(--bg);border-radius:26px;
+    overflow:hidden;display:flex;flex-direction:column}
+  .scrim{position:absolute;inset:0;background:rgba(0,0,0,.55)}
+  .modal{position:relative;width:100%;background:var(--surface);border-radius:0 0 20px 20px;
+    padding:18px 16px;display:flex;flex-direction:column;gap:11px;max-height:100%;overflow-y:auto}
+  .mhead{display:flex;align-items:center;gap:10px}
+  .mhead h3{font-size:1.1rem;margin:0;flex:1}
+  .mhead button{width:34px;height:34px;border-radius:9px;background:var(--surface-2);
+    border:none;color:var(--muted);font-size:.95rem;cursor:pointer}
+  .modal label{font-size:.82rem;color:var(--muted);margin-bottom:-6px;display:block}
+  .modal input,.modal textarea{background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);padding:12px;font-size:1rem;font-family:inherit;width:100%}
+  .modal textarea{resize:vertical;line-height:1.4}
+  /* Som i appen: .modal textarea har min-height 140px, så rows=2 ger ändå en stor ruta */
+  #hintfield{min-height:140px}
+  .modal textarea::placeholder,.modal input::placeholder{color:var(--muted)}
+  .prio{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;
+    background:var(--surface-2)}
+  .prio button{flex:1;background:none;border:none;border-right:1px solid var(--line);
+    color:var(--muted);padding:11px 0;font-family:inherit;font-weight:700;cursor:pointer}
+  .prio button:last-child{border-right:none}
+  .prio button.on{background:var(--accent);color:#fff}
+  .macts{display:flex;gap:10px;margin-top:4px}
+  .macts button{flex:1;padding:13px;border:none;border-radius:11px;font-family:inherit;
+    font-size:.95rem;font-weight:700;cursor:pointer}
+  .sec{background:var(--surface-2);color:var(--text)}
+  .pri{background:var(--accent);color:#fff}
+
+  /* ---- A: krokar ---- */
+  .hooks{display:flex;gap:6px;flex-wrap:wrap;margin-top:-4px}
+  .hooks button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:999px;padding:6px 11px;font-size:.79rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .hooks button:active{border-color:var(--accent)}
+
+  /* ---- B: exempel ---- */
+  .exp{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;
+    font-size:.8rem;color:var(--muted);margin-top:-4px}
+  .exp b{color:var(--text);font-weight:700}
+  .exp ul{margin:6px 0 0;padding-left:16px}
+  .exp li{margin:3px 0}
+  .toglink{background:none;border:none;color:var(--accent);font-family:inherit;font-size:.8rem;
+    font-weight:600;padding:0;cursor:pointer;text-align:left;margin-top:-4px}
+
+  /* ---- C/D: AI ---- */
+  .airow{display:flex;gap:8px;margin-top:-4px}
+  .airow button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px;font-size:.84rem;font-weight:700;cursor:pointer;
+    font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+  .promptbox{background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;
+    font-size:.76rem;color:var(--muted);white-space:pre-wrap;line-height:1.45;margin-top:-4px}
+  .sugg{display:flex;flex-direction:column;gap:7px;margin-top:-4px}
+  .sugg button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:10px 12px;font-size:.86rem;font-family:inherit;text-align:left;
+    line-height:1.4;cursor:pointer;display:flex;gap:9px;align-items:flex-start}
+  .sugg button:active{border-color:var(--accent)}
+  .sugg .plus{color:var(--accent);font-weight:800;flex:none}
+  .pastebox{min-height:80px !important}
+  .hintlbl{display:flex;align-items:baseline;gap:8px}
+  .hintlbl .grow{flex:1}
+
+  .note{max-width:660px;margin:18px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:15px 18px;font-size:.87rem;color:var(--muted)}
+  .note b{color:var(--text)}
+  .note ul{margin:8px 0 0;padding-left:18px}
+  .note li{margin:5px 0}
+  .tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;
+    border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<h1>Hjälp att skriva minnesregler</h1>
+<p class="sub">Fältet är idag en <b>tom 140 px-ruta</b> med en blek platshållare
+(<code>t.ex. liknar engelskans …</code>) – den ber inte om något och lär inte ut något.
+Fem sätt att ge en krok. Byt ord nedan för att se hur väl varje variant håller över
+olika språk.</p>
+
+<div class="tabs" id="tabs">
+  <button data-v="now" class="on">Idag</button>
+  <button data-v="hooks">A · Krokar</button>
+  <button data-v="examples">B · Exempel</button>
+  <button data-v="ai">C · AI-knapp</button>
+  <button data-v="aisugg">D · AI-förslag att trycka på</button>
+</div>
+<div class="words" id="words">
+  <span>Ord:</span>
+  <button data-w="0" class="on">готувати</button>
+  <button data-w="1">la vendedora</button>
+  <button data-w="2">tovagliolo</button>
+</div>
+
+<div class="phone"><div class="screen">
+  <div class="scrim"></div>
+  <div class="modal" id="modal"></div>
+</div></div>
+
+<div class="note" id="note"></div>
+
+<script>
+var ORD = [
+  { f:"готувати", b:"laga mat", lang:"ukrainska",
+    svar:"1. Låter som \"gott att vara\" – ho-TU-vaty, och det blir gott när man lagar mat.\n" +
+         "2. Tänk \"go to\" + \"vati\": du går till spisen och vattnar i grytan.\n" +
+         "3. Första ledet го- låter som engelskans \"go\" – gå och laga!" },
+  { f:"la vendedora", b:"försäljerskan", lang:"spanska",
+    svar:"1. Vendedora – hon VÄNDER varor till pengar.\n" +
+         "2. Samma rot som \"vending machine\" – automaten som säljer.\n" +
+         "3. -dora på slutet = hon som gör det, som en \"doer\"." },
+  { f:"tovagliolo", b:"servett", lang:"italienska",
+    svar:"1. Tovaglia = duk; -olo gör den liten. Liten duk = servett.\n" +
+         "2. Låter som \"tvätta-olja\" – det du torkar oljan med.\n" +
+         "3. Tänk TOV-aglio: du torkar munnen efter aglio (vitlök)." }
+];
+var KROKAR = [
+  ["Låter som", "Låter som "],
+  ["Bild", "Jag ser "],
+  ["Släktord", "Samma rot som "],
+  ["Ordvits", ""],
+  ["Dela upp", ""]
+];
+var variant = "now", wi = 0, visaPrompt = false, visaExempel = false, klistrat = "";
+var $ = function(id){ return document.getElementById(id); };
+
+function ord(){ return ORD[wi]; }
+
+function promptText(){
+  var o = ord();
+  return 'Ge mig ett par förslag på minnesregel som hjälper mig komma ihåg att "' + o.f +
+    '" betyder "' + o.b + '" på ' + o.lang + '.\n\n' +
+    'Det kan bygga på ljudlikhet, en bild, släktskap med ord jag redan kan – vad som helst ' +
+    'som ger hjärnan en krok att hänga upp det på.\n\n' +
+    'Svara med 2–4 förslag, ett per rad, utan inledning. Varje förslag ska vara kort nog ' +
+    'att rymmas på två rader i en app.';
+}
+
+// Delar upp ett AI-svar i enskilda förslag: numrering/punkter bort, inledningar bort.
+function delaFörslag(text){
+  return String(text || "").split(/\n+/)
+    .map(function(r){ return r.replace(/^\s*(\d+[.)]|[-*•])\s*/, "").trim(); })
+    .filter(function(r){
+      if (r.length < 8) return false;
+      if (/^(här är|självklart|visst|absolut|gärna)\b/i.test(r)) return false;
+      return true;
+    });
+}
+
+function sätt(text){ var el = $("hintfield"); el.value = text; el.focus(); }
+function lägg(text){
+  var el = $("hintfield");
+  el.value = el.value.trim() ? el.value.trim() + " " + text : text;
+  el.focus();
+}
+
+function render(){
+  var o = ord(), extra = "";
+
+  if (variant === "hooks") {
+    extra = '<div class="hooks" id="hooks">' + KROKAR.map(function(k,i){
+      return '<button data-i="' + i + '">' + k[0] + '</button>'; }).join("") + '</div>';
+  }
+  if (variant === "examples") {
+    extra = '<button class="toglink" id="togex">' + (visaExempel ? "▾" : "▸") +
+      ' Vad är en bra minnesregel?</button>' +
+      (visaExempel ? '<div class="exp"><b>Tre sätt som brukar funka</b><ul>' +
+        '<li><b>Ljudlikhet:</b> <i>burro</i> (åsna) – låter som "burrar", envis som en åsna.</li>' +
+        '<li><b>Bild:</b> <i>ventana</i> (fönster) – vinden (viento) kommer in genom fönstret.</li>' +
+        '<li><b>Släktord:</b> <i>libro</i> (bok) – som "bibliotek".</li>' +
+        '</ul></div>' : "");
+  }
+  if (variant === "ai" || variant === "aisugg") {
+    extra = '<div class="airow">' +
+      '<button id="ai-claude">✨ Claude</button>' +
+      '<button id="ai-gpt">✨ ChatGPT</button>' +
+      '<button id="ai-copy" style="flex:0 0 auto">⧉</button></div>' +
+      '<button class="toglink" id="togp">' + (visaPrompt ? "▾" : "▸") + ' Visa prompten</button>' +
+      (visaPrompt ? '<div class="promptbox">' + promptText().replace(/</g,"&lt;") + '</div>' : "");
+  }
+  if (variant === "aisugg") {
+    var lista = delaFörslag(klistrat);
+    extra += '<label>Klistra in AI-svaret</label>' +
+      '<textarea id="paste" class="pastebox" rows="3" placeholder="Klistra in hela svaret här – appen delar upp det">' +
+      klistrat.replace(/</g,"&lt;") + '</textarea>' +
+      (lista.length ? '<div class="sugg">' + lista.map(function(f,i){
+        return '<button data-s="' + i + '"><span class="plus">＋</span><span>' +
+               f.replace(/</g,"&lt;") + '</span></button>'; }).join("") + '</div>' : "");
+  }
+
+  $("modal").innerHTML =
+    '<div class="mhead"><h3>Redigera ord</h3><button>✨</button><button>🗑</button></div>' +
+    '<label>Utländskt (framsida)</label><input type="text" value="' + o.f + '">' +
+    '<label>Svenska (baksida)</label><input type="text" value="' + o.b + '">' +
+    '<div class="hintlbl"><label class="grow">Minnesregel (valfritt)</label></div>' +
+    '<textarea id="hintfield" rows="2" placeholder="t.ex. liknar engelskans …"></textarea>' +
+    extra +
+    '<label>Prio</label><div class="prio"><button>1</button><button class="on">2</button><button>3</button></div>' +
+    '<div class="macts"><button class="sec">Avbryt</button><button class="pri">Spara</button></div>';
+
+  var h = $("hooks");
+  if (h) h.addEventListener("click", function(e){
+    var b = e.target.closest("button"); if(!b) return;
+    var k = KROKAR[+b.dataset.i];
+    if (k[1]) sätt(k[1]); else sätt("");
+  });
+  if ($("togex")) $("togex").onclick = function(){ visaExempel = !visaExempel; render(); };
+  if ($("togp"))  $("togp").onclick  = function(){ visaPrompt  = !visaPrompt;  render(); };
+  if ($("ai-claude")) $("ai-claude").onclick = function(){
+    window.open("https://claude.ai/new?q=" + encodeURIComponent(promptText()), "_blank"); };
+  if ($("ai-gpt")) $("ai-gpt").onclick = function(){
+    window.open("https://chatgpt.com/?q=" + encodeURIComponent(promptText()), "_blank"); };
+  if ($("ai-copy")) $("ai-copy").onclick = function(){
+    try { navigator.clipboard.writeText(promptText()); } catch(_){}
+    $("ai-copy").textContent = "✓"; };
+  var pb = $("paste");
+  if (pb) {
+    pb.addEventListener("input", function(){ klistrat = this.value; render(); $("paste").focus(); });
+    var s = document.querySelector(".sugg");
+    if (s) s.addEventListener("click", function(e){
+      var b = e.target.closest("button"); if(!b) return;
+      sätt(delaFörslag(klistrat)[+b.dataset.s]);
+    });
+  }
+  $("note").innerHTML = NOTER[variant];
+}
+
+var NOTER = {
+  now: '<b>Idag</b> – ett tomt fält med platshållaren <code>t.ex. liknar engelskans …</code>. ' +
+    '<ul><li>Fältet är <b>140 px högt</b> (<code>.modal textarea</code> sätter min-height, så ' +
+    '<code>rows="2"</code> spelar ingen roll). En stor tom ruta signalerar "skriv mycket" ' +
+    'samtidigt som den inte säger vad.</li>' +
+    '<li>Platshållaren beskriver <em>en</em> sorts regel (släktord) och nämner engelska – ' +
+    'vilket inte hjälper för ukrainska.</li>' +
+    '<li>Resultat: fältet står oanvänt på de flesta ord.</li></ul>',
+  hooks: '<b>A · Krokar</b> <span class="tag">billigast</span> – rad med de vanliga sorterna ' +
+    'minnesregel. Tryck på en och fältet förifylls med början på en sådan ("Låter som …").' +
+    '<ul><li><b>Lär ut själva hantverket</b>, inte bara det här ordet. Efter tio ord kan man ' +
+    'sorterna utan att läsa något.</li>' +
+    '<li>Noll kostnad, noll beroenden, ingen väntan.</li>' +
+    '<li>Att väga: den hjälper med <em>formen</em> men inte med <em>innehållet</em> – står man ' +
+    'och stirrar på готувати ger "Låter som " ingen idé.</li></ul>',
+  examples: '<b>B · Exempel</b> – en ihopfälld rad som visar tre riktiga minnesregler för ' +
+    '<em>andra</em> ord, så den inte skämmer bort just det ord man håller i.' +
+    '<ul><li>Visar hur olika en bra regel kan se ut – ljudlikhet, bild, släktord.</li>' +
+    '<li>Ihopfälld i normalläget → kostar ingen höjd för den som redan kan.</li>' +
+    '<li>Att väga: man läser den en gång och sedan aldrig mer. Bra onboarding, svag ' +
+    'vardagshjälp.</li></ul>',
+  ai: '<b>C · AI-knapp</b> – samma mönster som AI-påfyllningen av ord: knappen öppnar ' +
+    'Claude/ChatGPT med en färdig prompt, du kopierar ett förslag och klistrar in i fältet. ' +
+    '⧉ kopierar prompten för andra AI:er. <b>Tryck "Visa prompten"</b> för att läsa den.' +
+    '<ul><li>Ger <b>innehåll</b>, inte bara form – det A saknar.</li>' +
+    '<li>Noll kostnad för oss: användarens eget AI-konto, ingen API-nyckel någonstans.</li>' +
+    '<li>Att väga: man lämnar appen och kommer tillbaka med ett klipp i urklipp. Fem steg ' +
+    'för en enda minnesregel. Och åldersgränserna gör att det är en Tom-funktion, inte en ' +
+    'barnfunktion (se framtida-utveckling §16).</li></ul>',
+  aisugg: '<b>D · AI-förslag att trycka på</b> <span class="tag">rekommenderad</span> – som C, ' +
+    'men du klistrar in <em>hela</em> svaret i rutan och appen delar upp det i enskilda förslag ' +
+    'du trycker på. <b>Rutan är förifylld med ett äkta svar – prova att trycka på ett förslag.</b>' +
+    '<ul><li>Löser det din egen prompt fick be AI:n om ("varje förslag ska gå att kopiera ' +
+    'enskilt"). Det behöver den inte längre – <b>appen</b> gör uppdelningen, så formateringen ' +
+    'får vara hur som helst.</li>' +
+    '<li>Därför kan prompten i stället kräva <code>ett per rad, utan inledning</code>, vilket ' +
+    'gör uppdelningen pålitlig.</li>' +
+    '<li>Ett klipp i stället för tre: markera allt, klistra in, tryck.</li>' +
+    '<li>Att väga: en textruta till i en redan lång modal. Kan visas bara efter att man ' +
+    'tryckt på AI-knappen.</li></ul>'
+};
+
+$("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  variant = b.dataset.v;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  if (variant === "aisugg" && !klistrat) klistrat = ord().svar;
+  render();
+});
+$("words").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  wi = +b.dataset.w;
+  [].forEach.call(this.querySelectorAll("button"), function(x){ x.classList.toggle("on", x === b); });
+  if (variant === "aisugg") klistrat = ord().svar;
+  render();
+});
+render();
+</script>
+</body>
+</html>
