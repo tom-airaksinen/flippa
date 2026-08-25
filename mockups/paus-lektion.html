@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – pausa en lektion</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --line:#2c3c63; --paus:#e0915a; --good:#5bbf72; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px;-webkit-user-select:none;user-select:none;
+    display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 18px;max-width:640px;font-size:.9rem}
+  code{font-size:.85em;color:var(--text)}
+
+  .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+  .tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:8px 13px;font-size:.82rem;cursor:pointer;font-weight:600;font-family:inherit}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .state{display:flex;gap:10px;align-items:center;justify-content:center;margin-bottom:18px;
+    color:var(--muted);font-size:.82rem}
+  .state button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:999px;padding:6px 16px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:inherit}
+
+  /* ---------- telefonen: speglar #editor-screen ---------- */
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:34px;padding:11px;
+    box-shadow:0 22px 55px rgba(0,0,0,.6)}
+  .screen{position:relative;width:360px;height:680px;background:var(--bg);border-radius:26px;
+    overflow:hidden;display:flex;flex-direction:column}
+  .hdr{display:flex;align-items:center;gap:10px;padding:16px 14px 10px;flex:none}
+  .hdr h2{font-size:1.16rem;font-weight:700;flex:1;min-width:0;margin:0;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .ib{background:var(--surface);color:var(--text);border:none;width:38px;height:38px;
+    border-radius:10px;font-size:1rem;cursor:pointer;flex:none;
+    display:flex;align-items:center;justify-content:center;font-family:inherit}
+  .ib.paused{background:var(--paus);color:#0d1426}
+  .acts{display:flex;gap:10px;padding:0 14px 12px;flex:none}
+  .acts .primary{flex:1;background:var(--accent);color:#fff;border:none;border-radius:12px;
+    padding:13px;font-size:.98rem;font-weight:700;font-family:inherit;cursor:pointer}
+  .rows{flex:1;overflow:hidden;padding:0 14px;display:flex;flex-direction:column;gap:9px}
+  .wrow{display:flex;align-items:center;gap:10px;background:var(--surface);
+    border-radius:12px;padding:12px 14px}
+  .wrow .wt{flex:1;min-width:0}
+  .wf{font-size:1rem;font-weight:700}
+  .wb{font-size:.85rem;color:var(--muted)}
+  .star{color:var(--muted);opacity:.55;font-size:1.2rem}
+  .tabbar{flex:none;display:flex;justify-content:center;gap:26px;border-top:1px solid var(--line);
+    padding:9px 0 12px;font-size:.62rem;font-weight:600;color:var(--muted)}
+  .tabbar div{display:flex;flex-direction:column;align-items:center;gap:3px}
+  .tabbar .on{color:var(--accent)}
+  .tabbar .gl{font-size:1.05rem}
+
+  /* ---------- A · statusremsa ---------- */
+  .strip{display:flex;align-items:center;gap:10px;margin:0 14px 12px;padding:10px 12px;
+    border-radius:12px;font-size:.84rem;flex:none;
+    background:var(--surface);border:1px solid var(--line);color:var(--muted)}
+  .strip.p{background:color-mix(in srgb, var(--paus) 16%, var(--surface));
+    border-color:color-mix(in srgb, var(--paus) 55%, transparent);color:var(--text)}
+  .strip .txt{flex:1;min-width:0}
+  .strip .txt b{display:block;color:var(--text);font-weight:700}
+  .strip .txt span{font-size:.76rem}
+  .strip button{flex:none;background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:9px;padding:7px 13px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .strip.p button{background:var(--paus);border-color:var(--paus);color:#0d1426}
+
+  /* ---------- B · knapp i åtgärdsraden ---------- */
+  .actbtn{flex:none;display:flex;align-items:center;gap:7px;background:var(--surface);
+    border:1px solid var(--line);color:var(--text);border-radius:12px;padding:0 14px;
+    font-size:.88rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .actbtn.p{background:var(--paus);border-color:var(--paus);color:#0d1426}
+
+  /* ---------- C · segmentväxel ---------- */
+  .seg{display:flex;margin:0 14px 12px;border:1px solid var(--line);border-radius:12px;
+    overflow:hidden;background:var(--surface);flex:none}
+  .seg button{flex:1;background:none;border:none;color:var(--muted);padding:11px 0;
+    font-family:inherit;font-weight:700;font-size:.88rem;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:7px}
+  .seg button.on{background:var(--accent);color:#fff}
+  .seg button.on.p{background:var(--paus);color:#0d1426}
+
+  /* ---------- D · pausat tar över ---------- */
+  .rows.dim .wrow{opacity:.38}
+  .banner{margin:0 14px 12px;padding:13px 14px;border-radius:14px;flex:none;
+    background:color-mix(in srgb, var(--paus) 18%, var(--surface));
+    border:1px solid color-mix(in srgb, var(--paus) 60%, transparent)}
+  .banner .bt{font-weight:700;font-size:.94rem;display:flex;align-items:center;gap:8px}
+  .banner .bd{color:var(--muted);font-size:.79rem;margin:3px 0 10px}
+  .banner button{width:100%;background:var(--paus);border:none;color:#0d1426;border-radius:10px;
+    padding:11px;font-size:.92rem;font-weight:800;cursor:pointer;font-family:inherit}
+
+  .note{max-width:640px;margin:18px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:15px 18px;font-size:.87rem;color:var(--muted)}
+  .note b{color:var(--text)}
+  .note ul{margin:8px 0 0;padding-left:18px}
+  .note li{margin:5px 0}
+  .tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;
+    border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<h1>Pausa en lektion</h1>
+<p class="sub">Idag sitter pausen som en liten <b>⏸</b> bland tre likadana ikonknappar i
+lektionens huvud – lätt att missa, och den säger inget om vad den gör eller vilket läge
+lektionen är i. Här är fyra alternativ inne i ordlistan. <b>Växla paus/aktiv</b> nedan för att se
+båda lägena i varje variant.</p>
+
+<div class="tabs" id="tabs">
+  <button data-v="now" class="on">Idag · ⏸ i huvudet</button>
+  <button data-v="a">A · Statusremsa</button>
+  <button data-v="b">B · Knapp i åtgärdsraden</button>
+  <button data-v="c">C · Segmentväxel</button>
+  <button data-v="d">D · Bara när det spelar roll</button>
+</div>
+<div class="state">
+  <span>Lektionen är nu:</span>
+  <button id="toggle">Aktiv</button>
+  <span id="statelbl">– klicka för att pausa</span>
+</div>
+
+<div class="phone"><div class="screen" id="screen">
+  <div class="hdr">
+    <button class="ib">←</button>
+    <h2>Bahasa 101</h2>
+    <button class="ib" id="hdr-pause">⏸</button>
+    <button class="ib">✎</button>
+    <button class="ib">🔍</button>
+  </div>
+  <div id="slot-top"></div>
+  <div class="acts" id="acts">
+    <button class="ib" style="width:44px;height:auto;align-self:stretch">⇅</button>
+    <button class="primary">＋ Lägg till ord</button>
+  </div>
+  <div id="slot-mid"></div>
+  <div class="rows" id="rows"></div>
+  <div class="tabbar">
+    <div class="on"><span class="gl">🗂</span>Flippa</div>
+    <div><span class="gl">📊</span>Statistik</div>
+    <div><span class="gl">❓</span>Hjälp</div>
+  </div>
+</div></div>
+
+<div class="note" id="note"></div>
+
+<script>
+var ORD = [
+  ["Selamat pagi","God morgon"], ["Selamat malam","God kväll"], ["Halo","Hej"],
+  ["Apa kabar?","Hur mår du?"], ["Baik","Bra"], ["Terima kasih","Tack"]
+];
+var variant = "now", paused = false;
+var $ = function(id){ return document.getElementById(id); };
+
+var NOTER = {
+  now: '<b>Idag</b> – en 38 px ikonknapp i huvudet, tredje av tre likadana. Pausad lektion ' +
+    'får knappen en orange bakgrund och ikonen byts till ▶. ' +
+    '<ul><li>Tar ingen plats.</li>' +
+    '<li>Men: ingen text förklarar vad den gör, och ⏸/▶ är tvetydigt – betyder ⏸ ' +
+    '&rdquo;lektionen är pausad&rdquo; eller &rdquo;tryck för att pausa&rdquo;? Idag betyder det det senare.</li>' +
+    '<li>Läget syns bara om man råkar titta på knappens färg.</li></ul>',
+  a: '<b>A · Statusremsa</b> <span class="tag">rekommenderad</span> – en remsa överst i listan ' +
+    'som säger vilket läge lektionen är i, med åtgärden till höger. Ikonknappen i huvudet utgår. ' +
+    '<ul><li><b>Läget står utskrivet</b> – man behöver aldrig tolka en ikon.</li>' +
+    '<li>Knappen säger vad som händer (&rdquo;Pausa&rdquo;/&rdquo;Återuppta&rdquo;), inte vad läget är.</li>' +
+    '<li>Pausad blir remsan orange – svår att missa när man öppnar lektionen.</li>' +
+    '<li>Att väga: tar ~44 px från ordlistan i båda lägena, även när allt är som vanligt.</li></ul>',
+  b: '<b>B · Knapp i åtgärdsraden</b> – pausen flyttar ner bredvid &rdquo;Lägg till ord&rdquo;, med text. ' +
+    '<ul><li>Ingen ny rad – använder utrymme som redan finns.</li>' +
+    '<li>Hamnar där man redan trycker när man förvaltar lektionen.</li>' +
+    '<li>Att väga: konkurrerar med den primära knappen, och åtgärdsraden börjar bli trång ' +
+    'med tre kontroller. Läget syns fortfarande bara via färg och ikon.</li></ul>',
+  c: '<b>C · Segmentväxel</b> – <em>Aktiv | Pausad</em>, samma språk som lägesväxeln ' +
+    'Svep/Handsfree i träningen. ' +
+    '<ul><li>Båda lägena syns samtidigt – man ser direkt vad som är valt och vad alternativet är.</li>' +
+    '<li>Känns igen från appen.</li>' +
+    '<li>Att väga: en växel antyder något man byter ofta. Paus sätts sällan och glöms länge – ' +
+    'den här ytan är kanske större än vad handlingen förtjänar.</li></ul>',
+  d: '<b>D · Bara när det spelar roll</b> – aktiv lektion ser ut precis som idag (liten ⏸ i huvudet). ' +
+    'Är den pausad tar läget över: orden dimmas och en tydlig ruta förklarar vad som gäller. ' +
+    '<ul><li><b>Kostar ingenting i normalläget</b> – ordlistan behåller hela sin höjd.</li>' +
+    '<li>Den dimmade listan gör konsekvensen synlig, inte bara statusen.</li>' +
+    '<li>Att väga: löser inte att själva <em>pausknappen</em> är svår att hitta – bara att man glömmer ' +
+    'att den är på. Kombineras med A eller B om båda problemen ska bort.</li></ul>'
+};
+
+function render(){
+  var top = $("slot-top"), mid = $("slot-mid"), rows = $("rows"), hp = $("hdr-pause");
+  top.innerHTML = ""; mid.innerHTML = "";
+  rows.className = "rows";
+  var gammal = $("acts").querySelector(".actbtn");   // B:s knapp lever utanför slotsen
+  if (gammal) gammal.remove();
+
+  // Ikonknappen i huvudet finns kvar i "Idag" och i D – de andra ersätter den
+  var visaHdr = (variant === "now" || variant === "d");
+  hp.style.display = visaHdr ? "flex" : "none";
+  hp.textContent = paused ? "▶" : "⏸";
+  hp.classList.toggle("paused", visaHdr && paused);
+
+  if (variant === "a") {
+    top.innerHTML = '<div class="strip' + (paused ? " p" : "") + '">' +
+      '<div class="txt"><b>' + (paused ? "⏸ Pausad" : "Aktiv i Dags att öva") + '</b>' +
+      '<span>' + (paused ? "Inga ord härifrån i Dags att öva. Du kan fortfarande öva lektionen manuellt."
+                         : "Orden härifrån kommer när de förfaller.") + '</span></div>' +
+      '<button>' + (paused ? "Återuppta" : "Pausa") + '</button></div>';
+    top.querySelector("button").onclick = flip;
+  }
+  if (variant === "b") {
+    var b = document.createElement("button");
+    b.className = "actbtn" + (paused ? " p" : "");
+    b.innerHTML = paused ? "▶ Återuppta" : "⏸ Pausa";
+    b.onclick = flip;
+    $("acts").insertBefore(b, $("acts").lastElementChild.nextSibling);
+  }
+  if (variant === "c") {
+    mid.innerHTML = '<div class="seg">' +
+      '<button class="' + (paused ? "" : "on") + '">▶ Aktiv</button>' +
+      '<button class="' + (paused ? "on p" : "") + '">⏸ Pausad</button></div>';
+    [].forEach.call(mid.querySelectorAll("button"), function(x, i){
+      x.onclick = function(){ paused = (i === 1); render(); };
+    });
+  }
+  if (variant === "d" && paused) {
+    mid.innerHTML = '<div class="banner"><div class="bt">⏸ Lektionen är pausad</div>' +
+      '<div class="bd">Inga ord härifrån dyker upp i Dags att öva. Du kan fortfarande öva ' +
+      'lektionen manuellt när du vill.</div><button>▶ Återuppta lektionen</button></div>';
+    mid.querySelector("button").onclick = flip;
+    rows.className = "rows dim";
+  }
+
+  rows.innerHTML = ORD.map(function(o){
+    return '<div class="wrow"><div class="wt"><div class="wf">' + o[0] +
+           '</div><div class="wb">' + o[1] + '</div></div><span class="star">☆</span></div>';
+  }).join("");
+
+  $("toggle").textContent = paused ? "Pausad" : "Aktiv";
+  $("statelbl").textContent = paused ? "– klicka för att återuppta" : "– klicka för att pausa";
+  $("note").innerHTML = NOTER[variant];
+}
+function flip(){ paused = !paused; render(); }
+
+$("hdr-pause").onclick = flip;
+$("toggle").onclick = flip;
+$("tabs").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  variant = b.dataset.v;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  render();
+});
+render();
+</script>
+</body>
+</html>
