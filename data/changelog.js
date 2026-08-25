@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v314", items: [
+    { t: "Ta hjälp av AI med minnesreglerna! I Redigera ord finns nu \u201dTa hjälp av AI\u201d vid Minnesregel – den öppnar Claude eller ChatGPT med en färdig fråga om just det ordet, och du klistrar in förslaget du gillar", type: "new", hi: true, ico: "\ud83d\udca1",
+      desc: "En bra minnesregel är ofta skillnaden mellan ett ord som fastnar och ett som inte gör det – men det är svårt att hitta på en själv. Nu får du ett par förslag att välja bland, byggda på ljudlikhet, bilder eller ord du redan kan." },
+  ]},
   { date: "25 augusti 2026", ver: "v311", items: [
     { t: "Prio syns nu som en siffra i en bricka vid stjärnan i stället för en liten färgprick inne i ordet – lättare att läsa, och den står kvar på sin plats även för långa fraser. Sorterar du på svagast visas Leitner-lådan där i stället", type: "improved" },
   ]},
