@@ -62,6 +62,15 @@
   .tabbar .on{color:var(--accent)}
   .tabbar .gl{font-size:1.05rem}
 
+  /* Sökfältet lever överst i scrollytan och är bortscrollat i viloläge – precis som
+     i appen (setupScrollSearch sätter scrollTop = fältets höjd). 🔍 växlar fram det. */
+  .searchrow{padding:8px 14px 4px;flex:none}
+  .searchrow input{width:100%;box-sizing:border-box;background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;color:var(--text);
+    padding:11px 14px;font-size:.95rem;font-family:inherit}
+  .searchrow input::placeholder{color:var(--muted)}
+  .ib.active{background:var(--accent);color:#fff}
+
   /* ---------- A · statusremsa ---------- */
   .strip{display:flex;align-items:center;gap:10px;margin:0 14px 12px;padding:10px 12px;
     border-radius:12px;font-size:.84rem;flex:none;
@@ -184,10 +193,11 @@ båda lägena i varje variant.</p>
     <button class="ib">←</button>
     <h2>Bahasa 101</h2>
     <button class="ib" id="hdr-pause">⏸</button>
+    <button class="ib" id="hdr-search" title="Filtrera ord">🔍</button>
     <button class="ib">✎</button>
-    <button class="ib">🔍</button>
   </div>
   <div id="below">
+    <div class="searchrow" id="searchrow"><input type="search" placeholder="Filtrera ord…"></div>
     <div id="slot-top"></div>
     <div class="acts" id="acts">
       <button class="ib" style="width:44px;height:auto;align-self:stretch">⇅</button>
@@ -234,7 +244,9 @@ var NOTER = {
     'upp när man scrollar. Bara rubriken med lektionsnamnet står still. <b>Chipsen ovanför telefonen ' +
     'växlar utseende:</b> ordraderna är <code>background: var(--surface)</code> med radie 12, så allt ' +
     'som också är det läser som &rdquo;ännu en ordrad&rdquo;. Utseende 1 är hur appen ser ut idag (v310) ' +
-    'och har precis det problemet – samma platta, bara med en ram runt. <b>Scrolla i telefonen för ' +
+    'och har precis det problemet – samma platta, bara med en ram runt. ' +
+    '<b>🔍 i huvudet</b> visar sökfältet: det bor överst i scrollytan och är bortscrollat i ' +
+    'viloläge, så i A2 dyker det upp <em>ovanför</em> remsan. <b>Scrolla i telefonen för ' +
     'att se det.</b>' +
     '<ul><li><b>Kostar noll i längden</b> – remsan syns när man kommer in i lektionen, precis när ' +
     'man har nytta av den, och är sedan ur vägen. Det var A:s enda verkliga nackdel.</li>' +
@@ -312,11 +324,22 @@ function render(){
     rows.className = "rows dim";
   }
 
+  // Sökfältet får inte ligga kvar i det som skrivs över. I appen är det löst genom att
+  // fältet bor utanför listans innerHTML; här kopplar vi loss det före omritningen.
+  var sr = $("searchrow");
+  if (sr.parentNode) sr.parentNode.removeChild(sr);
+
   rows.innerHTML = ORD.map(function(o){
     return '<div class="wrow"><div class="wt"><div class="wf">' + o[0] +
            '</div><div class="wb">' + o[1] + '</div></div><span class="star">☆</span></div>';
   }).join("");
 
+  // Fältet ligger alltid FÖRST i den yta som faktiskt scrollar: i A2 är det #below
+  // (då hamnar det ovanför remsan), annars listan. Samma ordning som i appen.
+  var scroller = (variant === "a2") ? $("below") : rows;
+  scroller.insertBefore(sr, scroller.firstChild);
+
+  hideSearchAtRest();
   $("looks").hidden = !(variant === "a" || variant === "a2");
   $("toggle").textContent = paused ? "Pausad" : "Aktiv";
   $("statelbl").textContent = paused ? "– klicka för att återuppta" : "– klicka för att pausa";
@@ -324,9 +347,30 @@ function render(){
 }
 function flip(){ paused = !paused; render(); }
 
+// Motsvarar appens hideAtRest(): scrolla precis förbi fältet så det är dolt vid vila.
+function searchScroller(){ return (variant === "a2") ? $("below") : $("rows"); }
+function fieldH(){ return $("searchrow").offsetHeight || 52; }
+function searchRevealed(){ return searchScroller().scrollTop < fieldH() - 4; }
+function hideSearchAtRest(){
+  var sc = searchScroller();
+  sc.scrollTop = fieldH();
+  $("hdr-search").classList.toggle("active", searchRevealed());
+}
+$("hdr-search").onclick = function(){
+  var sc = searchScroller();
+  sc.scrollTo({ top: searchRevealed() ? fieldH() : 0, behavior: "smooth" });
+  setTimeout(function(){ $("hdr-search").classList.toggle("active", searchRevealed()); }, 300);
+};
+
 // Rubrikens hårlinje tänds när innehållet passerat under den
+// Hårlinjen tänds först när man scrollat FÖRBI det dolda sökfältet, som i appen
+// (attachScrollShadow: scrollTop > _shadowBase + 6).
 $("below").addEventListener("scroll", function(){
-  $("screen").classList.toggle("scrolled", this.scrollTop > 2);
+  $("screen").classList.toggle("scrolled", this.scrollTop > fieldH() + 6);
+  $("hdr-search").classList.toggle("active", searchRevealed());
+});
+$("rows").addEventListener("scroll", function(){
+  $("hdr-search").classList.toggle("active", searchRevealed());
 });
 
 $("hdr-pause").onclick = flip;
