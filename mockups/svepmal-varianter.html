@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Flippa – svepmål, iteration 3 (A och C)</title>
+<title>Flippa – svepmål under draget</title>
 <style>
   :root{
     --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
@@ -187,17 +187,18 @@
 </head>
 <body>
 
-<h1>Svepmål i flippa-läget · iteration 4</h1>
-<p class="sub"><b>D</b> tonar in produktionens egen släpp-symbol redan under draget – inget nytt
-UI alls. <b>E</b> är samma sak med ordet under symbolen. A och C är oförändrade sedan förra
-rundan. Fottipsen finns kvar enbart i <b>Idag</b> som referens.</p>
+<h1>Svepmål i flippa-läget</h1>
+<p class="sub">Problemet: fyra svepriktningar som inget i appen förklarade. Tipsen satt i
+underkanten på 40 % opacitet, utanför kortet där blicken aldrig är under ett svep.
+<b>Variant E är byggd och ligger i Flippa sedan v309</b> – de övriga är alternativ vi provade
+på vägen. Dra kortet på riktigt; tryck för att vända det.</p>
 
 <div class="tabs" id="tabs">
-  <button data-v="0" class="on">Idag (referens)</button>
+  <button data-v="0" class="on">Före · v306</button>
   <button data-v="a">A · Målzoner</button>
   <button data-v="c">C · Kantglöd</button>
   <button data-v="d">D · Symbolen i förväg</button>
-  <button data-v="e">E · Symbol + ord</button>
+  <button data-v="e">E · Symbol + ord ✓</button>
 </div>
 <div class="opts">
   <label><input type="checkbox" id="opt-press"> visa målen redan vid <b>tryck</b> (annars vid rörelse)</label>
@@ -502,13 +503,14 @@ card.addEventListener("click", () => {
 
 /* -------------------------------------------------------------- varianter -- */
 const NOTES = {
-  "0": `<h2>Idag (referens)</h2>
+  "0": `<h2>Före · så såg det ut till och med v306</h2>
     <p>Fyra riktningar, och det enda stödet är tipsraden i underkanten på
     <b>40 % opacitet</b>. Den sitter <em>utanför</em> kortet, där blicken aldrig är under ett
     svep – man tittar på ordet. Inget visar var gränsen går, så ett halvhjärtat drag snäpper
     tillbaka utan förklaring.</p>
-    <p>Raden finns bara kvar här, för jämförelse. Notera att kortet är lägre än i A och C:
-    foten äter ~60 px som gloskortet får tillbaka när den tas bort.</p>`,
+    <p>Den här fliken finns kvar för jämförelse – så här fungerade appen till och med v306.
+    Notera att kortet är lägre än i de andra: foten åt ~64 px som gloskortet fick tillbaka
+    när den togs bort.</p>`,
   a: `<h2>A · Målzoner</h2>
     <div class="diff"><b>Ändrat i iteration 3:</b> mätarstrecket i chipet borta · färgen
     dämpad ytterligare (vald zon <code>9 %</code> tint mot tidigare 14 %, kant 30 % mot 48 %) ·
@@ -547,7 +549,7 @@ const NOTES = {
       <li>Tänd-tröskeln är 14 px i stället för 22 – nära 45° kan symbolen därför hoppa mellan
         två riktningar tidigt i draget.</li>
     </ul>`,
-  e: `<h2>E · Symbol + ord</h2>
+  e: `<h2>E · Symbol + ord <span class="tag">byggd – ligger i appen</span></h2>
     <div class="diff"><b>Skillnad mot D:</b> ett ord under symbolen, med samma toning och
     samma skalning så de rör sig som en enhet.<br>
     <b>Vid släppet:</b> ordet ligger kvar och poppar tillsammans med symbolen som en
@@ -562,6 +564,7 @@ const NOTES = {
         det är samma överlägg, bara med en rad till.</li>
       <li>Att väga: ordet tar mer plats över gloskortet än symbolen ensam. Ordet är dessutom
         onödigt så fort man lärt sig riktningarna – kan tonas bort efter N pass om det stör.</li>
+      <li><b>Utrullad i v308/v309</b> (25 augusti 2026), tillsammans med att fottipsen togs bort.</li>
     </ul>`,
   c: `<h2>C · Kantglöd</h2>
     <div class="diff"><b>Ändrat i iteration 3:</b> spåret och <em>SLÄPP</em>-texten borta ·
