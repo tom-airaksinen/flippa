@@ -192,6 +192,9 @@
   .ol-note li{margin:4px 0}
   .ol-probe{display:inline-flex;gap:3px;vertical-align:middle;margin:0 4px}
   .ol-probe i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .ol-flag{font-size:.78rem;vertical-align:middle;margin-left:4px}
+  /* Långa fraser ska bryta som i appen, inte kapas – då syns var indikatorn hamnar */
+  .ol-wrap .wrow .wf{line-height:1.35}
 </style>
 </head>
 <body>
@@ -513,9 +516,16 @@ själva sättet att visa. Den alternativa paletten byter prio 2 mot bärnsten �
 
 <script>
 (function(){
+  // [ord, svenska, prio, stjärnmärkt, har minnesregel]
   var ORD = [
-    ["pane","br\u00f6d",1,true], ["acqua","vatten",1,false], ["tovagliolo","servett",2,false],
-    ["posate","bestick",2,true], ["radicchio","r\u00f6dsallat",3,false], ["strutto","ister",3,false]
+    ["pane","br\u00f6d",1,true,false],
+    ["Il conto, per favore","Notan, tack",1,false,true],
+    ["acqua frizzante","kolsyrat vatten",1,false,false],
+    ["Vorrei prenotare un tavolo per due persone","Jag skulle vilja boka ett bord f\u00f6r tv\u00e5",2,false,false],
+    ["tovagliolo","servett",2,false,true],
+    ["Che cosa mi consiglia?","Vad rekommenderar du?",2,true,false],
+    ["radicchio","r\u00f6dsallat",3,false,false],
+    ["senza glutine","glutenfri",3,false,true]
   ];
   var NAMN = {1:"K\u00e4rna",2:"Vanlig",3:"Nisch"};
   var rows = document.getElementById("ol-rows");
@@ -531,10 +541,14 @@ själva sättet att visa. Den alternativa paletten byter prio 2 mot bärnsten �
       '<li>Men: m\u00e5ste l\u00e4ras utantill, och de tre nyanserna \u00e4r samma f\u00e4rgton i ' +
       'fallande m\u00e4ttnad. Prio 3 mot m\u00f6rk bakgrund syns knappt alls.</li></ul>',
     a: '<b>A \u00b7 Siffran i punkten</b> \u2013 samma plats, men punkten v\u00e4xer till 16 px och b\u00e4r sin siffra. ' +
+      '<em>Se p\u00e5 de l\u00e5nga fraserna:</em> bryter frasen till tv\u00e5 rader hamnar siffran l\u00e4ngst ut p\u00e5 ' +
+      'sista raden, d\u00e4r den \u00e4r sv\u00e5r att hitta \u2013 och st\u00e5r det \u00e4ven en \ud83d\udca1 d\u00e4r blir slutet av raden trangt. ' +
       '<ul><li>Sj\u00e4lvf\u00f6rklarande utan att flytta n\u00e5got: siffran b\u00e4r betydelsen, f\u00e4rgen blir en genv\u00e4g.</li>' +
       '<li>Funkar \u00e4ven om man inte kan skilja f\u00e4rgerna \u00e5t \u2013 pr\u00f6va med paletten p\u00e5 och av.</li>' +
       '<li>Att v\u00e4ga: 16 px bredvid ordet drar mer blick \u00e4n 9 px, och konkurrerar med \ud83d\udca1-flaggan.</li></ul>',
     b: '<b>B \u00b7 Bricka vid stj\u00e4rnan</b> \u2013 indikatorn flyttar till h\u00f6ger, i samma sp\u00e5r som ' +
+      'Leitner-brickan. <em>Vinner tydligt p\u00e5 de l\u00e5nga fraserna:</em> brickan st\u00e5r kvar i sin kolumn ' +
+      'oavsett hur m\u00e5nga rader frasen tar, och \ud83d\udca1 f\u00e5r beh\u00e5lla sin plats vid ordet. ' +
       'Leitner-brickan anv\u00e4nder n\u00e4r man sorterar p\u00e5 svagast. ' +
       '<ul><li>Ordet och \u00f6vers\u00e4ttningen blir helt rena \u2013 inget mellan ord och ' +
       '\ud83d\udca1-flagga.</li><li>Alla brickor hamnar i en lodr\u00e4t linje, s\u00e5 man kan skanna kolumnen ' +
@@ -553,14 +567,15 @@ själva sättet att visa. Den alternativa paletten byter prio 2 mot bärnsten �
   function render(){
     sortEl.innerHTML = variant === "c" ? "Sortera: Prio \u2013 fallande \u25be" : "Sortera: F\u00f6rst tillagda \u25be";
     rows.innerHTML = ORD.map(function(o){
-      var ord = o[0], sv = o[1], pr = o[2], fav = o[3];
+      var ord = o[0], sv = o[1], pr = o[2], fav = o[3], regel = o[4];
       var titel = "Prio " + pr + " \u00b7 " + NAMN[pr];
       var iOrdet = "", iHoger = "";
       if (variant === "now") iOrdet = '<span class="ol-dot ol-p' + pr + '" title="' + titel + '"></span>';
       if (variant === "a")   iOrdet = '<span class="ol-num ol-p' + pr + '" title="' + titel + '">' + pr + '</span>';
       if (variant === "b")   iHoger = '<span class="ol-badge ol-p' + pr + '" title="' + titel + '">' + pr + '</span>';
       if (variant === "c")   iHoger = '<span class="ol-badge wide ol-p' + pr + '">Prio ' + pr + '</span>';
-      return '<div class="wrow"><div class="wt"><div class="wf">' + ord + iOrdet +
+      var lampa = regel ? ' <span class="ol-flag" title="Har minnesregel">\ud83d\udca1</span>' : '';
+      return '<div class="wrow"><div class="wt"><div class="wf">' + ord + iOrdet + lampa +
              '</div><div class="wb">' + sv + '</div></div>' + iHoger +
              '<span class="star"' + (fav ? ' style="color:#f4c542;opacity:1"' : '') + '>' +
              (fav ? "\u2605" : "\u2606") + '</span></div>';

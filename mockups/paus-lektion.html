@@ -40,7 +40,16 @@
   .acts{display:flex;gap:10px;padding:0 14px 12px;flex:none}
   .acts .primary{flex:1;background:var(--accent);color:#fff;border:none;border-radius:12px;
     padding:13px;font-size:.98rem;font-weight:700;font-family:inherit;cursor:pointer}
-  .rows{flex:1;overflow:hidden;padding:0 14px;display:flex;flex-direction:column;gap:9px}
+  /* Idag: allt ovanför listan är fast, bara listan scrollar.
+     .away: rubriken är det enda som står still – resten följer med listan upp. */
+  #below{flex:1;min-height:0;display:flex;flex-direction:column}
+  .rows{flex:1;min-height:0;overflow-y:auto;padding:0 14px 14px;
+    display:flex;flex-direction:column;gap:9px}
+  .screen.away #below{display:block;overflow-y:auto}
+  .screen.away .rows{overflow:visible;flex:none}
+  /* Hårfin linje under rubriken först när något scrollat under den */
+  .hdr{border-bottom:1px solid transparent;transition:border-color .15s ease}
+  .screen.away.scrolled .hdr{border-bottom-color:var(--line)}
   .wrow{display:flex;align-items:center;gap:10px;background:var(--surface);
     border-radius:12px;padding:12px 14px}
   .wrow .wt{flex:1;min-width:0}
@@ -111,6 +120,7 @@ båda lägena i varje variant.</p>
 <div class="tabs" id="tabs">
   <button data-v="now" class="on">Idag · ⏸ i huvudet</button>
   <button data-v="a">A · Statusremsa</button>
+  <button data-v="a2">A2 · Remsan scrollar bort</button>
   <button data-v="b">B · Knapp i åtgärdsraden</button>
   <button data-v="c">C · Segmentväxel</button>
   <button data-v="d">D · Bara när det spelar roll</button>
@@ -129,13 +139,15 @@ båda lägena i varje variant.</p>
     <button class="ib">✎</button>
     <button class="ib">🔍</button>
   </div>
-  <div id="slot-top"></div>
-  <div class="acts" id="acts">
-    <button class="ib" style="width:44px;height:auto;align-self:stretch">⇅</button>
-    <button class="primary">＋ Lägg till ord</button>
+  <div id="below">
+    <div id="slot-top"></div>
+    <div class="acts" id="acts">
+      <button class="ib" style="width:44px;height:auto;align-self:stretch">⇅</button>
+      <button class="primary">＋ Lägg till ord</button>
+    </div>
+    <div id="slot-mid"></div>
+    <div class="rows" id="rows"></div>
   </div>
-  <div id="slot-mid"></div>
-  <div class="rows" id="rows"></div>
   <div class="tabbar">
     <div class="on"><span class="gl">🗂</span>Flippa</div>
     <div><span class="gl">📊</span>Statistik</div>
@@ -148,7 +160,10 @@ båda lägena i varje variant.</p>
 <script>
 var ORD = [
   ["Selamat pagi","God morgon"], ["Selamat malam","God kväll"], ["Halo","Hej"],
-  ["Apa kabar?","Hur mår du?"], ["Baik","Bra"], ["Terima kasih","Tack"]
+  ["Apa kabar?","Hur mår du?"], ["Baik","Bra"], ["Terima kasih","Tack"],
+  ["Sama-sama","Varsågod"], ["Tolong","Snälla / hjälp mig"], ["Maaf","Förlåt"],
+  ["Permisi","Ursäkta"], ["Ya","Ja"], ["Tidak","Nej"],
+  ["Berapa harganya?","Vad kostar det?"], ["Di mana…?","Var är…?"]
 ];
 var variant = "now", paused = false;
 var $ = function(id){ return document.getElementById(id); };
@@ -166,6 +181,20 @@ var NOTER = {
     '<li>Knappen säger vad som händer (&rdquo;Pausa&rdquo;/&rdquo;Återuppta&rdquo;), inte vad läget är.</li>' +
     '<li>Pausad blir remsan orange – svår att missa när man öppnar lektionen.</li>' +
     '<li>Att väga: tar ~44 px från ordlistan i båda lägena, även när allt är som vanligt.</li></ul>',
+  a2: '<b>A2 · Remsan scrollar bort</b> <span class="tag">rekommenderad</span> – samma remsa som A, ' +
+    'men hela toppsektionen (remsan + ⇅ och &rdquo;Lägg till ord&rdquo;) ligger <em>i</em> listan och åker ' +
+    'upp när man scrollar. Bara rubriken med lektionsnamnet står still. <b>Scrolla i telefonen för ' +
+    'att se det.</b>' +
+    '<ul><li><b>Kostar noll i längden</b> – remsan syns när man kommer in i lektionen, precis när ' +
+    'man har nytta av den, och är sedan ur vägen. Det var A:s enda verkliga nackdel.</li>' +
+    '<li>Rubriken blir det enda fasta, så ordlistan får nästan hela skärmen när man bläddrar.</li>' +
+    '<li>En hårfin linje tänds under rubriken när något scrollat under den, så den inte ' +
+    'ser ut att sväva.</li>' +
+    '<li><b>Att väga:</b> idag ligger ⇅ och &rdquo;Lägg till ord&rdquo; utanför scrollytan och är alltid ' +
+    'nåbara (<code>index.html</code>: <code>.editor-actions</code> före <code>#editor-scroll</code>). ' +
+    'Med A2 måste man scrolla upp för att lägga till ett ord – kännbart i en lång lektion. ' +
+    'Motmedel om det stör: låt ⇅/Lägg till fastna högst upp när man scrollar förbi, och låt bara ' +
+    'remsan försvinna.</li></ul>',
   b: '<b>B · Knapp i åtgärdsraden</b> – pausen flyttar ner bredvid &rdquo;Lägg till ord&rdquo;, med text. ' +
     '<ul><li>Ingen ny rad – använder utrymme som redan finns.</li>' +
     '<li>Hamnar där man redan trycker när man förvaltar lektionen.</li>' +
@@ -194,11 +223,13 @@ function render(){
 
   // Ikonknappen i huvudet finns kvar i "Idag" och i D – de andra ersätter den
   var visaHdr = (variant === "now" || variant === "d");
+  $("screen").classList.toggle("away", variant === "a2");
+  if (variant !== "a2") $("screen").classList.remove("scrolled");
   hp.style.display = visaHdr ? "flex" : "none";
   hp.textContent = paused ? "▶" : "⏸";
   hp.classList.toggle("paused", visaHdr && paused);
 
-  if (variant === "a") {
+  if (variant === "a" || variant === "a2") {
     top.innerHTML = '<div class="strip' + (paused ? " p" : "") + '">' +
       '<div class="txt"><b>' + (paused ? "⏸ Pausad" : "Aktiv i Dags att öva") + '</b>' +
       '<span>' + (paused ? "Inga ord härifrån i Dags att öva. Du kan fortfarande öva lektionen manuellt."
@@ -239,6 +270,11 @@ function render(){
   $("note").innerHTML = NOTER[variant];
 }
 function flip(){ paused = !paused; render(); }
+
+// Rubrikens hårlinje tänds när innehållet passerat under den
+$("below").addEventListener("scroll", function(){
+  $("screen").classList.toggle("scrolled", this.scrollTop > 2);
+});
 
 $("hdr-pause").onclick = flip;
 $("toggle").onclick = flip;
