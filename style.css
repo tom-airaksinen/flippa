@@ -1351,7 +1351,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .pause-strip {
   display: flex; align-items: center; gap: 10px; width: calc(100% - 32px);
   margin: 4px 16px 10px; padding: 10px 12px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  /* Skärmens egen bakgrund, inte --surface: ordraderna är --surface-plattor, så en
+     sådan här läste som ännu en ordrad. Nu bara en tunn ram = uppenbart inte innehåll.
+     Samma grepp som .row.paused använder i lektionslistan. */
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
   color: var(--muted); font-family: inherit; font-size: 0.84rem; text-align: left;
   cursor: pointer;
 }
