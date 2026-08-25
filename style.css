@@ -992,9 +992,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 /* Under själva svepet följer symbol + ord draget (kort transition, ingen animation).
    Opacitet och skala sätts inline från svep-logiken. */
-#swipe-feedback.hint, #swipe-feedback-label.hint {
-  transition: opacity 0.08s linear, transform 0.08s linear;
-}
+#swipe-feedback.hint { transition: opacity 0.08s linear, transform 0.08s linear; }
+/* Ordet tonas in långsammare än symbolen – det dyker upp först vid tvekan och ska
+   kännas som att det anländer, inte som att det snäpper fram. */
+#swipe-feedback-label.hint { transition: opacity 0.22s ease, transform 0.08s linear; }
 #swipe-feedback-label.show { animation: pop-lbl 0.5s ease-out; }
 @keyframes pop-lbl {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5) translateY(58px); }

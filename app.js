@@ -2890,8 +2890,9 @@ const GRADE_CUE = {
 // fromHint = svepet hade redan tonat fram symbolen → bekräftelsen fortsätter från DEN
 // nivån (pop-confirm) i stället för att starta om från noll. Handsfree/röst saknar
 // förhandsvisning och får den vanliga pop-kurvan.
-function showFeedback(grade, fromHint) {
+function showFeedback(grade, fromHint, withWord) {
   const cue = GRADE_CUE[grade];
+  const visaOrd = withWord !== false;
   feedbackEl.classList.remove("hint");
   feedbackEl.textContent = cue.sym;
   feedbackEl.style.color = cue.color;
@@ -2903,14 +2904,18 @@ function showFeedback(grade, fromHint) {
   feedbackEl.classList.add("show");
 
   feedbackLabelEl.classList.remove("hint");
-  feedbackLabelEl.textContent = cue.label;
-  feedbackLabelEl.style.color = cue.color;
   feedbackLabelEl.style.opacity = "";
   feedbackLabelEl.style.transform = "";
-  feedbackLabelEl.classList.toggle("from-hint", !!fromHint);
   feedbackLabelEl.classList.remove("show");
-  void feedbackLabelEl.offsetWidth;
-  feedbackLabelEl.classList.add("show");
+  if (visaOrd) {
+    feedbackLabelEl.textContent = cue.label;
+    feedbackLabelEl.style.color = cue.color;
+    feedbackLabelEl.classList.toggle("from-hint", !!fromHint);
+    void feedbackLabelEl.offsetWidth;
+    feedbackLabelEl.classList.add("show");
+  } else {
+    feedbackLabelEl.textContent = "";
+  }
 }
 
 // Städa när pop-animationen är klar. Utan detta blir .show kvar för alltid och
@@ -2930,23 +2935,51 @@ feedbackLabelEl.addEventListener("animationend", () => {
 // Förhandsvisning under svepet: samma symbol och ord som bekräftelsen, men nedtonade
 // och följsamma med draget. Ligger mitt på kortet, där blicken redan är – till skillnad
 // från de gamla tipsen i sidfoten, som satt utanför kortet och aldrig lästes.
-function showSwipeHint(grade, prog) {
-  const cue = GRADE_CUE[grade];
-  const ready = prog >= 1;
-  const op = ready ? 0.85 : 0.6 * prog;
-  const scale = ready ? 1.05 : 0.62 + 0.38 * prog;
+// Ordet är till för den som tvekar. Sveper man beslutsamt räcker symbolen, och då är
+// ordet bara brus mitt på kortet. Det tonas därför in först när samma riktning hållits
+// i WORD_DELAY ms – ett snabbt svep hinner släppa långt innan dess.
+// MÅSTE vara en timer: pointermove slutar fyra när fingret står still, och att stanna
+// är just vad "tveka" oftast betyder. En koll vid varje rörelse hade aldrig löst ut.
+const WORD_DELAY = 400;
+let hintGrade = null, hintProg = 0, wordTimer = null, wordOn = false;
+
+function paintSwipeHint() {
+  if (!hintGrade) return;
+  const cue = GRADE_CUE[hintGrade];
+  const ready = hintProg >= 1;
+  const op = ready ? 0.85 : 0.6 * hintProg;
+  const scale = ready ? 1.05 : 0.62 + 0.38 * hintProg;
   feedbackEl.textContent = cue.sym;
   feedbackEl.style.color = cue.color;
   feedbackEl.classList.add("hint");
   feedbackEl.style.opacity = op;
   feedbackEl.style.transform = `translate(-50%, -50%) scale(${scale})`;
+  // Etiketten ritas alltid, men är genomskinlig tills väntetiden gått → mjuk intoning
   feedbackLabelEl.textContent = cue.label;
   feedbackLabelEl.style.color = cue.color;
   feedbackLabelEl.classList.add("hint");
-  feedbackLabelEl.style.opacity = op;
+  feedbackLabelEl.style.opacity = wordOn ? op : 0;
   feedbackLabelEl.style.transform = `translate(-50%, -50%) scale(${scale}) translateY(58px)`;
 }
+
+function showSwipeHint(grade, prog) {
+  if (grade !== hintGrade) {          // ny riktning → börja om räkningen
+    hintGrade = grade;
+    wordOn = false;
+    clearTimeout(wordTimer);
+    wordTimer = setTimeout(() => {
+      if (!dragging || hintGrade !== grade) return;  // släppt eller bytt håll under tiden
+      wordOn = true;
+      paintSwipeHint();
+    }, WORD_DELAY);
+  }
+  hintProg = prog;
+  paintSwipeHint();
+}
+
 function clearSwipeHint() {
+  clearTimeout(wordTimer);
+  hintGrade = null; hintProg = 0; wordOn = false;
   feedbackEl.classList.remove("hint");
   feedbackEl.style.opacity = "";
   feedbackEl.style.transform = "";
@@ -3638,7 +3671,7 @@ card.addEventListener("pointerup", (e) => {
 
   if (swipePassed(g, dx, dy)) {
     didSwipe = true;
-    showFeedback(g, true); // förhandsvisningen är redan uppe → fortsätt därifrån
+    showFeedback(g, true, wordOn); // ordet följer med bara om det hann tonas fram
     flyOut(g);
   } else {
     clearSwipeHint();
@@ -5711,7 +5744,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v312";
+const APP_VERSION = "v313";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
