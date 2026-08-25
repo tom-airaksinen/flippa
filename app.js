@@ -3349,6 +3349,10 @@ const FAN_SVG_GLOBE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="non
 const FAN_SVG_IMAGE = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
 const FAN_SVG_EDIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0-3-3L5 17z"/><line x1="14" y1="7" x2="17" y2="10"/></svg>';
 // AI-stjärnor (fylld, vit via currentColor) för "AI-kontext" (öppnar Googles AI-läge).
+// Claude/ChatGPT-märkena. Låg tidigare inline i openAddDialog; nu en definition som
+// delas av Lägg till ord-dialogen och minnesregel-menyn.
+const AI_LOGO_CLAUDE = '<svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="3.5" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20.5"/><line x1="3.5" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20.5" y2="12"/><line x1="6" y1="6" x2="9.7" y2="9.7"/><line x1="14.3" y1="14.3" x2="18" y2="18"/><line x1="18" y1="6" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="6" y2="18"/></svg>';
+const AI_LOGO_GPT = '<svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.3 18.5 7v10L12 20.7 5.5 17V7z"/><path d="M12 11.4 18.2 7.8M12 11.4v7.1M12 11.4 5.8 7.8" opacity=".55"/></svg>';
 const AI_STARS_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><g transform="translate(12 11.5) scale(1.2) translate(-12 -11.5)"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></g></svg>';
 const FAN_ITEMS = [
   { key: "image",  ic: FAN_SVG_IMAGE, label: "Bildsök" },
@@ -3966,7 +3970,18 @@ function askWord(front, back, hint, opts = {}) {
       <input type="text" id="m-front" value="${esc(f)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
       <label>Svenska (baksida)</label>
       <input type="text" id="m-back" value="${esc(b)}" autocomplete="off" autocapitalize="none" lang="sv" spellcheck="true" />
-      <label>Minnesregel (valfritt)</label>
+      <div class="hint-lbl">
+        <label>Minnesregel (valfritt)</label>
+        <div class="ai-pop-wrap">
+          <button type="button" class="ai-help-btn" id="m-ai-help">${AI_STARS_SVG}Ta hjälp av AI</button>
+          <div class="ai-pop hidden" id="m-ai-pop">
+            <button type="button" class="ai-pop-item" id="m-ai-claude">${AI_LOGO_CLAUDE}Öppna i Claude</button>
+            <button type="button" class="ai-pop-item" id="m-ai-gpt">${AI_LOGO_GPT}Öppna i ChatGPT</button>
+            <button type="button" class="ai-pop-item" id="m-ai-copy">⧉ Kopiera frågan</button>
+            <div class="ai-pop-note">Öppnar AI:n med en färdig fråga. Kopiera ett förslag och klistra in det här.</div>
+          </div>
+        </div>
+      </div>
       <textarea id="m-hint" rows="2" placeholder="t.ex. liknar engelskans …" autocapitalize="sentences" lang="sv" spellcheck="true">${esc(h || "")}</textarea>
       <label>Prio</label>
       <div class="prio-segs" id="m-prio">
@@ -4010,6 +4025,38 @@ function askWord(front, back, hint, opts = {}) {
       if (!allowDelete) m.querySelector("#m-front").focus();
       m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(null); };
       if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ _delete: true }); };
+      // ---- Ta hjälp av AI: liten meny vid Minnesregel-etiketten ----
+      // Öppnas med openExternal(..., true) = <a target="_blank">-tapp → in-app-overlay.
+      // Viktigt här (till skillnad från openAiDialog som kör location.href): modalen
+      // MÅSTE leva vidare, annars finns inget fält att klistra in svaret i vid retur.
+      const aiPop = m.querySelector("#m-ai-pop");
+      const closeAiPop = () => aiPop.classList.add("hidden");
+      const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b); };
+      m.querySelector("#m-ai-help").onclick = (e) => {
+        e.stopPropagation();
+        aiPop.classList.toggle("hidden");
+      };
+      m.querySelector("#m-ai-claude").onclick = () => {
+        track("minnesregel-ai/claude"); closeAiPop();
+        openExternal("https://claude.ai/new?q=" + encodeURIComponent(hintPrompt()), true);
+      };
+      m.querySelector("#m-ai-gpt").onclick = () => {
+        track("minnesregel-ai/gpt"); closeAiPop();
+        openExternal("https://chatgpt.com/?q=" + encodeURIComponent(hintPrompt()), true);
+      };
+      m.querySelector("#m-ai-copy").onclick = (e) => {
+        e.stopPropagation();
+        try { if (navigator.clipboard) navigator.clipboard.writeText(hintPrompt()).catch(() => {}); } catch (_) {}
+        track("minnesregel-ai-kopierad");
+        e.currentTarget.textContent = "Kopierat ✓";
+      };
+      // Stäng vid tryck utanför – samma mönster som prio-dropdownen i statistiken.
+      m.addEventListener("pointerdown", (e) => {
+        if (aiPop.classList.contains("hidden")) return;
+        if (e.target.closest("#m-ai-pop") || e.target.closest("#m-ai-help")) return;
+        closeAiPop();
+      });
+
       if (explore) m.querySelector("#m-globe").onclick = () => {
         const v = vals();
         // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
@@ -4473,6 +4520,18 @@ function getCurrentLesson() {
   if (!currentSubject) return null;
   const s = content.find((x) => x.id === currentSubject.id) || currentSubject;
   return s.lessons.find((l) => l.id === currentLessonId) || null;
+}
+
+// Minnesregel-prompten. Ber om ett per rad utan inledning, så svaret går att läsa och
+// plocka ur direkt – man kopierar ett förslag och klistrar in i fältet.
+function buildHintPrompt(front, back) {
+  const lang = currentForeignLabel();
+  return `Ge mig ett par förslag på minnesregel som hjälper mig komma ihåg att "${front}" `
+    + `betyder "${back}" på ${lang}.\n\n`
+    + `Det kan bygga på ljudlikhet, en bild, släktskap med ord jag redan kan – vad som helst `
+    + `som ger hjärnan en krok att hänga upp det på.\n\n`
+    + `Svara med 2–4 förslag, ett per rad, utan inledning. Varje förslag ska vara kort nog `
+    + `att rymmas på två rader i en app.`;
 }
 
 // ---- Fyll lektion med AI (dialog → förifyll prompt i Claude/ChatGPT) ----
@@ -5013,8 +5072,8 @@ function openAddDialog(opts = {}) {
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
       <div class="ai-send">
-        <button type="button" class="ai-btn" id="ai2-claude"><svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="3.5" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20.5"/><line x1="3.5" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20.5" y2="12"/><line x1="6" y1="6" x2="9.7" y2="9.7"/><line x1="14.3" y1="14.3" x2="18" y2="18"/><line x1="18" y1="6" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="6" y2="18"/></svg>Claude</button>
-        <button type="button" class="ai-btn" id="ai2-gpt"><svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.3 18.5 7v10L12 20.7 5.5 17V7z"/><path d="M12 11.4 18.2 7.8M12 11.4v7.1M12 11.4 5.8 7.8" opacity=".55"/></svg>ChatGPT</button>
+        <button type="button" class="ai-btn" id="ai2-claude">${AI_LOGO_CLAUDE}Claude</button>
+        <button type="button" class="ai-btn" id="ai2-gpt">${AI_LOGO_GPT}ChatGPT</button>
       </div>
       <div class="tertiary-c"><button type="button" class="link-action" id="ai2-copy">⧉ Kopiera prompt (för annan AI)</button></div>
       <div class="add-divider">När du fått svaret</div>
@@ -5744,7 +5803,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v313";
+const APP_VERSION = "v314";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

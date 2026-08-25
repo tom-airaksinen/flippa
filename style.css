@@ -1731,6 +1731,34 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .ai-btn .ai-logo { width: 18px; height: 18px; flex: none; }
 .ai-copy-alt { text-align: center; margin: 15px 0 2px; }
 
+/* ---- "Ta hjälp av AI" vid Minnesregel-etiketten + dess lilla meny ----
+   Utlösaren delar rad med etiketten, så den kostar ingen höjd. Menyn följer
+   samma mönster som ＋-menyn (.add-menu) → känns igen, och modalen växer aldrig. */
+.hint-lbl { display: flex; align-items: center; gap: 8px; margin-bottom: -6px; }
+.hint-lbl label { margin-bottom: 0; }
+.ai-pop-wrap { position: relative; margin-left: auto; }
+.ai-help-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: none; border: none; padding: 0; cursor: pointer;
+  color: var(--accent); font-family: inherit; font-size: 0.78rem; font-weight: 700;
+}
+.ai-help-btn svg { width: 15px; height: 15px; flex: none; }
+.ai-pop {
+  position: absolute; z-index: 33; top: calc(100% + 7px); right: 0;
+  min-width: 216px; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 12px; padding: 6px; box-shadow: 0 16px 38px rgba(0, 0, 0, 0.5);
+}
+.ai-pop.hidden { display: none; }
+.ai-pop-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: none; border: none; color: var(--text); text-align: left;
+  padding: 11px 12px; border-radius: 8px; font-size: 0.95rem; font-family: inherit; cursor: pointer;
+}
+.ai-pop-item + .ai-pop-item { margin-top: 2px; }
+.ai-pop-item:active { background: var(--surface-2); }
+.ai-pop-item .ai-logo { width: 18px; height: 18px; flex: none; }
+.ai-pop-note { color: var(--muted); font-size: 0.76rem; padding: 4px 12px 7px; line-height: 1.35; }
+
 /* =========================================================================
    Enhetlig "Lägg till ord"-dialog
    ========================================================================= */
