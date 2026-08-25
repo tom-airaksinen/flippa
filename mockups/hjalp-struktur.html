@@ -68,6 +68,13 @@
   .grp.open .grp-b{display:block}
 
   /* C – sök */
+  /* E – inledning som alltid syns, utan att fälla ut något */
+  .intro{font-size:.9rem;color:#dfe5ee;margin:2px 2px 16px;line-height:1.55}
+  .kort h4{font-size:.9rem;margin:13px 0 3px;color:var(--text)}
+  .kort h4:first-child{margin-top:9px}
+  .kort p{margin:0 0 4px}
+  .kort .g{color:var(--muted);font-size:.82rem;margin:0 0 8px}
+
   /* D – hela sektionen utfälld: underrubriker + text, inga fler klick */
   .grp-b h4{font-size:.92rem;margin:14px 0 5px;color:var(--text)}
   .grp-b h4:first-child{margin-top:10px}
@@ -105,6 +112,7 @@ omskriven; det som ändras är hur man kommer åt den.</p>
   <button data-v="grp">B · Teman + fällbart</button>
   <button data-v="faq">C · FAQ med sök</button>
   <button data-v="flat">D · Teman, allt på en gång</button>
+  <button data-v="kort">E · Som D men kortfattat</button>
 </div>
 <p class="stat" id="stat"></p>
 
@@ -246,6 +254,76 @@ var D_TEMA = {
 };
 function temaD(a){ return D_TEMA[a.q] || a.g; }
 
+// ---- E: samma struktur som D, men texten kortad till det man faktiskt behöver.
+// Inledningen är dagens "Vad är Flippa?" flyttad ut ur accordionen – ordagrant samma
+// text, bara alltid synlig. Inget innehåll är påhittat; allt är komprimerat.
+var INTRO = 'Flippa är en glosapp med flippkort. Du svarar genom att svepa, och appen ' +
+  'håller koll på vad du behöver repetera – så att du pluggar rätt ord vid rätt tillfälle ' +
+  'i stället för allt om och om igen.';
+
+var KORT_GRUND =
+  '<h4>Öva det du <em>inte</em> kan</h4>' +
+  '<p>Rätt svar kommer tillbaka mer sällan, missar kommer tillbaka snart. Du behöver inte ' +
+  'hålla reda på det själv.</p>' +
+  '<h4>Du ska kunna sålla</h4>' +
+  '<p>Prio, stjärnor och paus styr vad appen frågar om. Allt behöver inte övas lika mycket.</p>' +
+  '<h4>Lätt att fylla på</h4>' +
+  '<p>Klistra in flera rader, importera en CSV eller låt en AI föreslå ord på ett tema.</p>' +
+  '<h4>En krok gör skillnad</h4>' +
+  '<p>Ett ord med minnesregel fastnar oftare. Kommer du inte på någon – be en AI om förslag.</p>';
+
+var KORT = {
+  "Hur svarar jag på ett kort?":
+    '<p>👉 <b>Kan</b> – en nivå upp · 👆 <b>Kan bra</b> – två nivåer upp<br>' +
+    '👈 <b>Kan inte</b> – tillbaka till början · 👇 <b>Hopplöst</b> – kommer snart igen</p>' +
+    '<p class="g">Svarade du fel? Skaka telefonen för att ångra.</p>',
+  "Övar jag till eller från svenska?":
+    '<p>Välj <b>Från svenska</b>, <b>Till svenska</b> eller <b>Blandat</b> överst på ' +
+    'lektionslistan.</p>',
+  "Vad är ”Dags att öva”?":
+    '<p>Antalet ord som är mogna för repetition just nu. Pausa (⏸) en lektion så är den ' +
+    'tyst där tills du återupptar den.</p>',
+  "Kan appen läsa upp orden?":
+    '<p>🔊 läser upp ordet. Med <b>Handsfree</b> svarar du med rösten: säg <i>kan</i>, ' +
+    '<i>kan inte</i>, <i>bra</i> eller <i>hopplöst</i> – även <i>flippa</i> och <i>ångra</i>.</p>',
+  "Hur vet appen vad jag ska öva?":
+    '<p>Varje ord ligger i en låda som bestämmer väntetiden: <b>1, 2, 4, 8, 16, 32, 64 dagar</b>. ' +
+    'Kan → uppåt. Kan inte → tillbaka till första lådan.</p>' +
+    '<p class="g">Varje riktning räknas separat – du kan kunna ett ord från svenska men inte till.</p>',
+  "Hur många ord får jag per pass?":
+    '<p><b>Kort/pass</b> sätter passets längd, <b>Nya ord per dag</b> hur många nya som ' +
+    'introduceras. Börja med 10.</p>' +
+    '<p class="g">Kunde du ett nytt ord direkt räknas det inte mot dagens kvot.</p>',
+  "Vad betyder prio 1, 2 och 3?":
+    '<p><b>1 Kärna</b>, <b>2 Vanlig</b>, <b>3 Nisch</b>. Filtrera på prio under KORT/PASS så ' +
+    'övar du det viktigaste först – bortvalda nivåer är helt tysta.</p>' +
+    '<p class="g">Stjärnmärk ord och slå på Endast stjärnord för ett fokuspass.</p>',
+  "Vad är en minnesregel?":
+    '<p>En krok som dyker upp som ledtråd när du behöver den. Lägg till den när du redigerar ' +
+    'ordet.</p>' +
+    '<p class="g">italienska <i>lampone</i> = hallon → ”ett jättehallon med en lampa på”.</p>',
+  "Vad kan jag göra med ett enskilt ord?":
+    '<p><b>⋯</b> nederst på kortet: ✨ AI-kontext, 🖼️ bildsök, ✏️ redigera, ⭐ stjärna – utan ' +
+    'att lämna passet.</p>',
+  "Hur hittar jag ett ord?":
+    '<p>Sökfält överst i listorna – scrolla upp eller tryck 🔍. Söker du i alla lektioner ' +
+    'visas träffarna grupperade per lektion.</p>',
+  "Var ser jag hur det går?":
+    '<p>Statistik-fliken: streak, 18 veckors aktivitet och hur orden fördelar sig över lådorna.</p>',
+  "Hur lägger jag till ord?":
+    '<p><b>＋ Lägg till ord</b> har tre flikar: <b>Manuellt</b> (en rad per ord, ' +
+    '<code>utländskt;svenskt</code>), <b>Slå upp</b> (översätts automatiskt) och <b>AI</b> ' +
+    '(tema + antal).</p>' +
+    '<p class="g">Många ord på en gång: ＋ → Importera CSV. Kolumner: sektion, ord, ' +
+    'översättning, favorit, minnesregel, prio.</p>',
+  "Var sparas mina ord?":
+    '<p>Orden ligger i molnet, din träningsprogress lokalt per enhet och profil.</p>',
+  "Funkar appen utan internet?":
+    '<p>Ja – du kan lägga till, ändra och ordna om ord offline. Det synkas automatiskt när ' +
+    'du är uppkopplad igen.</p>',
+  "Vad är Flippa?": null   // blir inledningen i stället
+};
+
 var variant = "now", oppna = {}, oppnaGrp = {}, filter = "";
 var $ = function(id){ return document.getElementById(id); };
 var TEMAN = ["Komma igång", "Öva", "Vad du övar", "Ord & verktyg"];
@@ -293,6 +371,19 @@ function render(){
           return '<h4>' + a.q + '</h4><div class="' + (k === med.length - 1 ? "sist" : "") + '">' +
                  a.h + '</div>';
         }).join("");
+      return '<div class="grp' + (open ? " open" : "") + '" data-g="' + tema + '">' +
+        '<button class="grp-h">' + tema + '<span class="cnt">' + antal + '</span></button>' +
+        '<div class="grp-b">' + kropp + '</div></div>';
+    }).join("");
+  }
+  if (variant === "kort") {
+    html = '<p class="intro">' + INTRO + '</p>' + TEMAN_D.map(function(tema){
+      var med = AVSNITT.filter(function(a){ return temaD(a) === tema && KORT[a.q]; });
+      var open = !!oppnaGrp[tema];
+      var antal = med.length + (tema === "Grundtankar" ? 1 : 0);
+      var kropp = (tema === "Grundtankar" ? '<div class="kort">' + KORT_GRUND + '</div>' : "") +
+        '<div class="kort">' + med.map(function(a){
+          return '<h4>' + a.q + '</h4>' + KORT[a.q]; }).join("") + '</div>';
       return '<div class="grp' + (open ? " open" : "") + '" data-g="' + tema + '">' +
         '<button class="grp-h">' + tema + '<span class="cnt">' + antal + '</span></button>' +
         '<div class="grp-b">' + kropp + '</div></div>';
@@ -376,6 +467,19 @@ var NOTER = {
     '&rdquo;Innehåll &amp; lagring&rdquo;, så Grundtankar får vara principer och inget annat.</li>' +
     '<li><b>Att väga:</b> en utfälld sektion är mycket text på en gång – närmare dagens vägg, ' +
     'men avgränsad till det man valde. &rdquo;Öva&rdquo; blir längst.</li></ul>',
+  kort: '<b>E · Som D men kortfattat</b> <span class="tag">rekommenderad</span> – samma fem ' +
+    'sektioner, men texten kortad till det man faktiskt behöver veta. Överst en inledning som ' +
+    '<b>alltid syns</b> utan att man fäller ut något.' +
+    '<ul><li>Inledningen är dagens &rdquo;Vad är Flippa?&rdquo; <b>ordagrant</b> – den flyttar ' +
+    'bara ut ur accordionen. Inget försvann; en rubrik blev en inledning.</li>' +
+    '<li>Sifferlistor i stället för tabeller: Leitner-avsnittet var en sjuradig tabell, nu står ' +
+    'väntetiderna på en rad (1, 2, 4, 8, 16, 32, 64 dagar).</li>' +
+    '<li>CSV-detaljerna (avgränsare, citattecken, UTF-8, mallfil) är nedkokade till vilka ' +
+    'kolumner som finns. Den som verkligen ska importera hittar resten i mallen.</li>' +
+    '<li>Det som <em>inte</em> kortades: gester, röstkommandon och siffror. Det är sånt man ' +
+    'kommer till hjälpen för att slå upp.</li>' +
+    '<li><b>Att väga:</b> kortare text betyder att nyanser försvinner – t.ex. att en höjning av ' +
+    'nya ord per dag gäller direkt men en sänkning från imorgon. Bedöm om sånt saknas.</li></ul>',
   faq: '<b>C · FAQ med sök</b> <span class="tag">rekommenderad</span> – rubrikerna omformulerade ' +
     'till frågor, plus en sökruta som filtrerar direkt. <b>Prova att söka på &rdquo;prio&rdquo;, ' +
     '&rdquo;offline&rdquo; eller &rdquo;svep&rdquo;.</b>' +
