@@ -195,27 +195,18 @@ body {
 .help-sec .hs-body { padding: 0 14px 10px; border-top: 1px solid var(--line); }
 .help-sec .hs-body h3 { font-size: 0.92rem; margin: 13px 0 4px; color: var(--text); }
 .help-sec .hs-body p { font-size: 0.86rem; line-height: 1.5; color: var(--muted); margin: 0 0 6px; }
-.help-sec .hs-body .help-note { font-size: 0.82rem; margin-bottom: 8px; }
+/* Kursiven var rimlig för korta bisatser, men noterna här är längre och bär länkar –
+   då blir hela raden tung att läsa. Dämpad storlek/färg räcker för att skilja dem. */
+.help-sec .hs-body .help-note { font-size: 0.82rem; margin-bottom: 8px; font-style: normal; }
+.help-sec .hs-body code {
+  background: var(--surface-2); border-radius: 4px; padding: 1px 5px; font-size: 0.82rem;
+  color: var(--text);
+}
 @media (prefers-reduced-motion: reduce) { .help-sec > summary::after { transition: none; } }
 
 .help-swipes { list-style: none; padding: 0; margin: 0 0 8px; }
 .help-swipes li { font-size: 0.86rem; line-height: 1.55; color: var(--muted); margin-bottom: 5px; }
 .help-swipes b { color: var(--text); }
-.help-tip { background: var(--surface); border-radius: 10px; padding: 10px 12px; }
-.help-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin: 4px 0 10px; }
-.help-table th, .help-table td { border: 1px solid var(--line); padding: 6px 10px; text-align: left; color: var(--muted); }
-.help-table th { color: var(--text); font-weight: 600; }
-.help-details { background: var(--surface); border-radius: 10px; margin: 14px 0; overflow: hidden; }
-.help-details > summary { list-style: none; cursor: pointer; padding: 12px 14px; font-size: 0.9rem; font-weight: 600; color: var(--text); display: flex; align-items: center; justify-content: space-between; }
-.help-details > summary::-webkit-details-marker { display: none; }
-.help-details > summary::after { content: "›"; color: var(--muted); font-size: 1.1rem; transition: transform 0.15s; }
-.help-details[open] > summary::after { transform: rotate(90deg); }
-.help-details-body { padding: 0 14px 12px; }
-.help-details-body ul { margin: 4px 0 10px; padding-left: 18px; }
-.help-details-body li { font-size: 0.82rem; line-height: 1.5; color: var(--muted); margin-bottom: 5px; }
-.help-details-body b { color: var(--text); }
-.help-details-body code { background: var(--surface-2); border-radius: 4px; padding: 1px 5px; font-size: 0.8rem; }
-.help-code { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; font-size: 0.76rem; line-height: 1.5; color: var(--text); overflow-x: auto; white-space: pre; margin: 4px 0 10px; }
 .help-link { color: var(--accent); font-weight: 600; font-size: 0.86rem; }
 
 /* Bottenflikar – diskret: samma bakgrund som sidan, bara en tunn avdelare.
