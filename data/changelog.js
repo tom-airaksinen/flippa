@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v310", items: [
+    { t: "Pausa en lektion är inte längre en gömd ikon: överst i ordlistan står det nu i klartext om lektionen är aktiv eller pausad, med knappen bredvid. Remsan följer med när du scrollar, så orden får plats", type: "improved" },
+  ]},
   { date: "25 augusti 2026", ver: "v309", items: [
     { t: "Svep-tipsen under kortet är borta – riktningarna visas i stället på kortet medan du drar, och gloskortet blir högre", type: "improved" },
   ]},

@@ -4138,7 +4138,6 @@ const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" 
 const IC_LOOKUP = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/><line x1="11" y1="8.4" x2="11" y2="13.6"/><line x1="8.4" y1="11" x2="13.6" y2="11"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
-const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
 (function setStaticIcons() {
   const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
   set("lessons-search-btn", IC_SEARCH);
@@ -4781,13 +4780,20 @@ $("rename-lesson").onclick = async () => {
   }
   renameLesson(currentSubject.id, lesson.id, res.name);
 };
-// Pausa/återuppta lektionen (▶ när pausad, ⏸ när aktiv) – uppe till höger i lektionen
-const togglePauseBtn = $("toggle-pause");
+// Pausa/återuppta lektionen. Satt tidigare som en 38 px ikonknapp i huvudet – tredje av
+// tre likadana, utan text. ⏸ var dessutom tvetydig (läge eller åtgärd?). Nu en remsa
+// överst i ordlistan där rubriken säger läget och knappen säger vad som händer. Remsan
+// ligger i scrollytan, så den kostar ingen höjd när man väl bläddrar i orden.
+const togglePauseBtn = $("pause-strip");
 function updatePauseToggle(lid) {
   const paused = isLessonPaused(lid);
-  togglePauseBtn.innerHTML = paused ? IC_PLAY : IC_PAUSE;
-  togglePauseBtn.title = paused ? "Återuppta lektionen" : "Pausa lektionen (tyst i Dags att öva)";
   togglePauseBtn.classList.toggle("paused", paused);
+  $("pause-strip-title").innerHTML = paused ? `${IC_PAUSE} Pausad` : "Aktiv i Dags att öva";
+  $("pause-strip-desc").textContent = paused
+    ? "Inga ord härifrån dyker upp där. Du kan fortfarande öva lektionen manuellt."
+    : "Orden härifrån kommer när de förfaller.";
+  $("pause-strip-act").textContent = paused ? "Återuppta" : "Pausa";
+  togglePauseBtn.title = paused ? "Återuppta lektionen" : "Pausa lektionen (tyst i Dags att öva)";
 }
 togglePauseBtn.onclick = () => {
   const lesson = getCurrentLesson();
@@ -5701,7 +5707,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v309";
+const APP_VERSION = "v310";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

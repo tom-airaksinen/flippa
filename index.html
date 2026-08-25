@@ -160,20 +160,27 @@
     <header class="app-header">
       <button class="back-btn" data-back="lessons">←</button>
       <h1 id="editor-title"></h1>
-      <button id="toggle-pause" class="icon-btn" title="Pausa lektionen">⏸</button>
       <button id="rename-lesson" class="icon-btn" title="Redigera lektion">✎</button>
       <button id="editor-search-btn" class="icon-btn" title="Filtrera ord">🔍</button>
     </header>
-    <div class="editor-actions">
-      <button id="sort-btn" class="icon-btn" title="Sortera">⇅</button>
-      <button id="add-words" class="primary-btn">＋ Lägg till ord</button>
-    </div>
     <div id="editor-scroll" class="scroll-area">
+      <!-- Sökfältet MÅSTE ligga först: listan startar scrollad förbi det
+           (setupScrollSearch: scrollTop = fieldH), så allt annat läggs efter. -->
       <div class="list-search" id="editor-search-row">
         <div class="search-wrap">
           <input type="search" id="editor-search" class="editor-search" placeholder="Filtrera ord…" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
           <button class="search-clear hidden" tabindex="-1">✕</button>
         </div>
+      </div>
+      <!-- Statusremsa + åtgärder ligger i scrollytan och åker upp med listan.
+           Bara rubriken står still. -->
+      <button type="button" id="pause-strip" class="pause-strip">
+        <span class="ps-txt"><b id="pause-strip-title"></b><span id="pause-strip-desc"></span></span>
+        <span class="ps-act" id="pause-strip-act"></span>
+      </button>
+      <div class="editor-actions">
+        <button id="sort-btn" class="icon-btn" title="Sortera">⇅</button>
+        <button id="add-words" class="primary-btn">＋ Lägg till ord</button>
       </div>
       <div id="editor-list" class="list"></div>
     </div>

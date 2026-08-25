@@ -28,6 +28,7 @@ input, textarea {
   --line: #2c3c63; /* strukturkant (väljare, modaler, flikfält) */
   --track: rgba(255, 255, 255, 0.12); /* omärkt del av behärskningsstapeln (= nya ord) */
   --prio1: #5b8cff; --prio2: #6f7fc0; --prio3: #48557a; /* Kärna/Vanlig/Nisch */
+  --paus: #e0915a; /* pausad lektion – samma orange som "på gång" i behärskningen */
 }
 
 /* Rosa tema – gäller bara Hedvigs profil (klass sätts på <html> i applyTheme) */
@@ -46,6 +47,7 @@ input, textarea {
   --line: #f0aecd;
   --track: rgba(74, 34, 54, 0.12);
   --prio1: #ff3d8f; --prio2: #db7ba6; --prio3: #a86e8a; /* rosa-familj: vivid → dämpad */
+  --paus: #d98a26;
 }
 /* Ljus bakgrund kräver vit text på de rosa chiparna + ljusa kort-lager */
 :root.theme-rosa #due-btn { color: #fff; }
@@ -1338,7 +1340,32 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 :root:not(.theme-rosa) .row.paused .row-name { color: var(--muted); }
 :root:not(.theme-rosa) .row.paused .row-meta { opacity: 0.6; }
 /* Pausväljaren inne i lektionen: blir en tydlig play-knapp (accent) när lektionen är pausad */
-#toggle-pause.paused { color: var(--accent); }
+/* Statusremsa för paus – överst i ordlistan, scrollar bort med innehållet.
+   Hela remsan är knappen: rubriken säger LÄGET, högerdelen vad som HÄNDER om man trycker. */
+.pause-strip {
+  display: flex; align-items: center; gap: 10px; width: calc(100% - 32px);
+  margin: 4px 16px 10px; padding: 10px 12px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+  color: var(--muted); font-family: inherit; font-size: 0.84rem; text-align: left;
+  cursor: pointer;
+}
+.pause-strip .ps-txt { flex: 1; min-width: 0; }
+.pause-strip .ps-txt b { display: block; color: var(--text); font-weight: 700; }
+.pause-strip .ps-txt span { display: block; font-size: 0.76rem; line-height: 1.35; }
+.pause-strip .ps-act {
+  flex: none; background: var(--surface-2); border: 1px solid var(--line); color: var(--text);
+  border-radius: 9px; padding: 7px 13px; font-size: 0.8rem; font-weight: 700;
+}
+.pause-strip:active { background: var(--surface-2); }
+/* Pausad: hela remsan byter ton, så läget syns direkt när lektionen öppnas */
+.pause-strip.paused {
+  background: color-mix(in srgb, var(--paus) 16%, var(--surface));
+  border-color: color-mix(in srgb, var(--paus) 55%, transparent);
+  color: var(--text);
+}
+.pause-strip.paused .ps-act {
+  background: var(--paus); border-color: var(--paus); color: #0d1426;
+}
 
 /* ---- Modal ---- */
 #modal-root {
