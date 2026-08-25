@@ -11,7 +11,7 @@
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
   { date: "25 augusti 2026", ver: "v314", items: [
-    { t: "Ta hjälp av AI med minnesreglerna! I Redigera ord finns nu \u201dTa hjälp av AI\u201d vid Minnesregel – den öppnar Claude eller ChatGPT med en färdig fråga om just det ordet, och du klistrar in förslaget du gillar", type: "new", hi: true, ico: "\ud83d\udca1",
+    { t: "I Redigera ord finns nu ”Ta hjälp av AI” vid Minnesregel – den öppnar Claude eller ChatGPT med en färdig fråga om just det ordet, och du klistrar in förslaget du gillar", type: "new", hi: true, ico: "💡",
       desc: "En bra minnesregel är ofta skillnaden mellan ett ord som fastnar och ett som inte gör det – men det är svårt att hitta på en själv. Nu får du ett par förslag att välja bland, byggda på ljudlikhet, bilder eller ord du redan kan." },
   ]},
   { date: "25 augusti 2026", ver: "v311", items: [
@@ -24,7 +24,7 @@ const CHANGELOG = [
     { t: "Svep-tipsen under kortet är borta – riktningarna visas i stället på kortet medan du drar, och gloskortet blir högre", type: "improved" },
   ]},
   { date: "25 augusti 2026", ver: "v308", items: [
-    { t: "Du ser nu vad ditt svep kommer att bli medan du drar kortet – symbolen och ordet (\u201dkan bra\u201d, \u201dhopplöst\u201d …) tonas fram mitt på kortet, så du hinner ändra dig innan du släpper", type: "new", hi: true, ico: "\ud83d\udc46",
+    { t: "Du ser nu vad ditt svep kommer att bli medan du drar kortet – symbolen och ordet (”kan bra”, ”hopplöst” …) tonas fram mitt på kortet, så du hinner ändra dig innan du släpper", type: "new", hi: true, ico: "👆",
       desc: "Tidigare fick man veta vad som hände först efter att man släppt. Nu växer symbolen fram med draget, mitt på kortet där blicken redan är – drar du åt fel håll är det bara att dra tillbaka." },
   ]},
   { date: "25 augusti 2026", ver: "v307", items: [

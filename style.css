@@ -1756,7 +1756,13 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .ai-pop-item + .ai-pop-item { margin-top: 2px; }
 .ai-pop-item:active { background: var(--surface-2); }
-.ai-pop-item .ai-logo { width: 18px; height: 18px; flex: none; }
+/* Både SVG-logotyperna och text-glyfen (⧉) måste ha SAMMA box, annars gäller inte
+   gap:10px mellan ikon och text för den som är en glyf i textnoden. */
+.ai-pop-item .ai-logo,
+.ai-pop-item .ai-pop-ico {
+  width: 18px; height: 18px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+}
 .ai-pop-note { color: var(--muted); font-size: 0.76rem; padding: 4px 12px 7px; line-height: 1.35; }
 
 /* =========================================================================

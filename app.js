@@ -1597,8 +1597,16 @@ function renderChangelog() {
     const f = $("clog-full"); f.classList.toggle("hidden");
     const open = !f.classList.contains("hidden");
     $("clog-more").textContent = open ? "Dölj versionshistoriken" : "Visa hela versionshistoriken";
-    // Listan fälls ut nedanför det synliga → scrolla fram den så det syns att nåt hände.
-    if (open) requestAnimationFrame(() => $("clog-more").scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "start" }));
+    // Listan fälls ut NEDANFÖR det synliga, så utan scroll ser det ut som att inget hände.
+    // scrollIntoView räckte inte: knappen ligger sist i en maskad scrollyta och
+    // offsetParent är overlayn (position:fixed), inte scrollytan – så vi räknar fram
+    // positionen ur rect-differensen i stället. Deterministiskt och testbart.
+    if (open) requestAnimationFrame(() => {
+      const body = $("clog-body"), btn = $("clog-more");
+      if (!body || !btn) return;
+      const top = body.scrollTop + btn.getBoundingClientRect().top - body.getBoundingClientRect().top - 8;
+      body.scrollTo({ top: Math.max(0, top), behavior: prefersReducedMotion ? "auto" : "smooth" });
+    });
   };
 }
 function openChangelog() {
@@ -3977,7 +3985,7 @@ function askWord(front, back, hint, opts = {}) {
           <div class="ai-pop hidden" id="m-ai-pop">
             <button type="button" class="ai-pop-item" id="m-ai-claude">${AI_LOGO_CLAUDE}Öppna i Claude</button>
             <button type="button" class="ai-pop-item" id="m-ai-gpt">${AI_LOGO_GPT}Öppna i ChatGPT</button>
-            <button type="button" class="ai-pop-item" id="m-ai-copy">⧉ Kopiera frågan</button>
+            <button type="button" class="ai-pop-item" id="m-ai-copy"><span class="ai-pop-ico">⧉</span>Kopiera frågan</button>
             <div class="ai-pop-note">Öppnar AI:n med en färdig fråga. Kopiera ett förslag och klistra in det här.</div>
           </div>
         </div>
@@ -5803,7 +5811,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v314";
+const APP_VERSION = "v315";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
