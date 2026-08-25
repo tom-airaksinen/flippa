@@ -68,6 +68,13 @@
   .grp.open .grp-b{display:block}
 
   /* C – sök */
+  /* D – hela sektionen utfälld: underrubriker + text, inga fler klick */
+  .grp-b h4{font-size:.92rem;margin:14px 0 5px;color:var(--text)}
+  .grp-b h4:first-child{margin-top:10px}
+  .grp-b .sist{padding-bottom:8px}
+  .grund li{margin:6px 0}
+  .grund b{color:var(--text)}
+
   .searchrow{padding:6px 0 12px}
   .searchrow input{width:100%;box-sizing:border-box;background:var(--surface-2);
     border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px 14px;
@@ -97,6 +104,7 @@ omskriven; det som ändras är hur man kommer åt den.</p>
   <button data-v="acc">A · Fällbara avsnitt</button>
   <button data-v="grp">B · Teman + fällbart</button>
   <button data-v="faq">C · FAQ med sök</button>
+  <button data-v="flat">D · Teman, allt på en gång</button>
 </div>
 <p class="stat" id="stat"></p>
 
@@ -205,6 +213,39 @@ var AVSNITT = [
 "g": "Komma igång"
 }
 ];
+// D:s indelning. "Grundtankar" är ny text – den förklarar VARFÖR appen fungerar som
+// den gör, vilket ingen av dagens rubriker gör. Resten av avsnitten är oförändrade,
+// bara omgrupperade: det praktiska ur "Komma igång" flyttas till Innehåll & lagring.
+var GRUND = {
+  t: "Grundtankar",
+  h: '<h4>Öva det du <em>inte</em> kan</h4>' +
+     '<p>Ett ord du svarar rätt på kommer tillbaka mer sällan – ett du missar kommer ' +
+     'tillbaka snart. Tiden går alltså till orden som inte sitter, inte till dem du redan ' +
+     'kan. Du behöver inte hålla reda på det själv; det är hela poängen med lådorna.</p>' +
+     '<h4>Du ska kunna sålla</h4>' +
+     '<p>Allt i en lektion är inte lika viktigt. Sätt <b>prio</b> på orden så styr du vad ' +
+     'som kommer först, <b>stjärnmärk</b> det du vill kunna säkert, och <b>pausa</b> en ' +
+     'lektion som får ligga still ett tag. Appen ska följa vad du tycker är viktigt.</p>' +
+     '<h4>Lätt att fylla på</h4>' +
+     '<p>Ett nytt område ska tas minuter att komma igång med, inte en kväll. Klistra in ' +
+     'flera rader på en gång, importera en CSV-fil, eller låt en AI föreslå ord på ett tema. ' +
+     'Trögheten ska ligga i att lära sig orden – inte i att mata in dem.</p>' +
+     '<h4>En krok gör skillnad</h4>' +
+     '<p>Ett ord med en <b>minnesregel</b> fastnar oftare än ett utan. Det kan vara en ' +
+     'ljudlikhet, en bild eller ett släktord – vad som helst som ger hjärnan något att ' +
+     'hänga upp ordet på. Kommer du inte på någon kan du be en AI om förslag direkt i ' +
+     'Redigera ord.</p>'
+};
+var TEMAN_D = ["Grundtankar", "Öva", "Vad du övar", "Ord & verktyg", "Innehåll & lagring"];
+// Avsnitt som flyttar från "Komma igång" till "Innehåll & lagring" i D
+var D_TEMA = {
+  "Vad är Flippa?": "Grundtankar",
+  "Hur lägger jag till ord?": "Innehåll & lagring",
+  "Var sparas mina ord?": "Innehåll & lagring",
+  "Funkar appen utan internet?": "Innehåll & lagring"
+};
+function temaD(a){ return D_TEMA[a.q] || a.g; }
+
 var variant = "now", oppna = {}, oppnaGrp = {}, filter = "";
 var $ = function(id){ return document.getElementById(id); };
 var TEMAN = ["Komma igång", "Öva", "Vad du övar", "Ord & verktyg"];
@@ -240,6 +281,21 @@ function render(){
         '<button class="grp-h">' + tema + '<span class="cnt">' + ids.length + '</span></button>' +
         '<div class="grp-b">' + ids.map(function(i){
           return accRad(AVSNITT[i], i, AVSNITT[i].q); }).join("") + '</div></div>';
+    }).join("");
+  }
+  if (variant === "flat") {
+    html = TEMAN_D.map(function(tema){
+      var med = AVSNITT.filter(function(a){ return temaD(a) === tema; });
+      var open = !!oppnaGrp[tema];
+      var antal = med.length + (tema === "Grundtankar" ? 1 : 0);
+      var kropp = (tema === "Grundtankar" ? '<div class="grund">' + GRUND.h + '</div>' : "") +
+        med.map(function(a, k){
+          return '<h4>' + a.q + '</h4><div class="' + (k === med.length - 1 ? "sist" : "") + '">' +
+                 a.h + '</div>';
+        }).join("");
+      return '<div class="grp' + (open ? " open" : "") + '" data-g="' + tema + '">' +
+        '<button class="grp-h">' + tema + '<span class="cnt">' + antal + '</span></button>' +
+        '<div class="grp-b">' + kropp + '</div></div>';
     }).join("");
   }
   if (variant === "faq") {
@@ -305,6 +361,21 @@ var NOTER = {
     '<li>Grupperingen svarar på &rdquo;var hör min fråga hemma?&rdquo; innan man börjar leta.</li>' +
     '<li>Att väga: två tryck till innehållet i stället för ett. Och gruppindelningen måste ' +
     'kännas självklar – gör den inte det blir den ett hinder.</li></ul>',
+  flat: '<b>D · Teman, allt på en gång</b> <span class="tag">rekommenderad</span> – som B, men ' +
+    'ett tryck ger <em>hela</em> området: underrubriker och text direkt, inga fler klick. Fem ' +
+    'sektioner, och den första – <b>Grundtankar</b> – är ny text som förklarar varför appen ' +
+    'fungerar som den gör.' +
+    '<ul><li><b>Ett tryck till svaret.</b> B kräver två: först temat, sedan frågan. Här läser ' +
+    'man området som en sammanhängande text – vilket är hur man faktiskt läser hjälp när man ' +
+    'är ny.</li>' +
+    '<li>Fem rader i viloläge, alltså samma överblick som B.</li>' +
+    '<li><b>Grundtankar</b> svarar på något ingen dagens rubrik gör: <em>varför</em> ska jag ' +
+    'lita på lådorna, varför finns prio, varför bry sig om minnesregler. Det är det som gör ' +
+    'skillnad på att förstå appen och att bara kunna klicka i den.</li>' +
+    '<li>Det praktiska ur &rdquo;Komma igång&rdquo; (lägga till ord, lagring, offline) flyttar till ' +
+    '&rdquo;Innehåll &amp; lagring&rdquo;, så Grundtankar får vara principer och inget annat.</li>' +
+    '<li><b>Att väga:</b> en utfälld sektion är mycket text på en gång – närmare dagens vägg, ' +
+    'men avgränsad till det man valde. &rdquo;Öva&rdquo; blir längst.</li></ul>',
   faq: '<b>C · FAQ med sök</b> <span class="tag">rekommenderad</span> – rubrikerna omformulerade ' +
     'till frågor, plus en sökruta som filtrerar direkt. <b>Prova att söka på &rdquo;prio&rdquo;, ' +
     '&rdquo;offline&rdquo; eller &rdquo;svep&rdquo;.</b>' +
