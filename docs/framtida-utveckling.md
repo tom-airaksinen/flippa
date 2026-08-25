@@ -752,6 +752,85 @@ B ger genuin riskminskning men troligen inte tystnad. Kopplar till avsnitt 1.
 
 ---
 
+## 16) Fota glosläxan → AI extraherar orden (framtida)
+
+Idé (2026-08-25): Hedvig fotar en spansk glosläxa hon fått på papper, en modell läser
+av listan och orden hamnar i en lektion. Inget byggt. Bygger vidare på avsnitt 4, men
+skiljer sig på två punkter som ändrar hela valet:
+
+- **Foto i stället för PDF** → pdf.js är irrelevant; det här är bild-in.
+- **Hedvigs konto i stället för Toms** → avsnitt 4:s lösning (BYO-nyckel i
+  `localStorage`, gated på `currentUser === "tom"`) fungerar inte. Nyckeln skulle
+  behöva ligga på en enhet Tom inte kontrollerar.
+
+### Tokenkostnaden är inte problemet
+Frågan ställdes som "vill helst inte betala så mycket för tokens". Premissen håller inte:
+en glosläxa är ett litet foto och ett kort svar.
+
+Räknat med **Claude Haiku 4.5** ($1/M input, $5/M output – Anthropics förstapartspriser,
+kollade 2026-08-25), ett foto på ~2 000 tokens, prompt ~200, svar ~300 för elva ordpar:
+
+| Modell | Per läxa | 100 läxor |
+|---|---|---|
+| Haiku 4.5 | ~$0,004 (≈ 4 öre) | ~4 kr |
+| Sonnet 5 | ~$0,011 (≈ 11 öre) | ~11 kr |
+
+Uppgiften – läsa en tydligt tryckt tvåspaltslista – är enkel nog att **Haiku räcker**.
+(Bildens tokenantal är ett antagande; verifiera med `count_tokens` innan något byggs.
+Priser rör sig – kolla om.)
+
+**Den verkliga kostnaden är var nyckeln bor**, precis som avsnitt 4 slår fast.
+
+### Varför vision och inte ren OCR
+Exempelfotot: papperet 90° roterat, skrynkligt, två spalter med prickade linjer emellan.
+En vision-modell parar ihop `la ciudad` med `staden` utan vidare och kan svara direkt i
+appens `ord;svenska`-format. **iOS Live Text** läser typiskt en spalt i taget och tappar
+parningen – elva spanska följt av elva svenska går att para ihop igen, men det spricker
+så fort en rad saknas eller viker sig i vecket.
+
+### Tre vägar
+
+**A · Noll infrastruktur – Live Text + klistra in.** Långtryck på fotot i Bilder →
+markera → kopiera → klistra in i Lägg till ord. Gratis, ingen kod, inget konto. Det som
+saknas är att `parseLines` (`app.js`) kräver `;`. En uppmjukning – acceptera även tabb
+eller 2+ mellanslag som avdelare när `;` saknas – gör vägen användbar direkt. Skör
+parning, men **bra sätt att validera om idén ens är värd något** innan något byggs.
+
+**B · Återanvänd "kopiera prompt"-mönstret.** Hedvig öppnar Claude/ChatGPT själv,
+bifogar fotot, klistrar in en prompt appen kopierat åt henne. Noll kostnad. **Men: hon är
+tolv.** Åldersgränserna (ChatGPT 13+, Claude 18+) gör att avsnitt 4:s lägsta-risk-steg
+inte översätts hit. Fungerar för Tom, inte för barnen.
+
+**C · Liten serverproxy – rekommenderad.** **Cloudflare Worker** på gratisnivån
+(100 000 anrop/dygn, inget kort) håller nyckeln serverside. Appen skickar fotot, Workern
+anropar Haiku 4.5 och returnerar `ord;svenska`-rader rakt in i befintlig import-pipeline
+med dubblettkoll. Hedvig ser bara "Fota läxan". Firebase Functions vore det naturliga
+alternativet men **kräver Blaze** – se avsnitt 2.
+
+### Skydd som måste med i C
+- **Delad hemlighet** från appen + **tak per dygn** i Workern, annars kan vem som helst
+  som hittar endpointen bränna nyckeln.
+- **Förhandsgranska en redigerbar lista innan något sparas** (samma krav som avsnitt 4).
+  Modellen missar något i vecket förr eller senare.
+- Fotot skickas till tredje part – se integritetsnoten nedan.
+
+### Sammanfattning
+
+| Bit | Validera först | Om det byggs |
+|---|---|---|
+| Nyckel | ingen alls (A) | Cloudflare Worker, gratisnivå |
+| Bild → ord | iOS Live Text | vision-modell (Haiku 4.5) |
+| Parsning | mjuka upp `parseLines` (tabb / 2+ mellanslag) | modellen svarar i `ord;svenska` |
+| Kostnad | 0 kr | ~4 öre per läxa |
+| Spara | befintlig import + dubblettkoll | oförändrat |
+| Granskning | manuell (man ser vad man klistrar in) | redigerbar lista före spar |
+
+> **Integritet:** ett foto av en skoluppgift skickas till en tredjeparts-LLM, och det är
+> ett barns material. Annan sak än Toms egna PDF:er i avsnitt 4 – ta ställning innan C
+> byggs, inte efter.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
