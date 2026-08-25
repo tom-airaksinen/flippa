@@ -75,6 +75,46 @@
     border-radius:9px;padding:7px 13px;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit}
   .strip.p button{background:var(--paus);border-color:var(--paus);color:#0d1426}
 
+  /* ---------- A/A2 · utseenden ----------
+     Ordraderna är background:var(--surface) med radie 12. Allt som också är
+     surface + radie 12 läser som "ännu en ordrad". Varje look nedan bryter
+     minst en av de egenskaperna. */
+  .look-chips{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:-8px 0 18px}
+  .look-chips button{background:var(--surface);border:1px solid var(--line);color:var(--muted);
+    border-radius:999px;padding:5px 12px;font-size:.76rem;font-weight:600;cursor:pointer;font-family:inherit}
+  .look-chips button.on{background:var(--surface-2);border-color:var(--accent);color:var(--text)}
+
+  /* 1 · som idag (v310) – med som referens */
+  .strip.look-now{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+  .strip.look-now.p{background:color-mix(in srgb, var(--paus) 16%, var(--surface));
+    border-color:color-mix(in srgb, var(--paus) 55%, transparent)}
+
+  /* 2 · ingen platta alls – rubrikrad med hårlinje under */
+  .strip.look-flat{background:none;border:none;border-bottom:1px solid var(--line);
+    border-radius:0;margin:0 16px 10px;padding:2px 2px 11px}
+  .strip.look-flat.p{background:none;border-bottom-color:color-mix(in srgb, var(--paus) 70%, transparent)}
+  .strip.look-flat.p .ps-act{background:var(--paus);border-color:var(--paus);color:#0d1426}
+
+  /* 3 · nedsänkt – mörkare än sidbakgrunden, ingen ram */
+  .strip.look-sunken{background:#080d19;border:none;border-radius:12px}
+  .strip.look-sunken.p{background:color-mix(in srgb, var(--paus) 22%, #080d19)}
+
+  /* 4 · accentkant till vänster */
+  .strip.look-rail{background:var(--surface);border:none;border-left:3px solid var(--accent);
+    border-radius:0 12px 12px 0}
+  .strip.look-rail.p{border-left-color:var(--paus);
+    background:color-mix(in srgb, var(--paus) 14%, var(--surface))}
+
+  /* 5 · streckad ram, ingen fyllning – läses som inställning, inte innehåll */
+  .strip.look-dashed{background:none;border:1px dashed var(--line);border-radius:12px}
+  .strip.look-dashed.p{background:none;border:1px dashed color-mix(in srgb, var(--paus) 65%, transparent)}
+
+  /* 6 · tonad platta i accentfärg */
+  .strip.look-tint{background:color-mix(in srgb, var(--accent) 11%, var(--bg));
+    border:1px solid color-mix(in srgb, var(--accent) 32%, transparent);border-radius:12px}
+  .strip.look-tint.p{background:color-mix(in srgb, var(--paus) 18%, var(--bg));
+    border-color:color-mix(in srgb, var(--paus) 55%, transparent)}
+
   /* ---------- B · knapp i åtgärdsraden ---------- */
   .actbtn{flex:none;display:flex;align-items:center;gap:7px;background:var(--surface);
     border:1px solid var(--line);color:var(--text);border-radius:12px;padding:0 14px;
@@ -125,6 +165,14 @@ båda lägena i varje variant.</p>
   <button data-v="c">C · Segmentväxel</button>
   <button data-v="d">D · Bara när det spelar roll</button>
 </div>
+<div class="look-chips" id="looks" hidden>
+  <button data-l="now" class="on">1 · som idag</button>
+  <button data-l="flat">2 · ingen platta</button>
+  <button data-l="sunken">3 · nedsänkt</button>
+  <button data-l="rail">4 · accentkant</button>
+  <button data-l="dashed">5 · streckad</button>
+  <button data-l="tint">6 · tonad</button>
+</div>
 <div class="state">
   <span>Lektionen är nu:</span>
   <button id="toggle">Aktiv</button>
@@ -165,7 +213,7 @@ var ORD = [
   ["Permisi","Ursäkta"], ["Ya","Ja"], ["Tidak","Nej"],
   ["Berapa harganya?","Vad kostar det?"], ["Di mana…?","Var är…?"]
 ];
-var variant = "now", paused = false;
+var variant = "now", paused = false, look = "now";
 var $ = function(id){ return document.getElementById(id); };
 
 var NOTER = {
@@ -183,7 +231,10 @@ var NOTER = {
     '<li>Att väga: tar ~44 px från ordlistan i båda lägena, även när allt är som vanligt.</li></ul>',
   a2: '<b>A2 · Remsan scrollar bort</b> <span class="tag">rekommenderad</span> – samma remsa som A, ' +
     'men hela toppsektionen (remsan + ⇅ och &rdquo;Lägg till ord&rdquo;) ligger <em>i</em> listan och åker ' +
-    'upp när man scrollar. Bara rubriken med lektionsnamnet står still. <b>Scrolla i telefonen för ' +
+    'upp när man scrollar. Bara rubriken med lektionsnamnet står still. <b>Chipsen ovanför telefonen ' +
+    'växlar utseende:</b> ordraderna är <code>background: var(--surface)</code> med radie 12, så allt ' +
+    'som också är det läser som &rdquo;ännu en ordrad&rdquo;. Utseende 1 är hur appen ser ut idag (v310) ' +
+    'och har precis det problemet – samma platta, bara med en ram runt. <b>Scrolla i telefonen för ' +
     'att se det.</b>' +
     '<ul><li><b>Kostar noll i längden</b> – remsan syns när man kommer in i lektionen, precis när ' +
     'man har nytta av den, och är sedan ur vägen. Det var A:s enda verkliga nackdel.</li>' +
@@ -235,7 +286,8 @@ function render(){
       '<span>' + (paused ? "Inga ord härifrån i Dags att öva. Du kan fortfarande öva lektionen manuellt."
                          : "Orden härifrån kommer när de förfaller.") + '</span></div>' +
       '<button>' + (paused ? "Återuppta" : "Pausa") + '</button></div>';
-    top.querySelector("button").onclick = flip;
+    top.querySelector(".strip").classList.add("look-" + look);
+    top.querySelector(".strip > button").onclick = flip;
   }
   if (variant === "b") {
     var b = document.createElement("button");
@@ -265,6 +317,7 @@ function render(){
            '</div><div class="wb">' + o[1] + '</div></div><span class="star">☆</span></div>';
   }).join("");
 
+  $("looks").hidden = !(variant === "a" || variant === "a2");
   $("toggle").textContent = paused ? "Pausad" : "Aktiv";
   $("statelbl").textContent = paused ? "– klicka för att återuppta" : "– klicka för att pausa";
   $("note").innerHTML = NOTER[variant];
@@ -278,6 +331,12 @@ $("below").addEventListener("scroll", function(){
 
 $("hdr-pause").onclick = flip;
 $("toggle").onclick = flip;
+$("looks").addEventListener("click", function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  look = b.dataset.l;
+  [].forEach.call(this.children, function(x){ x.classList.toggle("on", x === b); });
+  render();
+});
 $("tabs").addEventListener("click", function(e){
   var b = e.target.closest("button"); if(!b) return;
   variant = b.dataset.v;
