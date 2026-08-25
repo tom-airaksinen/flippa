@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 augusti 2026", ver: "v316", items: [
+    { t: "Uppdateringar till en ny version kan nu ske även när du står i en lektions ordlista – och du hamnar tillbaka i samma lektion efteråt", type: "improved" },
+  ]},
   { date: "25 augusti 2026", ver: "v314", items: [
     { t: "I Redigera ord finns nu ”Ta hjälp av AI” vid Minnesregel – den öppnar Claude eller ChatGPT med en färdig fråga om just det ordet, och du klistrar in förslaget du gillar", type: "new", hi: true, ico: "💡",
       desc: "En bra minnesregel är ofta skillnaden mellan ett ord som fastnar och ett som inte gör det – men det är svårt att hitta på en själv. Nu får du ett par förslag att välja bland, byggda på ljudlikhet, bilder eller ord du redan kan." },

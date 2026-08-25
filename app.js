@@ -1124,7 +1124,10 @@ function listenContent() {
       showStatus(null);
       renderCurrentScreen();
       flushOutbox(); // hört från servern → försök tömma ev. kö
-      if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
+      if (pendingRestore) {
+        const p = pendingRestore; pendingRestore = null;
+        if (!restorePlaceAfterUpdate(p) && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
+      } else if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
     },
     (err) => {
       console.error(err);
@@ -1445,6 +1448,24 @@ const PUSH_LOCAL_KEY = "flippa-push-local";     // { enabled, time } – lokal s
 const DEVICE_KEY = "flippa-device-id";          // slump-id per enhet (nyckel i /push)
 const LAST_SUBJECT_KEY = "flippa-last-subject"; // för deep-link vid notis-tryck
 let pendingPushOpen = false;                    // sätts vid kallstart via #pushopen
+// Plats att återgå till efter en uppdaterings-omladdning. sessionStorage överlever
+// reload i samma flik men är tom vid äkta kallstart – så en gammal plats kan inte spöka.
+let pendingRestore = null;
+try {
+  const raw = sessionStorage.getItem("flippa-restore");
+  if (raw) { sessionStorage.removeItem("flippa-restore"); pendingRestore = JSON.parse(raw); }
+} catch (_) { pendingRestore = null; }
+
+// Återgå till ämnet – och lektionen – man var på före omladdningen. Hoppar tyst över
+// om något hunnit försvinna (raderat på en annan enhet), då blir det startskärmen.
+function restorePlaceAfterUpdate(p) {
+  if (!p || !currentUser) return false;
+  const s = p.subject && content.find((x) => x.id === p.subject && x.owner === currentUser);
+  if (!s) return false;
+  openSubject(s.id);
+  if (p.screen === "editor" && p.lesson && s.lessons.some((l) => l.id === p.lesson)) openEditor(p.lesson);
+  return true;
+}
 
 function deviceId() {
   let id = localStorage.getItem(DEVICE_KEY);
@@ -3538,7 +3559,13 @@ window.addEventListener("pageshow", () => {
   } catch(_){}
   maybeRecoverUI();
 });
-document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") maybeRecoverUI(); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  maybeRecoverUI();
+  // Tillbaka i förgrunden är en naturlig hållpunkt – täcker den som SITTER i ordlistan
+  // och därför aldrig navigerar. (reg.update() körs på samma event, se sw-blocket.)
+  maybeReloadForUpdate();
+});
 // Bakåtkompatibla alias (kvarvarande anrop)
 function updateCardMenuBtn() { updateCardActions(); }
 function closeCardMenu() { closeFan(); }
@@ -4470,6 +4497,9 @@ function openEditor(lessonId) {
     if (!editorSearchCtl) return;
     if (hasFilter) editorSearchCtl.reveal(false); else editorSearchCtl.hideAtRest();
   });
+  // Säker hållpunkt, EFTER att activeScreen/currentLessonId är satta – annars sparas
+  // platsen som ämnesvyn och man återvänder inte till lektionen man just öppnade.
+  maybeReloadForUpdate();
 }
 
 // Språknamn för etiketter (gemener), t.ex. "italienska"
@@ -5811,7 +5841,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v315";
+const APP_VERSION = "v316";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
@@ -5819,11 +5849,12 @@ if (versionTag) {
   versionTag.onclick = openChangelog;
 }
 
-// Ladda bara om för en ny version när det är ofarligt: på ämnes-/lektionslistan,
-// utan pågående pass, handsfree eller öppen modal. Annars väntar omladdningen tills
-// man är tillbaka på en lista (se anropen i renderSubjects/renderLessons).
+// Ladda bara om för en ny version när det är ofarligt: på ämnes-/lektionslistan eller i
+// ordlistan, utan pågående pass, handsfree eller öppen modal. Ordlistan är säker eftersom
+// all redigering sker i en modal – och grinden kräver att ingen modal är öppen.
+// Osparat innehåll kan alltså inte gå förlorat; outboxen är dessutom durabel.
 function isSafeToReloadForUpdate() {
-  return (activeScreen === "subjects" || activeScreen === "lessons")
+  return (activeScreen === "subjects" || activeScreen === "lessons" || activeScreen === "editor")
     && !session && !handsfreeActive
     && modalRoot.classList.contains("hidden");
 }
@@ -5834,7 +5865,16 @@ function maybeReloadForUpdate() {
   // Flagga att NÄSTA laddning är en uppdaterings-omladdning (ej vanlig kallstart) →
   // splashen visar en lugn text så det inte ser ut som en krasch. sessionStorage
   // överlever reload i samma flik men är tom vid äkta kallstart.
-  try { sessionStorage.setItem("flippa-updated", "1"); } catch (_) {}
+  try {
+    sessionStorage.setItem("flippa-updated", "1");
+    // Kom tillbaka till samma plats efteråt. Utan detta startar appen på ämneslistan,
+    // och en uppdatering mitt i en ordlista skulle kasta ut en ur lektionen.
+    sessionStorage.setItem("flippa-restore", JSON.stringify({
+      screen: activeScreen,
+      subject: currentSubject ? currentSubject.id : null,
+      lesson: activeScreen === "editor" ? currentLessonId : null,
+    }));
+  } catch (_) {}
   location.reload();
 }
 
