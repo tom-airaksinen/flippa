@@ -831,6 +831,60 @@ alternativet men **kräver Blaze** – se avsnitt 2.
 
 ---
 
+## 17) Minnesregel i AI-genererade ordlistor (framtida)
+
+Idé (Emil, 2026-08-26): *"Minnesregel ger bra förslag tycker jag :) Kanske man kan ha en
+optional checkbox till AI-prompten när man genererar ordlistan att ta med en minnesregel
+till varje ord."* Inget byggt.
+
+### Nuläge: två olika kodvägar, bara en klarar minnesregel
+
+| Väg | Minnesregel | Kod |
+|---|---|---|
+| **Klistra in AI-svar** (＋ Lägg till ord → Manuellt) | ❌ nej | `parseLines` |
+| **Importera CSV** | ✅ ja, kolumn 5 | `parseCsvRecords` |
+
+CSV-importen mappar `Sektion;Ord;Översättning;Favorit;Minnesregel;Prio` och plockar
+`hint` ur index 4. Inklistringen kan bara `ord;översättning` med en valfri prio sist.
+
+**Verifierat, inte gissat** – `parseLines` med en minnesregel ger:
+
+```
+"gatto;katt;låter som gott;1"  →  { front: "gatto", back: "katt;låter som gott", prio: 1 }
+```
+
+Minnesregeln klistras alltså in i *översättningen*. Baksidan blir skräp.
+
+### Varför det inte är en enradsfix
+`parseLines` tar medvetet **allt** mellan första `;` och en avslutande prio-siffra som
+`back` – just för att en översättning ska få innehålla semikolon (`"tra/fra;om, mellan"`).
+Att tolka fält 3 som minnesregel skulle tysta trasiga sådana rader.
+
+`ord;översättning;minnesregel` går inte att skilja från `ord;översättning med ; i` genom
+att räkna fält. Det behövs en explicit signal.
+
+### Föreslagen lösning: rubrikrad som opt-in
+Låt inklistringen fungera exakt som idag **om inte** första raden är en rubrik. Är den
+det (`ord;översättning;minnesregel;prio` eller CSV:ns `Sektion;...`) tolkas resten strikt
+per kolumn. Då är det otvetydigt, bakåtkompatibelt, och checkboxen i AI-dialogen behöver
+bara lägga rubrikraden i prompten. Samma grepp som CSV-importen redan använder för att
+hoppa över sin rubrikrad.
+
+### UX
+En kryssruta i "Fyll lektionen med AI" – *Ta med minnesregel* – som lägger till
+minnesregel-instruktionen och rubrikraden i prompten. Default av: prompten blir längre och
+svaret långsammare, och alla ord behöver ingen krok.
+
+**Tvinga inte fram en regel per ord.** `no = nej` behöver ingen, och en påhittad krok är
+sämre än ingen. Prompten bör säga *lämna tomt när ordet är självklart* – annars fyller
+modellen på med brus som användaren sedan måste rensa.
+
+### Tills det är byggt
+CSV-vägen bär minnesregler redan idag: låt en LLM svara i CSV-format och importera filen.
+Prompt för det finns i [`oppna-fragor.md`](oppna-fragor.md) under Innehållshantering.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
