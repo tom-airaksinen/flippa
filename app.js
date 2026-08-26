@@ -66,6 +66,7 @@ const USERS = [
   { id: "wille", name: "Wille", salt: "03a070125fe335a6", lock: "e4fa98ef9be108372f1bd359251f534a4116570f1c1d85222cf01fad25e09041" },
   { id: "karin", name: "Karin E", salt: "b2e4c8c9cacc19b6", lock: "47138489aa57b251761df5827680fc024f7212564b71e192fe5f4a24b7c05bf9" },
   { id: "martin", name: "Martin H", salt: "019f77985b46c8c5", lock: "dd3d1ccbe2ab3949137cc22f582d50d2e66898cce2ae05f61caf38e4e1620833" },
+  { id: "maria", name: "Maria", salt: "9a9181985b110d03", lock: "ebb28041cad6b7717eacba4eff5db93bd8d28cd3827b2838006526efeeba9bb0" },
   { id: "guest", name: "Gäst" },
 ];
 // Verifierar inknappat lösenord mot salt+hash (Web Crypto SHA-256). Async.
@@ -5841,7 +5842,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v318";
+const APP_VERSION = "v319";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
