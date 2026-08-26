@@ -7,6 +7,7 @@ ingen ad-hoc curl). Anonym auth precis som appen – ingen hemlighet behövs.
 
   subjects                      lista områden (id, namn, ägare, lektioner, kort)
   plan     <subjectId> <profil> TORRKÖRNING: visar exakt vad som skulle skapas
+  jamfor   <idA> <idB>          jämför två områdens INNEHÅLL (id-oberoende)
   copy     <subjectId> <profil> skapar kopian och verifierar den mot källan
 
 Kopian är VERBATIM: exakt samma objekt som ligger på servern, med bara "owner"
@@ -79,6 +80,45 @@ def matt(s):
             h.update(f"C:{cid}:{c.get('front')}:{c.get('back')}:"
                      f"{c.get('hint')}:{c.get('prio')}\n".encode())
     return len(lektioner), kort, h.hexdigest()[:16]
+
+
+def innehall(s):
+    """Id-oberoende bild av innehållet: mängden (lektionsnamn, front, back, hint, prio)."""
+    ut = set()
+    for l in (s.get("lessons") or {}).values():
+        for c in (l.get("cards") or {}).values():
+            ut.add((l.get("name"), c.get("front"), c.get("back"),
+                    c.get("hint") or "", c.get("prio")))
+    return ut
+
+
+def cmd_jamfor(a, b):
+    alla = get("content/subjects") or {}
+    for i in (a, b):
+        if i not in alla: die(f'inget område med id "{i}"')
+    sa, sb = alla[a], alla[b]
+    ia, ib = innehall(sa), innehall(sb)
+    print(f"\nA: {sa.get('name')} (ägare {sa.get('owner')}) · {len(ia)} unika kort")
+    print(f"B: {sb.get('name')} (ägare {sb.get('owner')}) · {len(ib)} unika kort")
+    if ia == ib:
+        print("\nIDENTISKT innehåll – enda skillnaden är namn, id och ägare.\n")
+        return
+    bara_a, bara_b = ia - ib, ib - ia
+    print(f"\nSKILJER SIG · bara i A: {len(bara_a)} · bara i B: {len(bara_b)}")
+    # Är skillnaden bara prio/minnesregel, eller olika ord?
+    ord_a = {(x[0], x[1], x[2]) for x in ia}
+    ord_b = {(x[0], x[1], x[2]) for x in ib}
+    if ord_a == ord_b:
+        print("Samma ord och översättningar – skillnaden ligger i prio och/eller minnesregel.")
+    else:
+        print(f"Olika ord: bara i A {len(ord_a - ord_b)}, bara i B {len(ord_b - ord_a)}")
+        for x in list(ord_a - ord_b)[:3]: print(f"  bara A: {x[1]} = {x[2]}  ({x[0]})")
+        for x in list(ord_b - ord_a)[:3]: print(f"  bara B: {x[1]} = {x[2]}  ({x[0]})")
+    for namn, mangd in (("A", ia), ("B", ib)):
+        medprio = sum(1 for x in mangd if x[4] in (1, 2, 3))
+        medregel = sum(1 for x in mangd if x[3])
+        print(f"{namn}: {medprio} kort med prio · {medregel} med minnesregel")
+    print()
 
 
 def cmd_subjects():
@@ -159,6 +199,7 @@ if __name__ == "__main__":
         cmd, rest = args[0], args[1:]
         if cmd == "subjects" and not rest: cmd_subjects()
         elif cmd == "plan" and len(rest) == 2: cmd_plan(*rest)
+        elif cmd == "jamfor" and len(rest) == 2: cmd_jamfor(*rest)
         elif cmd == "copy" and len(rest) == 2: cmd_copy(*rest)
         else: die("okänt kommando eller fel antal argument – kör utan argument för hjälp")
     except urllib.error.HTTPError as e:
