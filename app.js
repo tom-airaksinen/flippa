@@ -257,7 +257,9 @@ function saveSRS() {
 }
 
 // SRS nycklas på ORDET (utländskt + svenska), inte på kort-ID:t. Då delar samma ord
-// sin inlärning mellan lektioner. Olika översättning = olika nyckel, så homonymer
+// sin inlärning mellan lektioner – och eftersom lagringen är per ENHET (inte per
+// profil) även mellan områden och profiler. Kopierar man ett område till en annan
+// profil på samma telefon följer progressen alltså med av sig själv. Olika översättning = olika nyckel, så homonymer
 // (t.ex. "tra/fra" = om / mellan) hålls isär eftersom baksidan skiljer sig.
 function normPart(s) {
   return (s || "").trim().toLowerCase().replace(/\s+/g, " ");
@@ -547,7 +549,11 @@ function openLevelsModal() {
 //  Favoriter (stjärnord) & pausade lektioner – personligt per profil
 // =========================================================================
 // Favoriter nycklas per ORD (cardKeyOf) så en stjärna följer ordet mellan lektioner.
-// Paus lagras per lektions-id. Båda per profil, precis som SRS.
+// Paus lagras per lektions-id. Båda är PER PROFIL (nycklade på unitUser()).
+// OBS: SRS är det INTE. `srs` är ett platt objekt per ENHET (flashcards-srs-v1),
+// nycklat på front|back|riktning och aldrig omtilldelat vid profilbyte – samma ord
+// delar alltså inlärning mellan lektioner, områden OCH profiler på samma enhet.
+// Statistiken är däremot per profil (rec.user i commitSessionStats).
 const FAV_KEY = "flippa-fav-v1";        // profil → [ordnyckel]
 const PAUSED_KEY = "flippa-paused-v1";  // profil → [lektions-id]
 
@@ -1345,7 +1351,7 @@ function renderSubjects() {
 
 // Profilväljaren: tryck → välj användare (enkel lista, lätt att utöka)
 // Profilfärg för avatar/väljare (matchar mockupen). Fallback = accent.
-const PROFILE_COLORS = { tom: "#5b8cff", hedvig: "#ff3d8f", wille: "#5bbf72", karin: "#c77dff", martin: "#ff8a3d", guest: "#9aa3b2" };
+const PROFILE_COLORS = { tom: "#5b8cff", hedvig: "#ff3d8f", wille: "#5bbf72", karin: "#c77dff", martin: "#ff8a3d", maria: "#2ec4b6", guest: "#9aa3b2" };
 function profileColor(id) { return PROFILE_COLORS[id] || "var(--accent)"; }
 
 // Väljer en profil (med lösenordslås vid byte till annan låst profil). true = bytt.
@@ -5842,7 +5848,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v319";
+const APP_VERSION = "v320";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
