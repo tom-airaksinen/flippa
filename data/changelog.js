@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "27 augusti 2026", ver: "v321", items: [
+    { t: "Text i hakparenteser läses inte upp. Skriv t.ex. sil' [f] så syns genuset på kortet men stör inte uppläsningen – och en ensam (f) läses inte längre som ”eff”", type: "new", hi: true, ico: "🔊",
+      desc: "Praktiskt för språk där man vill ha genus eller uttalshjälp på kortet utan att rösten läser upp det. Allt inom [ ] visas men hoppas över när ordet läses." },
+  ]},
   { date: "25 augusti 2026", ver: "v317", items: [
     { t: "Hjälpen är omgjord: fem områden du fäller ut i stället för en lång vägg av text, kortare texter, och ett nytt avsnitt ”Grundtankar” som förklarar varför appen fungerar som den gör", type: "improved", hi: true, ico: "❓",
       desc: "Förut fick man scrolla igenom allt för att hitta en sak. Nu ser du alla områden direkt och öppnar det du undrar över – och läser du Grundtankar förstår du tanken bakom lådorna, prio och minnesreglerna." },

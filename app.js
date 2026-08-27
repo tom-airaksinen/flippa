@@ -3132,9 +3132,24 @@ function unlockSpeech() {
   try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
 }
 
+// Text inom HAKPARENTESER läses aldrig upp. Där lägger man sådant som ska SYNAS på
+// kortet men inte höras – typiskt genus: "sil' [f]" visas men uttalas "sil'".
+// Parenteser lämnas i fred (de bär ofta riktigt innehåll, t.ex. "(qc)"), MED ett
+// undantag: en parentes som bara innehåller en genusmarkör – "(f)", "(m/f)", "(n.)" –
+// eftersom appens egen AI-prompt genererar den formen och den lästes upp som "eff".
+// Gäller alla vägar genom speak(): kortets fram- och baksida, handsfree och minnesregeln.
+function speakable(text) {
+  return String(text || "")
+    .replace(/\[[^\]]*\]/g, " ")
+    .replace(/\((?:[mfn](?:\s*[\/.,]+\s*[mfn])*)\.?\)/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
 function speak(text, lang, onEnd) {
-  if (!text || !("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
-  const u = new SpeechSynthesisUtterance(text);
+  const talat = speakable(text);
+  if (!talat || !("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
+  const u = new SpeechSynthesisUtterance(talat);
   if (lang) {
     u.lang = lang;
     const voices = speechSynthesis.getVoices();
@@ -5848,7 +5863,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v320";
+const APP_VERSION = "v321";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
