@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – ångra utan att skaka</title>
+<!-- Appens RIKTIGA stilmall → kortet blir pixelidentiskt med skarpa läget -->
+<link rel="stylesheet" href="../style.css">
+<style>
+  html,body{margin:0;background:#070b15}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--text);padding:24px 14px 60px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 16px;max-width:640px;font-size:.9rem}
+  .tabs{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;justify-content:center}
+  .tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    border-radius:10px;padding:8px 13px;font-size:.82rem;cursor:pointer;font-weight:600;font-family:inherit}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .sim{display:flex;gap:8px;justify-content:center;align-items:center;margin:0 0 16px;
+    color:var(--muted);font-size:.78rem;flex-wrap:wrap}
+  .sim button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:999px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit}
+  .sim button:disabled{opacity:.4}
+
+  /* Telefonram runt den riktiga skärmen */
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:34px;padding:11px;
+    box-shadow:0 22px 55px rgba(0,0,0,.6)}
+  .viewport{position:relative;width:360px;height:720px;background:var(--bg);border-radius:26px;
+    overflow:hidden;display:flex;flex-direction:column}
+  .viewport .screen{flex:1;min-height:0;display:flex;flex-direction:column}
+  .viewport #tabbar{position:absolute;bottom:0;left:0;right:0}
+  .viewport .card-area{margin-bottom:8px}
+
+  /* ---- NYTT: variant A – ångra-chip där överlägget var ---- */
+  .undo-chip{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    z-index:41; display:flex; align-items:center; gap:7px;
+    background:rgba(9,14,26,.82); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+    border:1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    color:var(--text); border-radius:999px; padding:9px 16px;
+    font-family:inherit; font-size:.88rem; font-weight:700; cursor:pointer;
+    animation:chip-in .18s ease-out;
+  }
+  .undo-chip.hidden{display:none}
+  @keyframes chip-in{from{opacity:0;transform:translate(-50%,-50%) scale(.9)}
+                     to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+  /* Tunn nedräkning så man ser att den försvinner */
+  .undo-chip::after{content:"";position:absolute;left:12px;right:12px;bottom:5px;height:2px;
+    border-radius:2px;background:color-mix(in srgb, var(--accent) 70%, transparent);
+    transform-origin:left;animation:chip-timer 3s linear forwards}
+  @keyframes chip-timer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+
+  /* ---- NYTT: variant B – ångra i topprutan ---- */
+  .undo-bar{background:var(--surface);color:var(--text);border:none;width:38px;height:38px;
+    border-radius:10px;font-size:1.05rem;cursor:pointer;font-family:inherit;margin-left:8px}
+  .undo-bar.hidden{display:none}
+  .undo-bar:disabled{opacity:.35}
+
+  .note{max-width:640px;margin:18px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:15px 18px;font-size:.87rem;color:var(--muted)}
+  .note b{color:var(--text)}
+  .note ul{margin:8px 0 0;padding-left:18px}
+  .note li{margin:5px 0}
+  .tag{display:inline-block;padding:1px 8px;border-radius:20px;font-size:.7rem;font-weight:700;
+    border:1px solid var(--line);color:var(--muted);margin-left:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<h1>Ångra utan att skaka</h1>
+<p class="sub">Kortet nedan använder appens <b>riktiga stilmall och markup</b> – svep på riktigt,
+tryck för att vända. Skakning finns kvar i alla varianter (knappen simulerar den), frågan är vad
+som ska <em>komplettera</em> den. Ångra glider tillbaka in från kanten kortet försvann över,
+precis som i appen.</p>
+
+<div class="tabs" id="tabs">
+  <button data-v="now" class="on">Idag · bara skaka</button>
+  <button data-v="chip">A · Chip i överlägget</button>
+  <button data-v="bar">B · ↩ i topprutan</button>
+  <button data-v="both">A + B</button>
+</div>
+<div class="sim">
+  <button id="sim-shake">📳 Simulera skakning</button>
+  <span id="readout">Svep kortet för att svara.</span>
+</div>
+
+<div class="phone"><div class="viewport" id="vp">
+<section id="training-screen" class="screen">
+    <div id="train-bar">
+      <button class="back-btn" data-back="lessons">←</button>
+      <button id="undo-bar" class="undo-bar hidden" title="Ångra senaste svaret" aria-label="Ångra">↩</button>
+      <span id="progress-pill">0</span>
+    </div>
+
+    <main class="card-area">
+      <div class="card-stack">
+        <!-- Centrerat handlingskluster i nederkant: kontextuell (🔊/💡) + ⋯-fjäder.
+             Utländska sidan: paret centrerat som en enhet. Svenska sidan (.solo):
+             ⋯ absolut centrerad, 💡 som satellit till vänster. -->
+        <!-- 🔊/💡 i kortets hörn; ⋯-menyn som halvellips-flik i nederkanten. -->
+        <button id="speak-btn" class="corner-btn corner-speak hidden" title="Uttala" aria-label="Uttala">🔊</button>
+        <button id="hint-btn" class="corner-btn corner-hint hidden" title="Visa ledtråd" aria-label="Visa ledtråd">💡</button>
+        <button id="menu-tab" class="menu-tab hidden" aria-label="Fler val">⋯</button>
+        <div id="card" class="card">
+          <div class="card-inner">
+            <div class="card-front" id="card-front">
+              <span id="card-front-text"></span>
+              <span id="card-front-hint" class="card-hint hidden"></span>
+            </div>
+            <div class="card-back" id="card-back">
+              <span id="card-answer"></span>
+              <span id="card-hint" class="card-hint"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="swipe-feedback"></div>
+      <div id="swipe-feedback-label"></div>
+      <button id="undo-chip" class="undo-chip hidden" type="button">↩ Ångra</button>
+    </main>
+
+    <div id="autospeak-row" class="autospeak-row hidden">
+      <span>🔊 Automatisk uppläsning</span>
+      <label class="switch">
+        <input type="checkbox" id="autospeak-toggle" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <footer class="train-footer">
+      <!-- Svep-tipsen är borta sedan v309: de låg utanför kortet och lästes aldrig.
+           Riktningarna visas i stället mitt på kortet under själva draget (v308). -->
+      <div class="cues-hf hidden">
+        <div class="hf-listen-head"><span class="hf-dot"></span> <span id="hf-status">Lyssnar…</span></div>
+        <div class="hf-chips">
+          <span class="hf-chip grade-fail">"kan inte"</span>
+          <span class="hf-chip grade-good">"kan"</span>
+          <span class="hf-chip grade-easy">"kan bra"</span>
+          <span class="hf-chip grade-hard">"hopplöst"</span>
+          <span class="hf-chip">"flippa"</span>
+          <span class="hf-chip">"ångra"</span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Lägesväxel längst ner (under tipsen). Segmentet fälls UPP (över handtaget). Default: Svep. -->
+    <div id="mode-switch" class="mode-switch">
+      <div id="mode-slide" class="mode-slide">
+        <div id="mode-seg" class="mode-seg">
+          <div class="mode-thumb"></div>
+          <button class="mode-opt on" data-mode="swipe">👆 Svep</button>
+          <button class="mode-opt" data-mode="hf">🎙 Handsfree <span class="beta">beta</span></button>
+        </div>
+      </div>
+      <button id="mode-handle" class="mode-handle" aria-expanded="false">
+        <span class="chev">⌃</span> <span id="mode-handle-lbl">Läge: Svep</span>
+      </button>
+    </div>
+  </section>
+<nav id="tabbar">
+    <button class="tab-btn on" data-tab="flippa" type="button">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="7" width="14" height="14" rx="2.5"/><path d="M7 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-2"/></svg>
+      <span>Flippa</span>
+    </button>
+    <button class="tab-btn" data-tab="stats" type="button">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg>
+      <span>Statistik</span>
+    </button>
+    <button class="tab-btn" data-tab="help" type="button">
+      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg>
+      <span>Hjälp</span>
+    </button>
+  </nav>
+</div></div>
+
+<div class="note" id="note"></div>
+
+<script>
+var ORD = [
+  ["готувати","laga mat"], ["хліб","bröd"], ["дякую","tack"],
+  ["вода","vatten"], ["книга","bok"], ["добре","bra"]
+];
+var i = 0, variant = "now";
+var startX=0, startY=0, dragging=false, didSwipe=false, animating=false;
+var THRESH=80, ROT=.06, HINT_MIN=14, WORD_DELAY=400;
+var hintGrade=null, hintProg=0, wordTimer=null, wordOn=false;
+var undoStack=[];
+var $ = function(id){ return document.getElementById(id); };
+var card=$("card"), fb=$("swipe-feedback"), fbl=$("swipe-feedback-label");
+var chip=$("undo-chip"), barBtn=$("undo-bar");
+var chipTimer=null;
+
+var CUE = {
+  easy:{sym:"\u21c8",label:"kan bra",color:"#f4c542",cls:"fly-up",in:"in-up"},
+  good:{sym:"\u2713",label:"kan",color:"#5bbf72",cls:"fly-right",in:"in-right"},
+  fail:{sym:"\u2717",label:"kan inte",color:"#e05a4f",cls:"fly-left",in:"in-left"},
+  hard:{sym:"\u21ca",label:"hopplöst",color:"#b06bf0",cls:"fly-down",in:"in-down"}
+};
+
+function load(){
+  var o = ORD[i % ORD.length];
+  $("card-front-text").textContent = o[0];
+  $("card-answer").textContent = o[1];
+  $("card-hint").textContent = "";
+  card.classList.remove("flipped");
+  $("progress-pill").textContent = (ORD.length - (i % ORD.length)) + " kvar";
+  visaKnappar();
+}
+function visaKnappar(){
+  var foreign = !card.classList.contains("flipped");
+  $("speak-btn").classList.toggle("hidden", !foreign || dragging || animating);
+  $("menu-tab").classList.toggle("hidden", dragging || animating);
+  $("hint-btn").classList.add("hidden");
+  // Ångra-affordanserna
+  barBtn.classList.toggle("hidden", !(variant==="bar"||variant==="both"));
+  barBtn.disabled = !undoStack.length;
+}
+
+function swipeGrade(dx,dy){ return Math.abs(dy)>Math.abs(dx) ? (dy<0?"easy":"hard") : (dx>0?"good":"fail"); }
+function axis(g,dx,dy){ return (g==="easy"||g==="hard")?Math.abs(dy):Math.abs(dx); }
+function passed(g,dx,dy){ return axis(g,dx,dy)>THRESH; }
+function prog(g,dx,dy){ return Math.min(1, axis(g,dx,dy)/THRESH); }
+
+function paintHint(){
+  if(!hintGrade) return;
+  var c=CUE[hintGrade], ready=hintProg>=1;
+  var op = ready?.85:.6*hintProg, sc=(ready?1.05:.62+.38*hintProg).toFixed(3);
+  fb.textContent=c.sym; fb.style.color=c.color; fb.classList.add("hint");
+  fb.style.opacity=op; fb.style.transform="translate(-50%,-50%) scale("+sc+")";
+  fbl.textContent=c.label; fbl.style.color=c.color; fbl.classList.add("hint");
+  fbl.style.opacity = wordOn?op:0;
+  fbl.style.transform="translate(-50%,-50%) scale("+sc+") translateY(58px)";
+}
+function showHint(g,p){
+  if(g!==hintGrade){ hintGrade=g; wordOn=false; clearTimeout(wordTimer);
+    wordTimer=setTimeout(function(){ if(!dragging||hintGrade!==g) return; wordOn=true; paintHint(); }, WORD_DELAY); }
+  hintProg=p; paintHint();
+}
+function clearHint(){
+  clearTimeout(wordTimer); hintGrade=null; hintProg=0; wordOn=false;
+  fb.classList.remove("hint"); fb.style.opacity=""; fb.style.transform="";
+  fbl.classList.remove("hint"); fbl.style.opacity=""; fbl.style.transform=""; fbl.textContent="";
+}
+function feedback(g){
+  var c=CUE[g];
+  fb.classList.remove("hint"); fb.textContent=c.sym; fb.style.color=c.color;
+  fb.style.opacity=""; fb.style.transform="";
+  fb.classList.add("from-hint"); fb.classList.remove("show"); void fb.offsetWidth; fb.classList.add("show");
+  fbl.classList.remove("hint"); fbl.textContent=c.label; fbl.style.color=c.color;
+  fbl.style.opacity=""; fbl.style.transform="";
+  fbl.classList.add("from-hint"); fbl.classList.remove("show"); void fbl.offsetWidth; fbl.classList.add("show");
+}
+function setDrag(dx,dy){ card.style.transform="translateX("+dx+"px) translateY("+dy+"px) rotate("+(dx*ROT)+"deg)"; }
+
+function flyOut(g){
+  animating=true; visaKnappar();
+  card.classList.add(CUE[g].cls);
+  setTimeout(function(){
+    card.classList.remove("fly-right","fly-left","fly-up","fly-down");
+    card.style.transform="";
+    undoStack.push({grade:g, index:i});
+    i++; load();
+    card.classList.add("emerge");
+    setTimeout(function(){
+      card.classList.remove("emerge"); animating=false;
+      visaKnappar(); visaChip(g);
+      $("readout").textContent = "Svarade " + CUE[g].sym + " " + CUE[g].label + ".";
+    },260);
+  },220);
+}
+
+function visaChip(g){
+  if(!(variant==="chip"||variant==="both")) return;
+  clearTimeout(chipTimer);
+  chip.classList.remove("hidden");
+  void chip.offsetWidth;
+  chipTimer = setTimeout(function(){ chip.classList.add("hidden"); }, 3000);
+}
+function doljChip(){ clearTimeout(chipTimer); chip.classList.add("hidden"); }
+
+function undo(){
+  if(!undoStack.length || animating) return;
+  var snap = undoStack.pop();
+  doljChip();
+  i = snap.index; load();
+  animating = true; visaKnappar();
+  var inCls = CUE[snap.grade].in;
+  card.classList.remove("emerge","in-right","in-left","in-up","in-down");
+  void card.offsetWidth;
+  card.classList.add(inCls);
+  fb.textContent="\u21a9"; fb.style.color="#5b8cff";
+  fb.classList.remove("show","undo-show","from-hint"); void fb.offsetWidth; fb.classList.add("undo-show");
+  fbl.classList.remove("show","from-hint"); fbl.textContent="";
+  $("readout").textContent = "Ångrade – kortet glider tillbaka in från " +
+    ({good:"höger",fail:"vänster",easy:"toppen",hard:"botten"})[snap.grade] + ".";
+  setTimeout(function(){
+    card.classList.remove(inCls); animating=false; visaKnappar();
+  },1450);
+}
+
+card.addEventListener("click", function(){
+  if(didSwipe||animating) return;
+  card.classList.toggle("flipped"); setTimeout(visaKnappar,460);
+});
+card.addEventListener("pointerdown", function(e){
+  if(animating) return;
+  startX=e.clientX; startY=e.clientY; dragging=true; didSwipe=false;
+  fb.classList.remove("show","undo-show","from-hint"); fbl.classList.remove("show","from-hint");
+  clearHint(); doljChip(); visaKnappar();
+  card.setPointerCapture(e.pointerId);
+});
+card.addEventListener("pointermove", function(e){
+  if(!dragging||animating) return;
+  var dx=e.clientX-startX, dy=e.clientY-startY;
+  setDrag(dx,dy);
+  if(Math.hypot(dx,dy)<HINT_MIN) clearHint();
+  else { var g=swipeGrade(dx,dy); showHint(g,prog(g,dx,dy)); }
+});
+card.addEventListener("pointerup", function(e){
+  if(!dragging) return;
+  dragging=false;
+  if(animating){ clearHint(); return; }
+  var dx=e.clientX-startX, dy=e.clientY-startY, g=swipeGrade(dx,dy);
+  if(passed(g,dx,dy)){ didSwipe=true; feedback(g); flyOut(g); }
+  else { clearHint(); card.classList.add("snapping"); card.style.transform="";
+         setTimeout(function(){ card.classList.remove("snapping"); visaKnappar(); },300); }
+});
+card.addEventListener("pointercancel", function(){ if(!dragging) return; dragging=false; clearHint(); });
+card.addEventListener("touchmove", function(e){ if(dragging) e.preventDefault(); }, {passive:false});
+
+chip.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
+barBtn.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
+$("sim-shake").addEventListener("click", function(){
+  if(!undoStack.length){ $("readout").textContent="Inget att ångra ännu – svep ett kort först."; return; }
+  undo();
+});
+
+var NOTER = {
+  now: '<b>Idag</b> – skakning är enda vägen tillbaka (plus rösten i handsfree).' +
+    '<ul><li>Kräver rörelsetillstånd som iOS bara frågar om <b>en gång</b>. Säger man nej är ' +
+    'ångra borta för alltid.</li>' +
+    '<li>Tröskeln är medvetet hög så vanlig gång inte triggar den – det krävs en bestämd skakning.</li>' +
+    '<li>Och att skaka telefonen på bussen är socialt kostsamt.</li></ul>',
+  chip: '<b>A · Chip i överlägget</b> <span class="tag">i stunden</span> – efter ett svar dyker ' +
+    '<em>↩ Ångra</em> upp mitt på kortet i tre sekunder, med en tunn nedräkning.' +
+    '<ul><li>Kommer <b>där blicken redan är</b> – samma plats som svarssymbolen just lämnade.</li>' +
+    '<li>Upptäckbar utan att läras ut. Man ser den första gången man svarar.</li>' +
+    '<li>Noll gestkonflikt: det är ett tryck, inte ett svep.</li>' +
+    '<li><b>Att väga:</b> den ligger ovanpå nästa kort och kan skymma ordet i tre sekunder. ' +
+    'Och den är borta när du väl <em>inser</em> att du svarade fel – vilket ofta är senare.</li></ul>',
+  bar: '<b>B · ↩ i topprutan</b> <span class="tag">alltid nåbar</span> – en liten knapp bredvid ' +
+    'bakåtpilen, nedtonad när det inte finns något att ångra.' +
+    '<ul><li>Alltid tillgänglig – även tre kort senare, när insikten kommer.</li>' +
+    '<li>Kostar <b>ingen korthöjd</b>. Topprutan har bara bakåtpil och förloppspill.</li>' +
+    '<li>Noll gestkonflikt, och den syns aldrig ovanpå ordet.</li>' +
+    '<li><b>Att väga:</b> långt från blicken mitt i ett pass, och man måste veta att den finns. ' +
+    'Den nedtonade knappen lär ut sig själv, men långsammare än A.</li>' +
+    '<li>OBS: ångra-stacken går bara ett steg i taget, så &rdquo;tre kort senare&rdquo; hjälper ' +
+    'bara till ett kort tillbaka.</li></ul>',
+  both: '<b>A + B</b> – chipet i stunden, knappen som säkerhetsnät.' +
+    '<ul><li>De krockar inte: den ena är tillfällig och nära blicken, den andra permanent och ' +
+    'perifer.</li>' +
+    '<li>Tillsammans täcker de båda ögonblicken – <em>direkt</em> (fel svep) och <em>strax ' +
+    'efter</em> (fel bedömning).</li>' +
+    '<li><b>Att väga:</b> två nya element för en funktion som redan finns. Om chipet räcker är ' +
+    'knappen bara brus i topprutan.</li></ul>'
+};
+
+$("tabs").addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  variant=b.dataset.v;
+  [].forEach.call(this.children,function(x){ x.classList.toggle("on", x===b); });
+  doljChip(); visaKnappar(); $("note").innerHTML=NOTER[variant];
+});
+$("note").innerHTML = NOTER.now;
+load();
+</script>
+</body>
+</html>
