@@ -21,6 +21,18 @@
   .sim button{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
     border-radius:999px;padding:6px 14px;font-size:.78rem;font-weight:700;cursor:pointer;font-family:inherit}
   .sim button:disabled{opacity:.4}
+  .sim button.on{border-color:var(--accent);color:var(--text);background:var(--surface-2)}
+  #ikonrad[hidden]{display:none}
+  /* Åtgärdsikoner i appen är streckade (fill:none, stroke-width 2, runda ändar) –
+     fyllda används för tillstånd som paus. Undo är en åtgärd → streckad familj. */
+  .undo-c svg, .undo-bar svg{width:17px;height:17px;flex:none;display:block}
+  .undo-bar svg{width:19px;height:19px;margin:0 auto}
+  .ikonprov{display:flex;gap:18px;justify-content:center;align-items:center;margin:0 0 16px;
+    color:var(--muted);font-size:.72rem}
+  .ikonprov figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .ikonprov .ruta{background:var(--surface);border-radius:10px;padding:8px 14px;
+    display:flex;align-items:center;gap:6px;color:var(--text);font-size:.85rem;font-weight:600}
+  .ikonprov .ruta svg{width:17px;height:17px}
 
   /* Telefonram runt den riktiga skärmen */
   .phone{background:#05070d;border:1px solid #26324f;border-radius:34px;padding:11px;
@@ -96,11 +108,19 @@ precis som i appen.</p>
   <button data-v="cbar">C · ↩ Ångra, centrerad</button>
   <button data-v="both">A + B</button>
 </div>
+<div class="sim" id="ikonrad" hidden>
+  <span>Ikon:</span>
+  <button data-i="text" class="on">↩ tecken (som idag)</button>
+  <button data-i="bage">Båge</button>
+  <button data-i="cirkel">Cirkelpil</button>
+  <button data-i="horn">Hörnpil</button>
+</div>
 <div class="sim">
   <button id="sim-shake">📳 Simulera skakning</button>
   <span id="readout">Svep kortet för att svara.</span>
 </div>
 
+<div class="ikonprov" id="ikonprov"></div>
 <div class="phone"><div class="viewport" id="vp">
 <section id="training-screen" class="screen">
     <div id="train-bar">
@@ -194,6 +214,23 @@ precis som i appen.</p>
 <div class="note" id="note"></div>
 
 <script>
+// Streckade i appens åtgärdsfamilj: fill none, stroke-width 2, runda ändar, 24-rutnät.
+var SVG_START = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+                'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+var IKONER = {
+  text:   "↩",
+  // Klassisk ångra-båge: pilspets åt vänster, bågen svänger ner åt höger
+  bage:   SVG_START + '<path d="M4 9h10a5 5 0 0 1 0 10h-3"/><polyline points="8 5 4 9 8 13"/></svg>',
+  // Moturs cirkelpil – samma familj som appens övriga runda ikoner
+  cirkel: SVG_START + '<polyline points="3 5 3 11 9 11"/>' +
+          '<path d="M5.3 16a9 9 0 1 0 1.9-9.4L3 11"/></svg>',
+  // Hörnpil – SVG-motsvarigheten till tecknet ↩
+  horn:   SVG_START + '<polyline points="9 14 4 9 9 4"/>' +
+          '<path d="M20 20v-7a4 4 0 0 0-4-4H4"/></svg>'
+};
+var ikon = "text";
+function ikonHtml(){ return IKONER[ikon]; }
+
 var ORD = [
   ["готувати","laga mat"], ["хліб","bröd"], ["дякую","tack"],
   ["вода","vatten"], ["книга","bok"], ["добре","bra"]
@@ -234,6 +271,10 @@ function visaKnappar(){
   barBtn.disabled = !undoStack.length;
   // C finns inte alls förrän det finns något att ångra – ingen nedtonad knapp att undra över
   $("undo-c").classList.toggle("hidden", !(variant==="cbar" && undoStack.length > 0));
+  $("undo-c").innerHTML = ikonHtml() + "<span>Ångra</span>";
+  barBtn.innerHTML = ikonHtml();
+  $("ikonrad").hidden = !(variant==="cbar" || variant==="bar" || variant==="both" || variant==="chip");
+  chip.innerHTML = ikonHtml() + "<span>Ångra</span>";
 }
 
 function swipeGrade(dx,dy){ return Math.abs(dy)>Math.abs(dx) ? (dy<0?"easy":"hard") : (dx>0?"good":"fail"); }
@@ -351,6 +392,20 @@ card.addEventListener("touchmove", function(e){ if(dragging) e.preventDefault();
 chip.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
 barBtn.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
 $("undo-c").addEventListener("click", function(e){ e.stopPropagation(); undo(); });
+$("ikonrad").addEventListener("click", function(e){
+  var b=e.target.closest("button"); if(!b) return;
+  ikon=b.dataset.i;
+  [].forEach.call(this.querySelectorAll("button"),function(x){ x.classList.toggle("on", x===b); });
+  visaKnappar(); ritaProv();
+});
+function ritaProv(){
+  var namn={text:"tecken ↩",bage:"båge",cirkel:"cirkelpil",horn:"hörnpil"};
+  $("ikonprov").innerHTML = Object.keys(IKONER).map(function(k){
+    return '<figure><span class="ruta">' + IKONER[k] + '<span>Ångra</span></span>' +
+           '<figcaption>' + namn[k] + '</figcaption></figure>';
+  }).join("");
+}
+ritaProv();
 $("sim-shake").addEventListener("click", function(){
   if(!undoStack.length){ $("readout").textContent="Inget att ångra ännu – svep ett kort först."; return; }
   undo();
@@ -378,7 +433,7 @@ var NOTER = {
     'Den nedtonade knappen lär ut sig själv, men långsammare än A.</li>' +
     '<li>OBS: ångra-stacken går bara ett steg i taget, så &rdquo;tre kort senare&rdquo; hjälper ' +
     'bara till ett kort tillbaka.</li></ul>',
-  cbar: '<b>C · ↩ Ångra, centrerad</b> <span class="tag">rekommenderad</span> – symbol och ord, ' +
+  cbar: '<b>C · Ångra, centrerad</b> <span class="tag">rekommenderad</span> – symbol och ord, ' +
     'mitt i topprutan. <b>Finns inte alls</b> på första kortet – först när det finns något att ' +
     'ångra dyker den upp.' +
     '<ul><li><b>Stör aldrig flippandet.</b> Den ligger i topprutan, aldrig ovanpå ordet – det ' +
@@ -390,7 +445,12 @@ var NOTER = {
     'någon av dem – den är absolut positionerad.</li>' +
     '<li><b>Att väga:</b> topprutan går från två element till tre. Och den kräver ' +
     '<code>position:relative</code> på <code>#train-bar</code>, som inte finns i appens CSS idag.</li>' +
-    '<li>Kvarstår: <code>undoStack</code> ångrar bara ett steg i taget.</li></ul>',
+    '<li>Kvarstår: <code>undoStack</code> ångrar bara ett steg i taget.</li>' +
+    '<li><b>Ikonen:</b> idag är ↩ ett vanligt <em>texttecken</em> – det renderas olika på olika ' +
+    'enheter och matchar inte appens övriga ikoner. Växla ovanför telefonen. Alla tre SVG-förslagen ' +
+    'ligger i appens åtgärdsfamilj: <code>fill:none</code>, <code>stroke-width 2</code>, runda ' +
+    'ändar, 24-rutnät – samma som papperskorgen och ⋯-menyns ikoner. Fyllda ikoner används i appen ' +
+    'för <em>tillstånd</em> (paus), inte för åtgärder.</li></ul>',
   both: '<b>A + B</b> – chipet i stunden, knappen som säkerhetsnät.' +
     '<ul><li>De krockar inte: den ena är tillfällig och nära blicken, den andra permanent och ' +
     'perifer.</li>' +
