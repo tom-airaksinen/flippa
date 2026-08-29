@@ -50,6 +50,22 @@
     transform-origin:left;animation:chip-timer 3s linear forwards}
   @keyframes chip-timer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 
+  /* ---- NYTT: variant C – centrerad ↩ Ångra i topprutan ----
+     OBS: kräver position:relative på #train-bar. Den regeln finns INTE i appens
+     style.css idag – den måste med om C rullas ut. Här sätts den prototyp-lokalt. */
+  .viewport #train-bar{position:relative}
+  .undo-c{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    display:flex; align-items:center; gap:6px;
+    background:var(--surface); color:var(--text); border:none; border-radius:10px;
+    padding:8px 14px; font-family:inherit; font-size:.85rem; font-weight:600;
+    cursor:pointer; white-space:nowrap;
+    animation:undoc-in .16s ease-out;
+  }
+  .undo-c.hidden{display:none}
+  .undo-c:active{background:var(--surface-2)}
+  @keyframes undoc-in{from{opacity:0}to{opacity:1}}
+
   /* ---- NYTT: variant B – ångra i topprutan ---- */
   .undo-bar{background:var(--surface);color:var(--text);border:none;width:38px;height:38px;
     border-radius:10px;font-size:1.05rem;cursor:pointer;font-family:inherit;margin-left:8px}
@@ -77,6 +93,7 @@ precis som i appen.</p>
   <button data-v="now" class="on">Idag · bara skaka</button>
   <button data-v="chip">A · Chip i överlägget</button>
   <button data-v="bar">B · ↩ i topprutan</button>
+  <button data-v="cbar">C · ↩ Ångra, centrerad</button>
   <button data-v="both">A + B</button>
 </div>
 <div class="sim">
@@ -89,6 +106,7 @@ precis som i appen.</p>
     <div id="train-bar">
       <button class="back-btn" data-back="lessons">←</button>
       <button id="undo-bar" class="undo-bar hidden" title="Ångra senaste svaret" aria-label="Ångra">↩</button>
+      <button id="undo-c" class="undo-c hidden" type="button">↩ Ångra</button>
       <span id="progress-pill">0</span>
     </div>
 
@@ -214,6 +232,8 @@ function visaKnappar(){
   // Ångra-affordanserna
   barBtn.classList.toggle("hidden", !(variant==="bar"||variant==="both"));
   barBtn.disabled = !undoStack.length;
+  // C finns inte alls förrän det finns något att ångra – ingen nedtonad knapp att undra över
+  $("undo-c").classList.toggle("hidden", !(variant==="cbar" && undoStack.length > 0));
 }
 
 function swipeGrade(dx,dy){ return Math.abs(dy)>Math.abs(dx) ? (dy<0?"easy":"hard") : (dx>0?"good":"fail"); }
@@ -330,6 +350,7 @@ card.addEventListener("touchmove", function(e){ if(dragging) e.preventDefault();
 
 chip.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
 barBtn.addEventListener("click", function(e){ e.stopPropagation(); undo(); });
+$("undo-c").addEventListener("click", function(e){ e.stopPropagation(); undo(); });
 $("sim-shake").addEventListener("click", function(){
   if(!undoStack.length){ $("readout").textContent="Inget att ångra ännu – svep ett kort först."; return; }
   undo();
@@ -357,6 +378,19 @@ var NOTER = {
     'Den nedtonade knappen lär ut sig själv, men långsammare än A.</li>' +
     '<li>OBS: ångra-stacken går bara ett steg i taget, så &rdquo;tre kort senare&rdquo; hjälper ' +
     'bara till ett kort tillbaka.</li></ul>',
+  cbar: '<b>C · ↩ Ångra, centrerad</b> <span class="tag">rekommenderad</span> – symbol och ord, ' +
+    'mitt i topprutan. <b>Finns inte alls</b> på första kortet – först när det finns något att ' +
+    'ångra dyker den upp.' +
+    '<ul><li><b>Stör aldrig flippandet.</b> Den ligger i topprutan, aldrig ovanpå ordet – det ' +
+    'var A:s problem: en knapp man oftast inte behöver, mitt i läsytan.</li>' +
+    '<li>Ordet gör den självförklarande. Ett ensamt ↩ kräver att man gissar.</li>' +
+    '<li>Ingen nedtonad knapp att undra över. Den dyker upp en gång, efter första svaret, och ' +
+    'blir sedan stående resten av passet.</li>' +
+    '<li>Centrerad har den egen plats mellan bakåtpilen och förloppspillen, utan att knuffa ' +
+    'någon av dem – den är absolut positionerad.</li>' +
+    '<li><b>Att väga:</b> topprutan går från två element till tre. Och den kräver ' +
+    '<code>position:relative</code> på <code>#train-bar</code>, som inte finns i appens CSS idag.</li>' +
+    '<li>Kvarstår: <code>undoStack</code> ångrar bara ett steg i taget.</li></ul>',
   both: '<b>A + B</b> – chipet i stunden, knappen som säkerhetsnät.' +
     '<ul><li>De krockar inte: den ena är tillfällig och nära blicken, den andra permanent och ' +
     'perifer.</li>' +
