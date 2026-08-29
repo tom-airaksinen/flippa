@@ -885,6 +885,65 @@ Prompt för det finns i [`oppna-fragor.md`](oppna-fragor.md) under Innehållshan
 
 ---
 
+## 18) Ikapp-högen efter ett uppehåll (framtida)
+
+Tanke (2026-08-29): idag går förfallodatum på **kalendertid**. Den som tar en paus möts
+av en överväldigande siffra när hen kommer tillbaka. Skulle schemat i stället kunna gå på
+*dagar man faktiskt startar appen*? Utrett, inget byggt, inget ändrat.
+
+### Först: idén är det ursprungliga Leitner-systemet
+I en **fysisk** Leitner-låda *är* tiden studietillfällena – fack 1 varje gång man sätter
+sig, fack 2 var tredje gång, lådan står stilla när man är borta. Digital SRS gick över
+till väggklocka av ett enda skäl: glömskan pausar inte.
+
+### Varför vi inte gör det
+
+**Modellen slutar mäta det den påstår sig mäta.** Intervallen är kalibrerade mot glömska,
+och glömska går på väggklocka. Efter tre veckors uppehåll visas ett "4-dagarskort" som om
+fyra dagar gått – i verkligheten sex veckor. Svaret blir fel och lådan var en lögn.
+Siffran blir vänligare medan schemat blir oärligt.
+
+**SRS ligger per ENHET** (se avsnitt om `flashcards-srs-v1`; nyckeln är
+`front|back|riktning` och lagringen delas mellan profiler på samma enhet). En "aktiv
+dag"-räknare skulle också bli per enhet → ett pass på iPaden flyttar inte telefonens
+räknare, och enheterna glider isär om vad som är förfallet. **Kalendertid är den enda
+klocka alla enheter redan delar gratis.**
+
+**Representationen är genomgripande.** `due` är en absolut tidsstämpel som jämförs mot
+`Date.now()` i `isDue`, `isDueNow`, `dueCountForLessons`, framskjutningen av andra
+riktningen i `answer()` och statistikvyn. Aktiva dagar kräver antingen dagindex (bryter
+alla jämförelser) eller omskrivning av samtliga förfallodatum vid appstart – att mutera
+hela SRS:en vid uppstart är svårt att ångra om det blir fel.
+
+### Men problemet är verkligt – och det är TVÅ problem
+
+**1. Siffran, inte jobbet.** Kort/pass är 10 som default, så 487 förfallna ger fortfarande
+ett pass på tio kort. Muren sitter i märket, inte i arbetsbördan. Presentationsproblem.
+
+**2. Lådkollapsen – den allvarligare.** `gradeCard` sätter `e.box = 1` vid fail/hard.
+Efter ett uppehåll svarar man fel på mycket, och ett halvårs uppbyggnad kan plattas till
+daglig repetition på ett enda pass. Det ger en lång svans av tråkighet långt efter att
+siffran normaliserats – och syns inte i märket alls.
+
+### Alternativ som behåller klockan ärlig
+
+| Åtgärd | Vad det löser | Risk |
+|---|---|---|
+| **Rama in siffran** – visa "10 idag" eller kapa till "50+" | problem 1, nästan helt | ingen, ren UX |
+| **Sprid ikapp-högen** – ärliga datum, men dela ut de mest försenade över några dagar | problem 1 på riktigt | måttlig, rör urvalet |
+| **Mildra felet efter uppehåll** – första missen sänker en låda i stället för att nollställa | problem 2 | rör inlärningsmodellen, testa noga |
+| **Återkomstläge** – "Borta tre veckor – ta 15 idag så jobbar vi ikapp" | upplevelsen | ingen, ren UX |
+
+### Bedömning
+De två första ger troligen nästan hela den önskade effekten. Den tredje är den som
+faktiskt räddar inlärningen. Att frysa klockan löser symptomet men gör schemat till en
+tröst snarare än ett verktyg.
+
+**Öppet:** börja med inramningen av siffran (billigast, noll modellrisk) och mät om
+känslan försvinner innan något rör urvalet eller lådorna.
+
+---
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
