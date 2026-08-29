@@ -780,22 +780,30 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
    bakåtpilen eller förloppspillen – och FRÅNVARANDE tills det finns något att ångra,
    i stället för nedtonad. Glider in uppifrån första gången den dyker upp i passet. */
 .undo-btn {
-  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  display: flex; align-items: center; gap: 6px;
+  position: absolute; left: 50%;
+  /* top:50% räknar mot PADDING-boxen, men flex-barnen centreras i INNEHÅLLS-boxen.
+     #train-bar har asymmetrisk padding (14 topp / 6 botten), så 50% hamnade 4 px för
+     högt. Ankra i stället vid padding-top och ge alla tre samma höjd → de linjerar. */
+  top: 14px; transform: translateX(-50%);
+  height: 38px;
+  display: flex; align-items: center; gap: 7px;
   background: var(--surface); color: var(--text); border: none; border-radius: 10px;
-  padding: 8px 14px;
+  padding: 0 14px;
   font-family: inherit; font-size: 0.85rem; font-weight: 600;
   white-space: nowrap; cursor: pointer;
 }
+.undo-btn svg { width: 17px; height: 17px; flex: none; display: block; }
 .undo-btn:active { background: var(--surface-2); }
 .undo-btn.slide-in { animation: undo-slide-in 0.26s ease-out; }
 @keyframes undo-slide-in {
-  from { opacity: 0; transform: translate(-50%, calc(-50% - 16px)); }
-  to   { opacity: 1; transform: translate(-50%, -50%); }
+  from { opacity: 0; transform: translate(-50%, -16px); }
+  to   { opacity: 1; transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) { .undo-btn.slide-in { animation: none; } }
 #progress-pill {
   margin-left: auto; /* puttas till höger (riktningsväljaren som låg här är flyttad) */
+  /* Samma höjd som .back-btn och .undo-btn – annars linjerar de tre inte i baren. */
+  height: 38px; display: inline-flex; align-items: center;
   background: var(--surface);
   color: var(--muted);
   border-radius: 10px;
