@@ -2012,6 +2012,24 @@ const feedbackLabelEl = $("swipe-feedback-label");
 
 let session = null; // { queue:[card], dirMode, current, shownDir }
 let undoStack = [];  // shake-to-undo: snapshots av state före varje svar i sessionen
+
+// Ångra-knappen i topprutan. Den finns inte alls förrän passets första svar är lagt –
+// ingen nedtonad knapp att undra över på kort ett. Första gången den dyker upp glider
+// den in uppifrån; sedan står den kvar resten av passet (stacken töms sällan).
+const undoBtn = $("undo-btn");
+let undoBtnShown = false;
+function updateUndoBtn(){
+  const show = activeScreen === "training" && !!session && undoStack.length > 0;
+  if (show === undoBtnShown) return;   // rör inget om läget är oförändrat → ingen omstartad animation
+  undoBtnShown = show;
+  undoBtn.classList.toggle("hidden", !show);
+  if (show) { undoBtn.classList.remove("slide-in"); void undoBtn.offsetWidth; undoBtn.classList.add("slide-in"); }
+}
+undoBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  track("angra/knapp");
+  undoLastAnswer();
+});
 // Kort som redan visats i den pågående "Fortsätt"-kedjan (rundan). Nollställs vid ny
 // runda (när man startar från knappen, inte via Fortsätt) så att fel-svarade ord inte
 // kommer tillbaka förrän man tryckt Klar och börjar om.
@@ -2541,6 +2559,7 @@ function beginSession({ queue, dirMode, label, note, kind, lessonId, forced, con
               startedAt: Date.now(), reviewCount: 0, cardSet: new Set(),
               statsSubject: currentSubject ? currentSubject.name : null, statsUser: currentUser || null };
   undoStack = []; // ny session → inget att ångra
+  updateUndoBtn();
   requestMotionPermissionOnce(); // sker inom klick-gesten (krav på iOS)
   unlockSpeech(); // lås upp TTS i samma gest → första kortets autospeak funkar även vid direktsvep
   show("training");
@@ -3033,6 +3052,7 @@ function undoLastAnswer() {
   if (!session || animating) return false;
   const snap = undoStack.pop();
   if (!snap) return false;
+  updateUndoBtn(); // tömdes stacken ska knappen bort direkt, inte om 1,5 s
   // Återställ SRS-poster (radera de som inte fanns före svaret)
   snap.srs.forEach(([k, v]) => { if (v === null) delete srs[k]; else srs[k] = v; });
   saveSRS();
@@ -3105,8 +3125,8 @@ function onMotion(e) {
   shakeLast = { x: a.x || 0, y: a.y || 0, z: a.z || 0, t };
   if (speed > SHAKE_THRESHOLD && t - lastShakeTrigger > 1200) {
     lastShakeTrigger = t;
-    if (activeScreen === "congrats") undoFromCongrats();
-    else undoLastAnswer();
+    if (activeScreen === "congrats") { track("angra/skak"); undoFromCongrats(); }
+    else { track("angra/skak"); undoLastAnswer(); }
   }
 }
 
@@ -3528,7 +3548,10 @@ hintBtn.addEventListener("click",(e)=>{
 });
 
 // Visar/gömmer ⋯-fliken samt hörnknapparna 🔊 (utländska+röst) och 💡 (svenska+minnesregel).
+
 function updateCardActions(){
+  updateUndoBtn(); // FÖRE guarden nedan: knappen sitter i baren, inte på kortet, och
+                   // ska inte döljas medan man drar.
   // Medan kortet dras eller flyger ska knapparna hållas dolda. Annars kan en
   // fördröjd timer (t.ex. showSpeakSoon efter en flipp) återvisa fliken mitt i ett
   // svep, så den ligger kvar på kortets gamla plats medan kortet flyttat sig.
@@ -3612,6 +3635,7 @@ async function editCurrentCard() {
     removeCard(currentSubject.id, lid, c.id);
     session.queue = session.queue.filter((x) => x.id !== c.id); // ut ur passet direkt
     undoStack = []; // det borttagna kortet ska inte gå att ångra tillbaka
+    updateUndoBtn();
     loadCard(); // visa nästa (eller avsluta om kön är tom)
     return;
   }
@@ -5897,7 +5921,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v322";
+const APP_VERSION = "v323";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

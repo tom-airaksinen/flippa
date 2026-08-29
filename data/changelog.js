@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "29 augusti 2026", ver: "v323", items: [
+    { t: "Ångra-knapp i toppen under passet. Den dyker upp först när du lagt ditt första svar, så du inte behöver skaka telefonen för att ta tillbaka ett kort", type: "new", hi: true, ico: "↩️",
+      desc: "Skakning finns kvar, men kräver rörelsetillstånd och är opraktisk på bussen. Nu räcker ett tryck – och knappen syns bara när det faktiskt finns något att ångra." },
+  ]},
   { date: "29 augusti 2026", ver: "v322", items: [
     { t: "Fixat: kortet kunde i sällsynta fall låsa sig mitt i ett pass så att det varken gick att vända eller svepa – bara att backa ur. Nu släpps låset alltid, och ⋯/🔊/💡 kommer tillbaka som de ska", type: "fixed" },
   ]},
