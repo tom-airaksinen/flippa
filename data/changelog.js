@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "29 augusti 2026", ver: "v322", items: [
+    { t: "Fixat: kortet kunde i sällsynta fall låsa sig mitt i ett pass så att det varken gick att vända eller svepa – bara att backa ur. Nu släpps låset alltid, och ⋯/🔊/💡 kommer tillbaka som de ska", type: "fixed" },
+  ]},
   { date: "27 augusti 2026", ver: "v321", items: [
     { t: "Text i hakparenteser läses inte upp. Skriv t.ex. sil' [f] så syns genuset på kortet men stör inte uppläsningen – och en ensam (f) läses inte längre som ”eff”", type: "new", hi: true, ico: "🔊",
       desc: "Praktiskt för språk där man vill ha genus eller uttalshjälp på kortet utan att rösten läser upp det. Allt inom [ ] visas men hoppas över när ordet läses." },

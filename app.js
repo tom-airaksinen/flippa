@@ -2856,6 +2856,7 @@ function launchConfetti() {
 }
 
 function answer(grade) {
+  if (!session || !session.current) return; // tom kö/avslutat pass → kasta inte
   const c = session.current;
   const dir = session.shownDir;
   // Statistik: räkna svar + unika kort i passet
@@ -3670,24 +3671,54 @@ function setDrag(dx, dy) {
 function snapBack() {
   card.classList.add("snapping");
   card.style.transform = "";
-  card.addEventListener("transitionend", () => { card.classList.remove("snapping"); updateCardActions(); }, { once: true });
+  // transitionend UTEBLIR om transformen redan var tom – t.ex. ett rent tapp utan
+  // rörelse. Då låg .snapping kvar och updateCardActions() kördes aldrig, så ⋯/🔊/💡
+  // förblev dolda. {once:true}-lyssnarna hopade sig dessutom, en per tapp.
+  // Timeouten är skyddsnätet; den som kommer först vinner, och båda avregistrerar.
+  let klar = false;
+  const settla = () => {
+    if (klar) return;
+    klar = true;
+    card.removeEventListener("transitionend", settla);
+    card.classList.remove("snapping");
+    updateCardActions();
+  };
+  card.addEventListener("transitionend", settla);
+  setTimeout(settla, 300); // .snapping är 0,25 s
 }
 
 function flyOut(grade) {
   animating = true;
   const cls = grade === "good" ? "fly-right" : grade === "easy" ? "fly-up" : grade === "hard" ? "fly-down" : "fly-left";
   card.classList.add(cls);
+  // animating spärrar BÅDE flipp (click) och svep (pointerdown). Släpps den inte är
+  // kortet dött tills man lämnar passet – bakåtpilen fungerar, inget annat.
+  // Därför får varje väg ut ur flyOut passera settla().
+  let klar = false;
+  const settla = () => {
+    if (klar) return;
+    klar = true;
+    card.classList.remove("emerge", "fly-right", "fly-left", "fly-up", "fly-down");
+    animating = false;
+    updateCardActions(); // settlat läge efter animationen: visa knapparna för nästa kort
+  };
   setTimeout(() => {
     card.classList.remove("fly-right", "fly-left", "fly-up", "fly-down");
     card.style.transform = "";
-    answer(grade);
+    try {
+      answer(grade);
+    } catch (err) {
+      // Ett fel i svarshanteringen får aldrig låsa kortet. Släpp flaggan, visa ett
+      // säkert läge, och låt felet synas i konsolen i stället för att tystas.
+      console.error("answer() kastade – släpper animating", err);
+      settla();
+      return;
+    }
     card.classList.add("emerge");
-    setTimeout(() => {
-      card.classList.remove("emerge");
-      animating = false;
-      updateCardActions(); // settlat läge efter animationen: visa knapparna för nästa kort
-    }, 260);
+    setTimeout(settla, 260);
   }, 220);
+  // Skyddsnät: skulle något oväntat hindra kedjan ovan släpps kortet ändå.
+  setTimeout(settla, 2000);
 }
 
 card.addEventListener("click", () => {
@@ -3724,8 +3755,11 @@ card.addEventListener("pointermove", (e) => {
 });
 
 card.addEventListener("pointerup", (e) => {
-  if (!dragging || animating) return;
+  if (!dragging) return;
+  // dragging måste släppas även om animating hunnit bli true mitt i draget – annars
+  // fastnar den true, och updateCardActions() döljer då ⋯/🔊/💡 för all framtid.
   dragging = false;
+  if (animating) { clearSwipeHint(); return; }
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
   const g = swipeGrade(dx, dy);
@@ -5863,7 +5897,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v321";
+const APP_VERSION = "v322";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
