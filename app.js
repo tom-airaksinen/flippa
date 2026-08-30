@@ -23,10 +23,26 @@ const screens = {
 };
 
 // ---- App-state ----
-// OBS: CACHE_KEY måste vara initierad INNAN loadCachedContent() anropas här, annars
-// kastar den (const i TDZ) ett ReferenceError som try/catch sväljer → cachen blir
-// alltid tom och "visa cachat innehåll offline" fungerar inte.
-const CACHE_KEY = "flashcards-content-cache-v1";
+// Innehållscachen nycklas PER PROFIL. Appen prenumererar bara på den valda
+// profilens områden (orderByChild("owner")), så en enhet lagrar exakt de profiler
+// den faktiskt använts med – inte allas. Då kan man dessutom byta tillbaka till en
+// profil man använt förut utan att hämta om, även offline.
+const CACHE_PREFIX = "flippa-content-cache-v2:";
+const CACHE_KEY_V1 = "flashcards-content-cache-v1"; // hela trädet – rensas en gång i boot()
+function cacheKeyFor(owner) { return CACHE_PREFIX + (owner || "-"); }
+let cacheOwner = null; // vems innehåll som ligger i minnet (undviker TDZ på currentUser i lsSet)
+
+// Släpper innehållscacher när utrymmet tryter. De är REN cache – allt hämtas från
+// Firebase igen – så de får alltid offras före riktig data (SRS, statistik).
+function dropContentCaches(keepOwner) {
+  const behall = keepOwner ? cacheKeyFor(keepOwner) : null;
+  let n = 0;
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.indexOf(CACHE_PREFIX) === 0 && k !== behall) { localStorage.removeItem(k); n++; }
+  }
+  return n;
+}
 
 // localStorage kan ta slut (iOS-taket ligger runt 5 MB, och HELA innehållsträdet
 // – alla ägares områden – cachas här). Ett kast från setItem får aldrig stoppa
@@ -45,13 +61,16 @@ function lsSet(key, value) {
   catch (err) {
     if (!isQuotaError(err)) { console.error("localStorage: kunde inte spara", key, err); return false; }
     // Cachen själv får aldrig tränga ut riktig data – misslyckas den, låt den vara.
-    if (key === CACHE_KEY) return false;
+    if (key.indexOf(CACHE_PREFIX) === 0) return false;
     try {
-      localStorage.removeItem(CACHE_KEY);
-      localStorage.setItem(key, value);
+      // Steg 1: offra ANDRA profilers cacher (aktiv profil behåller sitt offline-läge).
+      // Steg 2: räcker det inte, offra även den aktiva.
+      if (!dropContentCaches(cacheOwner)) dropContentCaches(null);
+      try { localStorage.setItem(key, value); }
+      catch (_) { dropContentCaches(null); localStorage.setItem(key, value); }
       if (!quotaNoticed) {
         quotaNoticed = true;
-        console.warn("localStorage fullt – innehållscachen rensades, skrivningen gjordes om");
+        console.warn("localStorage fullt – innehållscacher rensades, skrivningen gjordes om");
       }
       return true;
     } catch (err2) {
@@ -67,7 +86,9 @@ function lsSet(key, value) {
     }
   }
 }
-let content = loadCachedContent(); // [{id,name,order,owner,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
+// Fylls ur cachen så snart currentUser är känd (några rader ned) – cachen är
+// per profil, så den kan inte läsas förrän vi vet vem som är vald.
+let content = []; // [{id,name,order,owner,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
 let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
 // Uppdaterings-skydd: ny app-version laddas inte om mitt i ett pass. Sätts när en
@@ -120,6 +141,7 @@ async function verifyLock(u, pw) {
 }
 const USER_KEY = "flippa-user";
 let currentUser = localStorage.getItem(USER_KEY) || null; // null = ingen vald (ny enhet)
+content = loadCachedContent(currentUser); // direktmålning vid kallstart (se boot())
 applyTheme(); // sätt ev. rosa tema direkt (innan splash/render) om Hedvig är vald
 function userName(id) { return (USERS.find((u) => u.id === id) || {}).name || ""; }
 // Rosa tema gäller bara Hedvigs profil (sätter klass på <html> → CSS-variablerna byts)
@@ -127,9 +149,22 @@ function applyTheme() {
   document.documentElement.classList.toggle("theme-rosa", currentUser === "hedvig");
 }
 function setUser(id) {
+  const bytte = id !== currentUser;
   currentUser = id;
   if (id) lsSet(USER_KEY, id); else localStorage.removeItem(USER_KEY);
   applyTheme();
+  if (bytte) {
+    // Måla direkt ur den nya profilens cache så bytet känns omedelbart, och flytta
+    // sedan prenumerationen dit. Har profilen använts på enheten förut behövs ingen
+    // hämtning alls – den är redan cachad.
+    content = loadCachedContent(id);
+    cacheOwner = id;
+    serverRaw = content.length ? denormalize(content) : null;
+    if (contentAuthed) listenContent();
+    if (id && !content.length && !navigator.onLine) {
+      showStatus("Kan inte hämta " + userName(id) + "s innehåll offline");
+    }
+  }
   renderSubjects();
 }
 // Engångsfix: ge äldre områden (utan owner) en ägare efter namn. Skrivs till Firebase
@@ -148,7 +183,6 @@ function migrateOwners() {
   });
   lsSet(OWNER_MIGRATED_KEY, "1");
 }
-let seeding = false;
 
 // ---- Språk (för uttal) ----
 const LANG_OPTIONS = [
@@ -845,18 +879,22 @@ function migrateSrsKeys(contentArr) {
 // =========================================================================
 //  Datalager – Firebase + localStorage-cache
 // =========================================================================
-// (CACHE_KEY deklareras högre upp, före loadCachedContent()-anropet vid boot)
+// (CACHE_PREFIX/cacheKeyFor deklareras högre upp, före första anropet vid boot)
 
-function loadCachedContent() {
+function loadCachedContent(owner) {
+  if (!owner) return [];
   try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY)) || [];
+    const a = JSON.parse(localStorage.getItem(cacheKeyFor(owner)));
+    return Array.isArray(a) ? a : [];
   } catch {
     return [];
   }
 }
 
-function cacheContent(c) {
-  lsSet(CACHE_KEY, JSON.stringify(c));
+function cacheContent(owner, c) {
+  if (!owner) return;
+  cacheOwner = owner;
+  lsSet(cacheKeyFor(owner), JSON.stringify(c));
 }
 
 // =========================================================================
@@ -946,10 +984,17 @@ function denormalize(arr) {
 
 let serverRaw = content.length ? denormalize(content) : null;
 
+// Prenumerationen är avgränsad till en ägare, men outboxen kan innehålla ops för en
+// annan profil (t.ex. redigering som gäst strax före ett byte). Filtret gör att en
+// sådan op aldrig kan måla upp ett främmande område i den valda profilens vy.
+function ownedByCurrent(list) {
+  return currentUser ? list.filter((s) => s.owner === currentUser) : [];
+}
+
 // Lokal vy = normalize(serverRaw + outbox). Anropas vid varje mutate och server-eko.
 function recomputeContent() {
-  content = normalize(applyOutbox(serverRaw || {}, loadOutbox()));
-  cacheContent(content);
+  content = ownedByCurrent(normalize(applyOutbox(serverRaw || {}, loadOutbox())));
+  cacheContent(currentUser, content);
   renderCurrentScreen();
 }
 
@@ -1127,10 +1172,14 @@ function showStatus(msg) {
 function boot() {
   backfillAchvDays(); // självläkande: bygg dag-räknarna ur dagshistoriken varje start
   try { localStorage.removeItem(RAW_CACHE_KEY); } catch (_) {} // återvinn utrymmet från v297–299:s dubbla cache
+  // v1-cachen höll HELA trädet (alla ägares områden, ~1,7 MB). Cachen är nu per
+  // profil, så den gamla nyckeln är död vikt – ta bort den en gång och återvinn
+  // utrymmet direkt (den var en huvudorsak till att lagringen tog slut).
+  try { localStorage.removeItem(CACHE_KEY_V1); } catch (_) {}
   setupConnectivity();
   // Vid grind PÅ: väv in ev. osynkade offline-ändringar redan innan render.
   if (offlineEditEnabled() && (serverRaw || loadOutbox().length)) {
-    content = normalize(applyOutbox(serverRaw || {}, loadOutbox()));
+    content = ownedByCurrent(normalize(applyOutbox(serverRaw || {}, loadOutbox())));
   }
   // Visa cachat innehåll direkt (funkar offline)
   if (content.length) renderSubjects();
@@ -1148,71 +1197,59 @@ function boot() {
 
   auth.onAuthStateChanged((user) => {
     if (!user) return;
+    contentAuthed = true; // först nu får setUser byta prenumeration på egen hand
     listenContent();
     flushOutbox(); // inloggad → försök tömma ev. kö (undviker auth-race på .info/connected)
   });
 }
 
-function listenContent() {
-  db.ref("content/subjects").on(
-    "value",
-    (snap) => {
-      const val = snap.val();
-      if (!val) {
-        seedIfEmpty();
-        return;
-      }
-      serverRaw = val;
-      // Reconciliation: lägg ev. osynkade outbox-ops ovanpå serverns tillstånd
-      // (grind AV → outbox tom → identiskt med normalize(val)).
-      content = normalize(applyOutbox(serverRaw, loadOutbox()));
-      if (!localStorage.getItem(SRS_MIGRATED_KEY)) {
-        migrateSrsKeys(content);
-        lsSet(SRS_MIGRATED_KEY, "1");
-      }
-      migrateOwners(); // sätt ägare på äldre områden en gång (skrivs till Firebase)
-      cacheContent(content);
-      showStatus(null);
-      renderCurrentScreen();
-      flushOutbox(); // hört från servern → försök tömma ev. kö
-      if (pendingRestore) {
-        const p = pendingRestore; pendingRestore = null;
-        if (!restorePlaceAfterUpdate(p) && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
-      } else if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
-    },
-    (err) => {
-      console.error(err);
-      showStatus("Läsfel: " + (err.code || err.message));
-    }
-  );
+// Prenumerationen omfattar BARA den valda profilens områden. Kräver indexet
+// ".indexOn": ["owner"] på content/subjects i databasreglerna – utan det hämtar
+// Firebase ändå hela trädet och filtrerar i klienten (bara en konsolvarning).
+let contentQuery = null;    // aktiv fråga
+let contentHandler = null;  // dess value-lyssnare, sparad för att kunna kopplas loss
+let contentAuthed = false;  // sant när anonym inloggning gått igenom
+
+function stopListenContent() {
+  if (contentQuery && contentHandler) contentQuery.off("value", contentHandler);
+  contentQuery = null;
+  contentHandler = null;
 }
 
-function seedIfEmpty() {
-  if (seeding) return;
-  seeding = true;
-  showStatus("Lägger in startinnehåll …");
-  const ts = firebase.database.ServerValue.TIMESTAMP;
-  const subjRef = db.ref("content/subjects").push();
-  const lessRef = subjRef.child("lessons").push();
-  const cardsObj = {};
-  SEED.cards.forEach((c, i) => {
-    cardsObj[`c${i}`] = { front: c.front, back: c.back, order: i, createdAt: ts };
+function listenContent() {
+  stopListenContent();
+  const owner = currentUser;
+  if (!owner) return; // ingen profil vald → välkomstvyn, inget att hämta
+  contentQuery = db.ref("content/subjects").orderByChild("owner").equalTo(owner);
+  contentHandler = (snap) => {
+    // Svar som hinner komma in efter ett profilbyte hör till fel profil – släng det.
+    if (owner !== currentUser) return;
+    // Tomt svar betyder "profilen har inga områden än", INTE "databasen är tom".
+    // (Därför seedas inget här; renderSubjects() visar tomvyn med ＋.)
+    serverRaw = snap.val() || {};
+    // Reconciliation: lägg ev. osynkade outbox-ops ovanpå serverns tillstånd
+    // (grind AV → outbox tom → identiskt med normalize(val)).
+    content = ownedByCurrent(normalize(applyOutbox(serverRaw, loadOutbox())));
+    if (!localStorage.getItem(SRS_MIGRATED_KEY)) {
+      migrateSrsKeys(content);
+      lsSet(SRS_MIGRATED_KEY, "1");
+    }
+    migrateOwners(); // no-op numera: alla områden har ägare (se funktionen)
+    cacheContent(owner, content);
+    showStatus(null);
+    renderCurrentScreen();
+    flushOutbox(); // hört från servern → försök tömma ev. kö
+    if (pendingRestore) {
+      const p = pendingRestore; pendingRestore = null;
+      if (!restorePlaceAfterUpdate(p) && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
+    } else if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
+  };
+  contentQuery.on("value", contentHandler, (err) => {
+    console.error(err);
+    showStatus("Läsfel: " + (err.code || err.message));
   });
-  subjRef
-    .set({
-      name: SEED.subject,
-      order: 0,
-      createdAt: ts,
-      lessons: {
-        [lessRef.key]: { name: SEED.lesson, order: 0, createdAt: ts, cards: cardsObj },
-      },
-    })
-    .catch((err) => {
-      console.error(err);
-      showStatus("Kunde inte seeda: " + (err.code || err.message));
-      seeding = false;
-    });
 }
+
 
 // =========================================================================
 //  Navigation / rendering
@@ -5977,7 +6014,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v326";
+const APP_VERSION = "v327";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

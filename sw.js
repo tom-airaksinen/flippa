@@ -1,11 +1,10 @@
-const CACHE = "flashcards-v326";
+const CACHE = "flashcards-v327";
 const ASSETS = [
   "./",
   "./index.html",
   "./style.css",
   "./app.js",
   "./firebase-config.js",
-  "./data/seed.js",
   "./data/changelog.js",
   "./manifest.json",
   "./icon-192.png",

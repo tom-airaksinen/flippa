@@ -5,6 +5,7 @@ localStorage (appen prenumererar på HELA content/subjects, oavsett ägare).
 Endast läsning. Anonym auth, samma mönster som kopiera-omrade.py.
 
   storlek     storlek per område + totalt, samt uppskattad localStorage-andel
+  index       verifierar att .indexOn ["owner"] är aktivt (REST felar utan index)
 """
 import json, sys, urllib.request
 
@@ -30,6 +31,41 @@ def get(path):
     return http("GET", f"{DB}/{path}.json?auth={token()}")
 
 def kb(n): return f"{n/1024:.0f} kB"
+
+import urllib.parse, urllib.error
+
+def kolla_index():
+    """REST är strikt: saknas indexet svarar servern 400 med 'Index not defined'.
+    SDK:n faller i stället tyst tillbaka på att hämta allt, så detta är det
+    entydiga beskedet."""
+    agare = "tom"
+    q = urllib.parse.urlencode({"orderBy": '"owner"', "equalTo": '"%s"' % agare,
+                                "auth": token()})
+    url = "%s/content/subjects.json?%s" % (DB, q)
+    try:
+        with urllib.request.urlopen(url) as r:
+            res = json.loads(r.read() or "null") or {}
+    except urllib.error.HTTPError as e:
+        kropp = e.read().decode(errors="replace")
+        print("INDEX SAKNAS eller åtkomstfel (HTTP %s)" % e.code)
+        print(kropp.strip()[:400])
+        sys.exit(1)
+    alla = get("content/subjects") or {}
+    vantat = {k for k, v in alla.items() if (v or {}).get("owner") == agare}
+    fick = set(res)
+    print("Index aktivt: frågan orderBy=owner equalTo=%r besvarades av servern." % agare)
+    print("  träffar: %d  (ofiltrerat träd: %d områden)" % (len(fick), len(alla)))
+    print("  delmängd stämmer mot owner-fältet: %s" % ("JA" if fick == vantat else "NEJ"))
+    if fick != vantat:
+        print("  saknas:", vantat - fick, " extra:", fick - vantat)
+        sys.exit(1)
+    kb_del = len(json.dumps(res, ensure_ascii=False).encode())
+    kb_allt = len(json.dumps(alla, ensure_ascii=False).encode())
+    print("  storlek: %.0f kB av %.0f kB (%.0f %% mindre)" %
+          (kb_del/1024, kb_allt/1024, 100*(1-kb_del/kb_allt)))
+
+if len(sys.argv) > 1 and sys.argv[1] == "index":
+    kolla_index(); sys.exit(0)
 
 subs = get("content/subjects") or {}
 rader = []

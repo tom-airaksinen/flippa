@@ -944,6 +944,33 @@ känslan försvinner innan något rör urvalet eller lådorna.
 
 ---
 
+## 19) Lazy-load av kort (framtida)
+
+**Bakgrund.** Fram till v327 prenumererade appen på HELA `content/subjects` – alla
+ägares områden – och cachade trädet i localStorage. När trädet nådde 1,67 MB
+(varav tre identiska kopior av Franska Collins stod för 1,08 MB) tog utrymmet slut
+på iOS och skrivningar började kasta `QuotaExceededError`. Det slog ut
+svarshanteringen mitt i ett pass (se v325/v326).
+
+**Vad som gjordes i v327.** Prenumerationen avgränsades per profil via
+`orderByChild("owner").equalTo(...)` (kräver `.indexOn: ["owner"]` i
+databasreglerna), och cachen nycklas per profil. En enhet bär nu bara de profiler
+den faktiskt använts med. För Toms enhet: 495 kB per start i stället för 1712 kB.
+
+**Varför det inte räcker för alltid.** Avgränsning köper huvudutrymme, inte
+immunitet. Ett enskilt område kan växa sig stort på egen hand – Italienska är
+redan 460 kB / 3295 kort. Växer en profils innehåll tillräckligt är taket tillbaka.
+
+**Det som återstår.** Lyfta ut korten ur ämnesträdet och ladda dem per lektion
+först när de behövs. Ämnesvyn behöver bara namn och antal.
+
+**Knuten som måste lösas först.** "Dags att öva" och antalsbrickorna på
+lektionsvyn behöver SRS-status över *alla* kort i ett område för att räkna ut vad
+som är förfallet. Lazy-load slår sönder det om man inte samtidigt inför en
+sammanfattning per lektion (t.ex. antal förfallna per dag) som kan läsas utan att
+hämta korten. Det – inte själva laddningen – är den svåra delen, och skälet till
+att det inte gjordes i v327.
+
 ## Nästa steg
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt

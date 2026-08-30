@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "30 augusti 2026", ver: "v327", items: [
+    { t: "Appen hämtar nu bara den profil du faktiskt använder, i stället för allt innehåll i hela databasen. Starten går snabbare och telefonen får utrymme över", type: "improved", hi: true, ico: "⚡",
+      desc: "Tidigare laddade varje telefon allas områden – även andra profilers – vid varje start. Nu hämtas din profil, och de profiler du bytt till förut ligger kvar sparade så att byten sker direkt. Det var också det som gjorde att lagringen kunde ta slut." },
+    { t: "Byter du till en profil du aldrig använt på telefonen krävs nätverk första gången", type: "improved" },
+  ]},
   { date: "30 augusti 2026", ver: "v326", items: [
     { t: "Fixat: när enhetens lagring blivit full kunde passet krascha på sista kortet – ”Något gick fel: The quota has been exceeded” – och kortet kom tillbaka i stället för att passet avslutades. Nu går passet alltid i mål", type: "fixed", hi: true, ico: "💾",
       desc: "Flippa sparar en kopia av allt innehåll på telefonen, och den kunde tränga ut utrymmet för dina svar. Nu rensas den kopian automatiskt när det behövs – och skulle det ändå inte gå att spara får du veta det, i stället för att tro att framstegen sparas." },
