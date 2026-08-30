@@ -27,6 +27,46 @@ const screens = {
 // kastar den (const i TDZ) ett ReferenceError som try/catch sväljer → cachen blir
 // alltid tom och "visa cachat innehåll offline" fungerar inte.
 const CACHE_KEY = "flashcards-content-cache-v1";
+
+// localStorage kan ta slut (iOS-taket ligger runt 5 MB, och HELA innehållsträdet
+// – alla ägares områden – cachas här). Ett kast från setItem får aldrig stoppa
+// appen: det slog tidigare ut hela svarshanteringen mitt i ett pass, så kortet
+// kom tillbaka i stället för att gå vidare ("The quota has been exceeded").
+// Innehållscachen är REN cache – den hämtas alltid från Firebase igen – så den
+// offras först, sedan görs skrivningen om.
+function isQuotaError(err) {
+  return !!err && (err.name === "QuotaExceededError" ||
+                   err.name === "NS_ERROR_DOM_QUOTA_REACHED" || err.code === 22);
+}
+let quotaNoticed = false;   // cachen har redan offrats en gång
+let quotaToldUser = false;  // användaren har redan varnats detta besök
+function lsSet(key, value) {
+  try { localStorage.setItem(key, value); return true; }
+  catch (err) {
+    if (!isQuotaError(err)) { console.error("localStorage: kunde inte spara", key, err); return false; }
+    // Cachen själv får aldrig tränga ut riktig data – misslyckas den, låt den vara.
+    if (key === CACHE_KEY) return false;
+    try {
+      localStorage.removeItem(CACHE_KEY);
+      localStorage.setItem(key, value);
+      if (!quotaNoticed) {
+        quotaNoticed = true;
+        console.warn("localStorage fullt – innehållscachen rensades, skrivningen gjordes om");
+      }
+      return true;
+    } catch (err2) {
+      // Nu går det inte att spara ens efter att cachen offrats. Träningen fortsätter,
+      // men framsteg fastnar inte – det får användaren veta, en gång, i stället för
+      // att tro att allt sparas.
+      if (!quotaToldUser) {
+        quotaToldUser = true;
+        console.error("localStorage fullt – kunde inte spara", key, err2);
+        try { toast("Enhetens lagring är full – dina framsteg kan inte sparas", 5000, "error"); } catch (_) {}
+      }
+      return false;
+    }
+  }
+}
 let content = loadCachedContent(); // [{id,name,order,owner,lessons:[{id,name,order,cards:[{id,front,back,order}]}]}]
 let currentSubject = null;         // valt ämnesobjekt
 let currentLessonId = null;        // lektion öppen i editorn
@@ -88,7 +128,7 @@ function applyTheme() {
 }
 function setUser(id) {
   currentUser = id;
-  if (id) localStorage.setItem(USER_KEY, id); else localStorage.removeItem(USER_KEY);
+  if (id) lsSet(USER_KEY, id); else localStorage.removeItem(USER_KEY);
   applyTheme();
   renderSubjects();
 }
@@ -106,7 +146,7 @@ function migrateOwners() {
     s.owner = owner; // sätt lokalt direkt så filtret funkar innan Firebase ekar tillbaka
     enqueue([{ op: "set", path: `${s.id}/owner`, value: owner }]);
   });
-  localStorage.setItem(OWNER_MIGRATED_KEY, "1");
+  lsSet(OWNER_MIGRATED_KEY, "1");
 }
 let seeding = false;
 
@@ -253,7 +293,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 function startOfLocalDay(ts) { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); }
 
 function saveSRS() {
-  localStorage.setItem(SRS_KEY, JSON.stringify(srs));
+  lsSet(SRS_KEY, JSON.stringify(srs));
 }
 
 // SRS nycklas på ORDET (utländskt + svenska), inte på kort-ID:t. Då delar samma ord
@@ -336,7 +376,7 @@ function cardKeyOf(c) { return `${normPart(c.front)}|${normPart(c.back)}`; }
 function markFirstStudied(card) {
   const k = cardKeyOf(card);
   const m = loadFirstStudied();
-  if (!m[k]) { m[k] = todayStr(); localStorage.setItem(FIRST_STUDIED_KEY, JSON.stringify(m)); }
+  if (!m[k]) { m[k] = todayStr(); lsSet(FIRST_STUDIED_KEY, JSON.stringify(m)); }
 }
 
 // =========================================================================
@@ -374,7 +414,7 @@ function dayTierIcon(count) {
 function saveLevels(days, week) {
   const o = loadLS(LEVELS_KEY);
   o[unitUser()] = { days, week };
-  localStorage.setItem(LEVELS_KEY, JSON.stringify(o));
+  lsSet(LEVELS_KEY, JSON.stringify(o));
 }
 function unitUser() { return currentUser || "guest"; }
 function ymdLocal(d) { return d.toLocaleDateString("sv-SE"); }
@@ -406,7 +446,7 @@ function recordUnitFlip(card, dir) {
   if (isNew) dayArr.push(unit);
   const distinctWeek = new Set();
   week.forEach((d) => { if (Array.isArray(us[d])) us[d].forEach((k) => distinctWeek.add(k)); });
-  localStorage.setItem(UNITS_KEY, JSON.stringify(units));
+  lsSet(UNITS_KEY, JSON.stringify(units));
 
   const dayCount = dayArr.length, weekCount = distinctWeek.size;
 
@@ -416,7 +456,7 @@ function recordUnitFlip(card, dir) {
   cs[today] = dayCount;
   const cutoff = ymdLocal((() => { const d = new Date(); d.setDate(d.getDate() - 140); return d; })());
   Object.keys(cs).forEach((d) => { if (d < cutoff) delete cs[d]; });
-  localStorage.setItem(UNITCOUNT_KEY, JSON.stringify(counts));
+  lsSet(UNITCOUNT_KEY, JSON.stringify(counts));
 
   recordAchv(user, sid, dayCount, weekCount); // livstidshistorik för prestationer
 
@@ -477,7 +517,7 @@ function recordAchv(user, sid, dayCount, weekCount) {
   a.d[today] = Math.max(a.d[today] || 0, dayCount);
   const wk = isoWeekKey(new Date());
   a.w[wk] = Math.max(a.w[wk] || 0, weekCount);
-  localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
+  lsSet(ACHV_KEY, JSON.stringify(achv));
 }
 
 // Självläkande: bygg prestationernas DAG-räknare ur unitcount (~140 dgr) vid VARJE
@@ -493,7 +533,7 @@ function backfillAchvDays() {
     const a = achvSlot(achv, user, sid), cs = counts[user][sid];
     Object.keys(cs).forEach((d) => { const v = Math.max(a.d[d] || 0, cs[d]); if (v !== (a.d[d] || 0)) { a.d[d] = v; changed = true; } });
   }));
-  if (changed) localStorage.setItem(ACHV_KEY, JSON.stringify(achv));
+  if (changed) lsSet(ACHV_KEY, JSON.stringify(achv));
 }
 
 // Räkna prestationer för en scope (summerar per-ämnessiffror per dag/vecka)
@@ -569,7 +609,7 @@ function setFavKey(key, on) {
   const set = new Set(o[u] || []);
   on ? set.add(key) : set.delete(key);
   o[u] = [...set];
-  localStorage.setItem(FAV_KEY, JSON.stringify(o));
+  lsSet(FAV_KEY, JSON.stringify(o));
 }
 function toggleFav(card) { const on = !isFav(card); setFavKey(cardKeyOf(card), on); return on; }
 
@@ -580,7 +620,7 @@ function setLessonPaused(lid, on) {
   const set = new Set(o[u] || []);
   on ? set.add(lid) : set.delete(lid);
   o[u] = [...set];
-  localStorage.setItem(PAUSED_KEY, JSON.stringify(o));
+  lsSet(PAUSED_KEY, JSON.stringify(o));
 }
 function toggleLessonPause(lid) { const on = !isLessonPaused(lid); setLessonPaused(lid, on); return on; }
 // Lektioner som "Dags att öva" får dra ifrån (pausade exkluderas helt ur autopasset)
@@ -624,7 +664,7 @@ function setPrioFilter(subjectId, levels) {
   all[u] = all[u] || {};
   if (!levels || levels.length >= 3) delete all[u][subjectId]; // alla valda = frånvarande (= alla)
   else all[u][subjectId] = levels.slice().sort();
-  localStorage.setItem(PRIO_FILTER_KEY, JSON.stringify(all));
+  lsSet(PRIO_FILTER_KEY, JSON.stringify(all));
 }
 // Behörighet: kortets prio (frånvarande = 2) ∈ valda nivåer. Frånvarande filter = alla.
 function prioAllowed(c, sid) {
@@ -723,7 +763,7 @@ function todaysNewCards(subject) {
     });
     entry = { date: today, ids, freed: 0, freedIds: [] };
     ledger[subject.id] = entry;
-    localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+    lsSet(NEW_INTRO_KEY, JSON.stringify(ledger));
   }
   const idSet = new Set(entry.ids);
   const out = [];
@@ -757,7 +797,7 @@ function topUpTodaysNew(subject) {
   if (!add.length) return;
   entry.ids = entry.ids.concat(add.map((c) => c.id));
   ledger[subject.id] = entry;
-  localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+  lsSet(NEW_INTRO_KEY, JSON.stringify(ledger));
 }
 
 // Ett av dagens nya ord besvarades kan/kan bra → det "kunde du redan", så det ska inte
@@ -774,7 +814,7 @@ function freeNewCardSlot(card) {
   entry.freedIds.push(card.id);
   entry.freed = (entry.freed || 0) + 1;
   ledger[currentSubject.id] = entry;
-  localStorage.setItem(NEW_INTRO_KEY, JSON.stringify(ledger));
+  lsSet(NEW_INTRO_KEY, JSON.stringify(ledger));
   topUpTodaysNew(currentSubject); // öppna platsen direkt → nästa nya ord blir tillgängligt
 }
 
@@ -816,7 +856,7 @@ function loadCachedContent() {
 }
 
 function cacheContent(c) {
-  localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+  lsSet(CACHE_KEY, JSON.stringify(c));
 }
 
 // =========================================================================
@@ -827,7 +867,7 @@ function cacheContent(c) {
 // content = normalize(applyOutbox(serverRaw, outbox)).
 const OUTBOX_KEY = "flippa-outbox-v1";
 function loadOutbox() { try { return JSON.parse(localStorage.getItem(OUTBOX_KEY)) || []; } catch { return []; } }
-function saveOutbox(ops) { localStorage.setItem(OUTBOX_KEY, JSON.stringify(ops)); }
+function saveOutbox(ops) { lsSet(OUTBOX_KEY, JSON.stringify(ops)); }
 function splitPath(path) { return String(path || "").split("/").filter(Boolean); }
 
 // Applicerar EN op på ett rått trädobjekt (muterar in-place, returnerar roten).
@@ -1128,7 +1168,7 @@ function listenContent() {
       content = normalize(applyOutbox(serverRaw, loadOutbox()));
       if (!localStorage.getItem(SRS_MIGRATED_KEY)) {
         migrateSrsKeys(content);
-        localStorage.setItem(SRS_MIGRATED_KEY, "1");
+        lsSet(SRS_MIGRATED_KEY, "1");
       }
       migrateOwners(); // sätt ägare på äldre områden en gång (skrivs till Firebase)
       cacheContent(content);
@@ -1480,13 +1520,13 @@ function restorePlaceAfterUpdate(p) {
 
 function deviceId() {
   let id = localStorage.getItem(DEVICE_KEY);
-  if (!id) { id = "d" + Math.random().toString(36).slice(2) + Date.now().toString(36); localStorage.setItem(DEVICE_KEY, id); }
+  if (!id) { id = "d" + Math.random().toString(36).slice(2) + Date.now().toString(36); lsSet(DEVICE_KEY, id); }
   return id;
 }
 function pushSupported() { return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; }
 function isStandalone() { return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; }
 function pushLocal() { try { return JSON.parse(localStorage.getItem(PUSH_LOCAL_KEY) || "{}"); } catch { return {}; } }
-function setPushLocal(o) { localStorage.setItem(PUSH_LOCAL_KEY, JSON.stringify(o)); }
+function setPushLocal(o) { lsSet(PUSH_LOCAL_KEY, JSON.stringify(o)); }
 function localToday() { return new Date().toLocaleDateString("sv-SE"); } // YYYY-MM-DD
 // lastSent-startvärde: har vald tid redan passerat idag → sätt idag (undvik direkt-knuff);
 // ligger tiden framåt → null så den fyras idag vid rätt tid.
@@ -1661,7 +1701,7 @@ function closeChangelog() {
 
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
-  localStorage.setItem(LAST_SUBJECT_KEY, id); // för deep-link vid notis-tryck
+  lsSet(LAST_SUBJECT_KEY, id); // för deep-link vid notis-tryck
   $("lessons-search").value = "";
   syncLessonsClear();
   renderLessons();
@@ -2044,7 +2084,7 @@ const SESSION_LIMIT_KEY = "flashcards-session-limit";
 const sessionLimitSel = $("session-limit");
 sessionLimitSel.value = localStorage.getItem(SESSION_LIMIT_KEY) || "10"; // default på ny enhet: 10 kort/pass
 sessionLimitSel.addEventListener("change", () => {
-  localStorage.setItem(SESSION_LIMIT_KEY, sessionLimitSel.value);
+  lsSet(SESSION_LIMIT_KEY, sessionLimitSel.value);
 });
 function sessionLimit() {
   return parseInt(sessionLimitSel.value, 10) || 0; // 0 = alla
@@ -2056,7 +2096,7 @@ function onlyStarred() { return localStorage.getItem(ONLY_STARRED_KEY) === "1"; 
 const onlyStarredToggle = $("only-starred-toggle");
 onlyStarredToggle.checked = onlyStarred();
 onlyStarredToggle.addEventListener("change", () => {
-  localStorage.setItem(ONLY_STARRED_KEY, onlyStarredToggle.checked ? "1" : "0");
+  lsSet(ONLY_STARRED_KEY, onlyStarredToggle.checked ? "1" : "0");
   syncOptionPills();
   if (activeScreen === "lessons") renderLessons(); // uppdatera due-knappens antal/etikett
 });
@@ -2064,7 +2104,7 @@ onlyStarredToggle.addEventListener("change", () => {
 // ---- Riktning (kommer ihåg senaste valet) ----
 const DIR_KEY = "flashcards-dir";
 dirSelect.value = localStorage.getItem(DIR_KEY) || "b2f";
-dirSelect.addEventListener("change", () => localStorage.setItem(DIR_KEY, dirSelect.value));
+dirSelect.addEventListener("change", () => lsSet(DIR_KEY, dirSelect.value));
 
 // ---- Alternativ-pills: riktning + kort per pass (lektionsskärmen) ----
 const dirPill = $("dir-pill"), limitPill = $("limit-pill");
@@ -2103,7 +2143,7 @@ $("opt-backdrop").onclick = closeChoosers;
 $("dir-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   dirSelect.value = b.dataset.v;
-  localStorage.setItem(DIR_KEY, dirSelect.value);
+  lsSet(DIR_KEY, dirSelect.value);
   syncOptionPills(); closeChoosers();
 });
 $("limit-segs").addEventListener("click", (e) => {
@@ -2117,7 +2157,7 @@ $("limit-segs").addEventListener("click", (e) => {
 // visade ord → topUp gör inget då, så en sänkning gäller i praktiken från imorgon.
 $("newperday-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
-  localStorage.setItem(NEW_PER_DAY_KEY, b.dataset.v);
+  lsSet(NEW_PER_DAY_KEY, b.dataset.v);
   if (currentSubject) topUpTodaysNew(currentSubject);
   track("newperday/" + b.dataset.v);
   syncOptionPills();
@@ -2283,7 +2323,7 @@ function statsPrioLevels() {
 }
 function setStatsPrio(levels) {
   const s = [...new Set(levels)].sort();
-  if (s.length >= 3 || !s.length) localStorage.removeItem(STATS_PRIO_KEY); else localStorage.setItem(STATS_PRIO_KEY, JSON.stringify(s));
+  if (s.length >= 3 || !s.length) localStorage.removeItem(STATS_PRIO_KEY); else lsSet(STATS_PRIO_KEY, JSON.stringify(s));
 }
 function getStats() {
   try { const a = JSON.parse(localStorage.getItem(STATS_KEY) || "[]"); return Array.isArray(a) ? a : []; }
@@ -2312,7 +2352,7 @@ function commitSessionStats() {
   const i = arr.findIndex((r) => r.ts === s.startedAt);
   if (i >= 0) arr[i] = rec; else arr.push(rec);
   if (arr.length > 5000) arr.splice(0, arr.length - 5000); // backstopp mot obegränsad tillväxt
-  localStorage.setItem(STATS_KEY, JSON.stringify(arr));
+  lsSet(STATS_KEY, JSON.stringify(arr));
 }
 // Logga även om appen göms/stängs mitt i ett pass
 window.addEventListener("pagehide", commitSessionStats);
@@ -2536,13 +2576,13 @@ function renderStats() {
   };
   segs.addEventListener("click", (e) => {
     const b = e.target.closest("button"); if (!b) return;
-    period = b.dataset.v; localStorage.setItem(STATS_PERIOD_KEY, period); renderKpis();
+    period = b.dataset.v; lsSet(STATS_PERIOD_KEY, period); renderKpis();
   });
   // Tryck på KORT-rutan → växla mellan svep/repetitioner och unika kort (kommer ihåg läget)
   grid.addEventListener("click", (e) => {
     if (!e.target.closest("#kpi-kort")) return;
     const cur = localStorage.getItem(KORT_MODE_KEY) === "unika" ? "unika" : "kort";
-    localStorage.setItem(KORT_MODE_KEY, cur === "unika" ? "kort" : "unika");
+    lsSet(KORT_MODE_KEY, cur === "unika" ? "kort" : "unika");
     renderKpis();
   });
   renderKpis();
@@ -3156,7 +3196,7 @@ function hideCardActions(){ moreBtn.classList.add("hidden"); speakBtn.classList.
 const AUTO_SPEAK_KEY = "flippa-autospeak";
 // Default PÅ på ny enhet (saknad nyckel). Ett uttryckligt val att stänga av ("0") respekteras.
 let autoSpeak = localStorage.getItem(AUTO_SPEAK_KEY) !== "0";
-function saveAutoSpeak() { localStorage.setItem(AUTO_SPEAK_KEY, autoSpeak ? "1" : "0"); }
+function saveAutoSpeak() { lsSet(AUTO_SPEAK_KEY, autoSpeak ? "1" : "0"); }
 
 // iOS låser talsyntesen tills speak() körts i en användargest. Ett tyst (volume:0)
 // uttalande i gesten låser upp den – annars blockeras första autouppspelningen, som
@@ -4671,7 +4711,7 @@ function buildHintPrompt(front, back) {
 // ---- Fyll lektion med AI (dialog → förifyll prompt i Claude/ChatGPT) ----
 const AI_COUNT_KEY = "flippa-ai-count"; // minns valt antal mellan gånger
 function aiCount() { const v = parseInt(localStorage.getItem(AI_COUNT_KEY), 10); return Number.isFinite(v) ? v : 30; }
-function setAiCount(v) { v = Math.max(5, Math.min(100, v)); localStorage.setItem(AI_COUNT_KEY, String(v)); return v; }
+function setAiCount(v) { v = Math.max(5, Math.min(100, v)); lsSet(AI_COUNT_KEY, String(v)); return v; }
 // Exempelrader i AI-prompten, per språk: ett ENSAMT ord + en FLERORDSFRAS. Paret är
 // medvetet valt så – två rader där den andra innehåller ett mellanslag visar skillnaden
 // mellan mellanslag (inuti en glosa) och radbrytning (mellan glosor). Med bara ett
@@ -5645,15 +5685,15 @@ function openImport() {
     saveSRS();
     migrateSrsKeys(content); // konvertera ev. gammal ID-nycklad backup till ordnyckel
     if (obj.sessionLimit != null) {
-      localStorage.setItem(SESSION_LIMIT_KEY, String(obj.sessionLimit));
+      lsSet(SESSION_LIMIT_KEY, String(obj.sessionLimit));
       sessionLimitSel.value = String(obj.sessionLimit);
     }
-    if (obj.newPerDay != null) localStorage.setItem(NEW_PER_DAY_KEY, String(obj.newPerDay));
+    if (obj.newPerDay != null) lsSet(NEW_PER_DAY_KEY, String(obj.newPerDay));
     if (Array.isArray(obj.stats)) { // slå ihop träningsstatistik (unik på ts), behåll båda
       const merged = new Map(getStats().map((r) => [r.ts, r]));
       obj.stats.forEach((r) => { if (r && r.ts != null) merged.set(r.ts, r); });
       const arr = [...merged.values()].sort((a, b) => a.ts - b.ts);
-      localStorage.setItem(STATS_KEY, JSON.stringify(arr));
+      lsSet(STATS_KEY, JSON.stringify(arr));
     }
     closeModal();
     flash(`Importerade statistik för ${n} kort ✓`, 2500);
@@ -5937,7 +5977,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v325";
+const APP_VERSION = "v326";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

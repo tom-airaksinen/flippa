@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "30 augusti 2026", ver: "v326", items: [
+    { t: "Fixat: när enhetens lagring blivit full kunde passet krascha på sista kortet – ”Något gick fel: The quota has been exceeded” – och kortet kom tillbaka i stället för att passet avslutades. Nu går passet alltid i mål", type: "fixed", hi: true, ico: "💾",
+      desc: "Flippa sparar en kopia av allt innehåll på telefonen, och den kunde tränga ut utrymmet för dina svar. Nu rensas den kopian automatiskt när det behövs – och skulle det ändå inte gå att spara får du veta det, i stället för att tro att framstegen sparas." },
+  ]},
   { date: "30 augusti 2026", ver: "v325", items: [
     { t: "Fixat: i ”Dags att öva” kunde passet fastna på samma ord – man svarade, men samma ord kom upp igen och igen oavsett hur man svepte. Nu går passet alltid vidare", type: "fixed", hi: true, ico: "✅",
       desc: "Orsaken var att statistiken (dagens räknare och firande-notiserna) kunde snäva till sig och då stoppa hela svarshanteringen innan kortet hann bytas. Nu körs statistiken avskilt: den kan aldrig stoppa träningen, och skulle något ändå gå fel syns det som en notis i stället för att kortet tyst vägrar." },
