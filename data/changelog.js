@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "30 augusti 2026", ver: "v325", items: [
+    { t: "Fixat: i ”Dags att öva” kunde passet fastna på samma ord – man svarade, men samma ord kom upp igen och igen oavsett hur man svepte. Nu går passet alltid vidare", type: "fixed", hi: true, ico: "✅",
+      desc: "Orsaken var att statistiken (dagens räknare och firande-notiserna) kunde snäva till sig och då stoppa hela svarshanteringen innan kortet hann bytas. Nu körs statistiken avskilt: den kan aldrig stoppa träningen, och skulle något ändå gå fel syns det som en notis i stället för att kortet tyst vägrar." },
+  ]},
   { date: "29 augusti 2026", ver: "v323", items: [
     { t: "Ångra-knapp i toppen under passet. Den dyker upp först när du lagt ditt första svar, så du inte behöver skaka telefonen för att ta tillbaka ett kort", type: "new", hi: true, ico: "↩️",
       desc: "Skakning finns kvar, men kräver rörelsetillstånd och är opraktisk på bussen. Nu räcker ett tryck – och knappen syns bara när det faktiskt finns något att ångra." },

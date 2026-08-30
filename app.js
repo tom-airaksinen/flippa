@@ -398,10 +398,14 @@ function recordUnitFlip(card, dir) {
   const us = ((units[user] || (units[user] = {}))[sid] || (units[user][sid] = {}));
   const week = currentWeekDates(), weekSet = new Set(week);
   Object.keys(us).forEach((d) => { if (!weekSet.has(d)) delete us[d]; });
-  const dayArr = us[today] || (us[today] = []);
+  // Dagsposten ska vara en array. Är den det inte (trasig eller äldre form i
+  // localStorage) skulle .includes() kasta och slå ut hela svarshanteringen.
+  if (!Array.isArray(us[today])) us[today] = [];
+  const dayArr = us[today];
   const isNew = !dayArr.includes(unit);
   if (isNew) dayArr.push(unit);
-  const distinctWeek = new Set(); week.forEach((d) => (us[d] || []).forEach((k) => distinctWeek.add(k)));
+  const distinctWeek = new Set();
+  week.forEach((d) => { if (Array.isArray(us[d])) us[d].forEach((k) => distinctWeek.add(k)); });
   localStorage.setItem(UNITS_KEY, JSON.stringify(units));
 
   const dayCount = dayArr.length, weekCount = distinctWeek.size;
@@ -2881,13 +2885,8 @@ function answer(grade) {
   // Statistik: räkna svar + unika kort i passet
   session.reviewCount = (session.reviewCount || 0) + 1;
   (session.cardSet || (session.cardSet = new Set())).add(c.id);
-  // Flipp-mål: distinkt ord+riktning per dag/vecka → firande vid milstolpe
-  const flip = recordUnitFlip(c, dir);
-  if (flip) {
-    if (flip.crossedWeek) showAchievement("week");
-    else if (flip.dayCrossed) showAchievement("day", flip.dayCrossed);
-  }
   // Snapshot för shake-to-undo (innan någon mutation): kö, SRS-poster, graded-medlemskap.
+  // Tas FÖRST: allt nedan är sidoeffekter som aldrig får hindra att svaret registreras.
   const gradedKey = c.id + ":" + dir;
   const otherDir0 = dir === "f2b" ? "b2f" : "f2b";
   const k1 = srsKey(c, dir), k2 = srsKey(c, otherDir0);
@@ -2898,25 +2897,38 @@ function answer(grade) {
     srs: [[k1, srs[k1] ? { ...srs[k1] } : null], [k2, srs[k2] ? { ...srs[k2] } : null]],
   });
   if (undoStack.length > 40) undoStack.shift();
+  // Flipp-mål: distinkt ord+riktning per dag/vecka → firande vid milstolpe.
+  // Statistik och firande är SIDOEFFEKTER och körs isolerat: ett fel här får aldrig
+  // stoppa passet. (Buggrapport: passet fastnade på samma ord i all oändlighet –
+  // kön hann aldrig shiftas, och flyOut:s try/catch svalde felet tyst.)
+  try {
+    const flip = recordUnitFlip(c, dir);
+    if (flip) {
+      if (flip.crossedWeek) showAchievement("week");
+      else if (flip.dayCrossed) showAchievement("day", flip.dayCrossed);
+    }
+  } catch (err) { console.error("statistik/firande kastade – passet fortsätter", err); }
   // Endast första svaret per ord+riktning i sessionen räknas mot SRS.
   // Senare möten (efter felsvar) nöter ordet men ändrar inte lådan – så ett ord
   // man först bommade ligger kvar lågt och kommer oftare än ett man kunde direkt.
   const key = c.id + ":" + dir;
   if (!session.graded.has(key)) {
-    gradeCard(c, dir, grade);
-    session.graded.add(key);
-    // Ett LYCKAT svar räknas som repetition även för andra riktningen:
-    // är den introducerad och förfallen, skjut fram datumet (behåll lådan)
-    // så att ett tränat ord försvinner helt från "Dags att öva".
-    if (grade === "good" || grade === "easy") {
-      const otherDir = dir === "f2b" ? "b2f" : "f2b";
-      const oe = getEntry(c, otherDir);
-      const now = Date.now();
-      if (oe.box >= 1 && oe.due <= now) {
-        oe.due = startOfLocalDay(now + BOX_INTERVALS[oe.box] * DAY_MS); // lokal midnatt
-        saveSRS();
+    try {
+      gradeCard(c, dir, grade);
+      session.graded.add(key);
+      // Ett LYCKAT svar räknas som repetition även för andra riktningen:
+      // är den introducerad och förfallen, skjut fram datumet (behåll lådan)
+      // så att ett tränat ord försvinner helt från "Dags att öva".
+      if (grade === "good" || grade === "easy") {
+        const otherDir = dir === "f2b" ? "b2f" : "f2b";
+        const oe = getEntry(c, otherDir);
+        const now = Date.now();
+        if (oe.box >= 1 && oe.due <= now) {
+          oe.due = startOfLocalDay(now + BOX_INTERVALS[oe.box] * DAY_MS); // lokal midnatt
+          saveSRS();
+        }
       }
-    }
+    } catch (err) { console.error("SRS-uppdatering kastade – passet fortsätter", err); }
   }
   // Köhantering inom passet (oberoende av SRS-räkningen):
   // fel → tillbaka sist; hopplöst → tillbaka snart (drilla hårt); kan/kan bra → klart
@@ -2926,10 +2938,12 @@ function answer(grade) {
   // Autouppspelning: svepte man direkt från svenska sidan (b2f, utan att flippa)
   // hann man aldrig se/höra det utländska ordet – läs upp det nu så uttalet alltid
   // ges. Nästa kort i b2f visar svenska (ingen autospeak) så inget krockar.
-  if (autoSpeak && !handsfreeActive && dir === "b2f" && !card.classList.contains("flipped")
-      && hasVoiceFor(subjectLang(currentSubject))) {
-    speak(c.front, subjectLang(currentSubject));
-  }
+  try {
+    if (autoSpeak && !handsfreeActive && dir === "b2f" && !card.classList.contains("flipped")
+        && hasVoiceFor(subjectLang(currentSubject))) {
+      speak(c.front, subjectLang(currentSubject));
+    }
+  } catch (err) { console.error("autouppspelning kastade – passet fortsätter", err); }
   loadCard();
 }
 
@@ -3735,6 +3749,8 @@ function flyOut(grade) {
       // Ett fel i svarshanteringen får aldrig låsa kortet. Släpp flaggan, visa ett
       // säkert läge, och låt felet synas i konsolen i stället för att tystas.
       console.error("answer() kastade – släpper animating", err);
+      // Synligt, annars ser det bara ut som att kortet vägrar gå vidare.
+      try { toast("Något gick fel: " + (err && err.message ? err.message : err), 4000, "error"); } catch {}
       settla();
       return;
     }
@@ -5921,7 +5937,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v324";
+const APP_VERSION = "v325";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
