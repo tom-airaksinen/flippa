@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "4 september 2026", ver: "v328", items: [
+    { t: "Väljaren i ämnesvyn heter nu ”Översätt” i stället för ”Riktning” när ämnet är ett språk. För ämnen som inte översätts, som Morsekod, står det kvar som förut", type: "improved" },
+  ]},
   { date: "30 augusti 2026", ver: "v327", items: [
     { t: "Appen hämtar nu bara den profil du faktiskt använder, i stället för allt innehåll i hela databasen. Starten går snabbare och telefonen får utrymme över", type: "improved", hi: true, ico: "⚡",
       desc: "Tidigare laddade varje telefon allas områden – även andra profilers – vid varje start. Nu hämtas din profil, och de profiler du bytt till förut ligger kvar sparade så att byten sker direkt. Det var också det som gjorde att lagringen kunde ta slut." },

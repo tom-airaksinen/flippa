@@ -2163,6 +2163,9 @@ function toggleChooser(which) {
 function syncOptionPills() {
   const dirOpt = dirSelect.options[dirSelect.selectedIndex];
   $("dir-val").textContent = dirOpt ? dirOpt.text : "Från svenska";
+  // "Översätt" säger mer än "Riktning" – men bara för språkämnen. Morsekod och
+  // Learning science A översätts inte, och där får etiketten stå kvar.
+  $("dir-lbl").textContent = subjectLang(currentSubject) ? "ÖVERSÄTT" : "RIKTNING";
   const pf = currentSubject ? prioFilterFor(currentSubject.id) : null;
   const dots = pf ? ' <span class="limit-dots">' + [1, 2, 3].map((l) => `<i class="p${l}${pf.includes(l) ? "" : " off"}"></i>`).join("") + "</span>" : "";
   $("limit-val").innerHTML = esc(limitLabel(sessionLimitSel.value)) + (onlyStarred() ? " ⭐" : "") + dots;
@@ -6014,7 +6017,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v327";
+const APP_VERSION = "v328";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
