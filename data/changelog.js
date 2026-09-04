@@ -10,8 +10,8 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
-  { date: "4 september 2026", ver: "v328", items: [
-    { t: "Väljaren i ämnesvyn heter nu ”Översätt” i stället för ”Riktning” när ämnet är ett språk. För ämnen som inte översätts, som Morsekod, står det kvar som förut", type: "improved" },
+  { date: "4 september 2026", ver: "v329", items: [
+    { t: "Väljaren i ämnesvyn heter nu ”Översätt” i stället för ”Riktning” när ämnet är ett språk, och tredje valet heter ”Blanda riktning”. För ämnen som inte översätts, som Morsekod, står det kvar som förut", type: "improved" },
   ]},
   { date: "30 augusti 2026", ver: "v327", items: [
     { t: "Appen hämtar nu bara den profil du faktiskt använder, i stället för allt innehåll i hela databasen. Starten går snabbare och telefonen får utrymme över", type: "improved", hi: true, ico: "⚡",

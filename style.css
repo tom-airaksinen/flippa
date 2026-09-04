@@ -668,11 +668,14 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 @media (prefers-reduced-motion: reduce) {
   .opt-chooser, .opt-backdrop { transition: none; }
 }
-.opt-segs { display: flex; gap: 8px; }
-.opt-segs.wrap { flex-wrap: wrap; }
+/* wrap som skyddsnät: knapparna har white-space:nowrap och krymper alltså inte
+   under sin min-bredd. "Blanda riktning" gör att de tre tillsammans inte ryms på
+   en rad på riktigt smala skärmar (~320 px) – då bryts de till två rader i stället
+   för att spilla ut ur väljaren. Vid 375 px och uppåt ligger de kvar på en rad. */
+.opt-segs { display: flex; gap: 8px; flex-wrap: wrap; }
 .opt-segs button {
   flex: 1; background: var(--surface-2); color: var(--text); border: none; border-radius: 10px;
-  padding: 11px 8px; font-size: 0.88rem; font-family: inherit; cursor: pointer; white-space: nowrap;
+  padding: 11px 6px; font-size: 0.88rem; font-family: inherit; cursor: pointer; white-space: nowrap;
 }
 .opt-segs.wrap button { flex: 1 0 26%; }
 .opt-segs button.on { background: var(--accent); color: #fff; font-weight: 600; }
