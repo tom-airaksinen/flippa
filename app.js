@@ -2722,6 +2722,16 @@ function remainingForContinue(cont) {
 let lastSession = null;
 let lastSessionWasHF = false;
 
+// Texten på Klar-skärmens fortsätt-knapp. Ryms allt som är kvar i ETT pass är det
+// de sista orden – då lovar knappen att det är klart efter detta. Är det mer kvar än
+// passlängden följer fler pass, och då får den inte utge sig för att vara sista.
+// (Gränsfallet remaining === limit räknades förut som "mer kvar" och gav
+// "Fortsätt med 10 till" fast det var precis de sista tio.)
+function continueLabel(remaining, limit) {
+  if (remaining > limit) return `Fortsätt med ${limit} till`;
+  return remaining === 1 ? "Ta det sista direkt" : `Ta de sista ${remaining} direkt`;
+}
+
 function finishSession() {
   const wasHF = handsfreeActive;
   commitSessionStats(); // logga passet innan vi släpper session-objektet
@@ -2758,13 +2768,10 @@ function finishSession() {
     goalsEl.innerHTML = "";
   }
 
-  // "Fortsätt"-knapp om man kör i pass och det finns mer kvar. Texten anpassas:
-  // färre kvar än passlängden → "Ta de sista X direkt".
+  // "Fortsätt"-knapp om man kör i pass och det finns mer kvar.
   const contBtn = $("congrats-continue");
   if (remaining > 0) {
-    contBtn.textContent = remaining < cont.limit
-      ? (remaining === 1 ? "Ta det sista direkt" : `Ta de sista ${remaining} direkt`)
-      : `Fortsätt med ${cont.limit} till`;
+    contBtn.textContent = continueLabel(remaining, cont.limit);
     contBtn.classList.remove("hidden");
     contBtn.onclick = () => {
       if (cont.kind === "due") startDueSession(true); else startLessonSession(cont.lessonId, cont.forced, true);
@@ -6018,7 +6025,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v330";
+const APP_VERSION = "v331";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

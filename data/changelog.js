@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "8 september 2026", ver: "v331", items: [
+    { t: "Knappen på Klar-skärmen säger nu ”Ta de sista 10 direkt” även när det är precis ett pass kvar – förut stod det ”Fortsätt med 10 till” fast det inte kom mer efter det", type: "improved" },
+  ]},
   { date: "4 september 2026", ver: "v329", items: [
     { t: "Väljaren i ämnesvyn heter nu ”Översätt” i stället för ”Riktning” när ämnet är ett språk, och tredje valet heter ”Blanda riktning”. För ämnen som inte översätts, som Morsekod, står det kvar som förut", type: "improved" },
   ]},
