@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "10 september 2026", ver: "v332", items: [
+    { t: "Ämneslistan studsar nu mjukt när man drar i den, även om man bara har några få ämnen. Förut kändes skärmen stel eftersom det inte fanns något att scrolla", type: "improved" },
+  ]},
   { date: "8 september 2026", ver: "v331", items: [
     { t: "Knappen på Klar-skärmen säger nu ”Ta de sista 10 direkt” även när det är precis ett pass kvar – förut stod det ”Fortsätt med 10 till” fast det inte kom mer efter det", type: "improved" },
   ]},

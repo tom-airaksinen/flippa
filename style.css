@@ -346,6 +346,21 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   flex: none; overflow: visible; min-height: 0;
   -webkit-mask-image: none; mask-image: none;
 }
+/* iOS ger gummibandsstudsen bara när elementet FAKTISKT är scrollbart. Ämneslistan
+   är oftast kortare än skärmen (några få ämnen) → scrollHeight == clientHeight, och
+   då känns skärmen död jämfört med en native-lista, som studsar ändå. Ett 1 px
+   spöke strax under containerns nederkant gör listan minimalt scrollbar, så studsen
+   finns även när innehållet ryms. Pseudo-elementet är CSS-genererat och överlever
+   därför att renderSubjects() byter ut innerHTML.
+   top:100% räknas mot containerns egen höjd, så spöket följer med utan att påverka
+   raderna – och när listan väl är längre än skärmen ligger det inuti innehållet och
+   ändrar ingenting. */
+#subjects-list { position: relative; }
+#subjects-list::after {
+  content: ""; position: absolute; top: 100%; left: 0; width: 1px; height: 1px;
+  pointer-events: none;
+}
+
 .list-search { padding: 8px 16px 4px; }
 /* Diskret skugga i listans topp – syns först när man börjat scrolla, så den hårda
    klippkanten under den fasta toppen mjukas av. Egen 0-höjds-remsa PRECIS ovanför
