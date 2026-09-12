@@ -3685,16 +3685,42 @@ speakBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
 // Logiken är delad mellan kortets högtalare och redigeradialogens, så beteendet inte
 // kan glida isär. getOrd/getBojning läses vid varje tapp → alltid aktuella värden.
 const DOUBLE_TAP_MS = 350;
+const LONG_PRESS_MS = 500;
 function wireSpeakButton(btn, getOrd, getBojning, tag) {
-  let timer = null;
+  let tapTimer = null, pressTimer = null, langtryckTalade = false;
+
+  // Städa ordet före hopfogningen: speakable() plockar bort t.ex. "(n)" och skulle
+  // annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
+  const helaFrasen = (form) => `${speakable(getOrd())}. ${form}`;
+  const avbrytPress = () => { if (pressTimer) { clearTimeout(pressTimer); pressTimer = null; } };
+
+  // LÅNGTRYCK. Klicket kommer först vid pointerup, så inget har hunnit läsas ännu –
+  // därför läses hela frasen på en gång här, och det efterföljande klicket sväljs.
+  btn.addEventListener("pointerdown", () => {
+    langtryckTalade = false;
+    if (!getBojning()) return; // inget att hålla in för
+    pressTimer = setTimeout(() => {
+      pressTimer = null;
+      const form = getBojning();
+      if (!form) return;
+      langtryckTalade = true;
+      if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
+      track(tag + "/bojning-langtryck");
+      speak(helaFrasen(form), subjectLang(currentSubject));
+    }, LONG_PRESS_MS);
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach((ev) => btn.addEventListener(ev, avbrytPress));
+
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
+    avbrytPress();
+    if (langtryckTalade) { langtryckTalade = false; return; } // långtrycket har redan talat
     const lang = subjectLang(currentSubject);
-    if (timer) {
-      clearTimeout(timer); timer = null;
+    if (tapTimer) {
+      clearTimeout(tapTimer); tapTimer = null;
       const form = getBojning();
       if (form) {
-        track(tag + "/bojning");
+        track(tag + "/bojning-dubbeltapp");
         // Ordet har redan börjat läsas av första tappet. Att avbryta och läsa om allt
         // gav ett hack ("su– suc, un suc…"), så böjningen KÖAS efter ordet i stället:
         // ett sammanhängande uttal, och första tappet behöver ingen fördröjning.
@@ -3702,13 +3728,11 @@ function wireSpeakButton(btn, getOrd, getBojning, tag) {
         const talarAn = "speechSynthesis" in window &&
                         (speechSynthesis.speaking || speechSynthesis.pending);
         if (talarAn) speak(form, lang, null, true);
-        // Städa ordet före hopfogningen: speakable() plockar bort t.ex. "(n)" och
-        // skulle annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
-        else speak(`${speakable(getOrd())}. ${form}`, lang);
+        else speak(helaFrasen(form), lang);
         return;
       }
     }
-    timer = setTimeout(() => { timer = null; }, DOUBLE_TAP_MS);
+    tapTimer = setTimeout(() => { tapTimer = null; }, DOUBLE_TAP_MS);
     track(tag);
     speak(getOrd(), lang);
   });
@@ -4273,7 +4297,7 @@ function askWord(front, back, hint, opts = {}) {
       // samma villkor som kortets egen högtalare.
       const talLang = subjectLang(currentSubject);
       const kanTala = !!(talLang && hasVoiceFor(talLang));
-      const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa för böjning)" aria-label="Läs upp">🔊</button>` : "";
+      const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa eller håll in för böjningen)" aria-label="Läs upp">${IC_SPEAK}</button>` : "";
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
       // Böjningen hör till det utländska ordet → fältet ligger direkt under det.
@@ -6194,7 +6218,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v338";
+const APP_VERSION = "v339";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

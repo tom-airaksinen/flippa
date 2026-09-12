@@ -1521,8 +1521,12 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .modal-globe:active { color: var(--accent); }
 .modal-speak {
   flex: none; background: none; border: none; color: var(--text);
-  font-size: 1.05rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 4px 6px; border-radius: 8px; line-height: 1;
 }
+.modal-speak .ic-svg { width: 20px; height: 20px; vertical-align: middle; }
+/* Långtryck får inte ge iOS markerings-/delningspopup ovanpå knappen */
+.corner-speak, .modal-speak { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .modal-speak:active { color: var(--accent); }
 .modal label { font-size: 0.82rem; color: var(--muted); margin-bottom: -6px; }
 .modal input, .modal textarea {
