@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "12 september 2026", ver: "v334", items: [
+    { t: "Nytt böjningsfält på korten – slås på per ämne under Redigera ämne. Där kan du lägga t.ex. ”o casă, două case”, som visas diskret under ordet men aldrig läses upp", type: "new", hi: true, ico: "📐",
+      desc: "Tanken är att lära in genus och pluralform på köpet, särskilt för ord där stammen ändras. Fältet syns bara för ämnen där du slagit på det, så övriga ämnen ser ut precis som förut. Böjningen går att söka på, och AI-prompten ber om den när ämnet har fältet påslaget." },
+  ]},
   { date: "12 september 2026", ver: "v333", items: [
     { t: "Trycker du på Ångra kommer kortet tillbaka direkt, utan den lilla pausen. Skakar du telefonen är det som förut – då hinner ↩️ visa vad som hände innan kortet glider in", type: "improved" },
   ]},

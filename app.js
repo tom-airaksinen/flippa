@@ -4190,7 +4190,9 @@ function askWords() {
   return new Promise((resolve) => {
     const m = openModal(`
       <h3>Lägg till ord</h3>
-      <p class="modal-hint">Ett ord per rad: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>.<br>Valfritt: lägg prio (1–3) sist, t.ex. <code>grazie;tack;1</code></p>
+      <p class="modal-hint">Ett ord per rad: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>.<br>Valfritt: lägg prio (1–3) sist, t.ex. <code>grazie;tack;1</code>${
+        currentSubject && currentSubject.forms
+          ? `<br>Böjning i klamrar före prion, t.ex. <code>casă (f);hus;{o casă, două case};1</code>` : ""}</p>
       <textarea id="m-text" autocapitalize="none" autocorrect="off" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
@@ -4398,8 +4400,18 @@ function parseLines(text) {
           back = back.slice(0, j).trim();
         }
       }
+      // Valfri böjning i klammer efter baksidan:
+      //   casă (f);hus;{o casă, două case};1
+      // Klammern tas alltid emot, även när ämnet har böjning avslaget – annars
+      // tappas innehåll om man klistrar in innan flaggan slagits på.
+      let form = null;
+      const fm = back.match(/^(.*?);?\s*\{([^}]*)\}\s*$/);
+      if (fm) { form = fm[2].trim() || null; back = fm[1].trim(); }
       if (!front || !back) return null;
-      return prio ? { front, back, prio } : { front, back };
+      const out = { front, back };
+      if (form) out.form = form;
+      if (prio) out.prio = prio;
+      return out;
     })
     .filter(Boolean);
 }
@@ -4654,6 +4666,7 @@ function addCards(sid, lid, cards) {
   const order = Date.now();
   cards.forEach((c, i) => {
     const card = { front: c.front, back: c.back, order: order + i, createdAt: TS };
+    if (c.form) card.form = c.form;
     if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio; // default (2) skrivs aldrig
     value[base.push().key] = card;
   });
@@ -4875,20 +4888,50 @@ const AI_EXAMPLES = {
   zh: ["面包;bröd;1", "早上好;god morgon;2"],
   ko: ["빵;bröd;1", "안녕하세요;hej;2"],
 };
+
+// Böjningsexempel per språk, används bara när ämnet har böjning påslaget.
+// Formen är obestämd singular + obestämd plural, precis som på korten.
+const AI_FORM_EXAMPLES = {
+  ro: "o pâine, două pâini",
+  fr: "un pain, des pains",
+  it: "un pane, due pani",
+  es: "un pan, dos panes",
+  de: "das Brot, die Brote",
+};
 // Två exempelrader på MÅLSPRÅKET (tidigare alltid italienska "la nave", vilket krockade
 // med prompten när man bad om ett annat språk). Saknas språket i tabellen visas i
 // stället radformatet schematiskt, så att formen syns utan felaktiga ord.
+// Har ämnet böjning påslaget visas klammersegmentet i exempelraderna – ett exempel
+// styr mål-LLM:en mer tillförlitligt än en regel i löptext.
+function formsOn() { return !!(currentSubject && currentSubject.forms); }
+// harGenus = genusnoten kom före, då skulle "För substantiv:" upprepas i samma andetag.
+function formPromptNote(harGenus) {
+  if (!formsOn()) return "";
+  return (harGenus ? " Ta dessutom med böjningen" : " För substantiv: ta med böjningen")
+    + ` i klamrar efter den svenska sidan – obestämd singular + obestämd plural, `
+    + `t.ex. {o casă, două case}. Klammern utelämnas för ord som inte är substantiv.`;
+}
 function aiExampleLines(label) {
   const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
   const ex = AI_EXAMPLES[base];
-  if (ex) return ex.join("\n");
+  if (ex) {
+    if (!formsOn()) return ex.join("\n");
+    // Klammern hakas in före prion på substantivraden (den första).
+    const boj = AI_FORM_EXAMPLES[base];
+    return ex.map((rad, i) => {
+      if (i !== 0 || !boj) return rad;
+      const d = rad.lastIndexOf(";");
+      return d < 0 ? rad : rad.slice(0, d) + ";{" + boj + "}" + rad.slice(d);
+    }).join("\n");
+  }
   const l = base ? label : "målspråket";
   return `[ord på ${l}];bröd;1\n[kort fras på ${l}];god morgon;2`;
 }
 // Sammansatt "avancerad" prompt: befintlig genus/artikel-mekanik + prio (3-kolumnsformat).
 function buildAiPrompt(count, theme) {
   const lang = currentForeignLabel();
-  const note = genderPromptNote(subjectLang(currentSubject)); // börjar med mellanslag, eller ""
+  const genus = genderPromptNote(subjectLang(currentSubject)); // börjar med mellanslag, eller ""
+  const note = genus + formPromptNote(!!genus);
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
     + `Format: en glosa per rad – "ord/fras;svensk översättning;prio" med semikolon emellan.\n`
     + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
@@ -6088,7 +6131,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v333";
+const APP_VERSION = "v334";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
