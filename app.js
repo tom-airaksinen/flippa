@@ -4293,7 +4293,9 @@ function askWord(front, back, hint, opts = {}) {
       // MÅSTE leva vidare, annars finns inget fält att klistra in svaret i vid retur.
       const aiPop = m.querySelector("#m-ai-pop");
       const closeAiPop = () => aiPop.classList.add("hidden");
-      const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b); };
+      // Böjningen tas från det LEVANDE fältet: har man just skrivit in den ska frågan
+      // gälla den, och har man rensat den ska den inte följa med.
+      const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b, forms ? v.fo : ""); };
       m.querySelector("#m-ai-help").onclick = (e) => {
         e.stopPropagation();
         aiPop.classList.toggle("hidden");
@@ -4816,14 +4818,24 @@ function getCurrentLesson() {
 
 // Minnesregel-prompten. Ber om ett per rad utan inledning, så svaret går att läsa och
 // plocka ur direkt – man kopierar ett förslag och klistrar in i fältet.
-function buildHintPrompt(front, back) {
+// Har kortet en böjning bifogas den som en EGEN fråga efter minnesreglerna, under
+// rubrik. Förslagen ligger kvar överst och orörda, så det första man ser fortfarande
+// går att kopiera rakt in i fältet – men man får svar på "varför blir det sucuri?"
+// i samma veva, utan att behöva formulera om frågan själv.
+function buildHintPrompt(front, back, form) {
   const lang = currentForeignLabel();
+  const bojning = form
+    ? `\n\nOrdet böjs "${form}". Lägg EFTER förslagen till ett kort stycke under rubriken `
+      + `"Böjning:" om varför formerna ser ut så – vilket mönster det följer och om mönstret `
+      + `går att känna igen på andra ord. Två–tre meningar räcker. Låt förslagen ovanför stå `
+      + `orörda så jag kan kopiera ett av dem rakt av.`
+    : "";
   return `Ge mig ett par förslag på minnesregel som hjälper mig komma ihåg att "${front}" `
     + `betyder "${back}" på ${lang}.\n\n`
     + `Det kan bygga på ljudlikhet, en bild, släktskap med ord jag redan kan – vad som helst `
     + `som ger hjärnan en krok att hänga upp det på.\n\n`
     + `Svara med 2–4 förslag, ett per rad, utan inledning. Varje förslag ska vara kort nog `
-    + `att rymmas på två rader i en app.`;
+    + `att rymmas på två rader i en app.${bojning}`;
 }
 
 // ---- Fyll lektion med AI (dialog → förifyll prompt i Claude/ChatGPT) ----
@@ -6131,7 +6143,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v334";
+const APP_VERSION = "v335";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
