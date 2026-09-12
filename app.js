@@ -3759,9 +3759,11 @@ async function editCurrentCard() {
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lid) {
-    moveCard(currentSubject.id, lid, res.lessonId, c.id, res.front, res.back, res.hint, res.prio);
+    moveCard(currentSubject.id, lid, res.lessonId, c.id,
+             { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
   } else {
-    updateCard(currentSubject.id, lid, c.id, res.front, res.back, res.hint, res.prio);
+    updateCard(currentSubject.id, lid, c.id,
+               { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
   }
   // uppdatera visat kort direkt
   const showFrontFirst = session.shownDir === "f2b";
@@ -4620,9 +4622,18 @@ function addCards(sid, lid, cards) {
   });
   return enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards`, value }]);
 }
-function updateCard(sid, lid, cid, front, back, hint, prio) {
+// Kortets fält skickas som objekt, inte som positionsargument. Listan var uppe i
+// sju respektive åtta parametrar, och där blir ett förväxlat argument en tyst bugg
+// (böjningen hamnar i prio). Objektet gör också nya fält billiga att lägga till.
+// fields: { front, back, hint, prio }
+function updateCard(sid, lid, cid, fields) {
   // prio: 1/2/3 sparas; null/övrigt tar bort fältet (default 2 lagras aldrig).
-  const value = { front, back, hint: hint || null, prio: (prio === 1 || prio === 2 || prio === 3) ? prio : null };
+  const value = {
+    front: fields.front,
+    back: fields.back,
+    hint: fields.hint || null,
+    prio: (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) ? fields.prio : null,
+  };
   enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards/${cid}`, value }]);
 }
 function removeCard(sid, lid, cid) {
@@ -4631,10 +4642,12 @@ function removeCard(sid, lid, cid) {
 // Flytta ett kort till en annan lektion (atomiskt: lägg till nytt + ta bort gammalt).
 // SRS följer med automatiskt eftersom inlärningen nycklas på ordet, inte kort-id:t.
 // prio måste däremot skickas med explicit – annars tappas den vid flytt.
-function moveCard(sid, fromLid, toLid, cid, front, back, hint, prio) {
+// fields: { front, back, hint, prio } – se kommentaren vid updateCard.
+function moveCard(sid, fromLid, toLid, cid, fields) {
   const newKey = db.ref(`content/subjects/${sid}/lessons/${toLid}/cards`).push().key;
-  const card = { front, back, hint: hint || null, order: Date.now(), createdAt: TS };
-  if (prio === 1 || prio === 2 || prio === 3) card.prio = prio;
+  const card = { front: fields.front, back: fields.back, hint: fields.hint || null,
+                 order: Date.now(), createdAt: TS };
+  if (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) card.prio = fields.prio;
   enqueue([{ op: "batch", updates: {
     [`${sid}/lessons/${toLid}/cards/${newKey}`]: card,
     [`${sid}/lessons/${fromLid}/cards/${cid}`]: null,
@@ -5031,9 +5044,11 @@ async function editWord(cid) {
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lesson.id) {
-    moveCard(currentSubject.id, lesson.id, res.lessonId, cid, res.front, res.back, res.hint, res.prio);
+    moveCard(currentSubject.id, lesson.id, res.lessonId, cid,
+             { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
   } else {
-    updateCard(currentSubject.id, lesson.id, cid, res.front, res.back, res.hint, res.prio);
+    updateCard(currentSubject.id, lesson.id, cid,
+               { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
   }
 }
 
