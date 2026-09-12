@@ -3358,15 +3358,7 @@ function currentCardForm() {
   const c = session && session.current;
   return (currentSubject && currentSubject.forms && c && c.form) ? c.form : "";
 }
-function speakCurrentWithForm() {
-  if (!session || !session.current) return;
-  const c = session.current;
-  const form = currentCardForm();
-  // Städa ordet FÖRE hopfogningen: speakable() plockar bort t.ex. "(n)" och skulle
-  // annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
-  const ord = speakable(c.front);
-  speak(form ? `${ord}. ${form}` : c.front, subjectLang(currentSubject));
-}
+
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
@@ -3685,19 +3677,35 @@ fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeF
 // 🔊 (uttala) uppe till höger på utländska sidan; 💡 (ledtråd) nere till höger på svenska.
 speakBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
 // Dubbeltapp på högtalaren läser ordet TILLSAMMANS med böjningen – man vill höra hur
-// pluralen låter. Första tappet talar direkt som förut (ingen fördröjning att vänta ut);
-// kommer ett andra tapp inom fönstret avbryts det och ordet läses om med böjningen.
+// pluralen låter. Första tappet talar direkt (ingen fördröjning att vänta ut); kommer
+// ett andra tapp inom fönstret avbryts det och ordet läses om med böjningen.
+// Logiken är delad mellan kortets högtalare och redigeradialogens, så beteendet inte
+// kan glida isär. getOrd/getBojning läses vid varje tapp → alltid aktuella värden.
 const DOUBLE_TAP_MS = 350;
-let speakTapTimer = null;
-speakBtn.addEventListener("click",(e)=>{
-  e.stopPropagation();
-  if (speakTapTimer) {
-    clearTimeout(speakTapTimer); speakTapTimer = null;
-    if (currentCardForm()) { track("uttala/bojning"); speakCurrentWithForm(); return; }
-  }
-  speakTapTimer = setTimeout(()=>{ speakTapTimer = null; }, DOUBLE_TAP_MS);
-  track("uttala"); speakCurrent();
-});
+function wireSpeakButton(btn, getOrd, getBojning, tag) {
+  let timer = null;
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const lang = subjectLang(currentSubject);
+    if (timer) {
+      clearTimeout(timer); timer = null;
+      const form = getBojning();
+      if (form) {
+        // Städa ordet FÖRE hopfogningen: speakable() plockar bort t.ex. "(n)" och
+        // skulle annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
+        track(tag + "/bojning");
+        speak(`${speakable(getOrd())}. ${form}`, lang);
+        return;
+      }
+    }
+    timer = setTimeout(() => { timer = null; }, DOUBLE_TAP_MS);
+    track(tag);
+    speak(getOrd(), lang);
+  });
+}
+wireSpeakButton(speakBtn,
+  () => (session && session.current ? session.current.front : ""),
+  currentCardForm, "uttala");
 hintBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
 hintBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
@@ -4251,6 +4259,11 @@ function askWord(front, back, hint, opts = {}) {
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
     const open = (f, b, h, fo) => {
+      // Högtalaren till VÄNSTER om AI-stjärnorna. Visas bara när språket har en röst,
+      // samma villkor som kortets egen högtalare.
+      const talLang = subjectLang(currentSubject);
+      const kanTala = !!(talLang && hasVoiceFor(talLang));
+      const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa för böjning)" aria-label="Läs upp">🔊</button>` : "";
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
       // Böjningen hör till det utländska ordet → fältet ligger direkt under det.
@@ -4261,7 +4274,7 @@ function askWord(front, back, hint, opts = {}) {
       <label>Lektion</label>
       <div id="m-lesson-mount"></div>` : "";
       const m = openModal(`
-      <div class="modal-head"><h3>Redigera ord</h3><div class="modal-head-btns">${globeBtn}${delBtn}</div></div>
+      <div class="modal-head"><h3>Redigera ord</h3><div class="modal-head-btns">${speakBtnHtml}${globeBtn}${delBtn}</div></div>
       <label>Utländskt (framsida)</label>
       <input type="text" id="m-front" value="${esc(f)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${formBlock}
       <label>Svenska (baksida)</label>
@@ -4354,6 +4367,9 @@ function askWord(front, back, hint, opts = {}) {
         closeAiPop();
       });
 
+      if (kanTala) wireSpeakButton(m.querySelector("#m-speak"),
+        () => vals().f || f,
+        () => (forms ? vals().fo : ""), "uttala-redigera");
       if (explore) m.querySelector("#m-globe").onclick = () => {
         const v = vals();
         // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
@@ -6168,7 +6184,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v336";
+const APP_VERSION = "v337";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

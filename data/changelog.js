@@ -10,12 +10,14 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "12 september 2026", ver: "v337", items: [
+    { t: "Högtalare även i Redigera ord, till vänster om AI-stjärnorna – med samma dubbeltapp för böjningen. Den läser det du just skrivit, så du kan höra ändringen innan du sparar", type: "new", hi: true, ico: "🔊",
+      desc: "Praktiskt när man lägger in ett nytt ord och vill kontrollera uttalet på en gång, utan att först spara och leta upp kortet i ett pass." },
+    { t: "AI-kontext tar nu med ordets böjning i frågan när kortet har en, och ber om förklaringen till varför formerna ser ut som de gör", type: "improved" },
+  ]},
   { date: "12 september 2026", ver: "v336", items: [
     { t: "Dubbeltappa högtalaren så läses ordet upp tillsammans med böjningen – bra när man vill höra hur pluralen låter. Ett tapp är som förut, och den automatiska uppläsningen säger aldrig böjningen", type: "new", hi: true, ico: "🔊",
       desc: "Första tappet talar direkt som vanligt, så inget känns långsammare. Kommer ett andra tapp inom en tredjedels sekund läses ordet om, nu med böjningen efter." },
-  ]},
-  { date: "12 september 2026", ver: "v335", items: [
-    { t: "Har ordet en böjning frågar AI-hjälpen nu också varför formerna ser ut som de gör – minnesreglerna kommer först som förut, förklaringen under", type: "improved" },
   ]},
   { date: "12 september 2026", ver: "v334", items: [
     { t: "Nytt böjningsfält på korten – slås på per ämne under Redigera ämne. Där kan du lägga t.ex. ”o casă, două case”, som visas diskret under ordet men aldrig läses upp", type: "new", hi: true, ico: "📐",
