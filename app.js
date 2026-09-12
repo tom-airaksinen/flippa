@@ -3351,16 +3351,17 @@ function updateStack() {
 function speakCurrent() {
   if (session && session.current) speak(session.current.front, subjectLang(currentSubject));
 }
-// Böjningen ska BARA höras när man ber om den. Den automatiska uppläsningen och
-// handsfree går via speak(c.front, ...) och rör den aldrig.
-function currentSpokenForm() {
+// Böjningen på det kort som visas – tom när ämnet har flaggan av. Används av både
+// dubbeltapp-uppläsningen och AI-kontext. Den automatiska uppläsningen och handsfree
+// går via speak(c.front, ...) och rör den aldrig.
+function currentCardForm() {
   const c = session && session.current;
   return (currentSubject && currentSubject.forms && c && c.form) ? c.form : "";
 }
 function speakCurrentWithForm() {
   if (!session || !session.current) return;
   const c = session.current;
-  const form = currentSpokenForm();
+  const form = currentCardForm();
   // Städa ordet FÖRE hopfogningen: speakable() plockar bort t.ex. "(n)" och skulle
   // annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
   const ord = speakable(c.front);
@@ -3369,10 +3370,16 @@ function speakCurrentWithForm() {
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
-function googleAiExploreUrl(term) {
+// form (valfri) = kortets böjning. Är den ifylld läggs en fråga om varför formerna
+// ser ut som de gör till i samma kontextfråga – man vill förstå mönstret, inte bara
+// memorera det. Minnesregel-prompten är en annan sak och rör inte böjningen.
+function googleAiExploreUrl(term, form) {
   const label = subjectLang(currentSubject) ? langLabel(subjectLang(currentSubject)).toLowerCase() : "";
   const onLang = label ? ` på ${label}` : "";
-  const q = `Kan du berätta om "${term}"${onLang} - vad är etymologin och vilka andra närliggande ord finns och vad är skillnaden? Kan du illustrera med foton/bilder?`;
+  const bojning = form
+    ? ` Ordet böjs "${form}" – varför ser formerna ut så, och går mönstret igen på andra ord?`
+    : "";
+  const q = `Kan du berätta om "${term}"${onLang} - vad är etymologin och vilka andra närliggande ord finns och vad är skillnaden?${bojning} Kan du illustrera med foton/bilder?`;
   return `https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`;
 }
 function googleAiExplore(term) { return window.open(googleAiExploreUrl(term), "_blank"); }
@@ -3645,7 +3652,7 @@ function selectFan(i, src){
   setFanHot(-1);
   if(!c){ closeFan(); return; }
   if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); openExternal(googleImageSearchUrl(c.front), src === "tapp"); return; }
-  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front), src === "tapp"); return; }
+  if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front, currentCardForm()), src === "tapp"); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
@@ -3686,7 +3693,7 @@ speakBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
   if (speakTapTimer) {
     clearTimeout(speakTapTimer); speakTapTimer = null;
-    if (currentSpokenForm()) { track("uttala/bojning"); speakCurrentWithForm(); return; }
+    if (currentCardForm()) { track("uttala/bojning"); speakCurrentWithForm(); return; }
   }
   speakTapTimer = setTimeout(()=>{ speakTapTimer = null; }, DOUBLE_TAP_MS);
   track("uttala"); speakCurrent();
@@ -4321,9 +4328,7 @@ function askWord(front, back, hint, opts = {}) {
       // MÅSTE leva vidare, annars finns inget fält att klistra in svaret i vid retur.
       const aiPop = m.querySelector("#m-ai-pop");
       const closeAiPop = () => aiPop.classList.add("hidden");
-      // Böjningen tas från det LEVANDE fältet: har man just skrivit in den ska frågan
-      // gälla den, och har man rensat den ska den inte följa med.
-      const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b, forms ? v.fo : ""); };
+      const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b); };
       m.querySelector("#m-ai-help").onclick = (e) => {
         e.stopPropagation();
         aiPop.classList.toggle("hidden");
@@ -4353,7 +4358,9 @@ function askWord(front, back, hint, opts = {}) {
         const v = vals();
         // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
         // markExternalNav) i stället för rå window.open – annars kunde retur ge vit skärm.
-        openExternal(googleAiExploreUrl(v.f || f), true); // knapptryck = äkta tapp → overlay
+        // Böjningen tas från det LEVANDE fältet: har man just skrivit in den gäller
+        // frågan den, och har man rensat den följer den inte med.
+        openExternal(googleAiExploreUrl(v.f || f, forms ? v.fo : ""), true); // knapptryck = äkta tapp → overlay
       };
       m.querySelector("#m-ok").onclick = () => {
         const v = vals();
@@ -4846,24 +4853,14 @@ function getCurrentLesson() {
 
 // Minnesregel-prompten. Ber om ett per rad utan inledning, så svaret går att läsa och
 // plocka ur direkt – man kopierar ett förslag och klistrar in i fältet.
-// Har kortet en böjning bifogas den som en EGEN fråga efter minnesreglerna, under
-// rubrik. Förslagen ligger kvar överst och orörda, så det första man ser fortfarande
-// går att kopiera rakt in i fältet – men man får svar på "varför blir det sucuri?"
-// i samma veva, utan att behöva formulera om frågan själv.
-function buildHintPrompt(front, back, form) {
+function buildHintPrompt(front, back) {
   const lang = currentForeignLabel();
-  const bojning = form
-    ? `\n\nOrdet böjs "${form}". Lägg EFTER förslagen till ett kort stycke under rubriken `
-      + `"Böjning:" om varför formerna ser ut så – vilket mönster det följer och om mönstret `
-      + `går att känna igen på andra ord. Två–tre meningar räcker. Låt förslagen ovanför stå `
-      + `orörda så jag kan kopiera ett av dem rakt av.`
-    : "";
   return `Ge mig ett par förslag på minnesregel som hjälper mig komma ihåg att "${front}" `
     + `betyder "${back}" på ${lang}.\n\n`
     + `Det kan bygga på ljudlikhet, en bild, släktskap med ord jag redan kan – vad som helst `
     + `som ger hjärnan en krok att hänga upp det på.\n\n`
     + `Svara med 2–4 förslag, ett per rad, utan inledning. Varje förslag ska vara kort nog `
-    + `att rymmas på två rader i en app.${bojning}`;
+    + `att rymmas på två rader i en app.`;
 }
 
 // ---- Fyll lektion med AI (dialog → förifyll prompt i Claude/ChatGPT) ----
