@@ -2110,7 +2110,7 @@ function updateUndoBtn(){
 undoBtn.addEventListener("click", (e) => {
   e.stopPropagation();
   track("angra/knapp");
-  undoLastAnswer();
+  undoLastAnswer(true); // knapp → snabb inglidning utan paus
 });
 // Kort som redan visats i den pågående "Fortsätt"-kedjan (rundan). Nollställs vid ny
 // runda (när man startar från knappen, inte via Fortsätt) så att fel-svarade ord inte
@@ -3150,7 +3150,9 @@ function clearSwipeHint() {
 // =========================================================================
 //  Shake-to-undo – skaka telefonen för att ångra senaste svaret
 // =========================================================================
-function undoLastAnswer() {
+// quick = utlöst från ångra-knappen (medvetet tryck) → ingen paus, snabb inglidning.
+// Utan flaggan (skakning, röst, Klar-skärmen) behålls den långsamma varianten.
+function undoLastAnswer(quick) {
   if (!session || animating) return false;
   const snap = undoStack.pop();
   if (!snap) return false;
@@ -3162,34 +3164,37 @@ function undoLastAnswer() {
   if (!snap.gradedHadKey) session.graded.delete(snap.gradedKey);
   // Återställ kön (kopian hade det ångrade kortet först) och visa samma kort + riktning
   session.queue = snap.queue.slice();
-  showUndoFeedback();
+  showUndoFeedback(quick);
   loadCard(snap.dir);
   // Kortet glider tillbaka in från samma håll det lämnade (omvänd fly-out)
   const inClass = { good: "in-right", easy: "in-up", hard: "in-down", fail: "in-left" }[snap.grade] || "in-up";
-  card.classList.remove("emerge", "in-right", "in-left", "in-up", "in-down");
+  card.classList.remove("emerge", "in-right", "in-left", "in-up", "in-down", "undo-quick");
+  card.classList.toggle("undo-quick", !!quick);
   void card.offsetWidth;
   animating = true;
   card.classList.add(inClass);
-  // 0,7s delay + 0,7s inglidning = 1,4s; lite buffert innan vi släpper interaktion
+  // Långsam: 0,7s paus + 0,7s inglidning = 1,4s. Snabb: 0,34s utan paus.
+  // Lite buffert i båda fallen innan vi släpper interaktionen.
   setTimeout(() => {
-    card.classList.remove(inClass);
+    card.classList.remove(inClass, "undo-quick");
     animating = false;
     // Settlat läge efter ångra-inglidningen: visa rätt kort-knappar igen. loadCard:s
     // showSpeakSoon-timer hann köra medan animating var true (→ guarden dolde klustret),
     // så utan detta saknas t.ex. glödlampan på svenska sidan efter en skak-ångra.
     updateCardActions();
-  }, 1450);
+  }, quick ? 400 : 1450);
   return true;
 }
 
-function showUndoFeedback() {
+function showUndoFeedback(quick) {
   clearSwipeHint();
   feedbackLabelEl.classList.remove("show", "from-hint");
   feedbackLabelEl.textContent = "";
   feedbackEl.classList.remove("from-hint");
   feedbackEl.textContent = "↩️";
   feedbackEl.style.color = "#5b8cff";
-  feedbackEl.classList.remove("show", "undo-show");
+  feedbackEl.classList.remove("show", "undo-show", "undo-quick");
+  feedbackEl.classList.toggle("undo-quick", !!quick);
   void feedbackEl.offsetWidth;
   feedbackEl.classList.add("undo-show");
 }
@@ -6025,7 +6030,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v332";
+const APP_VERSION = "v333";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

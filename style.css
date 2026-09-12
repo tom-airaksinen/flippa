@@ -1018,6 +1018,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .card.in-left  { animation: in-left 0.7s ease-out 0.7s both; }
 .card.in-up    { animation: in-up 0.7s ease-out 0.7s both; }
 .card.in-down  { animation: in-down 0.7s ease-out 0.7s both; }
+.card.undo-quick.in-right, .card.undo-quick.in-left,
+.card.undo-quick.in-up, .card.undo-quick.in-down { animation-delay: 0s; animation-duration: 0.34s; }
 @keyframes in-right { from { transform: translateX(140%) rotate(18deg); }  to { transform: none; } }
 @keyframes in-left  { from { transform: translateX(-140%) rotate(-18deg); } to { transform: none; } }
 @keyframes in-up    { from { transform: translateY(-140%) scale(0.9); }     to { transform: none; } }
@@ -1087,6 +1089,12 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* ↩️ poppar upp direkt, ligger kvar genom hela pausen (0,7s) och tonar bort
    medan kortet glider in. Total 1,4s = 0,7s paus + 0,7s inglidning. */
 #swipe-feedback.undo-show { animation: undo-pop 1.4s ease-out; }
+/* Knapp-ångra: ett medvetet tryck behöver ingen paus som förklarar vad som hände –
+   kortet ska bara tillbaka. Skakning behåller den långsamma varianten ovan, där
+   pausen hinner visa ↩️ innan kortet glider in (man tittar inte alltid på skärmen
+   när man skakar). ↩️ kortas i takt med kortet, annars ligger den kvar ovanpå ett
+   kort som redan är på plats. */
+#swipe-feedback.undo-show.undo-quick { animation: undo-pop 0.5s ease-out; }
 @keyframes undo-pop {
   0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.4) rotate(-35deg); }
   12%  { opacity: 1; transform: translate(-50%, -50%) scale(1.35) rotate(0deg); }

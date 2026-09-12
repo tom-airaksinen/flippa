@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "12 september 2026", ver: "v333", items: [
+    { t: "Trycker du på Ångra kommer kortet tillbaka direkt, utan den lilla pausen. Skakar du telefonen är det som förut – då hinner ↩️ visa vad som hände innan kortet glider in", type: "improved" },
+  ]},
   { date: "10 september 2026", ver: "v332", items: [
     { t: "Ämneslistan studsar nu mjukt när man drar i den, även om man bara har några få ämnen. Förut kändes skärmen stel eftersom det inte fanns något att scrolla", type: "improved" },
   ]},
