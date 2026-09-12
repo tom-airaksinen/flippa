@@ -969,11 +969,13 @@ function denormalize(arr) {
   const out = {};
   (arr || []).forEach((s) => {
     out[s.id] = { name: s.name, order: s.order ?? 0, lang: s.lang || null, owner: s.owner || null, lessons: {} };
+    if (s.forms) out[s.id].forms = true;
     (s.lessons || []).forEach((l) => {
       const lo = { name: l.name, order: l.order ?? 0, cards: {} };
       (l.cards || []).forEach((c) => {
         const card = { front: c.front, back: c.back, order: c.order ?? 0 };
         if (c.hint) card.hint = c.hint;
+        if (c.form) card.form = c.form;
         if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio;
         lo.cards[c.id] = card;
       });
@@ -1143,6 +1145,7 @@ function normalize(subjectsObj) {
       order: s.order ?? 0,
       lang: s.lang || null,
       owner: s.owner || null,
+      forms: !!s.forms, // visa böjningsfält för det här ämnet
       lessons: Object.entries(s.lessons || {})
         .map(([lid, l]) => ({
           id: lid,
@@ -1151,6 +1154,7 @@ function normalize(subjectsObj) {
           cards: Object.entries(l.cards || {})
             .map(([cid, c]) => ({
               id: cid, front: c.front, back: c.back, hint: c.hint ?? null,
+              form: c.form ?? null, // böjning, t.ex. "o casă, două case"
               prio: c.prio === 1 || c.prio === 2 || c.prio === 3 ? c.prio : null,
               order: c.order ?? 0,
             }))
@@ -1808,7 +1812,8 @@ function renderLessons(keepChoosers) {
     let totalMatches = 0;
     currentSubject.lessons.forEach((l) => {
       const hits = l.cards.filter((c) =>
-        c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter));
+        c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter)
+        || (c.form || "").toLowerCase().includes(filter));
       if (hits.length) { groups.push({ l, hits }); totalMatches += hits.length; }
     });
     groups.sort((a, b) => sortCollator.compare(a.l.name, b.l.name)); // alfabetiskt per lektionsnamn
@@ -2087,6 +2092,16 @@ const cardFrontText = $("card-front-text");
 const cardFrontHint = $("card-front-hint");
 const cardAnswer = $("card-answer");
 const cardHint = $("card-hint");
+const cardFrontForm = $("card-front-form");
+const cardForm = $("card-form");
+// Böjningen hör till det UTLÄNDSKA ordet och följer med dit det visas: i f2b står
+// det på frågesidan (syns direkt), i b2f på svarssidan (efter flippen). Tomt när
+// ämnet inte har böjning påslaget, så inget renderas för andras ämnen.
+function paintCardForm(c, showFrontFirst) {
+  const v = (currentSubject && currentSubject.forms && c && c.form) ? c.form : "";
+  cardFrontForm.textContent = showFrontFirst ? v : "";
+  cardForm.textContent = showFrontFirst ? "" : v;
+}
 const dirSelect = $("dir-select");
 const progressPill = $("progress-pill");
 const feedbackEl = $("swipe-feedback");
@@ -2679,6 +2694,7 @@ function loadCard(forceDir) {
   // Minnesregeln är en svensk hjälp för det UTLÄNDSKA ordet → visa bara när svaret
   // är utländskt (b2f). Kör man TILL svenska vore den en gratisledtråd – göm den.
   cardHint.textContent = !showFrontFirst ? (c.hint || "") : "";
+  paintCardForm(c, showFrontFirst);
   cardFrontHint.textContent = ""; cardFrontHint.classList.add("hidden"); // ny ledtråd döljs tills lampan trycks
   updateProgress();
   updateStack();
@@ -3734,7 +3750,7 @@ async function editCurrentCard() {
   }
   if (!lid) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid, prio: c.prio });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid, prio: c.prio, forms: !!subj.forms, form: c.form });
   if (!res) return;
   if (res._delete) {
     const ok = await confirmDanger("Ta bort ord?", `"${c.front}" tas bort.`);
@@ -3756,20 +3772,22 @@ async function editCurrentCard() {
   c.front = res.front;
   c.back = res.back;
   c.hint = res.hint || null;
+  c.form = res.form || null;
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lid) {
     moveCard(currentSubject.id, lid, res.lessonId, c.id,
-             { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
+             { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
   } else {
     updateCard(currentSubject.id, lid, c.id,
-               { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
+               { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
   }
   // uppdatera visat kort direkt
   const showFrontFirst = session.shownDir === "f2b";
   cardFrontText.textContent = showFrontFirst ? c.front : c.back;
   cardAnswer.textContent = showFrontFirst ? c.back : c.front;
   cardHint.textContent = !showFrontFirst ? (c.hint || "") : "";
+  paintCardForm(c, showFrontFirst);
   cardFrontHint.textContent = ""; cardFrontHint.classList.add("hidden");
   updateHintBtn();
 }
@@ -4065,7 +4083,7 @@ function askName(title, value = "", okLabel = "Spara") {
   });
 }
 
-function askSubject(title, name = "", lang = "", allowDelete = false) {
+function askSubject(title, name = "", lang = "", allowDelete = false, forms = false) {
   // Ägaren väljs INTE här – den ges av aktiv profil (nytt) resp. behålls (redigering),
   // så man inte kan skapa eller flytta ett område åt en annan användare.
   return new Promise((resolve) => {
@@ -4076,6 +4094,14 @@ function askSubject(title, name = "", lang = "", allowDelete = false) {
       <div id="m-lang-mount"></div>
       <label>Namn</label>
       <input type="text" id="m-name" value="${esc(name)}" autocomplete="off" />
+      <div class="opt-toggle-row">
+        <span>Böjningsfält på korten</span>
+        <label class="switch">
+          <input type="checkbox" id="m-forms"${forms ? " checked" : ""} />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <p class="modal-hint">Ger ett extra fält för t.ex. "o casă, două case". Visas diskret under ordet och läses aldrig upp. Slår du av det döljs fältet – inget raderas.</p>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
@@ -4095,8 +4121,9 @@ function askSubject(title, name = "", lang = "", allowDelete = false) {
     m.querySelector("#m-ok").onclick = () => {
       const n = nameI.value.trim();
       const l = langSel.value;
+      const fo = m.querySelector("#m-forms").checked;
       closeModal();
-      resolve(n ? { name: n, lang: l } : null);
+      resolve(n ? { name: n, lang: l, forms: fo } : null);
     };
     if (allowDelete) m.querySelector("#m-del").onclick = () => { closeModal(); resolve({ delete: true }); };
     nameI.addEventListener("keydown", (e) => { if (e.key === "Enter") m.querySelector("#m-ok").click(); });
@@ -4178,22 +4205,28 @@ function askWords() {
 
 // opts: { allowDelete, explore, lessons, lessonId }
 // Returnerar { front, back, hint, lessonId } | { _delete:true } | null
+// opts.forms = ämnet har böjning påslaget → visa böjningsfältet. Av för alla andra
+// ämnen, så deras redigeringsdialog ser ut precis som förut.
 function askWord(front, back, hint, opts = {}) {
-  const { allowDelete, explore, lessons, lessonId, prio } = opts;
+  const { allowDelete, explore, lessons, lessonId, prio, forms, form } = opts;
   const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
   const showLesson = lessons && lessons.length > 1; // bara meningsfullt att flytta om det finns fler lektioner
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
-    const open = (f, b, h) => {
+    const open = (f, b, h, fo) => {
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
+      // Böjningen hör till det utländska ordet → fältet ligger direkt under det.
+      const formBlock = forms ? `
+      <label>Böjning (valfritt)</label>
+      <input type="text" id="m-form" value="${esc(fo || "")}" placeholder="t.ex. o casă, două case" autocomplete="off" autocapitalize="none" spellcheck="false" />` : "";
       const lessonBlock = showLesson ? `
       <label>Lektion</label>
       <div id="m-lesson-mount"></div>` : "";
       const m = openModal(`
       <div class="modal-head"><h3>Redigera ord</h3><div class="modal-head-btns">${globeBtn}${delBtn}</div></div>
       <label>Utländskt (framsida)</label>
-      <input type="text" id="m-front" value="${esc(f)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
+      <input type="text" id="m-front" value="${esc(f)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${formBlock}
       <label>Svenska (baksida)</label>
       <input type="text" id="m-back" value="${esc(b)}" autocomplete="off" autocapitalize="none" lang="sv" spellcheck="true" />
       <div class="hint-lbl">
@@ -4230,6 +4263,7 @@ function askWord(front, back, hint, opts = {}) {
         f: m.querySelector("#m-front").value.trim(),
         b: m.querySelector("#m-back").value.trim(),
         h: m.querySelector("#m-hint").value.trim(),
+        fo: forms ? m.querySelector("#m-form").value.trim() : "",
       });
       // Prio-segment: ingen vald = ovärderat (fältet lagras aldrig som default).
       // Tryck på vald igen → avmarkera. Explicit val 1/2/3 sparas.
@@ -4293,10 +4327,10 @@ function askWord(front, back, hint, opts = {}) {
         const v = vals();
         const chosenLid = lessonSel ? lessonSel.value : lessonId;
         closeModal();
-        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, lessonId: chosenLid, prio: curPrio } : null);
+        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, form: v.fo, lessonId: chosenLid, prio: curPrio } : null);
       };
     };
-    open(front, back, hint);
+    open(front, back, hint, form);
   });
 }
 
@@ -4585,12 +4619,15 @@ function writeError(err) {
 
 // Alla innehållsskrivningar går via enqueue() (choke-point). Paths är relativa
 // "content/subjects". push().key genereras klientside → riktiga id:n även offline.
-function addSubject(name, lang, owner) {
+function addSubject(name, lang, owner, forms) {
   const k = db.ref("content/subjects").push().key;
-  enqueue([{ op: "set", path: k, value: { name, order: Date.now(), createdAt: TS, lang: lang || null, owner: owner || null } }]);
+  const value = { name, order: Date.now(), createdAt: TS, lang: lang || null, owner: owner || null };
+  if (forms) value.forms = true;
+  enqueue([{ op: "set", path: k, value }]);
 }
-function updateSubject(sid, name, lang, owner) {
-  enqueue([{ op: "update", path: sid, value: { name, lang: lang || null, owner: owner || null } }]);
+function updateSubject(sid, name, lang, owner, forms) {
+  enqueue([{ op: "update", path: sid,
+             value: { name, lang: lang || null, owner: owner || null, forms: forms ? true : null } }]);
 }
 function removeSubject(sid) {
   enqueue([{ op: "remove", path: sid }]);
@@ -4625,13 +4662,14 @@ function addCards(sid, lid, cards) {
 // Kortets fält skickas som objekt, inte som positionsargument. Listan var uppe i
 // sju respektive åtta parametrar, och där blir ett förväxlat argument en tyst bugg
 // (böjningen hamnar i prio). Objektet gör också nya fält billiga att lägga till.
-// fields: { front, back, hint, prio }
+// fields: { front, back, hint, form, prio }
 function updateCard(sid, lid, cid, fields) {
   // prio: 1/2/3 sparas; null/övrigt tar bort fältet (default 2 lagras aldrig).
   const value = {
     front: fields.front,
     back: fields.back,
     hint: fields.hint || null,
+    form: fields.form || null,
     prio: (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) ? fields.prio : null,
   };
   enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards/${cid}`, value }]);
@@ -4642,11 +4680,12 @@ function removeCard(sid, lid, cid) {
 // Flytta ett kort till en annan lektion (atomiskt: lägg till nytt + ta bort gammalt).
 // SRS följer med automatiskt eftersom inlärningen nycklas på ordet, inte kort-id:t.
 // prio måste däremot skickas med explicit – annars tappas den vid flytt.
-// fields: { front, back, hint, prio } – se kommentaren vid updateCard.
+// fields: { front, back, hint, form, prio } – se kommentaren vid updateCard.
 function moveCard(sid, fromLid, toLid, cid, fields) {
   const newKey = db.ref(`content/subjects/${sid}/lessons/${toLid}/cards`).push().key;
   const card = { front: fields.front, back: fields.back, hint: fields.hint || null,
                  order: Date.now(), createdAt: TS };
+  if (fields.form) card.form = fields.form;
   if (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) card.prio = fields.prio;
   enqueue([{ op: "batch", updates: {
     [`${sid}/lessons/${toLid}/cards/${newKey}`]: card,
@@ -4660,14 +4699,14 @@ function moveCard(sid, fromLid, toLid, cid, fields) {
 async function editSubject(sid) {
   const s = content.find((x) => x.id === sid);
   if (!s) return;
-  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true);
+  const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true, !!s.forms);
   if (!res) return;
   if (res.delete) {
     const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
     return;
   }
-  updateSubject(sid, res.name, res.lang, s.owner || currentUser); // behåll befintlig ägare
+  updateSubject(sid, res.name, res.lang, s.owner || currentUser, res.forms); // behåll befintlig ägare
 }
 
 const editorSearch = $("editor-search");
@@ -4917,7 +4956,10 @@ function renderEditor() {
   const sorted = sortedCards(lesson);
   const filter = (editorSearch.value || "").trim().toLowerCase();
   const cards = filter
-    ? sorted.filter((c) => c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter))
+    ? sorted.filter((c) => c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter)
+        // böjningen är sökbar: stamväxlande ord (fată → fete) hittas annars bara
+        // om man råkar minnas grundformen
+        || (c.form || "").toLowerCase().includes(filter))
     : sorted;
   if (!cards.length) {
     const raw = (editorSearch.value || "").trim();
@@ -5037,18 +5079,19 @@ async function editWord(cid) {
   const c = lesson.cards.find((x) => x.id === cid);
   if (!c) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id, prio: c.prio });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id, prio: c.prio, forms: !!subj.forms, form: c.form });
   if (!res) return;
   if (res._delete) { deleteWord(cid); return; }
   c.hint = res.hint || null;
+  c.form = res.form || null;
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lesson.id) {
     moveCard(currentSubject.id, lesson.id, res.lessonId, cid,
-             { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
+             { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
   } else {
     updateCard(currentSubject.id, lesson.id, cid,
-               { front: res.front, back: res.back, hint: res.hint, prio: res.prio });
+               { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
   }
 }
 
@@ -5066,7 +5109,7 @@ $("profile-btn").onclick = openSettings;
 $("add-subject").onclick = async () => {
   if (!currentUser) { pickUser(); return; } // välj profil först
   const res = await askSubject("Nytt ämne", "", "", false);
-  if (res) addSubject(res.name, res.lang, currentUser); // ägare = aktiv profil
+  if (res) addSubject(res.name, res.lang, currentUser, res.forms); // ägare = aktiv profil
 };
 $("add-lesson").onclick = async () => {
   if (!currentSubject) return;
