@@ -17,7 +17,7 @@ const CHANGELOG = [
   ]},
   { date: "12 september 2026", ver: "v336", items: [
     { t: "Dubbeltappa högtalaren så läses ordet upp tillsammans med böjningen – bra när man vill höra hur pluralen låter. Ett tapp är som förut, och den automatiska uppläsningen säger aldrig böjningen", type: "new", hi: true, ico: "🔊",
-      desc: "Första tappet talar direkt som vanligt, så inget känns långsammare. Kommer ett andra tapp inom en tredjedels sekund läses ordet om, nu med böjningen efter." },
+      desc: "Första tappet talar direkt som vanligt, så inget känns långsammare. Kommer ett andra tapp inom en tredjedels sekund glider böjningen på direkt efter ordet, utan att uppläsningen börjar om." },
   ]},
   { date: "12 september 2026", ver: "v334", items: [
     { t: "Nytt böjningsfält på korten – slås på per ämne under Redigera ämne. Där kan du lägga t.ex. ”o casă, două case”, som visas diskret under ordet men aldrig läses upp", type: "new", hi: true, ico: "📐",

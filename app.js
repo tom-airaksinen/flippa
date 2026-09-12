@@ -3290,7 +3290,10 @@ function speakable(text) {
     .trim();
 }
 
-function speak(text, lang, onEnd) {
+// koa = lägg efter det som redan talas i stället för att avbryta det. Används av
+// dubbeltappet: ordet hinner börja på första tappet, och böjningen ska glida på efter
+// utan omstart. Allt annat avbryter som förut.
+function speak(text, lang, onEnd, koa) {
   const talat = speakable(text);
   if (!talat || !("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
   const u = new SpeechSynthesisUtterance(talat);
@@ -3302,7 +3305,7 @@ function speak(text, lang, onEnd) {
     if (v) u.voice = v;
   }
   if (onEnd) u.onend = onEnd;
-  speechSynthesis.cancel();
+  if (!koa) speechSynthesis.cancel();
   speechSynthesis.speak(u);
 }
 
@@ -3691,10 +3694,17 @@ function wireSpeakButton(btn, getOrd, getBojning, tag) {
       clearTimeout(timer); timer = null;
       const form = getBojning();
       if (form) {
-        // Städa ordet FÖRE hopfogningen: speakable() plockar bort t.ex. "(n)" och
-        // skulle annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
         track(tag + "/bojning");
-        speak(`${speakable(getOrd())}. ${form}`, lang);
+        // Ordet har redan börjat läsas av första tappet. Att avbryta och läsa om allt
+        // gav ett hack ("su– suc, un suc…"), så böjningen KÖAS efter ordet i stället:
+        // ett sammanhängande uttal, och första tappet behöver ingen fördröjning.
+        // Hann ordet ta slut finns inget att köa efter – läs då hela frasen på en gång.
+        const talarAn = "speechSynthesis" in window &&
+                        (speechSynthesis.speaking || speechSynthesis.pending);
+        if (talarAn) speak(form, lang, null, true);
+        // Städa ordet före hopfogningen: speakable() plockar bort t.ex. "(n)" och
+        // skulle annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
+        else speak(`${speakable(getOrd())}. ${form}`, lang);
         return;
       }
     }
@@ -6184,7 +6194,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v337";
+const APP_VERSION = "v338";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
