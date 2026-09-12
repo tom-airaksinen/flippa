@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "12 september 2026", ver: "v336", items: [
+    { t: "Dubbeltappa högtalaren så läses ordet upp tillsammans med böjningen – bra när man vill höra hur pluralen låter. Ett tapp är som förut, och den automatiska uppläsningen säger aldrig böjningen", type: "new", hi: true, ico: "🔊",
+      desc: "Första tappet talar direkt som vanligt, så inget känns långsammare. Kommer ett andra tapp inom en tredjedels sekund läses ordet om, nu med böjningen efter." },
+  ]},
   { date: "12 september 2026", ver: "v335", items: [
     { t: "Har ordet en böjning frågar AI-hjälpen nu också varför formerna ser ut som de gör – minnesreglerna kommer först som förut, förklaringen under", type: "improved" },
   ]},

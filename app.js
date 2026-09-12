@@ -3351,6 +3351,21 @@ function updateStack() {
 function speakCurrent() {
   if (session && session.current) speak(session.current.front, subjectLang(currentSubject));
 }
+// Böjningen ska BARA höras när man ber om den. Den automatiska uppläsningen och
+// handsfree går via speak(c.front, ...) och rör den aldrig.
+function currentSpokenForm() {
+  const c = session && session.current;
+  return (currentSubject && currentSubject.forms && c && c.form) ? c.form : "";
+}
+function speakCurrentWithForm() {
+  if (!session || !session.current) return;
+  const c = session.current;
+  const form = currentSpokenForm();
+  // Städa ordet FÖRE hopfogningen: speakable() plockar bort t.ex. "(n)" och skulle
+  // annars lämna ett mellanslag hängande före punkten ("suc . un suc, …").
+  const ord = speakable(c.front);
+  speak(form ? `${ord}. ${form}` : c.front, subjectLang(currentSubject));
+}
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
@@ -3662,7 +3677,20 @@ fanScrim.addEventListener("click",(e)=>{ e.stopPropagation(); if(fanOpen) closeF
 
 // 🔊 (uttala) uppe till höger på utländska sidan; 💡 (ledtråd) nere till höger på svenska.
 speakBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
-speakBtn.addEventListener("click",(e)=>{ e.stopPropagation(); track("uttala"); speakCurrent(); });
+// Dubbeltapp på högtalaren läser ordet TILLSAMMANS med böjningen – man vill höra hur
+// pluralen låter. Första tappet talar direkt som förut (ingen fördröjning att vänta ut);
+// kommer ett andra tapp inom fönstret avbryts det och ordet läses om med böjningen.
+const DOUBLE_TAP_MS = 350;
+let speakTapTimer = null;
+speakBtn.addEventListener("click",(e)=>{
+  e.stopPropagation();
+  if (speakTapTimer) {
+    clearTimeout(speakTapTimer); speakTapTimer = null;
+    if (currentSpokenForm()) { track("uttala/bojning"); speakCurrentWithForm(); return; }
+  }
+  speakTapTimer = setTimeout(()=>{ speakTapTimer = null; }, DOUBLE_TAP_MS);
+  track("uttala"); speakCurrent();
+});
 hintBtn.addEventListener("pointerdown",(e)=>e.stopPropagation());
 hintBtn.addEventListener("click",(e)=>{
   e.stopPropagation();
@@ -6143,7 +6171,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v335";
+const APP_VERSION = "v336";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
