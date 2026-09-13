@@ -118,5 +118,9 @@ iframen — ‹-raden är vägen ut.
   i standalone-PWA:er flyktig lagring** som nollas vid omstart. Oavsett vilket är fixen v352:
   Flippas localStorage är sanningskälla; iframen seedas vid load (omladdas en gång om något
   skrevs) och speglas tillbaka vid retur/20 s/pagehide. Delas lagringen redan är bryggan en
-  no-op. Verifierad e2e mot riktiga Gnugga i iframe (8/8). ⚠️ Om hypotes B stämmer var den
-  ett dolt hot mot hela B-lite – all gnuggning inbäddat hade försvunnit vid varje appomstart.
+  no-op. Verifierad e2e mot riktiga Gnugga i iframe (8/8).
+  **Utfall 13/9 ~15:00: hypotes B bekräftad.** Importen kl 14 gav synlig bekräftelse i den
+  inbäddade appen, och efter omstarten till v351 var dess lagring tom → iOS nollar iframens
+  localStorage i standalone-PWA:er vid omstart. Utan bryggan hade all inbäddad gnuggning
+  försvunnit vid varje appomstart – fyndet gäller alla framtida iframe-upplägg i Flippa.
+  Tom har gjort om importen på v352; bryggan speglar till Flippas beständiga lagring.
