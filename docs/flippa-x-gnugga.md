@@ -104,3 +104,9 @@ iframen — ‹-raden är vägen ut.
      + spara-först-ordning. `confirm()` på Nollställ ersatt med tvåtryck av samma skäl.
 
   Efter v29: gör om dag 0-protokollet (exportera från fristående → importera inbäddat).
+
+- **13/9 (kväll): B-lite fick toggeln från mockup B (Flippa v351).** Gnugga-kortet flyttade
+  från lektionslistans slut till en egen Grammatik-flik bredvid Glosor, efter att Tom känt
+  på den interaktiva mockupen. Fliken visar kortet + tre statusrader ur Gnuggas
+  localStorage (senaste gnuggdag, dagar av 7, ord/mönster) så att den bär sin plats.
+  Utlyftning är fortfarande liten: toggle + grammatikvy + GNUGGA_APPS bort (~150 rader).
