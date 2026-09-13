@@ -20,6 +20,7 @@ const screens = {
   training: $("training-screen"),
   congrats: $("congrats-screen"),
   settings: $("settings-screen"),
+  gnugga: $("gnugga-screen"),
 };
 
 // ---- App-state ----
@@ -206,6 +207,15 @@ const LANG_GUESS = {
 function subjectLang(s) {
   if (!s) return "";
   return s.lang || LANG_GUESS[(s.name || "").trim().toLowerCase()] || "";
+}
+// Gnugga inbäddad (testvecka B-lite): grammatikdrillen öppnas i en iframe inne i
+// Flippa, för ämnen vars språk har en deployad Gnugga – just nu bara rumänska.
+// Gnugga-repot rörs inte; framstegen bor i Gnuggas egna localStorage-nycklar.
+// Plan, protokoll och skavlogg: docs/flippa-x-gnugga.md.
+const GNUGGA_APPS = { ro: "https://tom-airaksinen.github.io/gnugga/" };
+function gnuggaUrlFor(s) {
+  const lang = subjectLang(s);
+  return GNUGGA_APPS[(lang || "").slice(0, 2).toLowerCase()] || null;
 }
 // Flagga-emoji per språk (tomt om inget språk)
 const LANG_FLAG = {
@@ -1260,7 +1270,7 @@ function listenContent() {
 //  Navigation / rendering
 // =========================================================================
 // Skärm-djup styr glidriktningen: djupare = push (in från höger), grundare = pop.
-const SCREEN_DEPTH = { subjects: 0, lessons: 1, editor: 2, training: 2, congrats: 3, settings: 1 };
+const SCREEN_DEPTH = { subjects: 0, lessons: 1, editor: 2, training: 2, congrats: 3, settings: 1, gnugga: 2 };
 const NAV_DUR = 220;
 const NAV_EASE = "cubic-bezier(.4,0,.2,1)";
 const prefersReducedMotion = !!(window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches);
@@ -1346,8 +1356,8 @@ function setTab(tab) {
 
 function updateTabbar() {
   document.querySelectorAll("#tabbar .tab-btn").forEach((b) => b.classList.toggle("on", b.dataset.tab === activeTab));
-  // Dölj flikfältet under pågående pass / klar-skärm i Flippa-fliken
-  const hide = activeTab === "flippa" && (shownScreen === "training" || shownScreen === "congrats");
+  // Dölj flikfältet under pågående pass / klar-skärm / inbäddade Gnugga i Flippa-fliken
+  const hide = activeTab === "flippa" && (shownScreen === "training" || shownScreen === "congrats" || shownScreen === "gnugga");
   $("tabbar").classList.toggle("hidden", hide);
   // Flikfältet är fixed → reservera dess höjd på innehållet bara när det syns
   document.body.classList.toggle("tabbar-on", !hide);
@@ -1843,8 +1853,21 @@ function renderLessons(keepChoosers) {
   const list = $("lessons-list");
   clearListShadow($("lessons-scroll"));
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
+  // Gnugga-ingången: sist i listan, bara för språk med en deployad Gnugga.
+  // Renderas in i listans innerHTML (listan hålls minst en skärm hög av det dolda
+  // sökfältet, så ett statiskt syskon EFTER listan hamnar alltid under vecket).
+  const gnuggaUrl = gnuggaUrlFor(currentSubject);
+  const gnuggaCardHTML = gnuggaUrl
+    ? `<button id="gnugga-entry" class="gnugga-entry" type="button">
+         <span class="ge-t">🧽 Gnugga grammatiken</span>
+         <span class="ge-go">›</span>
+         <span class="ge-d">Böj verb och substantiv – drillappen Gnugga öppnas här i Flippa</span>
+       </button>`
+    : "";
+  const wireGnuggaEntry = () => { const b = $("gnugga-entry"); if (b) b.onclick = () => openGnugga(gnuggaUrl); };
   if (!currentSubject.lessons.length) {
-    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
+    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>` + gnuggaCardHTML;
+    wireGnuggaEntry();
     return;
   }
   // Global sök: visa matchande ORD direkt (platt lista grupperad per lektion) i stället
@@ -1931,7 +1954,8 @@ function renderLessons(keepChoosers) {
         </div>
       </div>`;
     })
-    .join("");
+    .join("") + gnuggaCardHTML;
+  wireGnuggaEntry();
   list.querySelectorAll(".row").forEach((row) => {
     row.addEventListener("click", (e) => {
       if (e.target.closest(".row-edit")) return;
@@ -1947,6 +1971,24 @@ function renderLessons(keepChoosers) {
     });
   });
   maybeReloadForUpdate(); // säker plats → applicera ev. väntande app-uppdatering
+}
+
+// ---- Gnugga inbäddad (testvecka B-lite) ----
+// Fullskärmstakeover à la träningspasset: Flippas tabbar döljs (updateTabbar),
+// kvar är ‹-raden + iframen. Iframen skapas vid första öppningen och ligger
+// sedan kvar monterad, så Gnugga står där man lämnade den om man går in igen.
+let gnuggaFrame = null;
+function openGnugga(url) {
+  if (!gnuggaFrame) {
+    gnuggaFrame = document.createElement("iframe");
+    gnuggaFrame.id = "gnugga-frame";
+    gnuggaFrame.src = url;
+    gnuggaFrame.title = "Gnugga – grammatikdrill";
+    $("gnugga-holder").appendChild(gnuggaFrame);
+  }
+  activeScreen = "gnugga";
+  show("gnugga");
+  track("/gnugga-oppnad");
 }
 
 // ---- Drag & drop-omordning av rader (långtryck) – lektioner och ämnen ----
@@ -5516,7 +5558,7 @@ $("edit-subject").onclick = () => { if (currentSubject) editSubject(currentSubje
 // steg i stacken (som iOS-appar): lektion → ämne, ämne/inställningar → huvudskärm.
 function flippaBackOne() {
   closeChoosers();
-  if (activeScreen === "editor") renderLessons();
+  if (activeScreen === "editor" || activeScreen === "gnugga") renderLessons();
   else if (activeScreen === "lessons" || activeScreen === "settings") renderSubjects();
   // subjects (huvudskärmen) → redan i botten, gör inget
 }
@@ -6478,7 +6520,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v349";
+const APP_VERSION = "v350";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

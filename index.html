@@ -151,6 +151,8 @@
           <button class="search-clear hidden" tabindex="-1">✕</button>
         </div>
       </div>
+      <!-- Gnugga-ingången (testvecka B-lite) renderas av renderLessons() sist i
+           listan, för språk med en deployad Gnugga – se docs/flippa-x-gnugga.md -->
       <div id="lessons-list" class="list"></div>
     </div>
   </section>
@@ -286,6 +288,16 @@
     <button id="congrats-done" class="primary-btn green">Klar</button>
     <button id="congrats-continue" class="primary-btn alt hidden"></button>
     <p id="congrats-undo-hint" class="congrats-undo-hint hidden"></p>
+  </section>
+
+  <!-- Gnugga inbäddad (testvecka B-lite): fullskärmstakeover med ‹-rad + iframe.
+       Iframen skapas av openGnugga() vid första öppningen och ligger sedan kvar. -->
+  <section id="gnugga-screen" class="screen hidden">
+    <header class="app-header">
+      <button class="back-btn" data-back="lessons">←</button>
+      <h1>🧽 Gnugga</h1>
+    </header>
+    <div id="gnugga-holder"></div>
   </section>
 
   <!-- Inställningar (nås via avataren/kugghjulet på ämnesskärmen) -->

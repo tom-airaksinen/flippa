@@ -1956,3 +1956,31 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 #add-body .add-divider { margin: 20px 0 14px; }
 /* Sorteringsknappen: samma höjd som ＋ Lägg till ord (+ lite bredare) */
 .editor-actions .icon-btn { width: 54px; height: auto; }
+
+/* ---- Gnugga inbäddad (testvecka B-lite) – se docs/flippa-x-gnugga.md ----
+   Mint (#3fcfa8) är Gnuggas accent och markerar grammatikläget inne i Flippa. */
+.gnugga-entry {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 2px 10px;
+  align-items: center;
+  width: 100%;
+  margin: 4px 0 10px;
+  padding: 14px 16px;
+  text-align: left;
+  background: rgba(63, 207, 168, 0.10);
+  border: 1px solid rgba(63, 207, 168, 0.45);
+  border-radius: 12px; /* samma som .row */
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+/* Explicita grid-positioner: ett element med definierad rad (ge-go) auto-placeras
+   annars FÖRE auto-elementen och stjäl kolumn 1. */
+.gnugga-entry .ge-t { grid-column: 1; grid-row: 1; font-weight: 700; color: #3fcfa8; }
+.gnugga-entry .ge-go { grid-column: 2; grid-row: 1 / span 2; color: #3fcfa8; font-size: 1.4rem; line-height: 1; }
+.gnugga-entry .ge-d { grid-column: 1; grid-row: 2; font-size: 0.82rem; color: var(--muted); }
+/* Iframen fyller allt under ‹-raden; Gnugga är själv exakt en skärm hög och scrollar inuti */
+#gnugga-holder { flex: 1; min-height: 0; display: flex; }
+#gnugga-frame { flex: 1; width: 100%; border: 0; display: block; background: #0f1b1e; }

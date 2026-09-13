@@ -102,3 +102,11 @@
   [`mockups/lagg-till-flode.html`](../mockups/lagg-till-flode.html). B (ett fält utan
   flikar), C (källa först) och D (AI först när tomt) valdes bort som större omtag.
   (2026-09-13)
+
+## Monetisering – se [`monetisering.md`](monetisering.md)
+- [ ] Ambitionsnivå: fickpengar, sidoinkomst eller bolag? (styr allt annat)
+- [ ] Segment: familj/skolelev (positionering.html) eller ambitiös vuxen? Samma beslut som intäktsmodellen.
+- [ ] Snacka med Mathias Eklöf & Jens Bäckbom – betalningsvilja, distribution, ingång till försvarets språkutbildning?
+- [ ] Var ligger Firebase-databasen (region)? Går ej flytta – avgör GDPR-upplägget.
+- [ ] Bisyssleklausul i Kleer-avtalet – anmälningsplikt?
+- [x] Ska Gnugga integreras i Flippa? → **Svar:** På sikt ja, som grammatikmodul per ämne (variant B) – men Gnugga vidareutvecklas separat tills vidare; inte ens broarna (A) byggs ännu. Se [`flippa-x-gnugga.md`](flippa-x-gnugga.md) (2026-09-13)

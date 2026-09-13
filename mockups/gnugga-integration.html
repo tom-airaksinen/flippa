@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flippa × Gnugga</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --line:#2c3c63; --good:#5bbf72; --easy:#f4c542;
+    --mint:#3fcfa8; --mint-ink:#062b22; --mint-dim:rgba(63,207,168,.14); --mint-line:rgba(63,207,168,.4); }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:24px 14px 70px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 16px;max-width:680px;font-size:.9rem}
+  code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}
+  .tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    padding:9px 14px;border-radius:10px;font:inherit;font-size:.88rem;cursor:pointer}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+
+  .variant{display:none;width:100%;max-width:860px;flex-direction:column;align-items:center}
+  .variant.on{display:flex}
+  .v-desc{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:14px 18px;margin-bottom:20px;font-size:.88rem;max-width:680px}
+  .v-desc p{margin:0 0 8px}
+  .v-desc p:last-child{margin:0}
+  .pm{display:flex;gap:16px;font-size:.84rem;flex-wrap:wrap;margin-top:10px}
+  .pm>div{flex:1;min-width:240px}
+  .pm b{display:block;margin-bottom:3px}
+  .pm .plus b{color:var(--good)} .pm .minus b{color:#e0604f}
+  .pm ul{margin:0;padding-left:18px;color:var(--muted)}
+  .pm li{margin-bottom:3px}
+
+  .phones{display:flex;gap:22px;flex-wrap:wrap;justify-content:center;width:100%}
+  .phones>div{width:100%;max-width:340px}
+  .phone{width:100%;max-width:340px;background:var(--bg);border:1px solid var(--line);
+    border-radius:26px;padding:14px 12px 10px;box-shadow:0 20px 50px rgba(0,0,0,.5);
+    display:flex;flex-direction:column;min-height:560px}
+  .phone.gnugga-app{background:#0f1b1e;border-color:#2b444a}
+  .ph-cap{color:var(--muted);font-size:.78rem;text-align:center;margin:10px 0 2px}
+
+  .apphead{display:flex;align-items:center;gap:8px;margin:4px 4px 12px}
+  .apphead .back{color:var(--accent);font-size:1.15rem;line-height:1}
+  .apphead h3{margin:0;font-size:1.1rem;flex:1}
+  .apphead .streak{color:#ff8a3d;font-weight:700;font-size:.9rem}
+  .gnugga-app .apphead .back{color:var(--mint)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:12px 14px;margin:0 2px 10px}
+  .gnugga-app .card{background:#17282c;border-color:#2b444a}
+  .card h4{margin:0 0 2px;font-size:.95rem}
+  .card .meta{color:var(--muted);font-size:.78rem}
+  .bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);margin-top:8px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--good) 70%,#e0915a 70%)}
+
+  .mintcard{border-color:var(--mint-line);background:var(--mint-dim)}
+  .gnugga-app .mintcard{background:var(--mint-dim);border-color:var(--mint-line)}
+  .mintcard h4{color:var(--mint);display:flex;align-items:center;gap:7px}
+  .mintbtn{display:block;width:100%;margin-top:10px;background:var(--mint);color:var(--mint-ink);
+    border:none;border-radius:10px;padding:10px;font:inherit;font-size:.9rem;font-weight:700;cursor:pointer}
+  .ghostbtn{display:block;width:100%;margin-top:10px;background:none;color:var(--mint);
+    border:1px solid var(--mint-line);border-radius:10px;padding:10px;font:inherit;font-size:.9rem;font-weight:700;cursor:pointer}
+
+  .chip{display:inline-flex;align-items:center;gap:6px;background:var(--mint-dim);color:var(--mint);
+    border:1px solid var(--mint-line);border-radius:999px;padding:3px 11px;font-size:.76rem;font-weight:600}
+  .chip.blue{background:rgba(91,140,255,.14);color:var(--accent);border-color:rgba(91,140,255,.4)}
+
+  .seg{display:flex;gap:6px;margin:0 2px 12px}
+  .seg button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);
+    padding:9px 6px;border-radius:10px;font:inherit;font-size:.86rem;font-weight:600;cursor:default}
+  .seg .seg-on{background:var(--accent);border-color:var(--accent);color:#fff}
+  .seg .seg-mint{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+
+  .pill{font-size:.7rem;font-weight:700;border-radius:999px;padding:2px 9px}
+  .pill.ny{background:rgba(255,255,255,.12);color:var(--muted)}
+  .pill.ovat{background:rgba(244,197,66,.16);color:var(--easy)}
+  .pill.lart{background:rgba(91,191,114,.16);color:var(--good)}
+  .pill.auto{background:var(--mint-dim);color:var(--mint)}
+  .mrow{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+  .flash{background:var(--surface);border:1px solid var(--line);border-radius:18px;
+    margin:6px 2px;padding:34px 16px 26px;text-align:center;flex:0 0 auto}
+  .flash .w{font-size:1.7rem;font-weight:800}
+  .flash .form{color:var(--muted);font-size:.82rem;margin-top:10px}
+  .flash.gnu{border-color:var(--mint-line);box-shadow:inset 0 0 0 1px var(--mint-line)}
+  .flash.gnu .task{color:var(--mint);font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+  .ansfield{margin:14px auto 0;max-width:230px;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;padding:11px;color:var(--muted);font-size:1rem;text-align:left}
+  .gnu .ansfield{border-color:var(--mint-line)}
+  .diakrit{display:flex;gap:6px;justify-content:center;margin-top:10px}
+  .diakrit span{background:var(--surface-2);border:1px solid var(--mint-line);color:var(--mint);
+    border-radius:8px;padding:5px 10px;font-size:.95rem}
+
+  .dots{display:flex;gap:5px;justify-content:center;margin:12px 0 4px}
+  .dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.15)}
+  .dots i.done{background:var(--accent)}
+  .dots i.done.g{background:var(--mint)}
+  .dots i.cur{outline:2px solid #fff;outline-offset:1px}
+  .dots i.g{background:var(--mint-dim);border:1px solid var(--mint-line)}
+  .dotcap{text-align:center;color:var(--muted);font-size:.74rem;margin-bottom:6px}
+
+  .answerrow{display:flex;gap:8px;margin:auto 2px 8px;padding-top:14px}
+  .answerrow button{flex:1;border:none;border-radius:12px;padding:13px 6px;font:inherit;font-weight:700;font-size:.9rem}
+  .answerrow .no{background:#3a2732;color:#ff9d94}
+  .answerrow .yes{background:#22392e;color:#7fd79a}
+
+  .tabbar{display:flex;border-top:1px solid var(--line);margin:auto -12px 0;padding:8px 6px 2px}
+  .tabbar span{flex:1;text-align:center;font-size:.68rem;color:var(--muted)}
+  .tabbar span.on{color:var(--accent);font-weight:700}
+  .gnugga-app .tabbar{border-color:#2b444a}
+  .gnugga-app .tabbar span.on{color:var(--mint)}
+  .tabbar .ico{display:block;font-size:1.05rem;margin-bottom:1px}
+
+  table.cmp{border-collapse:collapse;font-size:.84rem;margin:8px 0 4px;width:100%}
+  .cmp th,.cmp td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  .cmp th{background:var(--surface-2);font-size:.78rem}
+  .cmp td:first-child{white-space:nowrap;font-weight:600}
+  .wrap-x{overflow-x:auto;width:100%;max-width:820px}
+  .reco{background:var(--surface);border:1px solid var(--mint-line);border-radius:14px;
+    padding:14px 18px;margin-top:22px;font-size:.88rem;max-width:680px}
+  .reco h2{margin:0 0 6px;font-size:1rem;color:var(--mint)}
+  .reco p{margin:0 0 8px} .reco p:last-child{margin:0}
+</style>
+</head>
+<body>
+
+<h1>Flippa × Gnugga – tre sätt att mötas</h1>
+<p class="sub">Ingen kod är ändrad – det här är tankefigurer. Mint = Gnuggas identitet, blått = Flippas.
+Varianterna är kumulativa: B förutsätter tankarna i A, C förutsätter B.</p>
+
+<div class="tabs">
+  <button class="on" data-v="a">A · Länkad svit</button>
+  <button data-v="b">B · Grammatik i ämnet</button>
+  <button data-v="c">C · Ett blandat pass</button>
+</div>
+
+<!-- ============ VARIANT A ============ -->
+<div class="variant on" id="v-a">
+  <div class="v-desc">
+    <p><b>Två appar, synliga broar.</b> Apparna förblir separata men känner till varandra:
+    Flippas rumänska ämne får ett Gnugga-kort, och Gnugga prioriterar orden du har i Flippa.
+    Bryggan är en export/länk – båda ligger redan på <code>tom-airaksinen.github.io</code>.</p>
+    <div class="pm">
+      <div class="plus"><b>För</b><ul>
+        <li>Nästan gratis: en knapp + en ordlista över bryggan</li>
+        <li>Noll risk för Flippas stabilitet (barnens app)</li>
+        <li>Apparna behåller egna deploys, changelogs, identiteter</li>
+      </ul></div>
+      <div class="minus"><b>Emot</b><ul>
+        <li>Två ikoner, två streaks, två statistikvyer – rutinen splittras</li>
+        <li>Säljs/paketeras som två produkter, inte en</li>
+        <li>Ingen gemensam "dags att öva"-signal</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="apphead"><span class="back">‹</span><h3>Rumänska</h3><span class="streak">🔥 12</span></div>
+        <div class="card"><div class="mrow"><h4>Rumänska 101</h4><span class="chip blue">Dags: 14</span></div>
+          <div class="meta">107 ord · böjning på 37</div><div class="bar"><i style="width:64%"></i></div></div>
+        <div class="card"><h4>Mat och dryck</h4><div class="meta">58 ord</div><div class="bar"><i style="width:41%"></i></div></div>
+        <div class="card"><h4>Räkneord 1–20</h4><div class="meta">20 ord</div><div class="bar"><i style="width:88%"></i></div></div>
+        <div class="card mintcard">
+          <h4>🧽 Gnugga grammatiken</h4>
+          <div class="meta">Böj verben och substantiven du kan härifrån – i systerappen Gnugga.</div>
+          <button class="mintbtn">Öppna Gnugga med dina ord</button>
+        </div>
+        <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Flippa: ämnesskärmen får ett Gnugga-kort (bara språk med grammatikdata)</p>
+    </div>
+
+    <div>
+      <div class="phone gnugga-app">
+        <div class="apphead"><h3>🧽 Gnugga</h3></div>
+        <div class="card mintcard" style="text-align:center">
+          <h4 style="justify-content:center">Dagens pass</h4>
+          <div class="meta">20 övningar · blandade mönster</div>
+          <button class="mintbtn">Kör</button>
+        </div>
+        <div style="margin:2px 4px 10px"><span class="chip">🃏 142 Flippa-ord prioriteras</span></div>
+        <div class="card"><div class="mrow"><h4>Bestämd form singular</h4><span class="pill auto">Automatiskt</span></div></div>
+        <div class="card"><div class="mrow"><h4>Plural</h4><span class="pill lart">Lärt</span></div></div>
+        <div class="card"><div class="mrow"><h4>Presens</h4><span class="pill ovat">Övat</span></div></div>
+        <div class="card"><div class="mrow"><h4>Genitiv-dativ</h4><span class="pill ny">Nytt</span></div></div>
+        <div class="tabbar"><span class="on"><span class="ico">🧽</span>Gnugga</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Gnugga: ord du redan kan i Flippa väljs först i övningarna</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VARIANT B ============ -->
+<div class="variant" id="v-b">
+  <div class="v-desc">
+    <p><b>Gnugga blir en modul i Flippa.</b> Ämnesskärmen får segmentet <i>Glosor | Grammatik</i> –
+    grindat per ämne precis som böjningsfältet, så bara rumänska visar det. Gnuggas motor och
+    lexikon laddas separat (lazy) och innehållet förblir statiskt och kurerat i repot; bara
+    progressen delar Flippas värld. Mint blir grammatikens färg <i>inuti</i> Flippa.</p>
+    <div class="pm">
+      <div class="plus"><b>För</b><ul>
+        <li>En app, en ikon, en rutin – "jag lär mig rumänska" på ett ställe</li>
+        <li>Böjningsfältet + AI-kontext + grammatikövningar förstärker varandra</li>
+        <li>En produkt att positionera och ta betalt för</li>
+        <li>Hjälp, changelog, inställningar, TTS byggs en gång</li>
+      </ul></div>
+      <div class="minus"><b>Emot</b><ul>
+        <li>Två innehållssystem i samma app (Firebase + statiskt lexikon)</li>
+        <li>app.js ≈ 6 000 rader redan – stort integrationsjobb utan byggsteg</li>
+        <li>Halvtomt löfte för alla ämnen utan grammatikdata</li>
+        <li>Regressionsrisk i appen barnen använder dagligen</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="apphead"><span class="back">‹</span><h3>Rumänska</h3><span class="streak">🔥 12</span></div>
+        <div class="seg"><button>Glosor</button><button class="seg-mint">Grammatik</button></div>
+        <div class="card"><div class="mrow"><h4>Bestämd form singular</h4><span class="pill auto">Automatiskt</span></div>
+          <div class="meta">casa · băiatul · orașul</div></div>
+        <div class="card"><div class="mrow"><h4>Plural</h4><span class="pill lart">Lärt</span></div>
+          <div class="meta">case · băieți · orașe</div></div>
+        <div class="card"><div class="mrow"><h4>Presens</h4><span class="pill ovat">Övat</span></div>
+          <div class="meta">înțeleg · vorbește · mănâncă</div></div>
+        <div class="card"><div class="mrow"><h4>Perfekt</h4><span class="pill ny">Nytt</span></div>
+          <div class="meta">am înțeles · a vorbit</div></div>
+        <div class="card mintcard" style="text-align:center;padding:10px">
+          <button class="mintbtn" style="margin-top:0">Gnugga · 20 övningar</button>
+        </div>
+        <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Segment på ämnesskärmen – visas bara när ämnet har grammatikdata</p>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="apphead"><span class="back">‹</span><h3>Gnugga · Plural</h3><span class="chip">7/20</span></div>
+        <div class="flash gnu">
+          <div class="task">Sätt i plural</div>
+          <div class="w">casă</div>
+          <div class="form">ett hus → flera hus</div>
+          <div class="ansfield">cas|</div>
+          <div class="diakrit"><span>ă</span><span>â</span><span>î</span><span>ș</span><span>ț</span></div>
+        </div>
+        <div class="dotcap" style="margin-top:14px">Ledtråd utan facit → nytt försök → facit + varför</div>
+        <div class="card mintcard" style="padding:10px"><div class="meta" style="color:var(--mint)">💡 Feminina på -ă tar oftast -e … men vänta med facit, försök igen!</div></div>
+        <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Övningsvyn: Gnuggas format, Flippas skal – mint markerar grammatikläget</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ VARIANT C ============ -->
+<div class="variant" id="v-c">
+  <div class="v-desc">
+    <p><b>Ett pass, två muskler.</b> Fullt sammanvuxet: "Dags att öva" blandar glosskort och
+    böjningsövningar i samma kö. Ett ord du just svarat rätt på kan dyka upp igen som
+    böjningsuppgift – hämtning först, produktion sedan. En streak, en statistik, en daglig signal.</p>
+    <div class="pm">
+      <div class="plus"><b>För</b><ul>
+        <li>Pedagogiskt starkast: produktion på ord du bevisligen kan</li>
+        <li>En enda rutin och streak – ingen "glömde öppna den andra appen"</li>
+        <li>Gnuggas nivåer och Flippas SRS kan korsbefrukta schemaläggningen</li>
+      </ul></div>
+      <div class="minus"><b>Emot</b><ul>
+        <li>Störst byggjobb och störst risk – rör själva träningsloopen</li>
+        <li>Två SRS-system ska förhandla om samma kö</li>
+        <li>Tempoväxlingen svep ↔ skriva kan störa flytet i passet</li>
+        <li>Kräver att B redan är gjord</li>
+      </ul></div>
+    </div>
+  </div>
+
+  <div class="phones">
+    <div>
+      <div class="phone">
+        <div class="apphead"><span class="back">‹</span><h3>Dags att öva</h3><span class="streak">🔥 12</span></div>
+        <div class="dots"><i class="done"></i><i class="done"></i><i class="done g"></i><i class="done"></i><i class="cur"></i><i></i><i class="g"></i><i></i><i></i><i class="g"></i></div>
+        <div class="dotcap">10 glosor · 4 böjningar i samma kö (mint = böjning)</div>
+        <div class="flash">
+          <div class="w">înțelege</div>
+          <div class="form">…​</div>
+        </div>
+        <div class="answerrow"><button class="no">Kan inte</button><button class="yes">Kan</button></div>
+        <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Vanligt glosskort … men kön har mintprickar</p>
+    </div>
+
+    <div>
+      <div class="phone">
+        <div class="apphead"><span class="back">‹</span><h3>Dags att öva</h3><span class="streak">🔥 12</span></div>
+        <div class="dots"><i class="done"></i><i class="done"></i><i class="done g"></i><i class="done"></i><i class="done"></i><i class="done"></i><i class="cur g"></i><i></i><i></i><i class="g"></i></div>
+        <div class="dotcap">…och ibland är nästa kort en böjning</div>
+        <div class="flash gnu">
+          <div class="task">🧽 Böj · presens, tredje person</div>
+          <div class="w">a înțelege</div>
+          <div class="form">hon förstår → ea …</div>
+          <div class="ansfield">înțeleg|</div>
+          <div class="diakrit"><span>ă</span><span>â</span><span>î</span><span>ș</span><span>ț</span></div>
+        </div>
+        <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
+      </div>
+      <p class="ph-cap">Böjningsuppgift mitt i passet – på ett ord du just klarat som gloskort</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ JÄMFÖRELSE + REKOMMENDATION ============ -->
+<div class="wrap-x">
+<table class="cmp">
+  <tr><th></th><th>A · Länkad svit</th><th>B · Grammatik i ämnet</th><th>C · Blandat pass</th></tr>
+  <tr><td>Byggjobb</td><td>Dagar</td><td>Veckor</td><td>Veckor till</td></tr>
+  <tr><td>Risk för Flippa</td><td>Ingen</td><td>Måttlig</td><td>Hög (rör träningsloopen)</td></tr>
+  <tr><td>Pedagogisk vinst</td><td>Liten</td><td>Stor</td><td>Störst</td></tr>
+  <tr><td>Som produkt/monetisering</td><td>Två appar</td><td>En produkt, tydlig USP</td><td>En produkt, unik USP</td></tr>
+  <tr><td>Innehållssystem</td><td>Oförändrade</td><td>Två parallella (ok: olika natur)</td><td>Två som måste samköras</td></tr>
+  <tr><td>Går att ångra?</td><td>Ja, trivialt</td><td>Ja – modulen kan tas bort</td><td>Svårt</td></tr>
+</table>
+</div>
+
+<div class="reco">
+  <h2>Rekommendation</h2>
+  <p><b>Gör A nu, sikta på B, låt C vänta på bevis.</b> A kostar dagar och ger dig facit på den
+  viktigaste frågan – klickar folk ens över bron? B är rätt slutmål om monetiseringen går mot den
+  ambitiösa vuxna inläraren ("komplett språkträning på svenska" är en produkt, inte två). C är
+  pedagogiskt vackrast men rör det enda som absolut inte får gå sönder: barnens dagliga pass.</p>
+  <p>Beslutet hänger ihop med segmentfrågan i <code>docs/monetisering.md</code>: familj/skolelev
+  → apparna förblir gärna två; ambitiös vuxen → en svit vinner.</p>
+</div>
+
+<script>
+  document.querySelectorAll(".tabs button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll(".tabs button").forEach(function(x){ x.classList.toggle("on", x===b); });
+      document.querySelectorAll(".variant").forEach(function(v){ v.classList.toggle("on", v.id==="v-"+b.dataset.v); });
+      window.scrollTo(0,0);
+    });
+  });
+</script>
+</body>
+</html>

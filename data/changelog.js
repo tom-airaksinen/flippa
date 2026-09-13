@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v350", items: [
+    { t: "Test: ämnen på rumänska har fått knappen 🧽 Gnugga grammatiken, som öppnar grammatikdrillen Gnugga direkt inne i Flippa", type: "new" },
+  ]},
   { date: "13 september 2026", ver: "v349", items: [
     { t: "Böjningsfältet fungerar nu för verb också, och AI:n fyller i det när den föreslår nya ord", type: "improved", hi: true, ico: "📐",
       desc: "För verb sparas de former man inte kan gissa sig till: 1:a och 3:e person presens, perfekt och konjunktiv. Rumänska 101 har fått alla sina 17 verb ifyllda." },

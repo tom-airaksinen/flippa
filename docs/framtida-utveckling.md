@@ -975,3 +975,12 @@ att det inte gjordes i v327.
 Konkreta beslut (delat vs eget innehåll, val av login-leverantörer, EU-region)
 och uppföljningsfrågor läggs i [`oppna-fragor.md`](oppna-fragor.md) enligt
 projektkonventionen.
+
+---
+
+## 20) Flippa × Gnugga – integrationsspåret (eget dokument)
+
+Frågan om Gnugga (grammatikdrill) ska bli en modul i Flippa har fått ett eget spår:
+[`flippa-x-gnugga.md`](flippa-x-gnugga.md). Beslut 2026-09-13: variant B (grammatik
+som segment per ämne) är huvudspåret på sikt, men Gnugga vidareutvecklas separat
+tills vidare. Mockup: [`../mockups/gnugga-integration.html`](../mockups/gnugga-integration.html).
