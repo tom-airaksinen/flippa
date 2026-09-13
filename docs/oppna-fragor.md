@@ -93,3 +93,13 @@
 - [ ] Vilka språk får färdiga paket först? (italienska redan på gång)
 - [ ] Engelsk master som mellanled, eller generera direkt svenska↔målspråk?
 - [ ] Distribution längre fram: i-app-bibliotek vs delade CSV-filer?
+
+## Lägg till ord – flödet
+- [ ] Vilken variant av "Lägg till ord" ska vi gå på? Prototyp med fyra varianter
+  ligger i [`mockups/lagg-till-flode.html`](../mockups/lagg-till-flode.html)
+  (live: tom-airaksinen.github.io/flippa/mockups/lagg-till-flode.html). Växla
+  AI-inställningen överst för att se hur varje variant beter sig med och utan
+  sparat val.
+  **A** dagens flöde med ett AI-mål · **B** ett fält utan flikar ·
+  **C** källa först i två steg · **D** AI först när lektionen är tom.
+  Claudes lutning: B, med D som tillägg för tomma lektioner. (2026-09-13)

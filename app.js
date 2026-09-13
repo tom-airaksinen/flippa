@@ -3610,8 +3610,12 @@ const FAN_SVG_EDIT = '<svg viewBox="0 0 24 24" width="20" height="20" fill="none
 // AI-stjärnor (fylld, vit via currentColor) för "AI-kontext" (öppnar Googles AI-läge).
 // Claude/ChatGPT-märkena. Låg tidigare inline i openAddDialog; nu en definition som
 // delas av Lägg till ord-dialogen och minnesregel-menyn.
-const AI_LOGO_CLAUDE = '<svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><line x1="12" y1="3.5" x2="12" y2="9"/><line x1="12" y1="15" x2="12" y2="20.5"/><line x1="3.5" y1="12" x2="9" y2="12"/><line x1="15" y1="12" x2="20.5" y2="12"/><line x1="6" y1="6" x2="9.7" y2="9.7"/><line x1="14.3" y1="14.3" x2="18" y2="18"/><line x1="18" y1="6" x2="14.3" y2="9.7"/><line x1="9.7" y1="14.3" x2="6" y2="18"/></svg>';
-const AI_LOGO_GPT = '<svg class="ai-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 3.3 18.5 7v10L12 20.7 5.5 17V7z"/><path d="M12 11.4 18.2 7.8M12 11.4v7.1M12 11.4 5.8 7.8" opacity=".55"/></svg>';
+// Claudes solburst: elva avsmalnande strålar. Stiliserad, men bär märkets karaktär –
+// den gamla versionen var åtta raka streck och läste som ett asterisk-tecken.
+const AI_LOGO_CLAUDE = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.00 11.40L13.10 2.15A1.10 1.10 0 0 1 10.90 2.15ZM12.32 11.50L18.25 4.31A1.10 1.10 0 0 1 16.40 3.12ZM12.55 11.75L21.42 8.91A1.10 1.10 0 0 1 20.50 6.91ZM12.59 12.09L21.59 14.49A1.10 1.10 0 0 1 21.91 12.31ZM12.45 12.39L18.72 19.28A1.10 1.10 0 0 1 20.16 17.62ZM12.17 12.58L13.72 21.76A1.10 1.10 0 0 1 15.83 21.14ZM11.83 12.58L8.17 21.14A1.10 1.10 0 0 1 10.28 21.76ZM11.55 12.39L3.84 17.62A1.10 1.10 0 0 1 5.28 19.28ZM11.41 12.09L2.09 12.31A1.10 1.10 0 0 1 2.41 14.49ZM11.45 11.75L3.50 6.91A1.10 1.10 0 0 1 2.58 8.91ZM11.68 11.50L7.60 3.12A1.10 1.10 0 0 1 5.75 4.31Z"/></svg>';
+// OpenAI-market i sin riktiga form. Den gamla ikonen var en kubkontur och hade inget
+// med logotypen att gora – flatan ar det som gor den igenkannbar.
+const AI_LOGO_GPT = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.08524.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.872zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6067-1.4997Z"/></svg>';
 const AI_STARS_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><g transform="translate(12 11.5) scale(1.2) translate(-12 -11.5)"><path d="M10 5 L11.7 10.3 L17 12 L11.7 13.7 L10 19 L8.3 13.7 L3 12 L8.3 10.3 Z"/><path d="M18 4 L18.8 6.2 L21 7 L18.8 7.8 L18 10 L17.2 7.8 L15 7 L17.2 6.2 Z"/></g></svg>';
 const FAN_ITEMS = [
   { key: "image",  ic: FAN_SVG_IMAGE, label: "Bildsök" },
@@ -6375,7 +6379,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v344";
+const APP_VERSION = "v345";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

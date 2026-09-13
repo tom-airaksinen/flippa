@@ -121,7 +121,14 @@ body {
 /* Flikinnehåll: en flik visas, den andra döljs (.hidden) */
 #app-main { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; }
 #screens { position: relative; flex: 1; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
-.tab-view { flex: 1; min-height: 0; overflow-y: auto; }
+.tab-view { flex: 1; min-height: 0; overflow-y: auto; position: relative; }
+/* Samma skäl som i ämneslistan (v332): iOS studsar bara när elementet FAKTISKT är
+   scrollbart, och Hjälp/Statistik ryms ofta på en skärm. Ett 1 px spöke strax under
+   nederkanten gör vyn minimalt scrollbar så gummibandet finns även då. */
+.tab-view::after {
+  content: ""; position: absolute; top: 100%; left: 0; width: 1px; height: 1px;
+  pointer-events: none;
+}
 
 /* Statistik-fliken */
 #stats-screen {
@@ -1842,6 +1849,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   color: var(--text); background: color-mix(in srgb, var(--accent) 16%, var(--surface-2)); cursor: pointer;
 }
 .ai-btn:active { filter: brightness(1.12); }
+/* Basstorlek: utan den blir en <svg> utan width/height jättestor i alla sammanhang
+   som inte råkar ha en egen regel. Kontexterna nedan får gärna skriva över. */
+.ai-logo { width: 18px; height: 18px; flex: none; }
 .ai-btn .ai-logo { width: 18px; height: 18px; flex: none; }
 .ai-copy-alt { text-align: center; margin: 15px 0 2px; }
 
