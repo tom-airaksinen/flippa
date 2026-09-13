@@ -1500,7 +1500,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 85dvh;
+  max-height: 92dvh;   /* utnyttja ytan: 85 lämnade en tom remsa i nederkant */
   overflow-y: auto;
   overscroll-behavior: contain; /* hindrar att svep-ner studsar hela sidan */
   animation: slideup 0.22s ease-out;
@@ -1555,6 +1555,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   width: 100%;
 }
 .modal textarea { min-height: 140px; resize: vertical; line-height: 1.4; }
+/* Minnesregeln är satt till rows="2" men fick 140 px av regeln ovan – fem rader för
+   en mening. Med böjningsfältet tillagt trängde det ut Spara ur dialogen. Egen höjd
+   här, inte i den generella regeln: inklistringsrutorna i Lägg till ord vill vara
+   stora. Kan fortfarande dras ut manuellt (resize). */
+#m-hint { min-height: 76px; }
 
 /* Egen dropdown (cs = custom select) – ersätter native <select> */
 .cs { position: relative; width: 100%; }

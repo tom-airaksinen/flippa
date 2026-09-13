@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v349", items: [
+    { t: "Böjningsfältet fungerar nu för verb också, och AI:n fyller i det när den föreslår nya ord", type: "improved", hi: true, ico: "📐",
+      desc: "För verb sparas de former man inte kan gissa sig till: 1:a och 3:e person presens, perfekt och konjunktiv. Rumänska 101 har fått alla sina 17 verb ifyllda." },
+    { t: "Fixat: Spara hamnade utanför dialogen i Redigera ord när böjningsfältet kom till. Minnesregelfältet var fem rader högt trots att det var tänkt som två", type: "fixed" },
+  ]},
   { date: "13 september 2026", ver: "v348", items: [
     { t: "Fixat: svepet höger för att gå tillbaka missade ofta när man svepte fort. Nu fångas även snabba svep", type: "fixed" },
   ]},

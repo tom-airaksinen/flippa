@@ -5168,6 +5168,13 @@ const AI_EXAMPLES = {
 
 // Böjningsexempel per språk, används bara när ämnet har böjning påslaget.
 // Formen är obestämd singular + obestämd plural, precis som på korten.
+// Verbens principaldelar skiljer sig helt mellan språk, så instruktionen skickas BARA
+// för språk som har ett exempel här. För rumänska: 1:a och 3:e person presens (visar
+// stam och ev. infix), perfektparticip (oförutsägbart i konjugation 3) och 3:e person
+// konjunktiv (oregelbunden, och rumänska använder den där andra språk tar infinitiv).
+const AI_VERB_EXAMPLES = {
+  ro: "înțeleg, înțelege · am înțeles · să înțeleagă",
+};
 const AI_FORM_EXAMPLES = {
   ro: "o pâine, două pâini",
   fr: "un pain, des pains",
@@ -5184,9 +5191,22 @@ function formsOn() { return !!(currentSubject && currentSubject.forms); }
 // harGenus = genusnoten kom före, då skulle "För substantiv:" upprepas i samma andetag.
 function formPromptNote(harGenus) {
   if (!formsOn()) return "";
-  return (harGenus ? " Ta dessutom med böjningen" : " För substantiv: ta med böjningen")
+  const bas = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
+  // Exemplet MÅSTE vara på målspråket. Saknas ett skickas en schematisk form i
+  // stället – ett rumänskt exempel i en finsk prompt styr mål-LLM:en helt fel.
+  const substExempel = AI_FORM_EXAMPLES[bas];
+  const subst = (harGenus ? " Ta dessutom med böjningen" : " För substantiv: ta med böjningen")
     + ` i klamrar efter den svenska sidan – obestämd singular + obestämd plural, `
-    + `t.ex. {o casă, două case}. Klammern utelämnas för ord som inte är substantiv.`;
+    + (substExempel ? `t.ex. {${substExempel}}.` : `i formen {obestämd singular, obestämd plural}.`);
+  const verbExempel = AI_VERB_EXAMPLES[bas];
+  const verb = verbExempel
+    ? ` För verb: lägg i klammern de former man inte kan gissa sig till – 1:a och 3:e `
+      + `person presens, perfekt med hjälpverb, och 3:e person konjunktiv, `
+      + `åtskilda med mittpunkt: {${verbExempel}}.`
+    : "";
+  return subst + verb
+    + (verbExempel ? ` Klammern utelämnas för ord som varken är substantiv eller verb.`
+                   : ` Klammern utelämnas för ord som inte är substantiv.`);
 }
 function aiExampleLines(label) {
   const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
@@ -6458,7 +6478,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v348";
+const APP_VERSION = "v349";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
