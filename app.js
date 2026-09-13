@@ -213,10 +213,18 @@ function subjectLang(s) {
 // Gnugga-repot rörs inte; framstegen bor i Gnuggas egna localStorage-nycklar.
 // Plan, protokoll och skavlogg: docs/flippa-x-gnugga.md.
 const GNUGGA_APPS = { ro: "https://tom-airaksinen.github.io/gnugga/" };
-function gnuggaUrlFor(s) {
-  const lang = subjectLang(s);
-  return GNUGGA_APPS[(lang || "").slice(0, 2).toLowerCase()] || null;
+function gnuggaLangKey(s) {
+  const p = (subjectLang(s) || "").slice(0, 2).toLowerCase();
+  return GNUGGA_APPS[p] ? p : null;
 }
+function gnuggaUrlFor(s) {
+  const p = gnuggaLangKey(s);
+  return p ? GNUGGA_APPS[p] : null;
+}
+// Glosor/Grammatik-vyn på ämnesskärmen. Nollställs till Glosor vid ämnesbyte,
+// men överlever omritningar (due-räknare, retur från Gnugga) inom samma ämne.
+let lessonsView = "glosor";
+let lessonsViewSubjectId = null;
 // Flagga-emoji per språk (tomt om inget språk)
 const LANG_FLAG = {
   "sv": "🇸🇪", "sv-SE": "🇸🇪",
@@ -1850,24 +1858,31 @@ function renderLessons(keepChoosers) {
   const hasExcluded = prioActive && activeLessons(currentSubject).some((l) => l.cards.some((c) => !prioAllowed(c)));
   $("prio-empty-note").classList.toggle("hidden", !(due === 0 && hasExcluded));
 
+  // Glosor/Grammatik-toggeln: bara för språk med en deployad Gnugga. I grammatik-
+  // läget döljs glosinnehållet (pillren, dags-knappen, listan) och grammatikvyn
+  // visas i stället – due-knappens och tom-notens ordinarie logik ovan har redan
+  // körts, så här räcker det att gömma dem ovanpå.
+  const gnuggaUrl = gnuggaUrlFor(currentSubject);
+  if (currentSubject.id !== lessonsViewSubjectId) { lessonsViewSubjectId = currentSubject.id; lessonsView = "glosor"; }
+  const grammatik = !!gnuggaUrl && lessonsView === "grammatik";
+  $("lessons-seg").classList.toggle("hidden", !gnuggaUrl);
+  $("seg-glosor").className = grammatik ? "" : "on-blue";
+  $("seg-grammatik").className = grammatik ? "on-mint" : "";
+  document.querySelector("#lessons-screen .opt-wrap").classList.toggle("hidden", grammatik);
+  $("lessons-search-btn").classList.toggle("hidden", grammatik);
+  $("lessons-scroll").classList.toggle("hidden", grammatik);
+  $("grammatik-view").classList.toggle("hidden", !grammatik);
+  if (grammatik) {
+    dueBtn.classList.add("hidden");
+    $("prio-empty-note").classList.add("hidden");
+    renderGrammatik(gnuggaUrl);
+    return;
+  }
   const list = $("lessons-list");
   clearListShadow($("lessons-scroll"));
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
-  // Gnugga-ingången: sist i listan, bara för språk med en deployad Gnugga.
-  // Renderas in i listans innerHTML (listan hålls minst en skärm hög av det dolda
-  // sökfältet, så ett statiskt syskon EFTER listan hamnar alltid under vecket).
-  const gnuggaUrl = gnuggaUrlFor(currentSubject);
-  const gnuggaCardHTML = gnuggaUrl
-    ? `<button id="gnugga-entry" class="gnugga-entry" type="button">
-         <span class="ge-t">🧽 Gnugga grammatiken</span>
-         <span class="ge-go">›</span>
-         <span class="ge-d">Böj verb och substantiv – drillappen Gnugga öppnas här i Flippa</span>
-       </button>`
-    : "";
-  const wireGnuggaEntry = () => { const b = $("gnugga-entry"); if (b) b.onclick = () => openGnugga(gnuggaUrl); };
   if (!currentSubject.lessons.length) {
-    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>` + gnuggaCardHTML;
-    wireGnuggaEntry();
+    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
     return;
   }
   // Global sök: visa matchande ORD direkt (platt lista grupperad per lektion) i stället
@@ -1954,8 +1969,7 @@ function renderLessons(keepChoosers) {
         </div>
       </div>`;
     })
-    .join("") + gnuggaCardHTML;
-  wireGnuggaEntry();
+    .join("");
   list.querySelectorAll(".row").forEach((row) => {
     row.addEventListener("click", (e) => {
       if (e.target.closest(".row-edit")) return;
@@ -1977,6 +1991,35 @@ function renderLessons(keepChoosers) {
 // Fullskärmstakeover à la träningspasset: Flippas tabbar döljs (updateTabbar),
 // kvar är ‹-raden + iframen. Iframen skapas vid första öppningen och ligger
 // sedan kvar monterad, så Gnugga står där man lämnade den om man går in igen.
+// Grammatikvyn: ingångskortet + status läst ur Gnuggas localStorage. Apparna delar
+// origin, så Gnuggas nycklar (gnugga-<språk>-progress) ligger i samma lagring och
+// uppdateras live när man gnuggat och kommer tillbaka (renderLessons körs på retur).
+function renderGrammatik(url) {
+  $("gnugga-entry").onclick = () => openGnugga(url);
+  const box = $("gnugga-status");
+  let P = null;
+  try { P = JSON.parse(localStorage.getItem(`gnugga-${gnuggaLangKey(currentSubject)}-progress`)); } catch (_) {}
+  const rad = (ico, text) => `<div class="gs-row"><span class="gs-i">${ico}</span><span class="gs-m">${text}</span></div>`;
+  const dagar = P && P.days ? Object.keys(P.days) : [];
+  if (!dagar.length) {
+    box.innerHTML = rad("✨", "Inget gnuggat på den här enheten än – kör första passet!");
+    return;
+  }
+  // Gnuggas datum är lokala "ÅÅÅÅ-MM-DD"-strängar; jämför i lokal tid
+  const dag = (s) => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+  const nu = new Date(); const idag = new Date(nu.getFullYear(), nu.getMonth(), nu.getDate());
+  const diffDagar = (s) => Math.round((idag - dag(s)) / 86400000);
+  const senaste = diffDagar(dagar.slice().sort().pop());
+  const senasteText = senaste <= 0 ? "i dag" : senaste === 1 ? "i går" : `för ${senaste} dagar sedan`;
+  const vecka = dagar.filter((s) => { const d = diffDagar(s); return d >= 0 && d < 7; }).length;
+  const ord = Object.keys(P.items || {}).length;
+  const monster = Object.values(P.pat || {}).filter((s) => s && s.seen > 0).length;
+  box.innerHTML =
+    rad("🗓️", `Senast gnuggat: <b>${senasteText}</b>`) +
+    rad("🔥", `${vecka} av 7 dagar senaste veckan`) +
+    rad("📚", `${ord} ord gnuggade · ${monster} mönster påbörjade`);
+}
+
 let gnuggaFrame = null;
 function openGnugga(url) {
   if (!gnuggaFrame) {
@@ -1990,6 +2033,8 @@ function openGnugga(url) {
   show("gnugga");
   track("/gnugga-oppnad");
 }
+$("seg-glosor").addEventListener("click", () => { if (lessonsView !== "glosor") { lessonsView = "glosor"; renderLessons(); } });
+$("seg-grammatik").addEventListener("click", () => { if (lessonsView !== "grammatik") { lessonsView = "grammatik"; renderLessons(); } });
 
 // ---- Drag & drop-omordning av rader (långtryck) – lektioner och ämnen ----
 // Generisk motor: raderna som ligger i listEl dras om; en liten cfg avgör
@@ -6520,7 +6565,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v350";
+const APP_VERSION = "v351";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

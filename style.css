@@ -1981,6 +1981,23 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .gnugga-entry .ge-t { grid-column: 1; grid-row: 1; font-weight: 700; color: #3fcfa8; }
 .gnugga-entry .ge-go { grid-column: 2; grid-row: 1 / span 2; color: #3fcfa8; font-size: 1.4rem; line-height: 1; }
 .gnugga-entry .ge-d { grid-column: 1; grid-row: 2; font-size: 0.82rem; color: var(--muted); }
+/* Glosor/Grammatik-toggeln på ämnesskärmen (bara språk med Gnugga) */
+.lessons-seg { display: flex; gap: 6px; padding: 2px 16px 10px; }
+.lessons-seg button {
+  flex: 1; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
+  padding: 9px 6px; border-radius: 10px; font: inherit; font-size: 0.9rem; font-weight: 700;
+  cursor: pointer; touch-action: manipulation;
+}
+.lessons-seg button.on-blue { background: var(--accent); border-color: var(--accent); color: #fff; }
+.lessons-seg button.on-mint { background: #3fcfa8; border-color: #3fcfa8; color: #062b22; }
+/* Grammatikvyn: ingångskort + statusrader ur Gnuggas localStorage */
+#grammatik-view { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 12px; }
+#gnugga-status { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.gs-row { background: var(--surface); border-radius: 12px; padding: 12px 14px; font-size: 0.9rem;
+  display: flex; gap: 10px; align-items: center; }
+.gs-row .gs-i { font-size: 1.05rem; flex: none; }
+.gs-row .gs-m { color: var(--muted); }
+.gs-row .gs-m b { color: var(--text); }
 /* Iframen fyller allt under ‹-raden; Gnugga är själv exakt en skärm hög och scrollar inuti */
 #gnugga-holder { flex: 1; min-height: 0; display: flex; }
 #gnugga-frame { flex: 1; width: 100%; border: 0; display: block; background: #0f1b1e; }

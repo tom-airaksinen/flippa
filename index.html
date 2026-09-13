@@ -69,6 +69,12 @@
         <a id="dl-template" class="add-menu-item add-menu-sub" href="mall.csv" target="_blank" rel="noopener" role="menuitem">📄 Ladda ner CSV-mall</a>
       </div>
     </header>
+    <!-- Glosor/Grammatik-toggle (testvecka B-lite): visas bara för språk med en
+         deployad Gnugga (GNUGGA_APPS) – se docs/flippa-x-gnugga.md -->
+    <div id="lessons-seg" class="lessons-seg hidden">
+      <button id="seg-glosor" type="button" class="on-blue">Glosor</button>
+      <button id="seg-grammatik" type="button">Grammatik</button>
+    </div>
     <input type="file" id="csv-file" accept=".csv,text/csv,text/plain" multiple class="hidden" />
     <!-- Bakgrund som mörkar/blurrar resten när en väljare är öppen -->
     <div id="opt-backdrop" class="opt-backdrop"></div>
@@ -151,9 +157,17 @@
           <button class="search-clear hidden" tabindex="-1">✕</button>
         </div>
       </div>
-      <!-- Gnugga-ingången (testvecka B-lite) renderas av renderLessons() sist i
-           listan, för språk med en deployad Gnugga – se docs/flippa-x-gnugga.md -->
       <div id="lessons-list" class="list"></div>
+    </div>
+    <!-- Grammatik-fliken (testvecka B-lite): Gnugga-ingång + status ur Gnuggas
+         localStorage (samma origin). Fylls av renderGrammatik(). -->
+    <div id="grammatik-view" class="hidden">
+      <button id="gnugga-entry" class="gnugga-entry" type="button">
+        <span class="ge-t">🧽 Gnugga grammatiken</span>
+        <span class="ge-go">›</span>
+        <span class="ge-d">Böj verb och substantiv – drillappen Gnugga öppnas här i Flippa</span>
+      </button>
+      <div id="gnugga-status"></div>
     </div>
   </section>
 
