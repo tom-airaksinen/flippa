@@ -110,3 +110,13 @@ iframen — ‹-raden är vägen ut.
   på den interaktiva mockupen. Fliken visar kortet + tre statusrader ur Gnuggas
   localStorage (senaste gnuggdag, dagar av 7, ord/mönster) så att den bär sin plats.
   Utlyftning är fortfarande liten: toggle + grammatikvy + GNUGGA_APPS bort (~150 rader).
+
+- **13/9 (sen eftermiddag): importerade framsteg försvann efter omstart → lagringsbrygga (v352).**
+  Tom importerade framsteg i inbäddade Gnugga (v29, "det gick bra"), svepte bort Flippa för att
+  få v351 – och Grammatik-fliken sa sedan "Inget gnuggat". Två hypoteser: (A) importen råkade
+  göras i fristående Gnugga (apparna ser numera identiska ut inuti), eller (B) **iOS ger iframes
+  i standalone-PWA:er flyktig lagring** som nollas vid omstart. Oavsett vilket är fixen v352:
+  Flippas localStorage är sanningskälla; iframen seedas vid load (omladdas en gång om något
+  skrevs) och speglas tillbaka vid retur/20 s/pagehide. Delas lagringen redan är bryggan en
+  no-op. Verifierad e2e mot riktiga Gnugga i iframe (8/8). ⚠️ Om hypotes B stämmer var den
+  ett dolt hot mot hela B-lite – all gnuggning inbäddat hade försvunnit vid varje appomstart.
