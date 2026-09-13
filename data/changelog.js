@@ -11,7 +11,7 @@
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
   { date: "13 september 2026", ver: "v345", items: [
-    { t: "Claudes och ChatGPTs ikoner ser nu ut som deras riktiga logotyper. ChatGPT hade en kub som inte hade med saken att göra", type: "improved" },
+    { t: "Claudes och ChatGPTs ikoner ser nu ut som deras riktiga logotyper, och alla AI-ikoner är lika stora i listorna. ChatGPT hade en kub som inte hade med saken att göra", type: "improved" },
     { t: "Hjälp och Statistik studsar nu mjukt när man drar i dem, även när innehållet ryms på skärmen", type: "improved" },
   ]},
   { date: "13 september 2026", ver: "v344", items: [
