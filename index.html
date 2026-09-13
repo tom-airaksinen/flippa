@@ -309,6 +309,13 @@
       <h1>Hjälp</h1>
     </header>
     <div class="help-body">
+      <div class="help-search">
+        <div class="search-wrap">
+          <input type="search" id="help-search" placeholder="Sök i hjälpen…" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />
+          <button class="search-clear hidden" tabindex="-1">✕</button>
+        </div>
+        <p class="help-hits hidden" id="help-hits"></p>
+      </div>
       <p class="help-intro">Flippa är en glosapp med flippkort. Du svarar genom att svepa, och appen håller koll på vad du behöver repetera – så att du pluggar rätt ord vid rätt tillfälle i stället för allt om och om igen.</p>
       <button id="help-whatsnew" class="whatsnew-btn" type="button"><span class="wn-label">📰 Vad är nytt</span><span class="wn-date" id="whatsnew-date"></span><span class="wn-chev">›</span></button>
 

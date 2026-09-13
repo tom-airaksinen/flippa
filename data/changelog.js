@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v340", items: [
+    { t: "Sökfält i Hjälp – skriv t.ex. ”prio” så visas bara de avsnitt som handlar om det, oavsett vilket tema de ligger under", type: "new", hi: true, ico: "🔍",
+      desc: "Söket träffar även brödtexten, inte bara rubrikerna, så du hittar rätt även när du bara minns ett ord ur texten. Rensar du fältet är hjälpen som förut." },
+    { t: "”Vad är nytt”-knappen linjerar nu med avsnitten under", type: "improved" },
+  ]},
   { date: "12 september 2026", ver: "v337", items: [
     { t: "Högtalare även i Redigera ord, till vänster om AI-stjärnorna – med samma dubbeltapp för böjningen. Den läser det du just skrivit, så du kan höra ändringen innan du sparar", type: "new", hi: true, ico: "🔊",
       desc: "Praktiskt när man lägger in ett nytt ord och vill kontrollera uttalet på en gång, utan att först spara och leta upp kortet i ett pass." },

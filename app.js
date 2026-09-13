@@ -4820,6 +4820,86 @@ function setupSearchClear(inputEl, onChange) {
 }
 const syncEditorClear = setupSearchClear(editorSearch, () => { if (activeScreen === "editor") renderEditor(); });
 
+// ---- Sök i hjälpen -------------------------------------------------------
+// Hjälptexten är statisk markup, så indexet byggs en gång ur DOM:en: varje <h3> i
+// ett .hs-body äger sig själv och allt som följer fram till nästa <h3>. Söket
+// matchar BÅDE rubrik och brödtext – den som minns ett ord ur texten men inte
+// vilken rubrik det stod under ska ändå hitta rätt.
+let helpIndex = null;
+function buildHelpIndex() {
+  if (helpIndex) return helpIndex;
+  helpIndex = [];
+  document.querySelectorAll("#help-screen .help-sec").forEach((sec) => {
+    const body = sec.querySelector(".hs-body");
+    if (!body) return;
+    sec._forspel = [];   // ev. innehåll före första rubriken
+    let cur = null;
+    Array.from(body.children).forEach((el) => {
+      if (el.tagName === "H3") {
+        cur = { sec, noder: [el], text: el.textContent };
+        helpIndex.push(cur);
+      } else if (cur) {
+        cur.noder.push(el);
+        cur.text += " " + el.textContent;
+      } else {
+        sec._forspel.push(el);
+      }
+    });
+  });
+  helpIndex.forEach((a) => { a.text = a.text.toLowerCase(); });
+  return helpIndex;
+}
+function filterHelp(q) {
+  const idx = buildHelpIndex();
+  const term = (q || "").trim().toLowerCase();
+  const intro = document.querySelector("#help-screen .help-intro");
+  const wn = $("help-whatsnew");
+  const hits = $("help-hits");
+  const sektioner = document.querySelectorAll("#help-screen .help-sec");
+  if (!term) {
+    idx.forEach((a) => a.noder.forEach((n) => { n.hidden = false; }));
+    sektioner.forEach((sec) => {
+      sec.hidden = false;
+      sec.open = false;                       // tillbaka till viloläget
+      (sec._forspel || []).forEach((n) => { n.hidden = false; });
+      const cnt = sec.querySelector(".hs-cnt");
+      if (cnt && cnt.dataset.full) cnt.textContent = cnt.dataset.full;
+    });
+    if (intro) intro.hidden = false;
+    if (wn) wn.hidden = false;
+    hits.classList.add("hidden");
+    return;
+  }
+  // Under sökning är inledningen och "Vad är nytt" inte träffar – de tas bort så
+  // resultatet börjar högst upp.
+  if (intro) intro.hidden = true;
+  if (wn) wn.hidden = true;
+  let antal = 0;
+  const perSektion = new Map();
+  idx.forEach((a) => {
+    const träff = a.text.includes(term);
+    a.noder.forEach((n) => { n.hidden = !träff; });
+    if (träff) { antal++; perSektion.set(a.sec, (perSektion.get(a.sec) || 0) + 1); }
+  });
+  sektioner.forEach((sec) => {
+    const n = perSektion.get(sec) || 0;
+    sec.hidden = n === 0;
+    sec.open = n > 0;                          // fäll ut det som matchar
+    (sec._forspel || []).forEach((el) => { el.hidden = n === 0; });
+    const cnt = sec.querySelector(".hs-cnt");
+    if (cnt) {
+      if (!cnt.dataset.full) cnt.dataset.full = cnt.textContent;
+      cnt.textContent = n;
+    }
+  });
+  hits.classList.remove("hidden");
+  hits.textContent = antal
+    ? `${antal} av ${idx.length} avsnitt`
+    : `Inget matchade ”${q.trim()}”`;
+}
+const helpSearch = $("help-search");
+const syncHelpClear = setupSearchClear(helpSearch, () => filterHelp(helpSearch.value));
+
 // 🔍-knappen i editorn hanteras nu av setupScrollSearch (editorSearchCtl) – sökfältet
 // lever överst i den scrollande ordlistan i stället för i en egen utfällbar toolbar.
 const syncLessonsClear = setupSearchClear($("lessons-search"), () => { if (activeScreen === "lessons") renderLessons(); });
@@ -6218,7 +6298,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v339";
+const APP_VERSION = "v340";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
