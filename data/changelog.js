@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v348", items: [
+    { t: "Fixat: svepet höger för att gå tillbaka missade ofta när man svepte fort. Nu fångas även snabba svep", type: "fixed" },
+  ]},
   { date: "13 september 2026", ver: "v347", items: [
     { t: "Att fylla en lektion med AI fungerar nu precis som Ta hjälp av AI: en knapp som fäller ut valen, med ”Kom ihåg mitt val”. Har du valt en AI går knappen direkt dit", type: "improved", hi: true, ico: "✨",
       desc: "Förut låg Claude och ChatGPT som två knappar bredvid varandra här, men som en utfällbar meny vid minnesregeln – samma sorts val såg olika ut på de två ställena. Nu är de lika, så mönstret behöver bara läras en gång." },

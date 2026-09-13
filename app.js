@@ -2092,21 +2092,33 @@ document.addEventListener("click", (e) => {
   if (swipeNavGuard) { e.stopPropagation(); e.preventDefault(); }
 }, true);
 function enableBackSwipe(screenEl) {
-  let sx = 0, sy = 0, tracking = false, decided = false, horiz = false;
-  screenEl.addEventListener("pointerdown", (e) => {
-    if (e.button != null && e.button > 0) return;
-    sx = e.clientX; sy = e.clientY; tracking = true; decided = false; horiz = false;
-  });
-  screenEl.addEventListener("pointermove", (e) => {
-    if (!tracking || decided) return;
-    const dx = e.clientX - sx, dy = e.clientY - sy;
+  let sx = 0, sy = 0, lx = 0, ly = 0, tracking = false, decided = false, horiz = false;
+  // Avgör riktningen utifrån en förflyttning. Bryts ut ur pointermove eftersom ett
+  // riktigt snabbt svep kan ge NOLL move-händelser – då måste beslutet kunna tas
+  // vid släppet i stället, annars händer ingenting alls. (Buggrapport: svårt att
+  // svepa tillbaka när man sveper fort.)
+  const avgor = (x, y) => {
+    if (decided) return;
+    const dx = x - sx, dy = y - sy;
     if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
     decided = true;
     horiz = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.3; // tydligt höger-svep
     if (!horiz) tracking = false; // vertikalt/vänster → lämna (scroll / radera-svep)
+  };
+  screenEl.addEventListener("pointerdown", (e) => {
+    if (e.button != null && e.button > 0) return;
+    sx = lx = e.clientX; sy = ly = e.clientY;
+    tracking = true; decided = false; horiz = false;
   });
-  const end = (e) => {
-    const ok = tracking && horiz && (e.clientX - sx) > 70;
+  screenEl.addEventListener("pointermove", (e) => {
+    if (!tracking) return;
+    lx = e.clientX; ly = e.clientY;
+    avgor(lx, ly);
+  });
+  const end = (x, y) => {
+    if (!tracking) return;
+    avgor(x, y);                     // hann ingen move avgöra riktningen: gör det nu
+    const ok = tracking && horiz && (x - sx) > 70;
     tracking = false;
     if (!ok) return;
     swipeNavGuard = true;                              // svälj efterföljande klick
@@ -2116,8 +2128,12 @@ function enableBackSwipe(screenEl) {
     if (target === "subjects") renderSubjects();
     else if (target === "lessons") renderLessons();
   };
-  screenEl.addEventListener("pointerup", end);
-  screenEl.addEventListener("pointercancel", () => { tracking = false; });
+  screenEl.addEventListener("pointerup", (e) => end(e.clientX, e.clientY));
+  // pointercancel = webbläsaren tog över gesten. Hade svepet redan passerat tröskeln
+  // var avsikten tydlig, så det får räknas – annars tappas snabba svep som systemet
+  // hinner klassa som scroll. Sista kända position används, eftersom cancel-eventets
+  // koordinater inte är att lita på.
+  screenEl.addEventListener("pointercancel", () => end(lx, ly));
 }
 enableBackSwipe($("lessons-screen"));  // ämne → huvudskärm
 enableBackSwipe($("editor-screen"));   // lektion → ämne
@@ -6442,7 +6458,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v347";
+const APP_VERSION = "v348";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
