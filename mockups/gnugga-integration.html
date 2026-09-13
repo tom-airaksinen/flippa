@@ -114,6 +114,54 @@
   .gnugga-app .tabbar span.on{color:var(--mint)}
   .tabbar .ico{display:block;font-size:1.05rem;margin-bottom:1px}
 
+
+  /* Verklighetstrogen Flippa-ämnesskärm (variant B, interaktiv) */
+  .fb-icons{display:flex;gap:8px}
+  .fb-ib{width:30px;height:30px;border-radius:9px;background:var(--surface);display:flex;
+    align-items:center;justify-content:center;font-size:.85rem;color:var(--text)}
+  .seg2{display:flex;gap:6px;margin:0 2px 10px}
+  .seg2 button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);
+    padding:9px 6px;border-radius:10px;font:inherit;font-size:.86rem;font-weight:700;cursor:pointer}
+  .seg2 button.on-blue{background:var(--accent);border-color:var(--accent);color:#fff}
+  .seg2 button.on-mint{background:var(--mint);border-color:var(--mint);color:var(--mint-ink)}
+  .bview{display:none;flex:1;min-height:0;flex-direction:column}
+  .bview.on{display:flex}
+  .fb-pills{display:flex;gap:8px;margin:0 2px 10px}
+  .fb-pill{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:6px}
+  .fb-pill .pl{display:flex;flex-direction:column}
+  .fb-pill .l{font-size:.62rem;font-weight:700;letter-spacing:.06em;color:var(--muted);text-transform:uppercase}
+  .fb-pill .v{font-size:.88rem;font-weight:600}
+  .fb-pill .car{color:var(--muted);font-size:.7rem}
+  .fb-due{display:block;width:calc(100% - 4px);margin:0 2px 10px;background:var(--easy);color:#3a2f00;
+    border:none;border-radius:12px;padding:13px;font:inherit;font-size:.95rem;font-weight:700;cursor:default}
+  .fb-search{margin:0 2px 10px;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+    padding:10px 13px;color:var(--muted);font-size:.9rem}
+  .fb-row{background:var(--surface);border-radius:12px;padding:14px 14px 12px;margin:0 2px 10px}
+  .fb-r1{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .fb-r1 .n{font-weight:700}
+  .fb-r1 .r{display:flex;align-items:center;gap:8px}
+  .fb-duetag{background:rgba(244,197,66,.16);color:var(--easy);border-radius:999px;
+    padding:2px 9px;font-size:.72rem;font-weight:700}
+  .fb-chev{width:26px;height:26px;border-radius:8px;background:var(--surface-2);color:var(--muted);
+    display:flex;align-items:center;justify-content:center;font-size:.85rem}
+  .fb-r2{display:flex;align-items:center;gap:8px;margin-top:9px}
+  .fb-bar{flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;display:flex}
+  .fb-bar .lrn{background:var(--good);height:100%}
+  .fb-bar .ong{background:#e0915a;height:100%}
+  .fb-pct{font-size:.72rem;font-weight:700;color:var(--good)}
+  .fb-cnt{font-size:.72rem;color:var(--muted)}
+  .fb-tom{flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);
+    font-size:.8rem;text-align:center;padding:20px}
+  /* Platshållarkortet exakt som i Flippa v350 */
+  .gnugga-entry{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;
+    width:calc(100% - 4px);margin:0 2px 10px;padding:14px 16px;text-align:left;
+    background:var(--mint-dim);border:1px solid var(--mint-line);border-radius:12px;
+    color:var(--text);font:inherit;cursor:pointer}
+  .gnugga-entry .ge-t{grid-column:1;grid-row:1;font-weight:700;color:var(--mint)}
+  .gnugga-entry .ge-go{grid-column:2;grid-row:1 / span 2;color:var(--mint);font-size:1.4rem;line-height:1}
+  .gnugga-entry .ge-d{grid-column:1;grid-row:2;font-size:.82rem;color:var(--muted)}
+
   table.cmp{border-collapse:collapse;font-size:.84rem;margin:8px 0 4px;width:100%}
   .cmp th,.cmp td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
   .cmp th{background:var(--surface-2);font-size:.78rem}
@@ -199,21 +247,23 @@ Varianterna är kumulativa: B förutsätter tankarna i A, C förutsätter B.</p>
 <div class="variant" id="v-b">
   <div class="v-desc">
     <p><b>Gnugga blir en modul i Flippa.</b> Ämnesskärmen får segmentet <i>Glosor | Grammatik</i> –
-    grindat per ämne precis som böjningsfältet, så bara rumänska visar det. Gnuggas motor och
-    lexikon laddas separat (lazy) och innehållet förblir statiskt och kurerat i repot; bara
-    progressen delar Flippas värld. Mint blir grammatikens färg <i>inuti</i> Flippa.</p>
+    grindat per ämne precis som böjningsfältet, så bara rumänska visar det. Sedan v350 finns
+    <b>B-lite</b> live: Gnugga öppnas i en iframe från ett kort sist i lektionslistan.
+    Vänstra telefonen visar hur det skulle kännas att <b>redan nu</b> flytta det kortet till en
+    egen Grammatik-flik — <b>togglen är klickbar</b>. Glosor-fliken är Rumänska som appen faktiskt
+    ser ut i dag; Grammatik-fliken innehåller bara dagens platshållarkort, inget mer.</p>
     <div class="pm">
       <div class="plus"><b>För</b><ul>
         <li>En app, en ikon, en rutin – "jag lär mig rumänska" på ett ställe</li>
         <li>Böjningsfältet + AI-kontext + grammatikövningar förstärker varandra</li>
         <li>En produkt att positionera och ta betalt för</li>
-        <li>Hjälp, changelog, inställningar, TTS byggs en gång</li>
+        <li>Togglen kostar nästan inget ovanpå B-lite – kortet byter bara hem</li>
       </ul></div>
       <div class="minus"><b>Emot</b><ul>
-        <li>Två innehållssystem i samma app (Firebase + statiskt lexikon)</li>
-        <li>app.js ≈ 6 000 rader redan – stort integrationsjobb utan byggsteg</li>
+        <li>Grammatik-fliken rymmer i dag EN knapp – en flik för en knapp kan kännas tom</li>
+        <li>Ett extra tryck till gnuggandet jämfört med kortet i listan</li>
         <li>Halvtomt löfte för alla ämnen utan grammatikdata</li>
-        <li>Regressionsrisk i appen barnen använder dagligen</li>
+        <li>Fullt B (högra telefonen) är fortfarande veckors jobb</li>
       </ul></div>
     </div>
   </div>
@@ -221,22 +271,43 @@ Varianterna är kumulativa: B förutsätter tankarna i A, C förutsätter B.</p>
   <div class="phones">
     <div>
       <div class="phone">
-        <div class="apphead"><span class="back">‹</span><h3>Rumänska</h3><span class="streak">🔥 12</span></div>
-        <div class="seg"><button>Glosor</button><button class="seg-mint">Grammatik</button></div>
-        <div class="card"><div class="mrow"><h4>Bestämd form singular</h4><span class="pill auto">Automatiskt</span></div>
-          <div class="meta">casa · băiatul · orașul</div></div>
-        <div class="card"><div class="mrow"><h4>Plural</h4><span class="pill lart">Lärt</span></div>
-          <div class="meta">case · băieți · orașe</div></div>
-        <div class="card"><div class="mrow"><h4>Presens</h4><span class="pill ovat">Övat</span></div>
-          <div class="meta">înțeleg · vorbește · mănâncă</div></div>
-        <div class="card"><div class="mrow"><h4>Perfekt</h4><span class="pill ny">Nytt</span></div>
-          <div class="meta">am înțeles · a vorbit</div></div>
-        <div class="card mintcard" style="text-align:center;padding:10px">
-          <button class="mintbtn" style="margin-top:0">Gnugga · 20 övningar</button>
+        <div class="apphead"><span class="back">‹</span><h3>🇷🇴 Rumänska</h3>
+          <span class="fb-icons"><span class="fb-ib">✎</span><span class="fb-ib">＋</span><span class="fb-ib">🔍</span></span></div>
+        <div class="seg2" id="bseg">
+          <button class="on-blue" data-bv="glosor">Glosor</button>
+          <button data-bv="grammatik">Grammatik</button>
+        </div>
+        <div class="bview on" id="bv-glosor">
+          <div class="fb-pills">
+            <div class="fb-pill"><span class="pl"><span class="l">Översätt</span><span class="v">Från svenska</span></span><span class="car">▾</span></div>
+            <div class="fb-pill"><span class="pl"><span class="l">Kort/pass</span><span class="v">10</span></span><span class="car">▾</span></div>
+          </div>
+          <button class="fb-due">⏰ Dags att öva (14)</button>
+          <div class="fb-search">Sök i alla lektioner…</div>
+          <div class="fb-row">
+            <div class="fb-r1"><span class="n">Rumänska 101</span><span class="r"><span class="fb-duetag">⏰ 14</span><span class="fb-chev">›</span></span></div>
+            <div class="fb-r2"><span class="fb-bar"><i class="lrn" style="width:46%"></i><i class="ong" style="width:18%"></i></span><span class="fb-pct">46%</span><span class="fb-cnt">107 ord</span></div>
+          </div>
+          <div class="fb-row">
+            <div class="fb-r1"><span class="n">Mat och dryck</span><span class="r"><span class="fb-chev">›</span></span></div>
+            <div class="fb-r2"><span class="fb-bar"><i class="lrn" style="width:28%"></i><i class="ong" style="width:13%"></i></span><span class="fb-pct">28%</span><span class="fb-cnt">58 ord</span></div>
+          </div>
+          <div class="fb-row">
+            <div class="fb-r1"><span class="n">Räkneord 1–20</span><span class="r"><span class="fb-chev">›</span></span></div>
+            <div class="fb-r2"><span class="fb-bar"><i class="lrn" style="width:75%"></i><i class="ong" style="width:13%"></i></span><span class="fb-pct">75%</span><span class="fb-cnt">20 ord</span></div>
+          </div>
+        </div>
+        <div class="bview" id="bv-grammatik">
+          <button class="gnugga-entry" style="margin-top:2px">
+            <span class="ge-t">🧽 Gnugga grammatiken</span>
+            <span class="ge-go">›</span>
+            <span class="ge-d">Böj verb och substantiv – drillappen Gnugga öppnas här i Flippa</span>
+          </button>
+          <div class="fb-tom">Mer finns inte här i dag.<br>Framtida B: mönsterlistan med nivåer (se högra telefonen).</div>
         </div>
         <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
       </div>
-      <p class="ph-cap">Segment på ämnesskärmen – visas bara när ämnet har grammatikdata</p>
+      <p class="ph-cap">B redan nu: klicka på togglen! Glosor = dagens Flippa, Grammatik = bara dagens B-lite-kort</p>
     </div>
 
     <div>
@@ -253,7 +324,7 @@ Varianterna är kumulativa: B förutsätter tankarna i A, C förutsätter B.</p>
         <div class="card mintcard" style="padding:10px"><div class="meta" style="color:var(--mint)">💡 Feminina på -ă tar oftast -e … men vänta med facit, försök igen!</div></div>
         <div class="tabbar"><span class="on"><span class="ico">🃏</span>Flippa</span><span><span class="ico">📊</span>Statistik</span><span><span class="ico">❓</span>Hjälp</span></div>
       </div>
-      <p class="ph-cap">Övningsvyn: Gnuggas format, Flippas skal – mint markerar grammatikläget</p>
+      <p class="ph-cap">B senare: övningarna bor i Flippa – Gnuggas format i Flippas skal</p>
     </div>
   </div>
 </div>
@@ -338,6 +409,16 @@ Varianterna är kumulativa: B förutsätter tankarna i A, C förutsätter B.</p>
 </div>
 
 <script>
+  document.querySelectorAll("#bseg button").forEach(function(b){
+    b.addEventListener("click", function(){
+      document.querySelectorAll("#bseg button").forEach(function(x){
+        x.classList.remove("on-blue", "on-mint");
+        if (x === b) x.classList.add(b.dataset.bv === "glosor" ? "on-blue" : "on-mint");
+      });
+      document.getElementById("bv-glosor").classList.toggle("on", b.dataset.bv === "glosor");
+      document.getElementById("bv-grammatik").classList.toggle("on", b.dataset.bv === "grammatik");
+    });
+  });
   document.querySelectorAll(".tabs button").forEach(function(b){
     b.addEventListener("click", function(){
       document.querySelectorAll(".tabs button").forEach(function(x){ x.classList.toggle("on", x===b); });
