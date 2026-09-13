@@ -102,4 +102,9 @@
   sparat val.
   **A** dagens flöde med ett AI-mål · **B** ett fält utan flikar ·
   **C** källa först i två steg · **D** AI först när lektionen är tom.
-  Claudes lutning: B, med D som tillägg för tomma lektioner. (2026-09-13)
+  Tom lutar åt **A** (säkrast), men vill förbättra läget innan man valt AI –
+  därav **A2** liten meny (som Ta hjälp av AI) · **A3** kryssruta under knapparna ·
+  **A4** minns automatiskt med ångra-rad. Alla tre ser likadana ut när valet väl
+  är gjort; skillnaden ligger bara i förstagångsläget.
+  Claudes lutning bland dessa: A2, eftersom mönstret då är identiskt med
+  minnesregelns och man lär sig det en gång. (2026-09-13)

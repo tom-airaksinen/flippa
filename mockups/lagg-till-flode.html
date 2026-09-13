@@ -60,6 +60,22 @@
   .link-action{background:none;border:none;color:var(--accent);font:inherit;font-size:.84rem;
     cursor:pointer;text-decoration:underline;padding:0}
 
+  .aiwrap{position:relative}
+  .aipop{position:absolute;z-index:9;top:calc(100% + 7px);left:0;right:0;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 16px 38px rgba(0,0,0,.5)}
+  .aipop.hidden{display:none}
+  .aipop button.row{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;
+    color:var(--text);text-align:left;padding:11px 12px;border-radius:8px;font:inherit;font-size:.95rem;cursor:pointer}
+  .aipop button.row:hover{background:var(--surface-2)}
+  .remember{display:flex;align-items:center;gap:9px;padding:9px 12px 5px;font-size:.86rem;color:var(--muted);cursor:pointer}
+  .remember input{width:16px;height:16px;accent-color:var(--accent)}
+  .aipop .note{background:none;border:none;padding:4px 12px 7px;margin:0;font-size:.76rem;color:var(--muted)}
+  .rememberbar{display:flex;align-items:center;gap:9px;margin-top:12px;font-size:.84rem;color:var(--muted);cursor:pointer}
+  .rememberbar input{width:16px;height:16px;accent-color:var(--accent)}
+  .aftertip{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.8rem;color:var(--muted);
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 11px}
+  .aftertip .link-action{font-size:.8rem}
+
   .modal-actions{display:flex;gap:10px;margin-top:18px}
   .modal-actions button{flex:1;padding:13px;border-radius:12px;font:inherit;font-size:.95rem;
     font-weight:700;cursor:pointer;border:1px solid var(--line)}
@@ -104,7 +120,10 @@ Byt AI-inställning här nedan så ser du hur varje variant beter sig.</p>
 </div>
 
 <div class="tabs" id="tabs">
-  <button data-v="a" class="on">A · Dagens, ett AI-mål</button>
+  <button data-v="a" class="on">A · Dagens</button>
+  <button data-v="a2">A2 · Liten meny</button>
+  <button data-v="a3">A3 · Kryss under</button>
+  <button data-v="a4">A4 · Minns automatiskt</button>
   <button data-v="b">B · Ett fält</button>
   <button data-v="c">C · Källa först</button>
   <button data-v="d">D · AI först när tomt</button>
@@ -122,31 +141,64 @@ var STARS = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor"><path 
 var AI = { claude:{n:"Claude",ic:CLAUDE}, gpt:{n:"ChatGPT",ic:GPT}, copy:{n:"kopiera",ic:COPY} };
 var variant = "a", pref = "claude";
 
-function aiKnapp(){
-  if(!pref) return '<div class="ai-send">'
+function valdKnapp(){
+  if(pref==="copy") return '<button class="ai-btn primary">'+COPY+'Kopiera prompten</button>';
+  return '<button class="ai-btn primary">'+AI[pref].ic+'Fråga '+AI[pref].n+'</button>';
+}
+function menyrader(){
+  return '<button class="row">'+CLAUDE+'Öppna i Claude</button>'
+       + '<button class="row">'+GPT+'Öppna i ChatGPT</button>'
+       + '<button class="row">'+COPY+'Kopiera frågan</button>';
+}
+// Alla varianter ser LIKADANA ut när ett val redan är sparat – skillnaden ligger
+// bara i läget innan, när inställningen är "fråga varje gång".
+function aiKnapp(v){
+  if(pref) return '<div class="ai-send">'+valdKnapp()+'</div>'
+    + '<div class="tertiary-c"><button class="link-action">Använd en annan AI</button></div>';
+
+  if(v==="a2") return '<div class="aiwrap">'
+    + '<div class="ai-send"><button class="ai-btn primary" onclick="document.getElementById(\'pop\').classList.toggle(\'hidden\')">'
+    + STARS+'Fråga en AI</button></div>'
+    + '<div class="aipop hidden" id="pop">'+menyrader()
+    + '<label class="remember"><input type="checkbox"><span>Kom ihåg mitt val</span></label>'
+    + '<p class="note">Nästa gång går knappen direkt dit.</p></div></div>';
+
+  if(v==="a3") return '<div class="ai-send">'
+    + '<button class="ai-btn">'+CLAUDE+'Claude</button>'
+    + '<button class="ai-btn">'+GPT+'ChatGPT</button></div>'
+    + '<label class="rememberbar"><input type="checkbox"><span>Kom ihåg mitt val</span></label>'
+    + '<div class="tertiary-c"><button class="link-action">⧉ Kopiera prompt (för annan AI)</button></div>';
+
+  if(v==="a4") return '<div class="ai-send">'
+    + '<button class="ai-btn">'+CLAUDE+'Claude</button>'
+    + '<button class="ai-btn">'+GPT+'ChatGPT</button></div>'
+    + '<div class="aftertip">Kommer ihåg ChatGPT nästa gång.'
+    + '<button class="link-action">Ångra</button></div>'
+    + '<div class="tertiary-c"><button class="link-action">⧉ Kopiera prompt (för annan AI)</button></div>';
+
+  return '<div class="ai-send">'
     + '<button class="ai-btn">'+CLAUDE+'Claude</button>'
     + '<button class="ai-btn">'+GPT+'ChatGPT</button></div>'
     + '<div class="tertiary-c"><button class="link-action">⧉ Kopiera prompt (för annan AI)</button></div>';
-  if(pref==="copy") return '<div class="ai-send"><button class="ai-btn primary">'+COPY+'Kopiera prompten</button></div>'
-    + '<div class="tertiary-c"><button class="link-action">Använd en annan AI</button></div>';
-  return '<div class="ai-send"><button class="ai-btn primary">'+AI[pref].ic+'Fråga '+AI[pref].n+'</button></div>'
-    + '<div class="tertiary-c"><button class="link-action">Använd en annan AI</button></div>';
 }
 function stepper(){ return '<label>Antal ord/fraser</label><div class="ai-stepper">'
   + '<button>−</button><span>20</span><button>+</button></div>'; }
 
 var V = {
-a: function(){ return ''
+a: function(v){ return ''
   + '<h3>Lägg till ord</h3>'
   + '<div class="seg"><button>Manuellt</button><button>Slå upp</button><button class="seg-on">AI</button></div>'
   + '<p class="modal-hint">Låt en AI föreslå ord. Öppnas med prompten ifylld – klistra sedan in svaret.</p>'
   + stepper()
   + '<label>Tema</label><input type="text" value="Mat och dryck">'
-  + aiKnapp()
+  + aiKnapp(v)
   + '<div class="add-divider">När du fått svaret</div>'
   + '<textarea placeholder="Klistra in AI:ns svar här"></textarea>'
   + '<div class="modal-actions"><button class="btn-secondary">Stäng</button>'
   + '<button class="btn-primary">Lägg till från svaret</button></div>'; },
+a2: function(){ return V.a("a2"); },
+a3: function(){ return V.a("a3"); },
+a4: function(){ return V.a("a4"); },
 
 b: function(){ return ''
   + '<h3>Lägg till ord</h3>'
@@ -154,7 +206,7 @@ b: function(){ return ''
   + 'Appen känner igen både egna rader och ett AI-svar.</p>'
   + '<textarea rows="5" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>'
   + '<div class="add-divider">Kom inte på något?</div>'
-  + aiKnapp()
+  + aiKnapp(variant)
   + '<div class="tertiary-c" style="margin-top:14px"><button class="link-action">🔍 Slå upp enstaka ord i stället</button></div>'
   + '<div class="modal-actions"><button class="btn-secondary">Avbryt</button>'
   + '<button class="btn-primary">Lägg till</button></div>'; },
@@ -179,7 +231,7 @@ d: function(){ return ''
   + '<p class="modal-hint">Fyll den snabbast med AI – eller lägg in ord själv.</p>'
   + stepper()
   + '<label>Tema</label><input type="text" value="Mat och dryck">'
-  + aiKnapp()
+  + aiKnapp(variant)
   + '<div class="add-divider">eller</div>'
   + '<div class="pick-list">'
   + '<button class="pick-item"><span class="pi-ic">✍️</span><span>Skriv in ord själv</span><span class="pi-chev">›</span></button>'
@@ -189,6 +241,25 @@ d: function(){ return ''
 };
 
 var NOTES = {
+a2: '<b>A2 · Liten meny</b><span class="tag">samma som Ta hjälp av AI</span>'
+ + '<ul><li>En knapp som fäller ut de tre valen – exakt samma mönster som minnesregelns '
+ + '”Ta hjälp av AI”. Lär man sig det ena kan man det andra.</li>'
+ + '<li>”Kom ihåg mitt val” sitter i menyn, där man ändå står när man väljer.</li>'
+ + '<li>Kompakt: dialogen är redan hög, och två knappar blir en.</li>'
+ + '<li>Kostar ett tryck extra tills man kryssat i.</li></ul>',
+a3: '<b>A3 · Kryss under knapparna</b>'
+ + '<ul><li>Inget extra tryck – båda valen syns direkt, precis som idag.</li>'
+ + '<li>Kryssrutan är synlig hela tiden, inte gömd bakom en meny. Svårare att missa.</li>'
+ + '<li>Men: tar en rad till i en dialog som redan är lång, och kryssrutan syns även '
+ + 'för den som aldrig tänkt spara något.</li></ul>',
+a4: '<b>A4 · Minns automatiskt, med ångra</b>'
+ + '<ul><li>Noll friktion: du trycker bara på din AI, och appen minns. Raden under '
+ + 'berättar vad som hände och låter dig ångra.</li>'
+ + '<li>Sparar flest klick av alla varianter – ingen kryssruta att hitta.</li>'
+ + '<li>Men: appen bestämmer åt användaren. Det kan kännas påstridigt, och ”Ångra” '
+ + 'måste synas länge nog för att hinna läsas.</li>'
+ + '<li>Skulle också behöva göras likadant i Ta hjälp av AI, annars beter sig de två '
+ + 'ställena olika.</li></ul>',
 a: '<b>A · Dagens flöde, ett AI-mål</b><span class="tag">minst risk</span>'
  + '<ul><li>Allt sitter kvar – bara de två AI-knapparna blir en, styrd av profilvalet.</li>'
  + '<li>Ändrar ingenting för den som redan lärt sig dialogen.</li>'
@@ -212,7 +283,7 @@ d: '<b>D · AI först när lektionen är tom</b>'
 };
 
 function rita(){
-  document.getElementById("phone").innerHTML = V[variant]();
+  document.getElementById("phone").innerHTML = V[variant](variant);
   document.getElementById("note").innerHTML = NOTES[variant];
   document.getElementById("prefnote").textContent =
     pref ? "→ ett tryck" : "→ menyn visas";
