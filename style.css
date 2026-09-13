@@ -1684,6 +1684,21 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
   mask-image: linear-gradient(to bottom, #000 calc(100% - 52px), transparent);
 }
+/* Vallista i en dialog: ett val i taget, markerat med bock. Samma idiom som
+   prio-popovern i statistiken, men i modalformat med Avbryt/Spara. */
+.pick-list { display: flex; flex-direction: column; gap: 2px; margin: 2px 0 4px; }
+.pick-item {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: var(--surface-2); border: 1px solid transparent; color: var(--muted);
+  font-family: inherit; font-size: 0.95rem; font-weight: 600; text-align: left;
+  padding: 12px 13px; border-radius: 10px; cursor: pointer;
+}
+.pick-item .pick-ic { width: 18px; height: 18px; flex: none; display: flex; align-items: center; justify-content: center; }
+.pick-item .pick-ic svg { width: 18px; height: 18px; }
+.pick-item.on { color: var(--text); border-color: var(--accent); background: var(--surface); }
+.pick-item.on::after { content: "✓"; margin-left: auto; color: var(--accent); font-weight: 700; }
+.pick-item:active { background: var(--surface-2); }
+
 .set-sec {
   font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--muted); font-weight: 700; margin: 20px 6px 8px;
@@ -1751,6 +1766,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   display: flex; align-items: center; justify-content: space-between; width: 100%;
   background: var(--surface); border: 1px solid var(--line); color: var(--text);
   font: inherit; font-size: 0.98rem; font-weight: 600; padding: 13px 14px;
+  /* <button> har text-align:center i UA-stilen, och .wn-label spanner hela bredden
+     (flex:1) – utan detta centreras etiketten i stället för att börja vid kanten. */
+  text-align: left;
   border-radius: 14px; cursor: pointer; margin: 4px 0 8px;
 }
 .whatsnew-btn:active { background: var(--surface-2); }

@@ -1491,6 +1491,7 @@ function renderSettingsScreen() {
         <span class="set-body"><span class="set-t">Mål & nivåer</span><span class="set-d">Kort/dag och veckomål</span></span>
         <span class="set-chev">›</span></button>
     </div>
+    <div class="set-sec">AI</div>
     <div class="set-card">
       <button class="set-row" id="set-ai" type="button">
         <span class="set-body"><span class="set-t">AI-hjälp</span><span class="set-d">${
@@ -1514,18 +1515,7 @@ function renderSettingsScreen() {
   const scl = $("set-changelog");
   if (scl) scl.onclick = openChangelog;
   $("set-levels").onclick = openLevelsModal;
-  $("set-ai").onclick = async () => {
-    const val = await actionSheet("AI-hjälp", [
-      { label: "Öppna Claude", value: "claude" },
-      { label: "Öppna ChatGPT", value: "gpt" },
-      { label: "Kopiera frågan", value: "copy" },
-      { label: "Fråga varje gång", value: "" },
-    ], "Vad ska hända när du trycker Ta hjälp av AI?");
-    if (val === null) return; // avbröt
-    setAiPref(val);
-    track("ai-val-installning/" + (val || "fraga"));
-    renderSettingsScreen();
-  };
+  $("set-ai").onclick = openAiPrefModal;
   $("set-backup").onclick = openBackup;
   const pt = $("push-toggle");
   if (pt) pt.onclick = () => { const l = pushLocal(); if (l.enabled) disablePush(); else enablePush(l.time || "08:00"); };
@@ -1534,6 +1524,44 @@ function renderSettingsScreen() {
   const ptest = $("push-test");
   if (ptest) ptest.onclick = testPush;
 }
+// Ett val i taget med bock på det valda, i stället för en rad knappar: man ser
+// nuvarande val redan i dialogen (actionSheet visade det bara i listan man kom
+// från), och Spara/Avbryt gör det tydligt att inget ändras förrän man bekräftar.
+function openAiPrefModal() {
+  const nuvarande = aiPref() || "";
+  let valt = nuvarande;
+  const VAL = [
+    { v: "claude", ic: () => AI_LOGO_CLAUDE, t: "Öppna Claude" },
+    { v: "gpt",    ic: () => AI_LOGO_GPT,    t: "Öppna ChatGPT" },
+    { v: "copy",   ic: () => '<span class="ai-pop-ico">⧉</span>', t: "Kopiera frågan" },
+    { v: "",       ic: () => AI_STARS_SVG,   t: "Fråga varje gång" },
+  ];
+  const m = openModal(`
+    <h3>AI-hjälp</h3>
+    <p class="modal-hint">Vad ska hända när du trycker <b>Ta hjälp av AI</b>?</p>
+    <div class="pick-list" id="ai-pick">
+      ${VAL.map((o) => `<button type="button" class="pick-item${o.v === valt ? " on" : ""}" data-v="${o.v}"><span class="pick-ic">${o.ic()}</span>${esc(o.t)}</button>`).join("")}
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" id="ai-cancel">Avbryt</button>
+      <button class="btn-primary" id="ai-save">Spara</button>
+    </div>`);
+  m.querySelectorAll("#ai-pick .pick-item").forEach((b) => {
+    b.onclick = () => {
+      valt = b.dataset.v;
+      m.querySelectorAll("#ai-pick .pick-item").forEach((x) => x.classList.toggle("on", x === b));
+    };
+  });
+  m.querySelector("#ai-cancel").onclick = closeModal;
+  m.querySelector("#ai-save").onclick = () => {
+    closeModal();
+    if (valt === nuvarande) return;      // inget ändrat → logga inget
+    setAiPref(valt);
+    track("ai-val-installning/" + (valt || "fraga"));
+    renderSettingsScreen();
+  };
+}
+
 function openSettings() {
   if (!currentUser) return;
   activeScreen = "settings";
@@ -6347,7 +6375,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v343";
+const APP_VERSION = "v344";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
