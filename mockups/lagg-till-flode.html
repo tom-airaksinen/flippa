@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – Lägg till ord, flödesvarianter</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --line:#2c3c63; --good:#5bbf72; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:24px 14px 70px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 16px;max-width:660px;font-size:.9rem}
+  code{font-size:.85em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;justify-content:center}
+  .tabs button{background:var(--surface);border:1px solid var(--line);color:var(--text);
+    padding:9px 14px;border-radius:10px;font:inherit;font-size:.88rem;cursor:pointer}
+  .tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+
+  .prefbar{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;
+    padding:9px 12px;margin-bottom:16px;font-size:.84rem;color:var(--muted);max-width:560px}
+  .prefbar select{background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    border-radius:8px;padding:6px 9px;font:inherit;font-size:.84rem}
+
+  .phone{width:100%;max-width:390px;background:var(--bg);border:1px solid var(--line);
+    border-radius:22px;padding:16px 14px 18px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+  .phone h3{margin:2px 0 10px;font-size:1.08rem}
+  .modal-hint{color:var(--muted);font-size:.82rem;margin:0 0 12px;line-height:1.45}
+  label{display:block;font-size:.82rem;color:var(--muted);margin:12px 0 4px}
+  input[type=text],textarea{width:100%;background:var(--surface-2);border:1px solid var(--line);
+    border-radius:10px;color:var(--text);padding:11px 14px;font:inherit;font-size:.95rem}
+  textarea{resize:vertical;min-height:76px}
+
+  .seg{display:flex;gap:6px;margin-bottom:12px}
+  .seg button{flex:1;background:var(--surface-2);border:1px solid var(--line);color:var(--muted);
+    padding:9px 6px;border-radius:10px;font:inherit;font-size:.86rem;font-weight:600;cursor:pointer}
+  .seg button.seg-on{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .ai-stepper{display:flex;align-items:center;width:calc(50% - 5px);background:var(--surface-2);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:2px}
+  .ai-stepper button{width:42px;height:42px;flex:none;border:none;background:none;
+    color:var(--accent);font-size:1.4rem;cursor:pointer}
+  .ai-stepper>span{flex:1;text-align:center;font-weight:700}
+
+  .ai-send{display:flex;gap:10px;margin-top:16px}
+  .ai-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--surface-2);border:1px solid var(--line);color:var(--text);
+    padding:13px 10px;border-radius:12px;font:inherit;font-size:.92rem;font-weight:700;cursor:pointer}
+  .ai-btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .ai-logo{width:17px;height:17px;flex:none}
+
+  .add-divider{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.76rem;
+    text-transform:uppercase;letter-spacing:.05em;margin:18px 0 8px}
+  .add-divider::before,.add-divider::after{content:"";flex:1;height:1px;background:var(--line)}
+  .tertiary-c{text-align:center;margin-top:10px}
+  .link-action{background:none;border:none;color:var(--accent);font:inherit;font-size:.84rem;
+    cursor:pointer;text-decoration:underline;padding:0}
+
+  .modal-actions{display:flex;gap:10px;margin-top:18px}
+  .modal-actions button{flex:1;padding:13px;border-radius:12px;font:inherit;font-size:.95rem;
+    font-weight:700;cursor:pointer;border:1px solid var(--line)}
+  .btn-secondary{background:var(--surface-2);color:var(--text)}
+  .btn-primary{background:var(--accent);border-color:var(--accent);color:#fff}
+
+  .pick-list{display:flex;flex-direction:column;gap:8px;margin:4px 0}
+  .pick-item{display:flex;align-items:center;gap:11px;width:100%;background:var(--surface-2);
+    border:1px solid transparent;color:var(--text);font:inherit;font-size:.95rem;font-weight:600;
+    text-align:left;padding:14px 13px;border-radius:12px;cursor:pointer}
+  .pick-item .pi-ic{width:20px;height:20px;flex:none;display:flex;align-items:center;justify-content:center}
+  .pick-item .pi-d{display:block;font-weight:400;font-size:.8rem;color:var(--muted);margin-top:2px}
+  .pick-item.on{border-color:var(--accent);background:var(--surface)}
+  .pick-item .pi-chev{margin-left:auto;color:var(--muted)}
+
+  .note{max-width:660px;margin:18px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:12px;padding:13px 15px;font-size:.86rem;color:var(--muted)}
+  .note b{color:var(--text)}
+  .note ul{margin:7px 0 0;padding-left:18px}
+  .note li{margin:4px 0}
+  .tag{display:inline-block;background:var(--accent);color:#fff;font-size:.68rem;font-weight:700;
+    padding:2px 7px;border-radius:999px;margin-left:6px;vertical-align:middle}
+  .steps{display:flex;gap:6px;justify-content:center;margin-bottom:12px}
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--line)}
+  .dot.on{background:var(--accent)}
+</style>
+</head>
+<body>
+<h1>Lägg till ord – flödesvarianter</h1>
+<p class="sub">Fyra sätt att bygga dialogen när AI-valet redan finns i profilen.
+Byt AI-inställning här nedan så ser du hur varje variant beter sig.</p>
+
+<div class="prefbar">
+  <span>AI-inställning i profilen:</span>
+  <select id="pref">
+    <option value="">Inte satt – frågar varje gång</option>
+    <option value="claude" selected>Claude</option>
+    <option value="gpt">ChatGPT</option>
+    <option value="copy">Kopiera frågan</option>
+  </select>
+  <span id="prefnote"></span>
+</div>
+
+<div class="tabs" id="tabs">
+  <button data-v="a" class="on">A · Dagens, ett AI-mål</button>
+  <button data-v="b">B · Ett fält</button>
+  <button data-v="c">C · Källa först</button>
+  <button data-v="d">D · AI först när tomt</button>
+</div>
+
+<div class="phone" id="phone"></div>
+<div class="note" id="note"></div>
+
+<script>
+var CLAUDE = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M4.7 15.5 9.2 13l.1-.2-.1-.2H9l-.8-.1-2.6-.1-2.3-.1-2.2-.1-.6-.1L0 11.4l.1-.4.5-.3.7.1 1.6.1 2.4.2 1.7.1 2.6.3h.4l.1-.2-.1-.1-.1-.1-2.6-1.8L4.5 7.3l-1.5-1.1-.8-.5-.4-.5-.2-1.1.7-.8 1 .1.2.1 1 .8 2.1 1.6 2.7 2 .4.3.2-.1v-.1L9.6 7 7.4 3.2l-.9-1.5-.2-.9c-.1-.4-.1-.8-.1-1.2L7.1 0l.6.2 1.3 1.7 2 2.8 1.1 1.7.2.1h.1v-.2l.1-.5.5-2.2.5-2.8L13.8.1 14.2 0l.8.6-.1 1-.7 3.4-.4 2.4h.2l.3-.3 1.1-1.5 1.9-2.4 1-1.2.4-.3h.7l.5.8-.2.8-.8 1-.6.9-1 1.3-.6 1.1.1.1h.2l3.2-.7 1.7-.3 2-.4.9.5.1.4-.3.9-2.1.5-2.4.5-3.6.9v.1l.2.1 1.6.1h1.3l2.6.2.7.4.4.6-.1.4-1 .5-1.4-.3-3.3-.8-1.1-.3h-.2v.1l.9.9 1.7 1.5 2.1 2 .1.5-.3.4h-.3l-2-1.5-.8-.7-1.7-1.5h-.1v.2l.4.6 2.1 3.1.1.9-.1.3-.5.2-.6-.1-1.2-1.7L14 17l-1-1.7-.1.1-.6 6.4-.3.3-.6.3-.5-.4-.3-.7.3-1.4.4-1.9.3-1.5.3-1.8.2-.6v-.1h-.2l-.6.9-1 1.3-1.5 1.6-.4.1-.6-.3.1-.5.3-.4 1.8-2.3.6-1.4 1.1-1.5v-.2h-.1l-.2.1-2.4 1.6-1.5.7-.9.4-.4-.3-.1-.5.2-.4 1.4-1Z"/></svg>';
+var GPT = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M21.6 10a5.4 5.4 0 0 0-.5-4.4 5.5 5.5 0 0 0-5.9-2.6A5.4 5.4 0 0 0 11.1 1a5.5 5.5 0 0 0-5.2 3.8A5.4 5.4 0 0 0 2.3 7.4a5.5 5.5 0 0 0 .7 6.4 5.4 5.4 0 0 0 .5 4.4 5.5 5.5 0 0 0 5.9 2.6 5.4 5.4 0 0 0 4.1 1.8 5.5 5.5 0 0 0 5.2-3.8 5.4 5.4 0 0 0 3.6-2.6 5.5 5.5 0 0 0-.7-6.2Zm-8.2 11.4a4 4 0 0 1-2.6-.9l.1-.1 4.3-2.5a.7.7 0 0 0 .4-.6v-6.1l1.8 1.1v5a4.1 4.1 0 0 1-4 4.1ZM4.7 17.8a4 4 0 0 1-.5-2.7l.2.1 4.3 2.5a.7.7 0 0 0 .7 0l5.3-3v2.1l-4.4 2.5a4.1 4.1 0 0 1-5.6-1.5ZM3.6 8.4a4 4 0 0 1 2.1-1.8v5.1a.7.7 0 0 0 .3.6l5.2 3-1.8 1-4.3-2.5a4.1 4.1 0 0 1-1.5-5.4Zm15 3.5-5.3-3.1 1.8-1 4.3 2.5a4.1 4.1 0 0 1-.6 7.4v-5.2a.7.7 0 0 0-.2-.6Zm1.8-2.7-.2-.1-4.2-2.5a.7.7 0 0 0-.7 0l-5.3 3V7.4l4.4-2.5a4.1 4.1 0 0 1 6 4.3ZM9.1 12.9l-1.8-1v-5a4.1 4.1 0 0 1 6.7-3.2l-.1.1-4.3 2.5a.7.7 0 0 0-.4.6Zm1-2.1L12 9.7l2.4 1.4v2.8L12 15.3l-2.4-1.4Z"/></svg>';
+var COPY = '<span style="font-size:1.05rem">⧉</span>';
+var STARS = '<svg class="ai-logo" viewBox="0 0 24 24" fill="currentColor"><path d="M10 5 11.7 10.3 17 12 11.7 13.7 10 19 8.3 13.7 3 12 8.3 10.3Z"/><path d="M18 4 18.8 6.2 21 7 18.8 7.8 18 10 17.2 7.8 15 7 17.2 6.2Z"/></svg>';
+
+var AI = { claude:{n:"Claude",ic:CLAUDE}, gpt:{n:"ChatGPT",ic:GPT}, copy:{n:"kopiera",ic:COPY} };
+var variant = "a", pref = "claude";
+
+function aiKnapp(){
+  if(!pref) return '<div class="ai-send">'
+    + '<button class="ai-btn">'+CLAUDE+'Claude</button>'
+    + '<button class="ai-btn">'+GPT+'ChatGPT</button></div>'
+    + '<div class="tertiary-c"><button class="link-action">⧉ Kopiera prompt (för annan AI)</button></div>';
+  if(pref==="copy") return '<div class="ai-send"><button class="ai-btn primary">'+COPY+'Kopiera prompten</button></div>'
+    + '<div class="tertiary-c"><button class="link-action">Använd en annan AI</button></div>';
+  return '<div class="ai-send"><button class="ai-btn primary">'+AI[pref].ic+'Fråga '+AI[pref].n+'</button></div>'
+    + '<div class="tertiary-c"><button class="link-action">Använd en annan AI</button></div>';
+}
+function stepper(){ return '<label>Antal ord/fraser</label><div class="ai-stepper">'
+  + '<button>−</button><span>20</span><button>+</button></div>'; }
+
+var V = {
+a: function(){ return ''
+  + '<h3>Lägg till ord</h3>'
+  + '<div class="seg"><button>Manuellt</button><button>Slå upp</button><button class="seg-on">AI</button></div>'
+  + '<p class="modal-hint">Låt en AI föreslå ord. Öppnas med prompten ifylld – klistra sedan in svaret.</p>'
+  + stepper()
+  + '<label>Tema</label><input type="text" value="Mat och dryck">'
+  + aiKnapp()
+  + '<div class="add-divider">När du fått svaret</div>'
+  + '<textarea placeholder="Klistra in AI:ns svar här"></textarea>'
+  + '<div class="modal-actions"><button class="btn-secondary">Stäng</button>'
+  + '<button class="btn-primary">Lägg till från svaret</button></div>'; },
+
+b: function(){ return ''
+  + '<h3>Lägg till ord</h3>'
+  + '<p class="modal-hint">Skriv eller klistra in – ett ord per rad, <b>utländskt;svenskt</b>. '
+  + 'Appen känner igen både egna rader och ett AI-svar.</p>'
+  + '<textarea rows="5" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>'
+  + '<div class="add-divider">Kom inte på något?</div>'
+  + aiKnapp()
+  + '<div class="tertiary-c" style="margin-top:14px"><button class="link-action">🔍 Slå upp enstaka ord i stället</button></div>'
+  + '<div class="modal-actions"><button class="btn-secondary">Avbryt</button>'
+  + '<button class="btn-primary">Lägg till</button></div>'; },
+
+c: function(){ return ''
+  + '<h3>Lägg till ord</h3>'
+  + '<div class="steps"><span class="dot on"></span><span class="dot"></span></div>'
+  + '<p class="modal-hint">Varifrån kommer orden?</p>'
+  + '<div class="pick-list">'
+  + '<button class="pick-item"><span class="pi-ic">✍️</span><span>Jag skriver själv'
+  + '<span class="pi-d">Eller klistrar in en lista jag redan har</span></span><span class="pi-chev">›</span></button>'
+  + '<button class="pick-item"><span class="pi-ic">🔍</span><span>Slå upp ord'
+  + '<span class="pi-d">Skriv svenska ord, få översättningen</span></span><span class="pi-chev">›</span></button>'
+  + '<button class="pick-item on"><span class="pi-ic">'+(pref&&pref!=="copy"?AI[pref].ic:STARS)+'</span><span>'
+  + (pref&&pref!=="copy" ? "Fråga "+AI[pref].n : "Ta hjälp av AI")
+  + '<span class="pi-d">Föreslår ord på ett tema</span></span><span class="pi-chev">›</span></button>'
+  + '</div>'
+  + '<div class="modal-actions"><button class="btn-secondary">Avbryt</button></div>'; },
+
+d: function(){ return ''
+  + '<h3>Lektionen är tom</h3>'
+  + '<p class="modal-hint">Fyll den snabbast med AI – eller lägg in ord själv.</p>'
+  + stepper()
+  + '<label>Tema</label><input type="text" value="Mat och dryck">'
+  + aiKnapp()
+  + '<div class="add-divider">eller</div>'
+  + '<div class="pick-list">'
+  + '<button class="pick-item"><span class="pi-ic">✍️</span><span>Skriv in ord själv</span><span class="pi-chev">›</span></button>'
+  + '<button class="pick-item"><span class="pi-ic">🔍</span><span>Slå upp ord</span><span class="pi-chev">›</span></button>'
+  + '</div>'
+  + '<div class="modal-actions"><button class="btn-secondary">Stäng</button></div>'; }
+};
+
+var NOTES = {
+a: '<b>A · Dagens flöde, ett AI-mål</b><span class="tag">minst risk</span>'
+ + '<ul><li>Allt sitter kvar – bara de två AI-knapparna blir en, styrd av profilvalet.</li>'
+ + '<li>Ändrar ingenting för den som redan lärt sig dialogen.</li>'
+ + '<li>Men: segmentkontrollen betyder fortfarande att man måste välja läge innan man ser något. '
+ + 'Tre flikar där två sällan används.</li></ul>',
+b: '<b>B · Ett fält</b>'
+ + '<ul><li>Inga flikar. Textrutan är det första och största – det man oftast vill göra.</li>'
+ + '<li>AI ligger under som hjälp när man kört fast, inte som ett eget läge.</li>'
+ + '<li>”Slå upp” blir en länk i stället för en flik – kortare väg för de många, en klick till för de få.</li>'
+ + '<li>Risk: samma ruta gör två saker (egna rader och AI-svar). Formatet är samma, men det måste synas i texten.</li></ul>',
+c: '<b>C · Källa först</b>'
+ + '<ul><li>Ett beslut i taget: först varifrån orden kommer, sedan ett fokuserat steg utan brus.</li>'
+ + '<li>Varje val kan få en förklarande rad – bra för Maria och andra som inte vet vad ”Slå upp” betyder.</li>'
+ + '<li>Profilvalet syns direkt i alternativet (”Fråga Claude”).</li>'
+ + '<li>Kostar en extra knapptryckning varje gång, även när man alltid gör samma sak.</li></ul>',
+d: '<b>D · AI först när lektionen är tom</b>'
+ + '<ul><li>Anpassar sig efter läget: en tom lektion ska fyllas, och då är AI snabbast.</li>'
+ + '<li>Har lektionen redan ord visas dagens dialog i stället.</li>'
+ + '<li>Löser ett verkligt tillfälle (”ny lektion, nu då?”) utan att röra det vanliga flödet.</li>'
+ + '<li>Men: två olika dialoger för samma knapp kan förvirra om man inte fattar varför.</li></ul>'
+};
+
+function rita(){
+  document.getElementById("phone").innerHTML = V[variant]();
+  document.getElementById("note").innerHTML = NOTES[variant];
+  document.getElementById("prefnote").textContent =
+    pref ? "→ ett tryck" : "→ menyn visas";
+}
+document.getElementById("tabs").onclick = function(e){
+  var b = e.target.closest("button"); if(!b) return;
+  variant = b.dataset.v;
+  this.querySelectorAll("button").forEach(function(x){ x.classList.toggle("on", x===b); });
+  rita();
+};
+document.getElementById("pref").onchange = function(){ pref = this.value; rita(); };
+rita();
+</script>
+</body>
+</html>
