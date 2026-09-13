@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v352", items: [
+    { t: "Fixat: gnuggframsteg gjorda inne i Flippa kunde försvinna när appen startades om – nu säkerhetskopieras de till Flippas egen lagring och läggs tillbaka automatiskt", type: "fixed" },
+  ]},
   { date: "13 september 2026", ver: "v351", items: [
     { t: "Testet med Gnugga i Flippa: rumänska ämnen har nu flikarna Glosor och Grammatik. Grammatik visar knappen till Gnugga plus hur det gnuggats på sistone", type: "improved" },
   ]},

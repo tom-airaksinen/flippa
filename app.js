@@ -212,7 +212,7 @@ function subjectLang(s) {
 // Flippa, för ämnen vars språk har en deployad Gnugga – just nu bara rumänska.
 // Gnugga-repot rörs inte; framstegen bor i Gnuggas egna localStorage-nycklar.
 // Plan, protokoll och skavlogg: docs/flippa-x-gnugga.md.
-const GNUGGA_APPS = { ro: "https://tom-airaksinen.github.io/gnugga/" };
+const GNUGGA_APPS = window.GNUGGA_APPS_OVERRIDE || { ro: "https://tom-airaksinen.github.io/gnugga/" };
 function gnuggaLangKey(s) {
   const p = (subjectLang(s) || "").slice(0, 2).toLowerCase();
   return GNUGGA_APPS[p] ? p : null;
@@ -1996,6 +1996,7 @@ function renderLessons(keepChoosers) {
 // uppdateras live när man gnuggat och kommer tillbaka (renderLessons körs på retur).
 function renderGrammatik(url) {
   $("gnugga-entry").onclick = () => openGnugga(url);
+  gnuggaPull(); // färska siffror ur iframen om den är öppnad (retur från ett pass)
   const box = $("gnugga-status");
   let P = null;
   try { P = JSON.parse(localStorage.getItem(`gnugga-${gnuggaLangKey(currentSubject)}-progress`)); } catch (_) {}
@@ -2020,17 +2021,51 @@ function renderGrammatik(url) {
     rad("📚", `${ord} ord gnuggade · ${monster} mönster påbörjade`);
 }
 
-let gnuggaFrame = null;
+// ---- Lagringsbrygga Flippa ↔ Gnugga-iframen ----
+// Flippas egen localStorage är sanningskällan för gnuggframstegen. På vissa
+// iOS-versioner får iframes i standalone-PWA:er FLYKTIG lagring (nollas när
+// appen startas om), så iframens lagring behandlas som arbetskopia: när ramen
+// laddats seedas den från Flippas kopia (och laddas om en gång om något skrevs),
+// och speglas tillbaka vid retur, var 20:e sekund och när appen göms. Delar
+// iframe och värdapp redan lagring (samma origin, normalfallet) blir bryggan
+// en ofarlig no-op: alla jämförelser är då lika och inget skrivs eller laddas om.
+let gnuggaFrame = null, gnuggaFrameLang = null, gnuggaPullTimer = null;
+function gnuggaSyncKeys() { return [`gnugga-${gnuggaFrameLang}-progress`, "gnugga-settings"]; }
+function gnuggaFrameStorage() {
+  try { return gnuggaFrame && gnuggaFrame.contentWindow && gnuggaFrame.contentWindow.localStorage; }
+  catch (_) { return null; }
+}
+function gnuggaPull() { // iframen → Flippas lagring
+  const fs = gnuggaFrameStorage(); if (!fs || !gnuggaFrameLang) return;
+  gnuggaSyncKeys().forEach((k) => {
+    try { const v = fs.getItem(k); if (v != null && v !== localStorage.getItem(k)) lsSet(k, v); } catch (_) {}
+  });
+}
+function gnuggaSeed() { // Flippas lagring → iframen; ladda om ramen om något faktiskt skrevs
+  const fs = gnuggaFrameStorage(); if (!fs || !gnuggaFrameLang) return;
+  let seedat = false;
+  gnuggaSyncKeys().forEach((k) => {
+    try { const v = localStorage.getItem(k); if (v != null && v !== fs.getItem(k)) { fs.setItem(k, v); seedat = true; } } catch (_) {}
+  });
+  if (seedat) { try { gnuggaFrame.contentWindow.location.reload(); } catch (_) {} }
+}
+document.addEventListener("visibilitychange", () => { if (document.hidden) gnuggaPull(); });
+window.addEventListener("pagehide", gnuggaPull);
+
 function openGnugga(url) {
   if (!gnuggaFrame) {
+    gnuggaFrameLang = gnuggaLangKey(currentSubject);
     gnuggaFrame = document.createElement("iframe");
     gnuggaFrame.id = "gnugga-frame";
     gnuggaFrame.src = url;
     gnuggaFrame.title = "Gnugga – grammatikdrill";
+    gnuggaFrame.addEventListener("load", gnuggaSeed); // körs även efter seed-omladdningen: då är allt lika → ingen loop
     $("gnugga-holder").appendChild(gnuggaFrame);
   }
   activeScreen = "gnugga";
   show("gnugga");
+  clearInterval(gnuggaPullTimer);
+  gnuggaPullTimer = setInterval(() => { if (shownScreen === "gnugga") gnuggaPull(); else { clearInterval(gnuggaPullTimer); gnuggaPullTimer = null; } }, 20000);
   track("/gnugga-oppnad");
 }
 $("seg-glosor").addEventListener("click", () => { if (lessonsView !== "glosor") { lessonsView = "glosor"; renderLessons(); } });
@@ -6565,7 +6600,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v351";
+const APP_VERSION = "v352";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
