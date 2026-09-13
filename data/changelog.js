@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v353", items: [
+    { t: "Fixat på riktigt: gnuggframstegen inne i Flippa överlever nu omstarter. Gnugga serveras nu från Flippas egen adress – förut låg den på en annan, och då ger iPhone den tillfällig lagring som nollas", type: "fixed" },
+  ]},
   { date: "13 september 2026", ver: "v352", items: [
     { t: "Fixat: gnuggframsteg gjorda inne i Flippa kunde försvinna när appen startades om – nu säkerhetskopieras de till Flippas egen lagring och läggs tillbaka automatiskt", type: "fixed" },
   ]},

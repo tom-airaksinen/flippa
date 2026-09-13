@@ -212,7 +212,11 @@ function subjectLang(s) {
 // Flippa, för ämnen vars språk har en deployad Gnugga – just nu bara rumänska.
 // Gnugga-repot rörs inte; framstegen bor i Gnuggas egna localStorage-nycklar.
 // Plan, protokoll och skavlogg: docs/flippa-x-gnugga.md.
-const GNUGGA_APPS = window.GNUGGA_APPS_OVERRIDE || { ro: "https://tom-airaksinen.github.io/gnugga/" };
+// OBS: måste vara SAMMA ORIGIN som Flippa (flippa.tomairaksinen.se) – därför en
+// snapshot i det här repot under gnugga/ (synkas med scripts/synka-gnugga.sh) och
+// inte Gnuggas github.io-URL. Cross-origin-iframes får flyktig, partitionerad
+// lagring i iOS standalone-PWA:er, och lagringsbryggan kan inte läsa dem alls.
+const GNUGGA_APPS = window.GNUGGA_APPS_OVERRIDE || { ro: "gnugga/" };
 function gnuggaLangKey(s) {
   const p = (subjectLang(s) || "").slice(0, 2).toLowerCase();
   return GNUGGA_APPS[p] ? p : null;
@@ -6600,7 +6604,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v352";
+const APP_VERSION = "v353";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

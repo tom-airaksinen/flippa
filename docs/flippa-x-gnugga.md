@@ -111,6 +111,17 @@ iframen — ‹-raden är vägen ut.
   localStorage (senaste gnuggdag, dagar av 7, ord/mönster) så att den bär sin plats.
   Utlyftning är fortfarande liten: toggle + grammatikvy + GNUGGA_APPS bort (~150 rader).
 
+- **13/9 (kväll): grundorsaken hittad – Flippa bor på egen domän (v353).** Flippa serveras
+  via CNAME på **flippa.tomairaksinen.se** (github.io-adressen är en 301-redirect), så
+  Gnugga-iframen mot github.io var **cross-origin**: WebKit ger cross-site-iframes
+  partitionerad, flyktig lagring (nollas vid omstart) och lagringsbryggan kunde inte läsa
+  ramen alls. Fix: en snapshot av Gnugga v29 ligger nu i det här repot under `gnugga/`
+  (synkas med `scripts/synka-gnugga.sh`) och iframen pekar på `gnugga/` – äkta samma
+  origin, bryggan fungerar, lagringen beständig. E2e 8/8 i prodlik layout (repo som
+  serverrot). ⚠️ Kvarstår oförklarat: efter ett pass hamnade Tom i ett läge utan
+  ‹-raden ("ser fristående ut") – trolig cross-origin/redirect-bieffekt; bevaka om det
+  återkommer efter v353. Gnuggas github.io-app är orörd och är fortfarande "fristående".
+
 - **13/9 (sen eftermiddag): importerade framsteg försvann efter omstart → lagringsbrygga (v352).**
   Tom importerade framsteg i inbäddade Gnugga (v29, "det gick bra"), svepte bort Flippa för att
   få v351 – och Grammatik-fliken sa sedan "Inget gnuggat". Två hypoteser: (A) importen råkade

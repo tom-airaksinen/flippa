@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Gnugga</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f1b1e" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Gnugga" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Splash vid kallstart -->
+  <div id="splash">
+    <img src="icon-192.png" class="splash-logo" alt="" />
+    <div class="splash-name">Gnugga</div>
+    <div class="splash-ver" id="splash-ver"></div>
+    <div class="splash-note" id="splash-note" aria-live="polite"></div>
+  </div>
+
+  <div id="app">
+
+    <!-- ===== HEM ===== -->
+    <section id="s-home" class="screen on">
+      <header class="hdr">
+        <h1><img src="icon-192.png" class="app-logo" alt="" /> Gnugga</h1>
+        <button class="chip" id="lang-chip" title="Språk"></button>
+        <button class="ib" id="settings-btn" title="Inställningar" aria-label="Inställningar"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.20 12.00 L20.16 12.77 L22.47 13.66 L22.03 15.43 L19.58 15.14 L17.80 17.80 L17.23 18.32 L18.23 20.58 L16.66 21.52 L15.14 19.58 L12.00 20.20 L11.23 20.16 L10.34 22.47 L8.57 22.03 L8.86 19.58 L6.20 17.80 L5.68 17.23 L3.42 18.23 L2.48 16.66 L4.42 15.14 L3.80 12.00 L3.84 11.23 L1.53 10.34 L1.97 8.57 L4.42 8.86 L6.20 6.20 L6.77 5.68 L5.77 3.42 L7.34 2.48 L8.86 4.42 L12.00 3.80 L12.77 3.84 L13.66 1.53 L15.43 1.97 L15.14 4.42 L17.80 6.20 L18.32 6.77 L20.58 5.77 L21.52 7.34 L19.58 8.86Z M15.4 12 A3.4 3.4 0 1 0 8.6 12 A3.4 3.4 0 1 0 15.4 12Z" fill="currentColor" fill-rule="evenodd"/></svg></button>
+      </header>
+      <div class="pad">
+        <div class="today" id="today"></div>
+        <div class="eyebrow" style="margin-top:6px">Mönster</div>
+        <div id="pattern-groups" class="groups"></div>
+        <div class="ver"><button class="linkish" id="version-tag"></button></div>
+      </div>
+    </section>
+
+    <!-- ===== MÖNSTER ===== -->
+    <section id="s-pattern" class="screen">
+      <header class="hdr">
+        <button class="ib back" data-go="s-home" aria-label="Tillbaka"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+        <div class="title" id="p-title"></div>
+        <span class="lvl" id="p-lvl"></span>
+      </header>
+      <div class="pad" id="p-body"></div>
+    </section>
+
+    <!-- ===== PASS ===== -->
+    <section id="s-session" class="screen">
+      <div class="top">
+        <button class="ib" id="quit" title="Avsluta passet" aria-label="Avsluta passet"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+        <div class="prog"><i id="prog-i" style="width:0%"></i></div>
+        <span class="counter" id="counter">0/0</span>
+      </div>
+      <div class="tags" id="tags"></div>
+      <div id="stage" class="stage"></div>
+      <div id="fb" class="fb"></div>
+    </section>
+
+    <!-- ===== STATISTIK (flik) ===== -->
+    <section id="s-stats" class="screen">
+      <header class="hdr"><h1>Statistik</h1><span class="chip" id="stats-lang"></span></header>
+      <div class="pad" id="stats-body"></div>
+    </section>
+
+    <!-- ===== HJÄLP (flik) ===== -->
+    <section id="s-help" class="screen">
+      <header class="hdr"><h1>Hjälp</h1></header>
+      <div class="pad" id="help-body"></div>
+    </section>
+
+    <!-- ===== KLAR ===== -->
+    <section id="s-done" class="screen">
+      <canvas id="done-canvas" aria-hidden="true"></canvas>
+      <div class="done" id="done-body"></div>
+    </section>
+  </div>
+
+  <!-- Flikrad – som Flippa. Syns på hem, statistik och hjälp; döljs under pass -->
+  <nav id="tabbar">
+    <button class="tab-btn on" data-tab="s-home" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="9" width="16" height="10" rx="3"/><path d="M4 12h16"/><path d="M8 5q2-2 4 0t4 0"/></svg><span>Gnugga</span></button>
+    <button class="tab-btn" data-tab="s-stats" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg><span>Statistik</span></button>
+    <button class="tab-btn" data-tab="s-help" type="button"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><line x1="12" y1="17.5" x2="12.01" y2="17.5"/></svg><span>Hjälp</span></button>
+  </nav>
+
+  <!-- Modaler (inställningar, vad är nytt) -->
+  <div id="modal-root" class="modal-root hidden">
+    <div class="modal-back" id="modal-back"></div>
+    <div class="modal" id="modal" role="dialog" aria-modal="true"></div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="data/changelog.js"></script>
+  <script src="data/ro/monster.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
