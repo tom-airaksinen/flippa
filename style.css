@@ -1879,6 +1879,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   border-radius: 12px; padding: 6px; box-shadow: 0 16px 38px rgba(0, 0, 0, 0.5);
 }
 .ai-pop.hidden { display: none; }
+/* A2-blocket i Lägg till ord / Fyll med AI: knappen är full bredd, så menyn ska
+   följa den i stället för att ankras i högerkanten som vid minnesregeln. */
+.ai-wrap { position: relative; }
+.ai-wrap .ai-pop { left: 0; right: 0; min-width: 0; }
 .ai-pop-item {
   display: flex; align-items: center; gap: 10px; width: 100%;
   background: none; border: none; color: var(--text); text-align: left;

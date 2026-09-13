@@ -5206,6 +5206,58 @@ function buildAiPrompt(count, theme) {
     + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
     + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
 }
+// A2-mönstret för "fyll med AI": EN knapp som antingen går direkt (sparat val i
+// profilen) eller fäller ut de tre valen med "Kom ihåg mitt val". Identiskt med
+// minnesregelns "Ta hjälp av AI", så mönstret bara behöver läras en gång.
+function aiActionHTML(p) {
+  const pref = aiPref();
+  const etikett = pref
+    ? (pref === "copy" ? `${AI_TARGETS.copy.logo()}Kopiera prompten`
+                       : `${AI_TARGETS[pref].logo()}Fråga ${AI_TARGETS[pref].namn}`)
+    : `${AI_STARS_SVG}Fråga en AI`;
+  return `<div class="ai-wrap">
+    <div class="ai-send"><button type="button" class="ai-btn primary" id="${p}-go">${etikett}</button></div>
+    ${pref ? `<div class="tertiary-c"><button type="button" class="link-action" id="${p}-other">Använd en annan AI</button></div>` : ""}
+    <div class="ai-pop hidden" id="${p}-pop">
+      <button type="button" class="ai-pop-item" data-ai="claude">${AI_LOGO_CLAUDE}Öppna i Claude</button>
+      <button type="button" class="ai-pop-item" data-ai="gpt">${AI_LOGO_GPT}Öppna i ChatGPT</button>
+      <button type="button" class="ai-pop-item" data-ai="copy">${scaleIcon(COPY_ICON_SVG, 18.0)}Kopiera frågan</button>
+      <label class="ai-pop-remember"><input type="checkbox" id="${p}-remember" /><span>Kom ihåg mitt val</span></label>
+      <div class="ai-pop-note">Nästa gång går knappen direkt dit.</div>
+    </div>
+  </div>`;
+}
+// kor(val, prompt) utför valet. Anroparen äger navigeringen: de här dialogerna går via
+// location.href (inte openExternal) för att en installerad PWA ska följa universal
+// links och slippa spökfliken – och den ena stänger modalen, den andra behåller den.
+function wireAiAction(m, p, getPrompt, kor) {
+  const pop = m.querySelector(`#${p}-pop`);
+  const go = m.querySelector(`#${p}-go`);
+  const other = m.querySelector(`#${p}-other`);
+  go.onclick = (e) => {
+    e.stopPropagation();
+    const pref = aiPref();
+    if (pref) { kor(pref, getPrompt()); return; }
+    pop.classList.toggle("hidden");
+  };
+  if (other) other.onclick = (e) => { e.stopPropagation(); pop.classList.toggle("hidden"); };
+  pop.querySelectorAll("[data-ai]").forEach((b) => {
+    b.onclick = (e) => {
+      e.stopPropagation();
+      pop.classList.add("hidden");
+      const val = b.dataset.ai;
+      if (m.querySelector(`#${p}-remember`).checked) { setAiPref(val); track("ai-val-sparat/" + val); }
+      kor(val, getPrompt());
+    };
+  });
+  m.addEventListener("pointerdown", (e) => {
+    if (pop.classList.contains("hidden")) return;
+    if (e.target.closest(`#${p}-pop`) || e.target.closest(`#${p}-go`) ||
+        (other && e.target.closest(`#${p}-other`))) return;
+    pop.classList.add("hidden");
+  });
+}
+
 function openAiDialog() {
   const lesson = getCurrentLesson();
   if (!lesson) return;
@@ -5216,11 +5268,7 @@ function openAiDialog() {
       <span class="ai-stepper"><button type="button" id="ai-dec">−</button><span id="ai-cnt">${aiCount()}</span><button type="button" id="ai-inc">+</button></span></label>
     <label class="ai-field col"><span>Tema</span>
       <input type="text" id="ai-theme" value="${esc(lesson.name)}" autocomplete="off" autocapitalize="sentences" /></label>
-    <div class="ai-send">
-      <button type="button" class="ai-btn claude" id="ai-claude">Öppna i Claude</button>
-      <button type="button" class="ai-btn gpt" id="ai-gpt">Öppna i ChatGPT</button>
-    </div>
-    <p class="ai-copy-alt"><button type="button" class="link-action" id="ai-copy-alt">eller kopiera prompten</button></p>`);
+    ${aiActionHTML("ai")}`);
   const themeVal = () => (m.querySelector("#ai-theme").value || lesson.name).trim() || lesson.name;
   const promptNow = () => buildAiPrompt(aiCount(), themeVal());
   m.querySelector("#ai-dec").onclick = () => { m.querySelector("#ai-cnt").textContent = setAiCount(aiCount() - 5); };
@@ -5229,18 +5277,17 @@ function openAiDialog() {
   // URL utanför scope en ren in-app Safari-vy som respekterar universal links (ChatGPT/
   // Claude-appen öppnas om den finns) och "Klar" tar dig tillbaka – slipper den blanka
   // spökfliken som window.open lämnar när sidan hoppar vidare till sin app.
-  const openAiSite = (base, ev) => {
-    const url = base + encodeURIComponent(promptNow()); // läs fälten INNAN modalen stängs
-    track(ev); closeModal(); markExternalNav(); location.href = url;
-  };
-  m.querySelector("#ai-claude").onclick = () => openAiSite("https://claude.ai/new?q=", "ai-oppna/claude");
-  m.querySelector("#ai-gpt").onclick = () => openAiSite("https://chatgpt.com/?q=", "ai-oppna/gpt");
-  m.querySelector("#ai-copy-alt").onclick = () => {
-    const btn = m.querySelector("#ai-copy-alt");
-    try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {}
-    btn.textContent = "Kopierat ✓";
-    track("ai-prompt-kopierad");
-  };
+  wireAiAction(m, "ai", promptNow, (val, q) => {
+    if (val === "copy") {
+      try { if (navigator.clipboard) navigator.clipboard.writeText(q).catch(() => {}); } catch (_) {}
+      track("ai-prompt-kopierad");
+      toast("Prompten kopierad – klistra in i din AI", 2600);
+      return;
+    }
+    const base = val === "gpt" ? "https://chatgpt.com/?q=" : "https://claude.ai/new?q=";
+    const url = base + encodeURIComponent(q); // läs fälten INNAN modalen stängs
+    track("ai-oppna/" + val); closeModal(); markExternalNav(); location.href = url;
+  });
 }
 
 function renderEditor() {
@@ -5660,11 +5707,7 @@ function openAddDialog(opts = {}) {
       <div class="ai-stepper" style="margin:2px 0 0"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
-      <div class="ai-send">
-        <button type="button" class="ai-btn" id="ai2-claude">${AI_LOGO_CLAUDE}Claude</button>
-        <button type="button" class="ai-btn" id="ai2-gpt">${AI_LOGO_GPT}ChatGPT</button>
-      </div>
-      <div class="tertiary-c"><button type="button" class="link-action" id="ai2-copy">⧉ Kopiera prompt (för annan AI)</button></div>
+      ${aiActionHTML("ai2")}
       <div class="add-divider">När du fått svaret</div>
       <div id="ai2-clipmsg"></div>
       <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="Klistra in AI:ns svar här"></textarea>
@@ -5675,10 +5718,17 @@ function openAddDialog(opts = {}) {
     const promptNow = () => buildAiPrompt(aiCount(), theme());
     m.querySelector("#ai2-dec").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() - 5); };
     m.querySelector("#ai2-inc").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() + 5); };
-    const openSite = (base, ev) => { const url = base + encodeURIComponent(promptNow()); track(ev); markExternalNav(); location.href = url; }; // behåll modalen → paste-rutan finns kvar vid retur
-    m.querySelector("#ai2-claude").onclick = () => openSite("https://claude.ai/new?q=", "ai-oppna/claude");
-    m.querySelector("#ai2-gpt").onclick = () => openSite("https://chatgpt.com/?q=", "ai-oppna/gpt");
-    m.querySelector("#ai2-copy").onclick = () => { const b = m.querySelector("#ai2-copy"); try { if (navigator.clipboard) navigator.clipboard.writeText(promptNow()).catch(() => {}); } catch (_) {} b.textContent = "Kopierat ✓ – klistra in i valfri AI"; track("ai-prompt-kopierad"); };
+    // Modalen behålls här (till skillnad från openAiDialog) → paste-rutan finns kvar vid retur.
+    wireAiAction(m, "ai2", promptNow, (val, q) => {
+      if (val === "copy") {
+        try { if (navigator.clipboard) navigator.clipboard.writeText(q).catch(() => {}); } catch (_) {}
+        track("ai-prompt-kopierad");
+        toast("Prompten kopierad – klistra in i din AI", 2600);
+        return;
+      }
+      const base = val === "gpt" ? "https://chatgpt.com/?q=" : "https://claude.ai/new?q=";
+      track("ai-oppna/" + val); markExternalNav(); location.href = base + encodeURIComponent(q);
+    });
     // Urklipps-knappen är dold tills vidare (behåller koden – guardad om #ai2-clip saknas).
     const clipBtn = m.querySelector("#ai2-clip");
     if (clipBtn) clipBtn.onclick = async () => {
@@ -6392,7 +6442,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v346";
+const APP_VERSION = "v347";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;
