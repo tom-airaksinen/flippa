@@ -91,4 +91,16 @@ men rör Gnugga-repot). Kvarstående skav: Flippas svep-tillbaka fungerar inte �
 iframen — ‹-raden är vägen ut.
 
 ### Skavlogg testveckan
-*(fylls på under veckan)*
+
+- **13/9 (dag 0, Toms iPhone):** TTS fungerar inbäddat. Två buggar hittade och fixade
+  i Gnugga v29 innan veckan räknas som startad:
+  1. *Tomt band i toppen* – iOS propagerar `env(safe-area-inset-top)` in i iframen,
+     så statusbarsmarginalen lades ovanpå Flippas header. Fix: `--sat` nollas via
+     `:root.embedded` (sätts automatiskt när `window.self !== window.top`).
+  2. *Importera framsteg gjorde ingenting* – två fel i ett: `prompt()` tystas av iOS
+     i iframes i standalone-PWA:er (tyst no-op), och när man väl kom in var importen
+     trasig även fristående sedan start: `loadProgress()` läste om P från localStorage
+     innan importen sparats, så det inklistrade kastades bort. Fix: modal med textarea
+     + spara-först-ordning. `confirm()` på Nollställ ersatt med tvåtryck av samma skäl.
+
+  Efter v29: gör om dag 0-protokollet (exportera från fristående → importera inbäddat).
