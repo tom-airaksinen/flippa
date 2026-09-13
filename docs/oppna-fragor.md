@@ -95,16 +95,10 @@
 - [ ] Distribution längre fram: i-app-bibliotek vs delade CSV-filer?
 
 ## Lägg till ord – flödet
-- [ ] Vilken variant av "Lägg till ord" ska vi gå på? Prototyp med fyra varianter
-  ligger i [`mockups/lagg-till-flode.html`](../mockups/lagg-till-flode.html)
-  (live: tom-airaksinen.github.io/flippa/mockups/lagg-till-flode.html). Växla
-  AI-inställningen överst för att se hur varje variant beter sig med och utan
-  sparat val.
-  **A** dagens flöde med ett AI-mål · **B** ett fält utan flikar ·
-  **C** källa först i två steg · **D** AI först när lektionen är tom.
-  Tom lutar åt **A** (säkrast), men vill förbättra läget innan man valt AI –
-  därav **A2** liten meny (som Ta hjälp av AI) · **A3** kryssruta under knapparna ·
-  **A4** minns automatiskt med ångra-rad. Alla tre ser likadana ut när valet väl
-  är gjort; skillnaden ligger bara i förstagångsläget.
-  Claudes lutning bland dessa: A2, eftersom mönstret då är identiskt med
-  minnesregelns och man lär sig det en gång. (2026-09-13)
+- [x] Vilken variant av "Lägg till ord" ska vi gå på? → **Svar: A2** – dagens flöde
+  behålls, men AI-valet blir en utfällbar meny med "Kom ihåg mitt val", precis som
+  minnesregelns "Ta hjälp av AI". Implementerat i v347 på båda ställena (Lägg till
+  ord → AI och Fyll lektionen med AI). Prototypen med alla varianter ligger kvar i
+  [`mockups/lagg-till-flode.html`](../mockups/lagg-till-flode.html). B (ett fält utan
+  flikar), C (källa först) och D (AI först när tomt) valdes bort som större omtag.
+  (2026-09-13)
