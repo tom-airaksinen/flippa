@@ -1491,6 +1491,13 @@ function renderSettingsScreen() {
         <span class="set-body"><span class="set-t">Mål & nivåer</span><span class="set-d">Kort/dag och veckomål</span></span>
         <span class="set-chev">›</span></button>
     </div>
+    <div class="set-card">
+      <button class="set-row" id="set-ai" type="button">
+        <span class="set-body"><span class="set-t">AI-hjälp</span><span class="set-d">${
+          aiPref() ? (aiPref() === "copy" ? "Kopierar frågan" : "Öppnar " + AI_TARGETS[aiPref()].namn)
+                   : "Frågar varje gång"}</span></span>
+        <span class="set-chev">›</span></button>
+    </div>
     <div class="set-sec">Data</div>
     <div class="set-card">
       <button class="set-row" id="set-backup" type="button">
@@ -1507,6 +1514,18 @@ function renderSettingsScreen() {
   const scl = $("set-changelog");
   if (scl) scl.onclick = openChangelog;
   $("set-levels").onclick = openLevelsModal;
+  $("set-ai").onclick = async () => {
+    const val = await actionSheet("AI-hjälp", [
+      { label: "Öppna Claude", value: "claude" },
+      { label: "Öppna ChatGPT", value: "gpt" },
+      { label: "Kopiera frågan", value: "copy" },
+      { label: "Fråga varje gång", value: "" },
+    ], "Vad ska hända när du trycker Ta hjälp av AI?");
+    if (val === null) return; // avbröt
+    setAiPref(val);
+    track("ai-val-installning/" + (val || "fraga"));
+    renderSettingsScreen();
+  };
   $("set-backup").onclick = openBackup;
   const pt = $("push-toggle");
   if (pt) pt.onclick = () => { const l = pushLocal(); if (l.enabled) disablePush(); else enablePush(l.time || "08:00"); };
@@ -4316,11 +4335,14 @@ function askWord(front, back, hint, opts = {}) {
       <div class="hint-lbl">
         <label>Minnesregel (valfritt)</label>
         <div class="ai-pop-wrap">
-          <button type="button" class="ai-help-btn" id="m-ai-help">${AI_STARS_SVG}Ta hjälp av AI</button>
+          <button type="button" class="ai-help-btn" id="m-ai-help">${
+            aiPref() ? AI_TARGETS[aiPref()].logo() + (aiPref() === "copy" ? "Kopiera AI-frågan" : "Fråga " + AI_TARGETS[aiPref()].namn)
+                     : AI_STARS_SVG + "Ta hjälp av AI"}</button>
           <div class="ai-pop hidden" id="m-ai-pop">
             <button type="button" class="ai-pop-item" id="m-ai-claude">${AI_LOGO_CLAUDE}Öppna i Claude</button>
             <button type="button" class="ai-pop-item" id="m-ai-gpt">${AI_LOGO_GPT}Öppna i ChatGPT</button>
             <button type="button" class="ai-pop-item" id="m-ai-copy"><span class="ai-pop-ico">⧉</span>Kopiera frågan</button>
+            <label class="ai-pop-remember"><input type="checkbox" id="m-ai-remember" /><span>Kom ihåg mitt val</span></label>
             <div class="ai-pop-note">Öppnar AI:n med en färdig fråga. Kopiera ett förslag och klistra in det här.</div>
           </div>
         </div>
@@ -4376,24 +4398,22 @@ function askWord(front, back, hint, opts = {}) {
       const aiPop = m.querySelector("#m-ai-pop");
       const closeAiPop = () => aiPop.classList.add("hidden");
       const hintPrompt = () => { const v = vals(); return buildHintPrompt(v.f || f, v.b || b); };
+      // Är en AI vald i profilen hoppar vi över menyn – knappen säger redan vart den
+      // leder. Annars fälls de tre valen ut som förut.
       m.querySelector("#m-ai-help").onclick = (e) => {
         e.stopPropagation();
+        const pref = aiPref();
+        if (pref) { runAiChoice(pref, hintPrompt(), "minnesregel-ai"); return; }
         aiPop.classList.toggle("hidden");
       };
-      m.querySelector("#m-ai-claude").onclick = () => {
-        track("minnesregel-ai/claude"); closeAiPop();
-        openExternal("https://claude.ai/new?q=" + encodeURIComponent(hintPrompt()), true);
+      const valjAi = (val) => {
+        closeAiPop();
+        if (m.querySelector("#m-ai-remember").checked) { setAiPref(val); track("ai-val-sparat/" + val); }
+        runAiChoice(val, hintPrompt(), "minnesregel-ai");
       };
-      m.querySelector("#m-ai-gpt").onclick = () => {
-        track("minnesregel-ai/gpt"); closeAiPop();
-        openExternal("https://chatgpt.com/?q=" + encodeURIComponent(hintPrompt()), true);
-      };
-      m.querySelector("#m-ai-copy").onclick = (e) => {
-        e.stopPropagation();
-        try { if (navigator.clipboard) navigator.clipboard.writeText(hintPrompt()).catch(() => {}); } catch (_) {}
-        track("minnesregel-ai-kopierad");
-        e.currentTarget.textContent = "Kopierat ✓";
-      };
+      m.querySelector("#m-ai-claude").onclick = () => valjAi("claude");
+      m.querySelector("#m-ai-gpt").onclick = () => valjAi("gpt");
+      m.querySelector("#m-ai-copy").onclick = (e) => { e.stopPropagation(); valjAi("copy"); };
       // Stäng vid tryck utanför – samma mönster som prio-dropdownen i statistiken.
       m.addEventListener("pointerdown", (e) => {
         if (aiPop.classList.contains("hidden")) return;
@@ -4983,6 +5003,35 @@ function getCurrentLesson() {
 
 // Minnesregel-prompten. Ber om ett per rad utan inledning, så svaret går att läsa och
 // plocka ur direkt – man kopierar ett förslag och klistrar in i fältet.
+// Föredragen AI, per profil. Är den satt går "Ta hjälp av AI" direkt dit i stället
+// för att först fälla ut tre val. Knappen byter då etikett till målet, så man alltid
+// ser vart trycket leder – inget överraskande hopp ur appen.
+const AI_PREF_KEY = "flippa-ai-pref-v1"; // profil → "claude" | "gpt" | "copy"
+const AI_TARGETS = {
+  claude: { namn: "Claude",  logo: () => AI_LOGO_CLAUDE, url: (q) => "https://claude.ai/new?q=" + encodeURIComponent(q) },
+  gpt:    { namn: "ChatGPT", logo: () => AI_LOGO_GPT,    url: (q) => "https://chatgpt.com/?q=" + encodeURIComponent(q) },
+  copy:   { namn: "kopiera frågan", logo: () => '<span class="ai-pop-ico">⧉</span>', url: null },
+};
+function aiPref() {
+  const v = loadLS(AI_PREF_KEY)[unitUser()];
+  return AI_TARGETS[v] ? v : null;
+}
+function setAiPref(v) {
+  const all = loadLS(AI_PREF_KEY);
+  if (v && AI_TARGETS[v]) all[unitUser()] = v; else delete all[unitUser()];
+  lsSet(AI_PREF_KEY, JSON.stringify(all));
+}
+// Utför ett AI-val. evtBas = eventprefix ("minnesregel-ai"), så statistiken blir
+// jämförbar oavsett om valet kom från popupen eller från en sparad inställning.
+function runAiChoice(val, prompt, evtBas) {
+  const t = AI_TARGETS[val];
+  if (!t) return;
+  if (t.url) { track(evtBas + "/" + (val === "gpt" ? "gpt" : val)); openExternal(t.url(prompt), true); return; }
+  track(evtBas + "-kopierad");
+  try { if (navigator.clipboard) navigator.clipboard.writeText(prompt).catch(() => {}); } catch (_) {}
+  toast("Frågan kopierad – klistra in i din AI", 2600);
+}
+
 function buildHintPrompt(front, back) {
   const lang = currentForeignLabel();
   return `Ge mig ett par förslag på minnesregel som hjälper mig komma ihåg att "${front}" `
@@ -6298,7 +6347,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v341";
+const APP_VERSION = "v342";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

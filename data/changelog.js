@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "13 september 2026", ver: "v342", items: [
+    { t: "Välj din AI en gång så slipper du menyn: kryssa i ”Kom ihåg mitt val” när du trycker Ta hjälp av AI, så går knappen direkt till Claude eller ChatGPT nästa gång", type: "new", hi: true, ico: "✨",
+      desc: "Knappen byter då namn till ”Fråga Claude” så du ser vart den leder innan du trycker. Valet gäller din profil och ändras under Inställningar → AI-hjälp, där du också kan välja att bara få frågan kopierad." },
+  ]},
   { date: "13 september 2026", ver: "v341", items: [
     { t: "Hjälpen beskriver nu böjningsfältet och hur du hör böjningen genom att dubbeltappa eller hålla in högtalaren", type: "improved" },
   ]},

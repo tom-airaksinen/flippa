@@ -1839,6 +1839,12 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   color: var(--accent); font-family: inherit; font-size: 0.78rem; font-weight: 700;
 }
 .ai-help-btn svg { width: 15px; height: 15px; flex: none; }
+/* Kopiera-valet är en textglyf, inte en SVG. Utan egen box blir den pytteliten och
+   hamnar fel mot baslinjen – ge den samma box som logotyperna i knappen. */
+.ai-help-btn .ai-pop-ico {
+  width: 15px; height: 15px; flex: none; font-size: 0.95rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+}
 .ai-pop {
   position: absolute; z-index: 33; top: calc(100% + 7px); right: 0;
   min-width: 216px; background: var(--surface); border: 1px solid var(--line);
@@ -1852,6 +1858,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .ai-pop-item + .ai-pop-item { margin-top: 2px; }
 .ai-pop-item:active { background: var(--surface-2); }
+.ai-pop-remember {
+  display: flex; align-items: center; gap: 9px; padding: 9px 12px 5px;
+  font-size: 0.86rem; color: var(--muted); cursor: pointer;
+}
+.ai-pop-remember input { width: 16px; height: 16px; accent-color: var(--accent); flex: none; }
 /* Både SVG-logotyperna och text-glyfen (⧉) måste ha SAMMA box, annars gäller inte
    gap:10px mellan ikon och text för den som är en glyf i textnoden. */
 .ai-pop-item .ai-logo,
