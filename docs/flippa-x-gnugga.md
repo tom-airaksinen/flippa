@@ -111,6 +111,12 @@ iframen — ‹-raden är vägen ut.
   localStorage (senaste gnuggdag, dagar av 7, ord/mönster) så att den bär sin plats.
   Utlyftning är fortfarande liten: toggle + grammatikvy + GNUGGA_APPS bort (~150 rader).
 
+- **14/9: snapshot synkad till Gnugga v30.** Påminnelse ur skavloggen: Gnugga-releaser syns
+  **inte** i Flippa förrän `scripts/synka-gnugga.sh` körts och flippa-repot pushats – den
+  inbäddade Gnugga är en kopia under `gnugga/`, inte github.io-appen. Tom såg v29 i Flippa
+  medan github.io redan låg på v30. Flippas egen `APP_VERSION` behöver inte bumpas: snapshotens
+  service worker (`gnugga-v30`) sköter uppdateringen inne i iframen.
+
 - **13/9 (kväll): grundorsaken hittad – Flippa bor på egen domän (v353).** Flippa serveras
   via CNAME på **flippa.tomairaksinen.se** (github.io-adressen är en 301-redirect), så
   Gnugga-iframen mot github.io var **cross-origin**: WebKit ger cross-site-iframes
