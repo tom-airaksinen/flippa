@@ -1013,12 +1013,16 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   max-width: 90%;
 }
 /* Böjningen är stödinformation, inte svaret – den ska kunna läsas i förbifarten
-   utan att konkurrera med ordet. Tom sträng → inget renderas (inget gap). */
+   utan att konkurrera med ordet. Tom sträng → inget renderas (inget gap).
+   Kursiv skiljer den från minnesregeln: böjningen är citerat språk, minnesregeln
+   är meta-text (och har dessutom 💡-prefixet). */
 .card-form {
-  font-size: 0.92rem; color: var(--muted); font-weight: 500;
+  font-size: 0.92rem; color: var(--muted); font-weight: 500; font-style: italic;
   margin-top: 10px; line-height: 1.35; max-width: 92%;
 }
 .card-form:empty { display: none; }
+/* Extra luft mellan böjning och minnesregel när båda syns (baksidan vid Från svenska) */
+.card-form:not(:empty) + .card-hint:not(:empty) { margin-top: 14px; }
 .card-hint:not(:empty)::before { content: "💡 "; }
 .word-hint-flag { font-size: 0.8rem; opacity: 0.7; }
 
@@ -1982,14 +1986,20 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .gnugga-entry .ge-go { grid-column: 2; grid-row: 1 / span 2; color: #3fcfa8; font-size: 1.4rem; line-height: 1; }
 .gnugga-entry .ge-d { grid-column: 1; grid-row: 2; font-size: 0.82rem; color: var(--muted); }
 /* Glosor/Grammatik-toggeln på ämnesskärmen (bara språk med Gnugga) */
-.lessons-seg { display: flex; gap: 6px; padding: 2px 16px 10px; }
+/* Samma segmentidiom som prio-väljaren i Redigera ord (.prio-segs): sammanfogade
+   knappar i en ram, den valda fylls med sin färg. */
+.lessons-seg {
+  display: flex; margin: 2px 16px 10px; border: 1px solid var(--line);
+  border-radius: 10px; overflow: hidden; background: var(--surface-2);
+}
 .lessons-seg button {
-  flex: 1; background: var(--surface-2); border: 1px solid var(--line); color: var(--muted);
-  padding: 9px 6px; border-radius: 10px; font: inherit; font-size: 0.9rem; font-weight: 700;
+  flex: 1; background: none; border: none; border-right: 1px solid var(--line);
+  color: var(--muted); padding: 10px 0; font: inherit; font-size: 0.92rem; font-weight: 700;
   cursor: pointer; touch-action: manipulation;
 }
-.lessons-seg button.on-blue { background: var(--accent); border-color: var(--accent); color: #fff; }
-.lessons-seg button.on-mint { background: #3fcfa8; border-color: #3fcfa8; color: #062b22; }
+.lessons-seg button:last-child { border-right: none; }
+.lessons-seg button.on-blue { background: var(--accent); color: #fff; }
+.lessons-seg button.on-mint { background: #3fcfa8; color: #062b22; }
 /* Grammatikvyn: ingångskort + statusrader ur Gnuggas localStorage */
 #grammatik-view { flex: 1; min-height: 0; overflow-y: auto; padding: 4px 16px 12px; }
 #gnugga-status { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }

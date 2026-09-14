@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "14 september 2026", ver: "v354", items: [
+    { t: "Böjningen på kortet visas nu i kursiv stil med mer luft mot minnesregeln, så de två går att skilja åt i en blick", type: "improved" },
+    { t: "Glosor/Grammatik-växlaren ser nu ut som prio-väljaren i Redigera ord – ett sammanhängande segment i stället för två knappar", type: "improved" },
+  ]},
   { date: "13 september 2026", ver: "v353", items: [
     { t: "Fixat på riktigt: gnuggframstegen inne i Flippa överlever nu omstarter. Gnugga serveras nu från Flippas egen adress – förut låg den på en annan, och då ger iPhone den tillfällig lagring som nollas", type: "fixed" },
   ]},
