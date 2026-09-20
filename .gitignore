@@ -1,1 +1,9 @@
 .DS_Store
+
+# Gästspelet: lokalt testkit för användartest, ska inte publiceras
+gastspel/
+docs/gastspel.md
+scripts/gastlektion.py
+
+# Sparade konversationer – privat arbetsmaterial, repot är publikt
+session-exports/
