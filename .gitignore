@@ -7,3 +7,6 @@ scripts/gastlektion.py
 
 # Sparade konversationer – privat arbetsmaterial, repot är publikt
 session-exports/
+
+# Databasbackup av ett helt ämne – arbetsmaterial, repot är publikt
+data/rumanska/backup-*.json

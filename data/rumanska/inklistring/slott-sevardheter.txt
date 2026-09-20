@@ -1,0 +1,41 @@
+castel (n);slott;{un castel, două castele};1
+cetate (f);fästning, borg;{o cetate, două cetăți};2
+biserică (f);kyrka;{o biserică, două biserici};1
+mănăstire (f);kloster;{o mănăstire, două mănăstiri};2
+muzeu (n);museum;{un muzeu, două muzee};1
+turn (n);torn;{un turn, două turnuri};2
+zid (n);mur;{un zid, două ziduri};3
+poartă (f);port, grind;{o poartă, două porți};2
+curte (f);innergård, borggård;{o curte, două curți};3
+bilet (n);biljett;{un bilet, două bilete};1
+casă de bilete (f);biljettkassa;{o casă de bilete, două case de bilete};2
+intrare (f);entré, ingång;{o intrare, două intrări};1
+ieșire (f);utgång;{o ieșire, două ieșiri};1
+program (n);öppettider;{un program, două programe};2
+ghid (m);guide;{un ghid, doi ghizi};1
+tur (n);rundtur;{un tur, două tururi};2
+vizită (f);besök;{o vizită, două vizite};2
+fotografie (f);foto;{o fotografie, două fotografii};2
+reducere (f);rabatt;{o reducere, două reduceri};2
+coadă (f);kö;{o coadă, două cozi};2
+suvenir (n);souvenir;3
+grup (n);grupp;{un grup, două grupuri};3
+a vizita;att besöka;{vizitez, vizitează · am vizitat · să viziteze};1
+a intra;att gå in;{intru, intră · am intrat · să intre};2
+a deschide;att öppna;{deschid, deschide · am deschis · să deschidă};2
+a închide;att stänga;{închid, închide · am închis · să închidă};2
+a fotografia;att fotografera;{fotografiez, fotografiază · am fotografiat · să fotografieze};2
+deschis;öppen;1
+închis;stängd;1
+vechi;gammal (om saker);2
+frumos;vacker;1
+celebru;berömd;3
+Două bilete, vă rog.;Två biljetter, tack.;1
+Cât costă intrarea?;Vad kostar inträdet?;1
+Este deschis astăzi?;Är det öppet idag?;1
+La ce oră se închide?;Hur dags stänger det?;1
+Unde este intrarea?;Var är ingången?;1
+Aveți un ghid în engleză?;Har ni en guide på engelska?;2
+Se poate fotografia?;Får man fotografera?;2
+Există reducere pentru copii?;Finns det barnrabatt?;2
+Cât durează turul?;Hur lång tid tar rundturen?;2

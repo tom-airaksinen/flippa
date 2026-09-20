@@ -1,0 +1,51 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+Hotell & frukost;hotel (n);hotell;;;1;"un hotel, două hotele"
+Hotell & frukost;pensiune (f);pensionat (vanligt boende i Rumänien);;;2;"o pensiune, două pensiuni"
+Hotell & frukost;recepție (f);reception;;;1;"o recepție, două recepții"
+Hotell & frukost;recepționer (m);receptionist;;;2;"un recepționer, doi recepționeri"
+Hotell & frukost;cameră (f);rum (hotellrum);;;1;"o cameră, două camere"
+Hotell & frukost;cheie (f);nyckel;;;1;"o cheie, două chei"
+Hotell & frukost;cartelă (f);nyckelkort;;;2;"o cartelă, două cartele"
+Hotell & frukost;lift (n);hiss;;;2;"un lift, două lifturi"
+Hotell & frukost;etaj (n);våning;;;2;"un etaj, două etaje"
+Hotell & frukost;parter (n);bottenvåning;;;3;
+Hotell & frukost;bagaj (n);bagage;;;1;"un bagaj, două bagaje"
+Hotell & frukost;valiză (f);resväska;;;2;"o valiză, două valize"
+Hotell & frukost;pat (n);säng;;;1;"un pat, două paturi"
+Hotell & frukost;pernă (f);kudde;;;2;"o pernă, două perne"
+Hotell & frukost;pătură (f);filt;;;2;"o pătură, două pături"
+Hotell & frukost;prosop (n);handduk;;;1;"un prosop, două prosoape"
+Hotell & frukost;baie (f);badrum;;;1;"o baie, două băi"
+Hotell & frukost;duș (n);dusch;;;1;"un duș, două dușuri"
+Hotell & frukost;săpun (n);tvål;;;2;"un săpun, două săpunuri"
+Hotell & frukost;hârtie igienică (f);toapapper;;;2;"o hârtie igienică, două hârtii igienice"
+Hotell & frukost;aer condiționat (n);luftkonditionering;;;2;
+Hotell & frukost;încălzire (f);"värme, uppvärmning";;;3;"o încălzire, două încălziri"
+Hotell & frukost;fereastră (f);fönster;;;2;"o fereastră, două ferestre"
+Hotell & frukost;ușă (f);dörr;;;2;"o ușă, două uși"
+Hotell & frukost;parolă (f);lösenord;;;1;"o parolă, două parole"
+Hotell & frukost;bufet (n);buffé;;;2;"un bufet, două bufete"
+Hotell & frukost;unt (n);smör;;;1;"un unt, două unturi"
+Hotell & frukost;gem (n);sylt;;;2;"un gem, două gemuri"
+Hotell & frukost;miere (f);honung;;;2;
+Hotell & frukost;iaurt (n);yoghurt;;;2;"un iaurt, două iaurturi"
+Hotell & frukost;cașcaval (n);gul ost (hårdost);;;2;"un cașcaval, două cașcavaluri"
+Hotell & frukost;telemea (f);saltlakeost (rumänsk fetaost);;;3;
+Hotell & frukost;omletă (f);omelett;;;2;"o omletă, două omlete"
+Hotell & frukost;ou fiert (n);kokt ägg;;;2;"un ou fiert, două ouă fierte"
+Hotell & frukost;șuncă (f);skinka;;;2;"o șuncă, două șunci"
+Hotell & frukost;cârnat (m);korv;;;2;"un cârnat, doi cârnați"
+Hotell & frukost;cereale (f);"flingor (frukostflingor, alltid plural)";;;3;
+Hotell & frukost;a dormi;att sova;;;1;"dorm, doarme · am dormit · să doarmă"
+Hotell & frukost;a pleca;"att åka iväg, ge sig av";;;1;"plec, pleacă · am plecat · să plece"
+Hotell & frukost;a ajunge;att komma fram;;;2;"ajung, ajunge · am ajuns · să ajungă"
+Hotell & frukost;a aștepta;att vänta;;;2;"aștept, așteaptă · am așteptat · să aștepte"
+Hotell & frukost;Am o rezervare pe numele…;Jag har en bokning i namnet…;;;1;
+Hotell & frukost;O cameră dublă pentru două nopți.;Ett dubbelrum för två nätter.;;;1;
+Hotell & frukost;La ce oră este micul dejun?;Hur dags är frukosten?;;;1;
+Hotell & frukost;Micul dejun este inclus?;Ingår frukosten?;;;1;
+Hotell & frukost;Care este parola de wifi?;Vad är wifi-lösenordet?;;;1;
+Hotell & frukost;Putem lăsa bagajele aici?;Kan vi lämna bagaget här?;;;2;
+Hotell & frukost;Mai avem nevoie de un prosop.;Vi behöver en handduk till.;;;2;
+Hotell & frukost;Aerul condiționat nu funcționează.;Luftkonditioneringen fungerar inte.;;;2;
+Hotell & frukost;La ce oră trebuie să eliberăm camera?;Hur dags måste vi checka ut?;;;2;

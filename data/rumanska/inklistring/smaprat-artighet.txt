@@ -1,0 +1,25 @@
+nume (n);namn;{un nume, două nume};1
+vârstă (f);ålder;{o vârstă, două vârste};2
+vacanță (f);semester;{o vacanță, două vacanțe};1
+turist (m);turist;{un turist, doi turiști};2
+limbă (f);språk;{o limbă, două limbi};1
+serviciu (n);jobb, arbete;{un serviciu, două servicii};2
+suedez (m);svensk;{un suedez, doi suedezi};1
+engleză (f);engelska (språket);1
+a locui;att bo;{locuiesc, locuiește · am locuit · să locuiască};1
+a călători;att resa;{călătoresc, călătorește · am călătorit · să călătorească};2
+Vorbesc puțină română.;Jag talar lite rumänska.;1
+Puteți vorbi mai rar, vă rog?;Kan ni tala långsammare, tack?;1
+Ce înseamnă…?;Vad betyder…?;1
+Cum se spune… în română?;Hur säger man … på rumänska?;1
+Îmi pare rău.;Förlåt, jag är ledsen.;1
+Cu plăcere.;Varsågod (svar på tack).;1
+Mulțumesc frumos.;Tack så mycket.;1
+Nicio problemă.;Inga problem.;2
+Noroc!;Skål!;1
+Sănătate!;Prosit! (när någon nyser);2
+Sunt în vacanță.;Jag är på semester.;1
+Unde locuiți?;Var bor ni?;2
+Îmi place România.;Jag gillar Rumänien.;2
+Este foarte frumos aici.;Det är väldigt vackert här.;2
+Câți ani ai?;Hur gammal är du?;3

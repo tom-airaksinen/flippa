@@ -1,0 +1,32 @@
+vreme (f);väder;{o vreme, două vremuri};1
+soare (m);sol;{un soare, doi sori};1
+ploaie (f);regn;{o ploaie, două ploi};1
+zăpadă (f);snö;{o zăpadă, două zăpezi};2
+vânt (n);vind;{un vânt, două vânturi};2
+nor (m);moln;{un nor, doi nori};2
+furtună (f);storm;{o furtună, două furtuni};3
+ceață (f);dimma;{o ceață, două cețuri};3
+cer (n);himmel;{un cer, două ceruri};2
+temperatură (f);temperatur;{o temperatură, două temperaturi};2
+grad (n);grad;{un grad, două grade};2
+umbră (f);skugga;{o umbră, două umbre};3
+pădure (f);skog;{o pădure, două păduri};1
+râu (n);flod;{un râu, două râuri};2
+lac (n);sjö;{un lac, două lacuri};2
+mare (f);hav (jämför adjektivet mare = stor);{o mare, două mări};1
+copac (m);träd;{un copac, doi copaci};1
+floare (f);blomma;{o floare, două flori};1
+iarbă (f);gräs;{o iarbă, două ierburi};2
+frunză (f);löv;{o frunză, două frunze};3
+piatră (f);sten;{o piatră, două pietre};3
+vale (f);dal;{o vale, două văi};3
+câmp (n);fält;{un câmp, două câmpuri};3
+plajă (f);strand;{o plajă, două plaje};2
+insulă (f);ö;{o insulă, două insule};3
+peșteră (f);grotta;{o peșteră, două peșteri};3
+a ploua;att regna (opersonligt: bara 3:e person);{plouă · a plouat · să plouă};1
+a ninge;att snöa (opersonligt: bara 3:e person);{ninge · a nins · să ningă};2
+Plouă.;Det regnar.;1
+Este cald.;Det är varmt.;1
+Este frig.;Det är kallt.;1
+Ce vreme frumoasă!;Vilket fint väder!;2

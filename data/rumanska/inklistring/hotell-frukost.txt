@@ -1,0 +1,50 @@
+hotel (n);hotell;{un hotel, două hotele};1
+pensiune (f);pensionat (vanligt boende i Rumänien);{o pensiune, două pensiuni};2
+recepție (f);reception;{o recepție, două recepții};1
+recepționer (m);receptionist;{un recepționer, doi recepționeri};2
+cameră (f);rum (hotellrum);{o cameră, două camere};1
+cheie (f);nyckel;{o cheie, două chei};1
+cartelă (f);nyckelkort;{o cartelă, două cartele};2
+lift (n);hiss;{un lift, două lifturi};2
+etaj (n);våning;{un etaj, două etaje};2
+parter (n);bottenvåning;3
+bagaj (n);bagage;{un bagaj, două bagaje};1
+valiză (f);resväska;{o valiză, două valize};2
+pat (n);säng;{un pat, două paturi};1
+pernă (f);kudde;{o pernă, două perne};2
+pătură (f);filt;{o pătură, două pături};2
+prosop (n);handduk;{un prosop, două prosoape};1
+baie (f);badrum;{o baie, două băi};1
+duș (n);dusch;{un duș, două dușuri};1
+săpun (n);tvål;{un săpun, două săpunuri};2
+hârtie igienică (f);toapapper;{o hârtie igienică, două hârtii igienice};2
+aer condiționat (n);luftkonditionering;2
+încălzire (f);värme, uppvärmning;{o încălzire, două încălziri};3
+fereastră (f);fönster;{o fereastră, două ferestre};2
+ușă (f);dörr;{o ușă, două uși};2
+parolă (f);lösenord;{o parolă, două parole};1
+bufet (n);buffé;{un bufet, două bufete};2
+unt (n);smör;{un unt, două unturi};1
+gem (n);sylt;{un gem, două gemuri};2
+miere (f);honung;2
+iaurt (n);yoghurt;{un iaurt, două iaurturi};2
+cașcaval (n);gul ost (hårdost);{un cașcaval, două cașcavaluri};2
+telemea (f);saltlakeost (rumänsk fetaost);3
+omletă (f);omelett;{o omletă, două omlete};2
+ou fiert (n);kokt ägg;{un ou fiert, două ouă fierte};2
+șuncă (f);skinka;{o șuncă, două șunci};2
+cârnat (m);korv;{un cârnat, doi cârnați};2
+cereale (f);flingor (frukostflingor, alltid plural);3
+a dormi;att sova;{dorm, doarme · am dormit · să doarmă};1
+a pleca;att åka iväg, ge sig av;{plec, pleacă · am plecat · să plece};1
+a ajunge;att komma fram;{ajung, ajunge · am ajuns · să ajungă};2
+a aștepta;att vänta;{aștept, așteaptă · am așteptat · să aștepte};2
+Am o rezervare pe numele…;Jag har en bokning i namnet…;1
+O cameră dublă pentru două nopți.;Ett dubbelrum för två nätter.;1
+La ce oră este micul dejun?;Hur dags är frukosten?;1
+Micul dejun este inclus?;Ingår frukosten?;1
+Care este parola de wifi?;Vad är wifi-lösenordet?;1
+Putem lăsa bagajele aici?;Kan vi lämna bagaget här?;2
+Mai avem nevoie de un prosop.;Vi behöver en handduk till.;2
+Aerul condiționat nu funcționează.;Luftkonditioneringen fungerar inte.;2
+La ce oră trebuie să eliberăm camera?;Hur dags måste vi checka ut?;2

@@ -1,0 +1,45 @@
+# Slott & sevärdheter
+castel;slott;1
+cetate;fästning, borg;2
+biserică;kyrka;1
+mănăstire;kloster;2
+muzeu;museum;1
+turn;torn;2
+zid;mur;3
+poartă;port, grind;2
+curte;innergård, borggård;3
+bilet;biljett;1
+casă de bilete (f);biljettkassa;{o casă de bilete, două case de bilete};2
+intrare;entré, ingång;1
+ieșire;utgång;1
+program;öppettider;2
+ghid;guide;1
+tur;rundtur;2
+vizită;besök;2
+fotografie;foto;2
+reducere;rabatt;2
+coadă;kö;2
+suvenir;souvenir;3
+grup;grupp;3
+# --- verb ---
+a vizita;att besöka;1
+a intra;att gå in;2
+a deschide;att öppna;2
+a închide;att stänga;2
+a fotografia;att fotografera;2
+# --- adjektiv ---
+adj:deschis;öppen;1
+adj:închis;stängd;1
+adj:vechi;gammal (om saker);2
+adj:frumos;vacker;1
+adj:celebru;berömd;3
+# --- fraser ---
+Două bilete, vă rog.;Två biljetter, tack.;1
+Cât costă intrarea?;Vad kostar inträdet?;1
+Este deschis astăzi?;Är det öppet idag?;1
+La ce oră se închide?;Hur dags stänger det?;1
+Unde este intrarea?;Var är ingången?;1
+Aveți un ghid în engleză?;Har ni en guide på engelska?;2
+Se poate fotografia?;Får man fotografera?;2
+Există reducere pentru copii?;Finns det barnrabatt?;2
+Cât durează turul?;Hur lång tid tar rundturen?;2

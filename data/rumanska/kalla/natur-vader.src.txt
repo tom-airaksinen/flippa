@@ -1,0 +1,36 @@
+# Natur & väder
+vreme;väder;1
+soare;sol;1
+ploaie;regn;1
+zăpadă;snö;2
+vânt;vind;2
+nor;moln;2
+furtună;storm;3
+ceață;dimma;3
+cer;himmel;2
+temperatură;temperatur;2
+grad;grad;2
+umbră;skugga;3
+# --- landskapet ---
+pădure;skog;1
+râu;flod;2
+lac;sjö;2
+mare (f);hav (jämför adjektivet mare = stor);{o mare, două mări};1
+copac;träd;1
+floare;blomma;1
+iarbă;gräs;2
+frunză;löv;3
+piatră;sten;3
+vale;dal;3
+câmp;fält;3
+plajă;strand;2
+insulă;ö;3
+peșteră;grotta;3
+# --- verb ---
+a ploua;att regna (opersonligt: bara 3:e person);{plouă · a plouat · să plouă};1
+a ninge;att snöa (opersonligt: bara 3:e person);{ninge · a nins · să ningă};2
+# --- fraser ---
+Plouă.;Det regnar.;1
+Este cald.;Det är varmt.;1
+Este frig.;Det är kallt.;1
+Ce vreme frumoasă!;Vilket fint väder!;2

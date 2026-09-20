@@ -1,0 +1,18 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+Nödsituationer;urgență (f);"nödfall, akutfall";;;1;"o urgență, două urgențe"
+Nödsituationer;ambulanță (f);ambulans;;;1;"o ambulanță, două ambulanțe"
+Nödsituationer;pompier (m);brandman (brandkåren = pompierii);;;2;"un pompier, doi pompieri"
+Nödsituationer;pericol (n);fara;;;2;"un pericol, două pericole"
+Nödsituationer;hoț (m);tjuv;;;2;"un hoț, doi hoți"
+Nödsituationer;furt (n);stöld;;;2;"un furt, două furturi"
+Nödsituationer;pașaport (n);pass;;;1;"un pașaport, două pașapoarte"
+Nödsituationer;portofel (n);plånbok;;;2;"un portofel, două portofele"
+Nödsituationer;telefon (n);telefon;;;1;"un telefon, două telefoane"
+Nödsituationer;ambasadă (f);ambassad;;;2;"o ambasadă, două ambasade"
+Nödsituationer;Ajutor!;Hjälp!;;;1;
+Nödsituationer;Sunați la poliție!;Ring polisen!;;;1;
+Nödsituationer;Sunați la o ambulanță!;Ring en ambulans!;;;1;
+Nödsituationer;Mi-am pierdut pașaportul.;Jag har tappat bort passet.;;;1;
+Nödsituationer;Am nevoie de ajutor.;Jag behöver hjälp.;;;1;
+Nödsituationer;Este o urgență.;Det är akut.;;;2;
+Nödsituationer;Am fost jefuit.;Jag har blivit rånad.;;;3;

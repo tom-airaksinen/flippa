@@ -1,0 +1,34 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+Handla & butik;magazin (n);butik;;;1;"un magazin, două magazine"
+Handla & butik;supermarket (n);stormarknad;;;2;"un supermarket, două supermarketuri"
+Handla & butik;piață (f);"marknad, torg";;;1;"o piață, două piețe"
+Handla & butik;brutărie (f);bageri;;;2;"o brutărie, două brutării"
+Handla & butik;măcelărie (f);"köttdisk, slakteri";;;3;"o măcelărie, două măcelării"
+Handla & butik;casier (m);kassör;;;3;"un casier, doi casieri"
+Handla & butik;preț (n);pris;;;1;"un preț, două prețuri"
+Handla & butik;bani (m);pengar;;;1;
+Handla & butik;leu (m);leu (rumänsk valuta);;;1;"un leu, doi lei"
+Handla & butik;ban (m);"ban (växelmynt, 1/100 leu)";;;3;"un ban, doi bani"
+Handla & butik;euro (m);euro;;;2;"un euro, doi euro"
+Handla & butik;rest (n);växel (pengar tillbaka);;;2;"un rest, două resturi"
+Handla & butik;pungă (f);påse;;;2;"o pungă, două pungi"
+Handla & butik;coș (n);korg;;;2;"un coș, două coșuri"
+Handla & butik;raft (n);hylla;;;3;"un raft, două rafturi"
+Handla & butik;cutie (f);"ask, låda";;;2;"o cutie, două cutii"
+Handla & butik;borcan (n);burk;;;3;"un borcan, două borcane"
+Handla & butik;kilogram (n);kilo;;;2;
+Handla & butik;bucată (f);"styck, bit";;;2;"o bucată, două bucăți"
+Handla & butik;mărime (f);storlek;;;2;"o mărime, două mărimi"
+Handla & butik;număr (n);nummer;;;2;"un număr, două numere"
+Handla & butik;a căuta;att leta efter;;;1;"caut, caută · am căutat · să caute"
+Handla & butik;a găsi;att hitta;;;1;"găsesc, găsește · am găsit · să găsească"
+Handla & butik;a costa;att kosta;;;1;"cost, costă · am costat · să coste"
+Handla & butik;a schimba;"att byta, växla";;;2;"schimb, schimbă · am schimbat · să schimbe"
+Handla & butik;a proba;att prova;;;2;"probez, probează · am probat · să probeze"
+Handla & butik;a vinde;att sälja;;;3;"vând, vinde · am vândut · să vândă"
+Handla & butik;Unde este piața?;Var ligger marknaden?;;;1;
+Handla & butik;Aveți …?;Har ni …?;;;1;
+Handla & butik;"Doar mă uit, mulțumesc.";"Jag tittar bara, tack.";;;2;
+Handla & butik;Pot să plătesc în euro?;Kan jag betala i euro?;;;2;
+Handla & butik;"Îmi dați o pungă, vă rog.";"Kan jag få en påse, tack.";;;2;
+Handla & butik;Este prea scump.;Det är för dyrt.;;;2;

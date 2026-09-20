@@ -6042,7 +6042,7 @@ $("translate-subject").onclick = () => openTranslate(null); // lektionslistans �
 // (＋ Lägg till ord på lektionsskärmen går via openAddDialog; #translate-words-knappen borttagen)
 
 // =========================================================================
-//  CSV-import → lektioner (sektion;italienska;svenska;favorit;minnesregel)
+//  CSV-import → lektioner (sektion;ord;svenska;favorit;minnesregel;prio;böjning)
 // =========================================================================
 // Tecken-för-tecken-parser som klarar citerade fält (med ; eller , inuti) och "" som escape.
 function parseCsvRecords(text, delim) {
@@ -6069,7 +6069,7 @@ function detectDelim(text) {
 }
 
 const FAV_FALSEY = new Set(["", "0", "nej", "no", "false", "n"]);
-// Läs alla valda filer → lista av {sektion, front, back, fav, hint, prio}
+// Läs alla valda filer → lista av {sektion, front, back, fav, hint, prio, form}
 function readCsvFiles(files) {
   return Promise.all([...files].map((f) => f.text())).then((texts) => {
     const out = [];
@@ -6086,7 +6086,10 @@ function readCsvFiles(files) {
         const hint = (r[4] || "").trim();
         const rawPrio = (r[5] || "").trim();
         const prio = rawPrio === "1" || rawPrio === "2" || rawPrio === "3" ? parseInt(rawPrio, 10) : null;
-        out.push({ sektion, front, back, fav, hint, prio });
+        // Kolumn 7 = böjning (kortets form-fält). Klammer runt värdet är tillåten,
+        // så en rad kopierad från inklistringsformatet funkar rakt av.
+        const form = (r[6] || "").trim().replace(/^\{|\}$/g, "").trim();
+        out.push({ sektion, front, back, fav, hint, prio, form });
       });
     });
     return out;
@@ -6142,6 +6145,7 @@ function commitImport(subject, plan) {
       const ck = db.ref(`content/subjects/${sid}/lessons/${lid}/cards`).push().key;
       const card = { front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS };
       if (rec.prio === 1 || rec.prio === 2 || rec.prio === 3) card.prio = rec.prio;
+      if (rec.form) card.form = rec.form;
       updates[`${sid}/lessons/${lid}/cards/${ck}`] = card;
       if (rec.fav) favKeys.push(`${normPart(rec.front)}|${normPart(rec.back)}`);
     });
@@ -6163,6 +6167,16 @@ async function startCsvImport(files) {
   const plan = buildImportPlan(subject, records);
   if (!plan.wordCount) { toast("Inget nytt att importera – allt fanns redan", 4000); return; }
 
+  // En fil vars FÖRSTA kolumn inte är lektionsnamnet (t.ex. en inklistringsfil,
+  // där ordet står först) ger en lektion per rad. Det syns på att nästan varje
+  // sektion bara innehåller ett ord – varna innan något skrivs.
+  const singles = plan.list.filter((s) => s.cards.length === 1).length;
+  const enPerLektion = plan.list.length >= 5 && singles / plan.list.length >= 0.9;
+  const varning = enPerLektion ? `
+    <p class="modal-warn">⚠️ <b>${singles} av ${plan.list.length}</b> lektioner får ett enda ord.
+      Står lektionsnamnet verkligen i <b>första</b> kolumnen? I en inklistringsfil
+      står ordet först – då blir varje ord en egen lektion.</p>` : "";
+
   const sample = plan.list.slice(0, 8).map((s) =>
     `<li>${esc(s.name)} <span class="dup-lesson">(${s.cards.length}${s.existing ? ", befintlig" : ""})</span></li>`).join("");
   const more = plan.list.length > 8 ? `<li class="dup-lesson">…och ${plan.list.length - 8} till</li>` : "";
@@ -6171,15 +6185,19 @@ async function startCsvImport(files) {
     <p class="modal-hint"><b>${plan.wordCount}</b> ord i <b>${plan.list.length}</b> lektioner
       (${plan.newCount} nya, ${plan.mergeCount} befintliga)${plan.skipped ? ` · ${plan.skipped} dubbletter hoppas över` : ""}.
       Nya lektioner importeras <b>pausade</b>.</p>
+    ${varning}
     <ul class="dup-list">${sample}${more}</ul>
     <div class="modal-actions">
       <button class="btn-secondary" id="imp-cancel">Avbryt</button>
-      <button class="btn-primary" id="imp-go">Importera</button>
+      <button class="btn-primary" id="imp-go">${enPerLektion ? "Importera ändå" : "Importera"}</button>
     </div>`);
+  if (enPerLektion) track("import-varning-en-per-lektion");
   m.querySelector("#imp-cancel").onclick = closeModal;
   m.querySelector("#imp-go").onclick = () => {
     closeModal();
     if (plan.list.some((s) => s.cards.some((c) => c.prio))) track("import-med-prio");
+    if (plan.list.some((s) => s.cards.some((c) => c.form))) track("import-med-bojning");
+    if (enPerLektion) track("import-varning-trots-allt");
     commitImport(subject, plan)
       .then(() => flash(`Importerade ${plan.wordCount} ord i ${plan.list.length} lektioner ✓`, 3000))
       .catch((e) => { writeError(e); toast("Importen misslyckades: " + (e.code || e.message), 5000, "error"); });
@@ -6604,7 +6622,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v354";
+const APP_VERSION = "v355";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

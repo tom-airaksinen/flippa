@@ -1,0 +1,28 @@
+# Småprat & artighet
+nume;namn;1
+vârstă;ålder;2
+vacanță;semester;1
+turist;turist;2
+limbă;språk;1
+serviciu;jobb, arbete;2
+suedez;svensk;1
+engleză;engelska (språket);1
+# --- verb ---
+a locui;att bo;1
+a călători;att resa;2
+# --- fraser ---
+Vorbesc puțină română.;Jag talar lite rumänska.;1
+Puteți vorbi mai rar, vă rog?;Kan ni tala långsammare, tack?;1
+Ce înseamnă…?;Vad betyder…?;1
+Cum se spune… în română?;Hur säger man … på rumänska?;1
+Îmi pare rău.;Förlåt, jag är ledsen.;1
+Cu plăcere.;Varsågod (svar på tack).;1
+Mulțumesc frumos.;Tack så mycket.;1
+Nicio problemă.;Inga problem.;2
+Noroc!;Skål!;1
+Sănătate!;Prosit! (när någon nyser);2
+Sunt în vacanță.;Jag är på semester.;1
+Unde locuiți?;Var bor ni?;2
+Îmi place România.;Jag gillar Rumänien.;2
+Este foarte frumos aici.;Det är väldigt vackert här.;2
+Câți ani ai?;Hur gammal är du?;3

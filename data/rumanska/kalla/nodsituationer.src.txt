@@ -1,0 +1,19 @@
+# Nödsituationer
+urgență;nödfall, akutfall;1
+ambulanță;ambulans;1
+pompier;brandman (brandkåren = pompierii);2
+pericol;fara;2
+hoț;tjuv;2
+furt;stöld;2
+pașaport;pass;1
+portofel;plånbok;2
+telefon;telefon;1
+ambasadă;ambassad;2
+# --- fraser ---
+Ajutor!;Hjälp!;1
+Sunați la poliție!;Ring polisen!;1
+Sunați la o ambulanță!;Ring en ambulans!;1
+Mi-am pierdut pașaportul.;Jag har tappat bort passet.;1
+Am nevoie de ajutor.;Jag behöver hjälp.;1
+Este o urgență.;Det är akut.;2
+Am fost jefuit.;Jag har blivit rånad.;3

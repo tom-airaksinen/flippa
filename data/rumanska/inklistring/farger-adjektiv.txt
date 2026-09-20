@@ -1,0 +1,36 @@
+roșu;röd;1
+albastru;blå;1
+verde;grön;1
+galben;gul;1
+negru;svart;1
+alb;vit;1
+maro;brun;2
+gri;grå;2
+portocaliu;orange;2
+roz;rosa;2
+mov;lila;3
+mare;stor;1
+mic;liten;1
+lung;lång (om saker);2
+scurt;kort;2
+înalt;hög, lång (om personer);2
+plin;full;2
+gol;tom;3
+nou;ny;1
+bun;bra, god;1
+urât;ful;3
+scump;dyr;1
+ieftin;billig;1
+curat;ren;2
+murdar;smutsig;2
+cald;varm;1
+rece;kall;1
+greu;tung, svår;2
+ușor;lätt;2
+rapid;snabb;2
+lent;långsam;3
+tânăr;ung;2
+bătrân;gammal (om personer);2
+obosit;trött;2
+fericit;glad;2
+trist;ledsen;3

@@ -1,0 +1,51 @@
+# Tid, dagar & siffror
+luni;måndag;1
+marți;tisdag;1
+miercuri;onsdag;1
+joi;torsdag;1
+vineri;fredag;1
+sâmbătă;lördag;1
+duminică;söndag;1
+săptămână;vecka;1
+lună;månad;1
+an;år;1
+oră;timme;1
+minut;minut;2
+ceas;klocka;2
+sfert;kvart;3
+jumătate;halva, hälft;2
+amiază;middag (mitt på dagen);2
+după-amiază;eftermiddag;2
+poimâine;i övermorgon;3
+alaltăieri;i förrgår;3
+weekend (n);helg;{un weekend, două weekenduri};2
+# --- månaderna ---
+ovr:ianuarie;januari;3
+ovr:februarie;februari;3
+ovr:martie;mars;3
+ovr:aprilie;april;3
+ovr:luna mai;maj (frontar 'luna' för att skilja från mai = mer);3
+ovr:iunie;juni;3
+ovr:iulie;juli;3
+ovr:august;augusti;3
+ovr:septembrie;september;3
+ovr:octombrie;oktober;3
+ovr:noiembrie;november;3
+ovr:decembrie;december;3
+# --- större tal ---
+treizeci;trettio;1
+patruzeci;fyrtio;2
+cincizeci;femtio;2
+șaizeci;sextio;2
+șaptezeci;sjuttio;3
+optzeci;åttio;3
+nouăzeci;nittio;3
+o sută;hundra;1
+o mie;tusen;1
+# --- fraser ---
+Cât e ceasul?;Vad är klockan?;1
+La ce oră?;Hur dags?;1
+în fiecare zi;varje dag;2
+de la … până la …;från … till …;2
+acum o oră;för en timme sedan;3
+peste o oră;om en timme;2

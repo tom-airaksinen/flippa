@@ -1,5 +1,5 @@
-Sektion;Ord;Översättning;Favorit;Minnesregel;Prio
-Mat;la manzana;äpple;;;1
+Sektion;Ord;Översättning;Favorit;Minnesregel;Prio;Böjning
+Mat;la manzana;äpple;;;1;"una manzana, dos manzanas"
 Mat;el pan;bröd;;;
 Mat;el queso;ost;ja;;2
 Resa;el aeropuerto;flygplats;ja;"låter som airport";2

@@ -1622,6 +1622,19 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .modal-hint { font-size: 0.8rem; color: var(--muted); }
 .dup-list { margin: 6px 0 2px; padding-left: 1.2em; color: var(--text); font-size: 0.95rem; line-height: 1.55; }
 .dup-lesson { color: var(--muted); font-size: 0.85em; }
+/* Varning i importdialogen (t.ex. "nästan varje lektion får ett enda ord").
+   Samma paus-orange som används för pausade lektioner – inte rött: det här är
+   något att titta en extra gång på, inte ett fel. */
+.modal-warn {
+  margin: 8px 0 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--paus);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paus) 12%, transparent);
+  color: var(--text);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
 .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
 .modal-actions button {
   flex: 1;

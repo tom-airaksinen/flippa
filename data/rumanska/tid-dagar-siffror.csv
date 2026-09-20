@@ -1,0 +1,48 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+"Tid, dagar & siffror";luni (f);måndag;;;1;"o luni, două luni"
+"Tid, dagar & siffror";marți (f);tisdag;;;1;"o marți, două marți"
+"Tid, dagar & siffror";miercuri (f);onsdag;;;1;"o miercuri, două miercuri"
+"Tid, dagar & siffror";joi (f);torsdag;;;1;"o joi, două joi"
+"Tid, dagar & siffror";vineri (f);fredag;;;1;"o vineri, două vineri"
+"Tid, dagar & siffror";sâmbătă (f);lördag;;;1;"o sâmbătă, două sâmbete"
+"Tid, dagar & siffror";duminică (f);söndag;;;1;"o duminică, două duminici"
+"Tid, dagar & siffror";săptămână (f);vecka;;;1;"o săptămână, două săptămâni"
+"Tid, dagar & siffror";lună (f);månad;;;1;"o lună, două luni"
+"Tid, dagar & siffror";an (m);år;;;1;"un an, doi ani"
+"Tid, dagar & siffror";oră (f);timme;;;1;"o oră, două ore"
+"Tid, dagar & siffror";minut (n);minut;;;2;"un minut, două minute"
+"Tid, dagar & siffror";ceas (n);klocka;;;2;"un ceas, două ceasuri"
+"Tid, dagar & siffror";sfert (n);kvart;;;3;"un sfert, două sferturi"
+"Tid, dagar & siffror";jumătate (f);"halva, hälft";;;2;"o jumătate, două jumătăți"
+"Tid, dagar & siffror";amiază (f);middag (mitt på dagen);;;2;"o amiază, două amiezi"
+"Tid, dagar & siffror";după-amiază (f);eftermiddag;;;2;"o după-amiază, două după-amiezi"
+"Tid, dagar & siffror";poimâine;i övermorgon;;;3;
+"Tid, dagar & siffror";alaltăieri;i förrgår;;;3;
+"Tid, dagar & siffror";weekend (n);helg;;;2;"un weekend, două weekenduri"
+"Tid, dagar & siffror";ianuarie;januari;;;3;
+"Tid, dagar & siffror";februarie;februari;;;3;
+"Tid, dagar & siffror";martie;mars;;;3;
+"Tid, dagar & siffror";aprilie;april;;;3;
+"Tid, dagar & siffror";luna mai;maj (frontar 'luna' för att skilja från mai = mer);;;3;
+"Tid, dagar & siffror";iunie;juni;;;3;
+"Tid, dagar & siffror";iulie;juli;;;3;
+"Tid, dagar & siffror";august;augusti;;;3;
+"Tid, dagar & siffror";septembrie;september;;;3;
+"Tid, dagar & siffror";octombrie;oktober;;;3;
+"Tid, dagar & siffror";noiembrie;november;;;3;
+"Tid, dagar & siffror";decembrie;december;;;3;
+"Tid, dagar & siffror";treizeci;trettio;;;1;
+"Tid, dagar & siffror";patruzeci;fyrtio;;;2;
+"Tid, dagar & siffror";cincizeci;femtio;;;2;
+"Tid, dagar & siffror";șaizeci;sextio;;;2;
+"Tid, dagar & siffror";șaptezeci;sjuttio;;;3;
+"Tid, dagar & siffror";optzeci;åttio;;;3;
+"Tid, dagar & siffror";nouăzeci;nittio;;;3;
+"Tid, dagar & siffror";o sută;hundra;;;1;
+"Tid, dagar & siffror";o mie;tusen;;;1;
+"Tid, dagar & siffror";Cât e ceasul?;Vad är klockan?;;;1;
+"Tid, dagar & siffror";La ce oră?;Hur dags?;;;1;
+"Tid, dagar & siffror";în fiecare zi;varje dag;;;2;
+"Tid, dagar & siffror";de la … până la …;från … till …;;;2;
+"Tid, dagar & siffror";acum o oră;för en timme sedan;;;3;
+"Tid, dagar & siffror";peste o oră;om en timme;;;2;

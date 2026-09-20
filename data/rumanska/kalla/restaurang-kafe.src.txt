@@ -1,0 +1,60 @@
+# Restaurang & kafé – källa. Rader "lemma;svenska;prio" fylls med genus+böjning
+# ur ordboken (scripts/ro-former.py fyll). Färdiga rader (fras, egen böjning) passerar orört.
+# --- på stället ---
+chelner;servitör;1
+chelneriță;servitris;2
+masă;bord;1
+terasă (f);uteservering;{o terasă, două terase};2
+cafenea;kafé;1
+cofetărie;konditori (kaffe och bakverk);3
+rezervare;bordsbokning;1
+comandă;beställning;2
+gustare;förrätt, tilltugg;2
+fel principal (n);huvudrätt;{un fel principal, două feluri principale};2
+ceașcă;kopp;2
+șervețel;servett;2
+halbă;stor öl (halvliter);2
+gheață;is;2
+bacșiș;dricks;1
+chitanță;kvitto;2
+card;kort (betalkort);1
+numerar (n);kontanter;2
+# --- rumänskt på menyn ---
+ciorbă;sursoppa (rumänsk vardagsmat);1
+mămăligă;majsgröt, polenta;1
+sarma;kåldolme (oftast i plural: sarmale);2
+papanaș;ostmunk med gräddfil och sylt;2
+mici (m);grillade köttrullar (även mititei);{un mic, doi mici};2
+plăcintă;paj (söt eller matig);2
+covrig;kringla (gatustånd);2
+clătită;pannkaka;2
+# --- dryck ---
+vin roșu (n);rött vin;{un vin roșu, două vinuri roșii};1
+vin alb (n);vitt vin;{un vin alb, două vinuri albe};1
+apă plată (f);stilla vatten;{o apă plată, două ape plate};1
+apă minerală (f);kolsyrat vatten;{o apă minerală, două ape minerale};1
+# --- verb ---
+a comanda;att beställa;1
+a rezerva;att boka;1
+a recomanda;att rekommendera;2
+a gusta;att smaka;2
+a alege;att välja;2
+a servi;att servera;3
+# --- hur det smakar ---
+picant;stark (kryddstark);2
+dulce;söt;2
+proaspăt;färsk;2
+la grătar;grillad;2
+prăjit;stekt;3
+# --- fraser ---
+O masă pentru două persoane, vă rog.;Ett bord för två, tack.;1
+Avem o rezervare.;Vi har en bokning.;1
+Pot să văd meniul?;Kan jag få se menyn?;1
+Încă o bere, vă rog.;En öl till, tack.;1
+Pot să plătesc cu cardul?;Kan jag betala med kort?;1
+Plătim separat.;Vi betalar var för sig.;2
+Păstrați restul.;Behåll växeln.;2
+Poftă bună!;Smaklig måltid!;1
+Sunt vegetarian.;Jag är vegetarian.;2
+Este picant?;Är det starkt?;2
+Mai doriți ceva?;Önskas det något mer? (det servitören frågar);2

@@ -1,0 +1,55 @@
+# Hotell & frukost – källa (se restaurang-kafe.src.txt för formatet).
+# --- på hotellet ---
+hotel;hotell;1
+pensiune;pensionat (vanligt boende i Rumänien);2
+recepție;reception;1
+recepționer;receptionist;2
+cameră;rum (hotellrum);1
+cheie;nyckel;1
+cartelă;nyckelkort;2
+lift;hiss;2
+etaj;våning;2
+parter (n);bottenvåning;3
+bagaj;bagage;1
+valiză;resväska;2
+pat;säng;1
+pernă;kudde;2
+pătură;filt;2
+prosop;handduk;1
+baie;badrum;1
+duș;dusch;1
+săpun;tvål;2
+hârtie igienică (f);toapapper;{o hârtie igienică, două hârtii igienice};2
+aer condiționat (n);luftkonditionering;2
+încălzire;värme, uppvärmning;3
+fereastră;fönster;2
+ușă;dörr;2
+parolă;lösenord;1
+# --- frukosten ---
+bufet;buffé;2
+unt;smör;1
+gem;sylt;2
+miere;honung;2
+iaurt;yoghurt;2
+cașcaval;gul ost (hårdost);2
+telemea;saltlakeost (rumänsk fetaost);3
+omletă;omelett;2
+ou fiert (n);kokt ägg;{un ou fiert, două ouă fierte};2
+șuncă;skinka;2
+cârnat;korv;2
+cereale (f);flingor (frukostflingor, alltid plural);3
+# --- verb ---
+a dormi;att sova;1
+a pleca;att åka iväg, ge sig av;1
+a ajunge;att komma fram;2
+a aștepta;att vänta;2
+# --- fraser ---
+Am o rezervare pe numele…;Jag har en bokning i namnet…;1
+O cameră dublă pentru două nopți.;Ett dubbelrum för två nätter.;1
+La ce oră este micul dejun?;Hur dags är frukosten?;1
+Micul dejun este inclus?;Ingår frukosten?;1
+Care este parola de wifi?;Vad är wifi-lösenordet?;1
+Putem lăsa bagajele aici?;Kan vi lämna bagaget här?;2
+Mai avem nevoie de un prosop.;Vi behöver en handduk till.;2
+Aerul condiționat nu funcționează.;Luftkonditioneringen fungerar inte.;2
+La ce oră trebuie să eliberăm camera?;Hur dags måste vi checka ut?;2

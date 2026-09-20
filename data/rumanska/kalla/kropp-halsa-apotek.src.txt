@@ -1,0 +1,40 @@
+# Kropp, hälsa & apotek
+cap;huvud;1
+ochi;öga;1
+nas;näsa;2
+gură;mun;2
+ureche;öra;2
+dinte;tand;2
+gât;hals;1
+mână;hand;1
+picior;ben, fot;1
+spate;rygg;2
+burtă;mage;1
+inimă;hjärta;2
+piele;hud;3
+sânge;blod;3
+# --- när något krånglar ---
+durere;smärta, värk;1
+febră;feber;1
+răceală;förkylning;2
+tuse;hosta;2
+greață;illamående;2
+alergie;allergi;1
+# --- vård ---
+farmacie;apotek;1
+medicament;medicin;1
+doctor;läkare;1
+spital;sjukhus;1
+rețetă;recept;2
+plasture;plåster;2
+# --- verb ---
+a durea;att göra ont (mă doare = det gör ont på mig, mă dor om flera saker);{mă doare · m-a durut · să mă doară};1
+a ajuta;att hjälpa;1
+# --- fraser ---
+Nu mă simt bine.;Jag mår inte bra.;1
+Mă doare capul.;Jag har huvudvärk.;1
+Mă doare stomacul.;Jag har ont i magen.;2
+Am nevoie de un doctor.;Jag behöver en läkare.;1
+Sunt alergic la…;Jag är allergisk mot…;1
+Unde este cea mai apropiată farmacie?;Var ligger närmaste apotek?;1
+Aveți ceva pentru durere de cap?;Har ni något mot huvudvärk?;2

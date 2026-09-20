@@ -1,0 +1,52 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+Hyrbil & vägen;mașină (f);bil;;;1;"o mașină, două mașini"
+Hyrbil & vägen;permis de conducere (n);körkort;;;1;"un permis de conducere, două permise de conducere"
+Hyrbil & vägen;asigurare (f);försäkring;;;1;"o asigurare, două asigurări"
+Hyrbil & vägen;rovinietă (f);vinjett (obligatorisk vägavgift i Rumänien);;;1;"o rovinietă, două roviniete"
+Hyrbil & vägen;portbagaj (n);bagagelucka;;;2;"un portbagaj, două portbagaje"
+Hyrbil & vägen;cauciuc (n);däck;;;3;"un cauciuc, două cauciucuri"
+Hyrbil & vägen;roată (f);hjul;;;3;"o roată, două roți"
+Hyrbil & vägen;volan (n);ratt;;;3;"un volan, două volane"
+Hyrbil & vägen;benzină (f);bensin;;;1;
+Hyrbil & vägen;motorină (f);diesel;;;2;"o motorină, două motorine"
+Hyrbil & vägen;benzinărie (f);bensinstation;;;1;"o benzinărie, două benzinării"
+Hyrbil & vägen;parcare (f);parkering;;;1;"o parcare, două parcări"
+Hyrbil & vägen;drum (n);väg;;;1;"un drum, două drumuri"
+Hyrbil & vägen;șosea (f);landsväg;;;2;"o șosea, două șosele"
+Hyrbil & vägen;autostradă (f);motorväg;;;2;"o autostradă, două autostrăzi"
+Hyrbil & vägen;sens giratoriu (n);rondell;;;2;"un sens giratoriu, două sensuri giratorii"
+Hyrbil & vägen;semafor (n);trafikljus;;;2;"un semafor, două semafoare"
+Hyrbil & vägen;indicator (m);vägskylt;;;3;"un indicator, doi indicatori"
+Hyrbil & vägen;trecere de pietoni (f);övergångsställe;;;3;"o trecere de pietoni, două treceri de pietoni"
+Hyrbil & vägen;pod (n);bro;;;2;"un pod, două poduri"
+Hyrbil & vägen;tunel (n);tunnel;;;3;"un tunel, două tuneluri"
+Hyrbil & vägen;curbă (f);kurva;;;3;"o curbă, două curbe"
+Hyrbil & vägen;hartă (f);karta;;;2;"o hartă, două hărți"
+Hyrbil & vägen;viteză (f);hastighet;;;2;"o viteză, două viteze"
+Hyrbil & vägen;amendă (f);böter;;;2;"o amendă, două amende"
+Hyrbil & vägen;poliție (f);polis;;;2;"o poliție, două poliții"
+Hyrbil & vägen;accident (n);olycka;;;2;"un accident, două accidente"
+Hyrbil & vägen;munte (m);berg;;;2;"un munte, doi munți"
+Hyrbil & vägen;deal (n);"kulle, backe";;;3;"un deal, două dealuri"
+Hyrbil & vägen;a conduce;att köra;;;1;"conduc, conduce · am condus · să conducă"
+Hyrbil & vägen;a închiria;att hyra;;;1;"închiriez, închiriază · am închiriat · să închirieze"
+Hyrbil & vägen;a parca;att parkera;;;1;"parchez, parchează · am parcat · să parcheze"
+Hyrbil & vägen;a opri;att stanna;;;2;"opresc, oprește · am oprit · să oprească"
+Hyrbil & vägen;a vira;att svänga;;;2;"virez, virează · am virat · să vireze"
+Hyrbil & vägen;a alimenta;att tanka;;;2;"alimentez, alimentează · am alimentat · să alimenteze"
+Hyrbil & vägen;stânga (f);vänster;;;1;
+Hyrbil & vägen;dreapta (f);höger;;;1;
+Hyrbil & vägen;drept înainte;rakt fram;;;1;
+Hyrbil & vägen;aproape;nära;;;2;
+Hyrbil & vägen;departe;långt bort;;;2;
+Hyrbil & vägen;Am închiriat o mașină.;Jag har hyrt en bil.;;;1;
+Hyrbil & vägen;Unde pot parca?;Var kan jag parkera?;;;1;
+Hyrbil & vägen;Unde este cea mai apropiată benzinărie?;Var ligger närmaste bensinstation?;;;1;
+Hyrbil & vägen;"Plinul, vă rog.";"Full tank, tack.";;;1;
+Hyrbil & vägen;Este inclusă asigurarea?;Ingår försäkringen?;;;1;
+Hyrbil & vägen;Cât costă pe zi?;Vad kostar det per dag?;;;1;
+Hyrbil & vägen;Am nevoie de rovinietă?;Behöver jag vinjett?;;;1;
+Hyrbil & vägen;Faceți la stânga.;Sväng vänster.;;;2;
+Hyrbil & vägen;Mergeți drept înainte.;Kör rakt fram.;;;2;
+Hyrbil & vägen;Cât de departe este?;Hur långt är det?;;;2;
+Hyrbil & vägen;Mașina nu pornește.;Bilen startar inte.;;;3;

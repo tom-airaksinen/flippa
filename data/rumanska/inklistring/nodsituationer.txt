@@ -1,0 +1,17 @@
+urgență (f);nödfall, akutfall;{o urgență, două urgențe};1
+ambulanță (f);ambulans;{o ambulanță, două ambulanțe};1
+pompier (m);brandman (brandkåren = pompierii);{un pompier, doi pompieri};2
+pericol (n);fara;{un pericol, două pericole};2
+hoț (m);tjuv;{un hoț, doi hoți};2
+furt (n);stöld;{un furt, două furturi};2
+pașaport (n);pass;{un pașaport, două pașapoarte};1
+portofel (n);plånbok;{un portofel, două portofele};2
+telefon (n);telefon;{un telefon, două telefoane};1
+ambasadă (f);ambassad;{o ambasadă, două ambasade};2
+Ajutor!;Hjälp!;1
+Sunați la poliție!;Ring polisen!;1
+Sunați la o ambulanță!;Ring en ambulans!;1
+Mi-am pierdut pașaportul.;Jag har tappat bort passet.;1
+Am nevoie de ajutor.;Jag behöver hjälp.;1
+Este o urgență.;Det är akut.;2
+Am fost jefuit.;Jag har blivit rånad.;3

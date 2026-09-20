@@ -1,0 +1,35 @@
+cap (n);huvud;{un cap, două capete};1
+ochi (m);öga;{un ochi, doi ochi};1
+nas (n);näsa;{un nas, două nasuri};2
+gură (f);mun;{o gură, două guri};2
+ureche (f);öra;{o ureche, două urechi};2
+dinte (m);tand;{un dinte, doi dinți};2
+gât (n);hals;{un gât, două gâturi};1
+mână (f);hand;{o mână, două mâini};1
+picior (n);ben, fot;{un picior, două picioare};1
+spate (n);rygg;{un spate, două spate};2
+burtă (f);mage;{o burtă, două burți};1
+inimă (f);hjärta;{o inimă, două inimi};2
+piele (f);hud;{o piele, două piei};3
+sânge (n);blod;{un sânge, două sângiuri};3
+durere (f);smärta, värk;{o durere, două dureri};1
+febră (f);feber;{o febră, două febre};1
+răceală (f);förkylning;{o răceală, două răceli};2
+tuse (f);hosta;2
+greață (f);illamående;{o greață, două grețuri};2
+alergie (f);allergi;{o alergie, două alergii};1
+farmacie (f);apotek;{o farmacie, două farmacii};1
+medicament (n);medicin;{un medicament, două medicamente};1
+doctor (m);läkare;{un doctor, doi doctori};1
+spital (n);sjukhus;{un spital, două spitale};1
+rețetă (f);recept;{o rețetă, două rețete};2
+plasture (m);plåster;{un plasture, doi plasturi};2
+a durea;att göra ont (mă doare = det gör ont på mig, mă dor om flera saker);{mă doare · m-a durut · să mă doară};1
+a ajuta;att hjälpa;{ajut, ajută · am ajutat · să ajute};1
+Nu mă simt bine.;Jag mår inte bra.;1
+Mă doare capul.;Jag har huvudvärk.;1
+Mă doare stomacul.;Jag har ont i magen.;2
+Am nevoie de un doctor.;Jag behöver en läkare.;1
+Sunt alergic la…;Jag är allergisk mot…;1
+Unde este cea mai apropiată farmacie?;Var ligger närmaste apotek?;1
+Aveți ceva pentru durere de cap?;Har ni något mot huvudvärk?;2

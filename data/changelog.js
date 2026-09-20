@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "20 september 2026", ver: "v355", items: [
+    { t: "CSV-importen tar nu med böjningen – lägg den i en sjunde kolumn, så slipper du fylla i formerna efteråt", type: "new",
+      hi: true, ico: "⬆️", desc: "Böjningen följer med i CSV-filen" },
+    { t: "Importen varnar om nästan varje lektion bara får ett enda ord – då står oftast ordet i första kolumnen i stället för lektionsnamnet", type: "new" },
+  ]},
   { date: "14 september 2026", ver: "v354", items: [
     { t: "Böjningen på kortet visas nu i kursiv stil med mer luft mot minnesregeln, så de två går att skilja åt i en blick", type: "improved" },
     { t: "Glosor/Grammatik-växlaren ser nu ut som prio-väljaren i Redigera ord – ett sammanhängande segment i stället för två knappar", type: "improved" },

@@ -1,0 +1,30 @@
+# Djur
+câine;hund;1
+pisică;katt;1
+cal;häst;1
+vacă;ko;2
+oaie;får;2
+porc;gris;2
+găină;höna;2
+cocoș;tupp;3
+rață;anka;3
+capră;get;3
+urs;björn (vanlig i Karpaterna);1
+lup;varg;2
+vulpe;räv;2
+cerb;kronhjort;3
+căprioară;rådjur;3
+mistreț;vildsvin;3
+iepure;hare, kanin;2
+veveriță;ekorre;3
+șoarece;mus;3
+pasăre;fågel;1
+vultur;örn;3
+barză;stork (häckar på byhusen);3
+albină;bi;3
+muscă;fluga;2
+țânțar;mygga;2
+șarpe;orm;3
+# --- fraser ---
+Atenție, câine rău!;Varning för hunden!;2
+Sunt urși în zonă?;Finns det björnar i området?;2

@@ -19,8 +19,13 @@ sig, plus en färdig prompt för att få ut det ur Collins-PDF:en.
 | 4 | `favorit` | nej | `x` eller `1` = stjärnmärks direkt. Tomt = vanlig. |
 | 5 | `minnesregel` | nej | Frivillig minnesregel/exempel → kortets hint-fält. |
 | 6 | `prio` | nej | `1` kärna · `2` vanlig · `3` nisch – relativ centralitet **inom temat** (se [`prio-plan-2026-07-06.html`](prio-plan-2026-07-06.html)). Tomt = tolkas som vanlig (2), inget skrivs. |
+| 7 | `böjning` | nej | Kortets böjningsfält, t.ex. `o casă, două case` (visas bara i ämnen med böjning påslaget). Klamrar runt värdet tas bort, så en rad från inklistringsformatet funkar rakt av. Från v355. |
 
 - **En rad = en glosa.** Tomma rader ignoreras.
+- **Kolumn 1 är lektionsnamnet**, inte ordet. Skickar man in en fil där ordet står
+  först (t.ex. inklistringsformatet `ord;svenska;{böjning};prio`) blir varje rad en
+  egen lektion. Appen varnar när nästan varje lektion bara får ett ord, men filen
+  bör rättas i stället för att importeras ändå.
 - Innehåller ett fält självt `;` eller `,` → omslut fältet med dubbla citattecken,
   t.ex. `"buongiorno, signora"`.
 

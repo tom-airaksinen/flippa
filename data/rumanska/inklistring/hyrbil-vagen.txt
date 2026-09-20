@@ -1,0 +1,51 @@
+mașină (f);bil;{o mașină, două mașini};1
+permis de conducere (n);körkort;{un permis de conducere, două permise de conducere};1
+asigurare (f);försäkring;{o asigurare, două asigurări};1
+rovinietă (f);vinjett (obligatorisk vägavgift i Rumänien);{o rovinietă, două roviniete};1
+portbagaj (n);bagagelucka;{un portbagaj, două portbagaje};2
+cauciuc (n);däck;{un cauciuc, două cauciucuri};3
+roată (f);hjul;{o roată, două roți};3
+volan (n);ratt;{un volan, două volane};3
+benzină (f);bensin;1
+motorină (f);diesel;{o motorină, două motorine};2
+benzinărie (f);bensinstation;{o benzinărie, două benzinării};1
+parcare (f);parkering;{o parcare, două parcări};1
+drum (n);väg;{un drum, două drumuri};1
+șosea (f);landsväg;{o șosea, două șosele};2
+autostradă (f);motorväg;{o autostradă, două autostrăzi};2
+sens giratoriu (n);rondell;{un sens giratoriu, două sensuri giratorii};2
+semafor (n);trafikljus;{un semafor, două semafoare};2
+indicator (m);vägskylt;{un indicator, doi indicatori};3
+trecere de pietoni (f);övergångsställe;{o trecere de pietoni, două treceri de pietoni};3
+pod (n);bro;{un pod, două poduri};2
+tunel (n);tunnel;{un tunel, două tuneluri};3
+curbă (f);kurva;{o curbă, două curbe};3
+hartă (f);karta;{o hartă, două hărți};2
+viteză (f);hastighet;{o viteză, două viteze};2
+amendă (f);böter;{o amendă, două amende};2
+poliție (f);polis;{o poliție, două poliții};2
+accident (n);olycka;{un accident, două accidente};2
+munte (m);berg;{un munte, doi munți};2
+deal (n);kulle, backe;{un deal, două dealuri};3
+a conduce;att köra;{conduc, conduce · am condus · să conducă};1
+a închiria;att hyra;{închiriez, închiriază · am închiriat · să închirieze};1
+a parca;att parkera;{parchez, parchează · am parcat · să parcheze};1
+a opri;att stanna;{opresc, oprește · am oprit · să oprească};2
+a vira;att svänga;{virez, virează · am virat · să vireze};2
+a alimenta;att tanka;{alimentez, alimentează · am alimentat · să alimenteze};2
+stânga (f);vänster;1
+dreapta (f);höger;1
+drept înainte;rakt fram;1
+aproape;nära;2
+departe;långt bort;2
+Am închiriat o mașină.;Jag har hyrt en bil.;1
+Unde pot parca?;Var kan jag parkera?;1
+Unde este cea mai apropiată benzinărie?;Var ligger närmaste bensinstation?;1
+Plinul, vă rog.;Full tank, tack.;1
+Este inclusă asigurarea?;Ingår försäkringen?;1
+Cât costă pe zi?;Vad kostar det per dag?;1
+Am nevoie de rovinietă?;Behöver jag vinjett?;1
+Faceți la stânga.;Sväng vänster.;2
+Mergeți drept înainte.;Kör rakt fram.;2
+Cât de departe este?;Hur långt är det?;2
+Mașina nu pornește.;Bilen startar inte.;3

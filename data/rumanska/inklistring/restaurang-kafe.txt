@@ -1,0 +1,52 @@
+chelner (m);servitör;{un chelner, doi chelneri};1
+chelneriță (f);servitris;{o chelneriță, două chelnerițe};2
+masă (f);bord;{o masă, două mese};1
+terasă (f);uteservering;{o terasă, două terase};2
+cafenea (f);kafé;{o cafenea, două cafenele};1
+cofetărie (f);konditori (kaffe och bakverk);{o cofetărie, două cofetării};3
+rezervare (f);bordsbokning;{o rezervare, două rezervări};1
+comandă (f);beställning;{o comandă, două comenzi};2
+gustare (f);förrätt, tilltugg;{o gustare, două gustări};2
+fel principal (n);huvudrätt;{un fel principal, două feluri principale};2
+ceașcă (f);kopp;{o ceașcă, două cești};2
+șervețel (n);servett;{un șervețel, două șervețele};2
+halbă (f);stor öl (halvliter);{o halbă, două halbe};2
+gheață (f);is;{o gheață, două ghețuri};2
+bacșiș (n);dricks;{un bacșiș, două bacșișuri};1
+chitanță (f);kvitto;{o chitanță, două chitanțe};2
+card (n);kort (betalkort);{un card, două carduri};1
+numerar (n);kontanter;2
+ciorbă (f);sursoppa (rumänsk vardagsmat);{o ciorbă, două ciorbe};1
+mămăligă (f);majsgröt, polenta;{o mămăligă, două mămăligi};1
+sarma (f);kåldolme (oftast i plural: sarmale);{o sarma, două sarmale};2
+papanaș (m);ostmunk med gräddfil och sylt;{un papanaș, doi papanași};2
+mici (m);grillade köttrullar (även mititei);{un mic, doi mici};2
+plăcintă (f);paj (söt eller matig);{o plăcintă, două plăcinte};2
+covrig (m);kringla (gatustånd);{un covrig, doi covrigi};2
+clătită (f);pannkaka;{o clătită, două clătite};2
+vin roșu (n);rött vin;{un vin roșu, două vinuri roșii};1
+vin alb (n);vitt vin;{un vin alb, două vinuri albe};1
+apă plată (f);stilla vatten;{o apă plată, două ape plate};1
+apă minerală (f);kolsyrat vatten;{o apă minerală, două ape minerale};1
+a comanda;att beställa;{comand, comandă · am comandat · să comande};1
+a rezerva;att boka;{rezerv, rezervă · am rezervat · să rezerve};1
+a recomanda;att rekommendera;{recomand, recomandă · am recomandat · să recomande};2
+a gusta;att smaka;{gust, gustă · am gustat · să guste};2
+a alege;att välja;{aleg, alege · am ales · să aleagă};2
+a servi;att servera;{servesc, servește · am servit · să servească};3
+picant;stark (kryddstark);2
+dulce;söt;2
+proaspăt;färsk;2
+la grătar;grillad;2
+prăjit;stekt;3
+O masă pentru două persoane, vă rog.;Ett bord för två, tack.;1
+Avem o rezervare.;Vi har en bokning.;1
+Pot să văd meniul?;Kan jag få se menyn?;1
+Încă o bere, vă rog.;En öl till, tack.;1
+Pot să plătesc cu cardul?;Kan jag betala med kort?;1
+Plătim separat.;Vi betalar var för sig.;2
+Păstrați restul.;Behåll växeln.;2
+Poftă bună!;Smaklig måltid!;1
+Sunt vegetarian.;Jag är vegetarian.;2
+Este picant?;Är det starkt?;2
+Mai doriți ceva?;Önskas det något mer? (det servitören frågar);2

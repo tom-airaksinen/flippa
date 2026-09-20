@@ -1,0 +1,53 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+Restaurang & kafé;chelner (m);servitör;;;1;"un chelner, doi chelneri"
+Restaurang & kafé;chelneriță (f);servitris;;;2;"o chelneriță, două chelnerițe"
+Restaurang & kafé;masă (f);bord;;;1;"o masă, două mese"
+Restaurang & kafé;terasă (f);uteservering;;;2;"o terasă, două terase"
+Restaurang & kafé;cafenea (f);kafé;;;1;"o cafenea, două cafenele"
+Restaurang & kafé;cofetărie (f);konditori (kaffe och bakverk);;;3;"o cofetărie, două cofetării"
+Restaurang & kafé;rezervare (f);bordsbokning;;;1;"o rezervare, două rezervări"
+Restaurang & kafé;comandă (f);beställning;;;2;"o comandă, două comenzi"
+Restaurang & kafé;gustare (f);"förrätt, tilltugg";;;2;"o gustare, două gustări"
+Restaurang & kafé;fel principal (n);huvudrätt;;;2;"un fel principal, două feluri principale"
+Restaurang & kafé;ceașcă (f);kopp;;;2;"o ceașcă, două cești"
+Restaurang & kafé;șervețel (n);servett;;;2;"un șervețel, două șervețele"
+Restaurang & kafé;halbă (f);stor öl (halvliter);;;2;"o halbă, două halbe"
+Restaurang & kafé;gheață (f);is;;;2;"o gheață, două ghețuri"
+Restaurang & kafé;bacșiș (n);dricks;;;1;"un bacșiș, două bacșișuri"
+Restaurang & kafé;chitanță (f);kvitto;;;2;"o chitanță, două chitanțe"
+Restaurang & kafé;card (n);kort (betalkort);;;1;"un card, două carduri"
+Restaurang & kafé;numerar (n);kontanter;;;2;
+Restaurang & kafé;ciorbă (f);sursoppa (rumänsk vardagsmat);;;1;"o ciorbă, două ciorbe"
+Restaurang & kafé;mămăligă (f);"majsgröt, polenta";;;1;"o mămăligă, două mămăligi"
+Restaurang & kafé;sarma (f);kåldolme (oftast i plural: sarmale);;;2;"o sarma, două sarmale"
+Restaurang & kafé;papanaș (m);ostmunk med gräddfil och sylt;;;2;"un papanaș, doi papanași"
+Restaurang & kafé;mici (m);grillade köttrullar (även mititei);;;2;"un mic, doi mici"
+Restaurang & kafé;plăcintă (f);paj (söt eller matig);;;2;"o plăcintă, două plăcinte"
+Restaurang & kafé;covrig (m);kringla (gatustånd);;;2;"un covrig, doi covrigi"
+Restaurang & kafé;clătită (f);pannkaka;;;2;"o clătită, două clătite"
+Restaurang & kafé;vin roșu (n);rött vin;;;1;"un vin roșu, două vinuri roșii"
+Restaurang & kafé;vin alb (n);vitt vin;;;1;"un vin alb, două vinuri albe"
+Restaurang & kafé;apă plată (f);stilla vatten;;;1;"o apă plată, două ape plate"
+Restaurang & kafé;apă minerală (f);kolsyrat vatten;;;1;"o apă minerală, două ape minerale"
+Restaurang & kafé;a comanda;att beställa;;;1;"comand, comandă · am comandat · să comande"
+Restaurang & kafé;a rezerva;att boka;;;1;"rezerv, rezervă · am rezervat · să rezerve"
+Restaurang & kafé;a recomanda;att rekommendera;;;2;"recomand, recomandă · am recomandat · să recomande"
+Restaurang & kafé;a gusta;att smaka;;;2;"gust, gustă · am gustat · să guste"
+Restaurang & kafé;a alege;att välja;;;2;"aleg, alege · am ales · să aleagă"
+Restaurang & kafé;a servi;att servera;;;3;"servesc, servește · am servit · să servească"
+Restaurang & kafé;picant;stark (kryddstark);;;2;
+Restaurang & kafé;dulce;söt;;;2;
+Restaurang & kafé;proaspăt;färsk;;;2;
+Restaurang & kafé;la grătar;grillad;;;2;
+Restaurang & kafé;prăjit;stekt;;;3;
+Restaurang & kafé;"O masă pentru două persoane, vă rog.";"Ett bord för två, tack.";;;1;
+Restaurang & kafé;Avem o rezervare.;Vi har en bokning.;;;1;
+Restaurang & kafé;Pot să văd meniul?;Kan jag få se menyn?;;;1;
+Restaurang & kafé;"Încă o bere, vă rog.";"En öl till, tack.";;;1;
+Restaurang & kafé;Pot să plătesc cu cardul?;Kan jag betala med kort?;;;1;
+Restaurang & kafé;Plătim separat.;Vi betalar var för sig.;;;2;
+Restaurang & kafé;Păstrați restul.;Behåll växeln.;;;2;
+Restaurang & kafé;Poftă bună!;Smaklig måltid!;;;1;
+Restaurang & kafé;Sunt vegetarian.;Jag är vegetarian.;;;2;
+Restaurang & kafé;Este picant?;Är det starkt?;;;2;
+Restaurang & kafé;Mai doriți ceva?;Önskas det något mer? (det servitören frågar);;;2;

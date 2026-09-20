@@ -1,0 +1,36 @@
+# Handla & butik
+magazin;butik;1
+supermarket (n);stormarknad;{un supermarket, două supermarketuri};2
+piață;marknad, torg;1
+brutărie;bageri;2
+măcelărie;köttdisk, slakteri;3
+casier;kassör;3
+preț;pris;1
+bani;pengar;1
+leu;leu (rumänsk valuta);1
+ban;ban (växelmynt, 1/100 leu);3
+euro;euro;2
+rest;växel (pengar tillbaka);2
+pungă;påse;2
+coș;korg;2
+raft;hylla;3
+cutie;ask, låda;2
+borcan;burk;3
+kilogram;kilo;2
+bucată;styck, bit;2
+mărime;storlek;2
+număr;nummer;2
+# --- verb ---
+a căuta;att leta efter;1
+a găsi;att hitta;1
+a costa;att kosta;1
+a schimba;att byta, växla;2
+a proba;att prova;2
+a vinde;att sälja;3
+# --- fraser ---
+Unde este piața?;Var ligger marknaden?;1
+Aveți …?;Har ni …?;1
+Doar mă uit, mulțumesc.;Jag tittar bara, tack.;2
+Pot să plătesc în euro?;Kan jag betala i euro?;2
+Îmi dați o pungă, vă rog.;Kan jag få en påse, tack.;2
+Este prea scump.;Det är för dyrt.;2

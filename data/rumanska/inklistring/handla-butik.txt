@@ -1,0 +1,33 @@
+magazin (n);butik;{un magazin, două magazine};1
+supermarket (n);stormarknad;{un supermarket, două supermarketuri};2
+piață (f);marknad, torg;{o piață, două piețe};1
+brutărie (f);bageri;{o brutărie, două brutării};2
+măcelărie (f);köttdisk, slakteri;{o măcelărie, două măcelării};3
+casier (m);kassör;{un casier, doi casieri};3
+preț (n);pris;{un preț, două prețuri};1
+bani (m);pengar;1
+leu (m);leu (rumänsk valuta);{un leu, doi lei};1
+ban (m);ban (växelmynt, 1/100 leu);{un ban, doi bani};3
+euro (m);euro;{un euro, doi euro};2
+rest (n);växel (pengar tillbaka);{un rest, două resturi};2
+pungă (f);påse;{o pungă, două pungi};2
+coș (n);korg;{un coș, două coșuri};2
+raft (n);hylla;{un raft, două rafturi};3
+cutie (f);ask, låda;{o cutie, două cutii};2
+borcan (n);burk;{un borcan, două borcane};3
+kilogram (n);kilo;2
+bucată (f);styck, bit;{o bucată, două bucăți};2
+mărime (f);storlek;{o mărime, două mărimi};2
+număr (n);nummer;{un număr, două numere};2
+a căuta;att leta efter;{caut, caută · am căutat · să caute};1
+a găsi;att hitta;{găsesc, găsește · am găsit · să găsească};1
+a costa;att kosta;{cost, costă · am costat · să coste};1
+a schimba;att byta, växla;{schimb, schimbă · am schimbat · să schimbe};2
+a proba;att prova;{probez, probează · am probat · să probeze};2
+a vinde;att sälja;{vând, vinde · am vândut · să vândă};3
+Unde este piața?;Var ligger marknaden?;1
+Aveți …?;Har ni …?;1
+Doar mă uit, mulțumesc.;Jag tittar bara, tack.;2
+Pot să plătesc în euro?;Kan jag betala i euro?;2
+Îmi dați o pungă, vă rog.;Kan jag få en påse, tack.;2
+Este prea scump.;Det är för dyrt.;2

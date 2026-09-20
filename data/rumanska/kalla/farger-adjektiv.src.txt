@@ -1,0 +1,40 @@
+# Färger & vanliga adjektiv
+adj:roșu;röd;1
+adj:albastru;blå;1
+adj:verde;grön;1
+adj:galben;gul;1
+adj:negru;svart;1
+adj:alb;vit;1
+adj:maro;brun;2
+adj:gri;grå;2
+adj:portocaliu;orange;2
+adj:roz;rosa;2
+adj:mov;lila;3
+# --- storlek och mängd ---
+adj:mare;stor;1
+adj:mic;liten;1
+adj:lung;lång (om saker);2
+adj:scurt;kort;2
+adj:înalt;hög, lång (om personer);2
+adj:plin;full;2
+adj:gol;tom;3
+# --- värde ---
+adj:nou;ny;1
+adj:bun;bra, god;1
+adj:urât;ful;3
+adj:scump;dyr;1
+adj:ieftin;billig;1
+adj:curat;ren;2
+adj:murdar;smutsig;2
+# --- hur det känns ---
+adj:cald;varm;1
+adj:rece;kall;1
+adj:greu;tung, svår;2
+adj:ușor;lätt;2
+adj:rapid;snabb;2
+adj:lent;långsam;3
+adj:tânăr;ung;2
+adj:bătrân;gammal (om personer);2
+adj:obosit;trött;2
+adj:fericit;glad;2
+adj:trist;ledsen;3

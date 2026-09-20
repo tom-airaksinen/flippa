@@ -1,0 +1,58 @@
+# Hyrbil & vägen – källa (se restaurang-kafe.src.txt för formatet).
+# --- bilen ---
+mașină;bil;1
+permis de conducere (n);körkort;{un permis de conducere, două permise de conducere};1
+asigurare;försäkring;1
+rovinietă;vinjett (obligatorisk vägavgift i Rumänien);1
+portbagaj;bagagelucka;2
+cauciuc;däck;3
+roată;hjul;3
+volan;ratt;3
+# --- tanka & parkera ---
+benzină;bensin;1
+motorină;diesel;2
+benzinărie;bensinstation;1
+parcare;parkering;1
+# --- vägen ---
+drum;väg;1
+șosea;landsväg;2
+autostradă;motorväg;2
+sens giratoriu (n);rondell;{un sens giratoriu, două sensuri giratorii};2
+semafor;trafikljus;2
+indicator;vägskylt;3
+trecere de pietoni (f);övergångsställe;{o trecere de pietoni, două treceri de pietoni};3
+pod;bro;2
+tunel;tunnel;3
+curbă;kurva;3
+hartă;karta;2
+viteză;hastighet;2
+amendă;böter;2
+poliție;polis;2
+accident;olycka;2
+munte;berg;2
+deal;kulle, backe;3
+# --- verb ---
+a conduce;att köra;1
+a închiria;att hyra;1
+a parca;att parkera;1
+a opri;att stanna;2
+a vira;att svänga;2
+a alimenta;att tanka;2
+# --- riktning ---
+stânga;vänster;1
+dreapta;höger;1
+drept înainte;rakt fram;1
+aproape;nära;2
+departe;långt bort;2
+# --- fraser ---
+Am închiriat o mașină.;Jag har hyrt en bil.;1
+Unde pot parca?;Var kan jag parkera?;1
+Unde este cea mai apropiată benzinărie?;Var ligger närmaste bensinstation?;1
+Plinul, vă rog.;Full tank, tack.;1
+Este inclusă asigurarea?;Ingår försäkringen?;1
+Cât costă pe zi?;Vad kostar det per dag?;1
+Am nevoie de rovinietă?;Behöver jag vinjett?;1
+Faceți la stânga.;Sväng vänster.;2
+Mergeți drept înainte.;Kör rakt fram.;2
+Cât de departe este?;Hur långt är det?;2
+Mașina nu pornește.;Bilen startar inte.;3

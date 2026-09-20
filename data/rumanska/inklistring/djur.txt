@@ -1,0 +1,28 @@
+câine (m);hund;{un câine, doi câini};1
+pisică (f);katt;{o pisică, două pisici};1
+cal (m);häst;{un cal, doi cai};1
+vacă (f);ko;{o vacă, două vaci};2
+oaie (f);får;{o oaie, două oi};2
+porc (m);gris;{un porc, doi porci};2
+găină (f);höna;{o găină, două găini};2
+cocoș (m);tupp;{un cocoș, doi cocoși};3
+rață (f);anka;{o rață, două rațe};3
+capră (f);get;{o capră, două capre};3
+urs (m);björn (vanlig i Karpaterna);{un urs, doi urși};1
+lup (m);varg;{un lup, doi lupi};2
+vulpe (f);räv;{o vulpe, două vulpi};2
+cerb (m);kronhjort;{un cerb, doi cerbi};3
+căprioară (f);rådjur;{o căprioară, două căprioare};3
+mistreț (m);vildsvin;{un mistreț, doi mistreți};3
+iepure (m);hare, kanin;{un iepure, doi iepuri};2
+veveriță (f);ekorre;{o veveriță, două veverițe};3
+șoarece (m);mus;{un șoarece, doi șoareci};3
+pasăre (f);fågel;{o pasăre, două păsări};1
+vultur (m);örn;{un vultur, doi vulturi};3
+barză (f);stork (häckar på byhusen);{o barză, două berze};3
+albină (f);bi;{o albină, două albine};3
+muscă (f);fluga;{o muscă, două muște};2
+țânțar (m);mygga;{un țânțar, doi țânțari};2
+șarpe (m);orm;{un șarpe, doi șerpi};3
+Atenție, câine rău!;Varning för hunden!;2
+Sunt urși în zonă?;Finns det björnar i området?;2

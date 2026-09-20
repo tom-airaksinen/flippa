@@ -1,0 +1,47 @@
+luni (f);måndag;{o luni, două luni};1
+marți (f);tisdag;{o marți, două marți};1
+miercuri (f);onsdag;{o miercuri, două miercuri};1
+joi (f);torsdag;{o joi, două joi};1
+vineri (f);fredag;{o vineri, două vineri};1
+sâmbătă (f);lördag;{o sâmbătă, două sâmbete};1
+duminică (f);söndag;{o duminică, două duminici};1
+săptămână (f);vecka;{o săptămână, două săptămâni};1
+lună (f);månad;{o lună, două luni};1
+an (m);år;{un an, doi ani};1
+oră (f);timme;{o oră, două ore};1
+minut (n);minut;{un minut, două minute};2
+ceas (n);klocka;{un ceas, două ceasuri};2
+sfert (n);kvart;{un sfert, două sferturi};3
+jumătate (f);halva, hälft;{o jumătate, două jumătăți};2
+amiază (f);middag (mitt på dagen);{o amiază, două amiezi};2
+după-amiază (f);eftermiddag;{o după-amiază, două după-amiezi};2
+poimâine;i övermorgon;3
+alaltăieri;i förrgår;3
+weekend (n);helg;{un weekend, două weekenduri};2
+ianuarie;januari;3
+februarie;februari;3
+martie;mars;3
+aprilie;april;3
+luna mai;maj (frontar 'luna' för att skilja från mai = mer);3
+iunie;juni;3
+iulie;juli;3
+august;augusti;3
+septembrie;september;3
+octombrie;oktober;3
+noiembrie;november;3
+decembrie;december;3
+treizeci;trettio;1
+patruzeci;fyrtio;2
+cincizeci;femtio;2
+șaizeci;sextio;2
+șaptezeci;sjuttio;3
+optzeci;åttio;3
+nouăzeci;nittio;3
+o sută;hundra;1
+o mie;tusen;1
+Cât e ceasul?;Vad är klockan?;1
+La ce oră?;Hur dags?;1
+în fiecare zi;varje dag;2
+de la … până la …;från … till …;2
+acum o oră;för en timme sedan;3
+peste o oră;om en timme;2

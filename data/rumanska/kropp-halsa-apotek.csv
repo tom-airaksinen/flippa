@@ -1,0 +1,36 @@
+sektion;rumänska;svenska;favorit;minnesregel;prio;böjning
+"Kropp, hälsa & apotek";cap (n);huvud;;;1;"un cap, două capete"
+"Kropp, hälsa & apotek";ochi (m);öga;;;1;"un ochi, doi ochi"
+"Kropp, hälsa & apotek";nas (n);näsa;;;2;"un nas, două nasuri"
+"Kropp, hälsa & apotek";gură (f);mun;;;2;"o gură, două guri"
+"Kropp, hälsa & apotek";ureche (f);öra;;;2;"o ureche, două urechi"
+"Kropp, hälsa & apotek";dinte (m);tand;;;2;"un dinte, doi dinți"
+"Kropp, hälsa & apotek";gât (n);hals;;;1;"un gât, două gâturi"
+"Kropp, hälsa & apotek";mână (f);hand;;;1;"o mână, două mâini"
+"Kropp, hälsa & apotek";picior (n);"ben, fot";;;1;"un picior, două picioare"
+"Kropp, hälsa & apotek";spate (n);rygg;;;2;"un spate, două spate"
+"Kropp, hälsa & apotek";burtă (f);mage;;;1;"o burtă, două burți"
+"Kropp, hälsa & apotek";inimă (f);hjärta;;;2;"o inimă, două inimi"
+"Kropp, hälsa & apotek";piele (f);hud;;;3;"o piele, două piei"
+"Kropp, hälsa & apotek";sânge (n);blod;;;3;"un sânge, două sângiuri"
+"Kropp, hälsa & apotek";durere (f);"smärta, värk";;;1;"o durere, două dureri"
+"Kropp, hälsa & apotek";febră (f);feber;;;1;"o febră, două febre"
+"Kropp, hälsa & apotek";răceală (f);förkylning;;;2;"o răceală, două răceli"
+"Kropp, hälsa & apotek";tuse (f);hosta;;;2;
+"Kropp, hälsa & apotek";greață (f);illamående;;;2;"o greață, două grețuri"
+"Kropp, hälsa & apotek";alergie (f);allergi;;;1;"o alergie, două alergii"
+"Kropp, hälsa & apotek";farmacie (f);apotek;;;1;"o farmacie, două farmacii"
+"Kropp, hälsa & apotek";medicament (n);medicin;;;1;"un medicament, două medicamente"
+"Kropp, hälsa & apotek";doctor (m);läkare;;;1;"un doctor, doi doctori"
+"Kropp, hälsa & apotek";spital (n);sjukhus;;;1;"un spital, două spitale"
+"Kropp, hälsa & apotek";rețetă (f);recept;;;2;"o rețetă, două rețete"
+"Kropp, hälsa & apotek";plasture (m);plåster;;;2;"un plasture, doi plasturi"
+"Kropp, hälsa & apotek";a durea;"att göra ont (mă doare = det gör ont på mig, mă dor om flera saker)";;;1;mă doare · m-a durut · să mă doară
+"Kropp, hälsa & apotek";a ajuta;att hjälpa;;;1;"ajut, ajută · am ajutat · să ajute"
+"Kropp, hälsa & apotek";Nu mă simt bine.;Jag mår inte bra.;;;1;
+"Kropp, hälsa & apotek";Mă doare capul.;Jag har huvudvärk.;;;1;
+"Kropp, hälsa & apotek";Mă doare stomacul.;Jag har ont i magen.;;;2;
+"Kropp, hälsa & apotek";Am nevoie de un doctor.;Jag behöver en läkare.;;;1;
+"Kropp, hälsa & apotek";Sunt alergic la…;Jag är allergisk mot…;;;1;
+"Kropp, hälsa & apotek";Unde este cea mai apropiată farmacie?;Var ligger närmaste apotek?;;;1;
+"Kropp, hälsa & apotek";Aveți ceva pentru durere de cap?;Har ni något mot huvudvärk?;;;2;
