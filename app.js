@@ -3554,14 +3554,15 @@ function currentCardForm() {
 
 // Direkt Google-sökning i AI-läge (udm=50) på det utländska ordet, öppnas i webview.
 // (Anropas från "Slå upp" i kortets …-meny. openExplore finns kvar oförändrad.)
-// form (valfri) = kortets böjning. Är den ifylld läggs en fråga om varför formerna
-// ser ut som de gör till i samma kontextfråga – man vill förstå mönstret, inte bara
-// memorera det. Minnesregel-prompten är en annan sak och rör inte böjningen.
+// form (valfri) = kortets böjning. Är den ifylld ber kontextfrågan om HELA paradigmet
+// plus förklaringen till formerna – klammern på kortet visar bara de former man inte
+// kan gissa sig till, och vid uppslag vill man se resten också. Minnesregel-prompten
+// är en annan sak och rör inte böjningen.
 function googleAiExploreUrl(term, form) {
   const label = subjectLang(currentSubject) ? langLabel(subjectLang(currentSubject)).toLowerCase() : "";
   const onLang = label ? ` på ${label}` : "";
   const bojning = form
-    ? ` Ordet böjs "${form}" – varför ser formerna ut så, och går mönstret igen på andra ord?`
+    ? ` Ordet böjs "${form}" – ge mig alla former, berätta varför formerna ser ut så, och går mönstret igen på andra ord?`
     : "";
   const q = `Kan du berätta om "${term}"${onLang} - vad är etymologin och vilka andra närliggande ord finns och vad är skillnaden?${bojning} Kan du illustrera med foton/bilder?`;
   return `https://www.google.com/search?udm=50&q=${encodeURIComponent(q)}`;
@@ -6622,7 +6623,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v355";
+const APP_VERSION = "v356";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 if (versionTag) {
   versionTag.textContent = "Flippa " + APP_VERSION;

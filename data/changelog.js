@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "22 september 2026", ver: "v356", items: [
+    { t: "Slå upp-frågan ber nu om ordets alla böjningsformer, inte bara förklaringen till dem som står på kortet", type: "improved" },
+  ]},
   { date: "20 september 2026", ver: "v355", items: [
     { t: "CSV-importen tar nu med böjningen – lägg den i en sjunde kolumn, så slipper du fylla i formerna efteråt", type: "new",
       hi: true, ico: "⬆️", desc: "Böjningen följer med i CSV-filen" },
