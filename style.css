@@ -660,6 +660,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .version-tag { margin-top: auto; text-align: center; color: var(--muted); font-size: 0.7rem; opacity: 0.55; padding: 10px 0 16px; }
 .version-tag.tappable { cursor: pointer; }
 .version-tag.tappable:active { opacity: 0.9; }
+/* Ny version ligger ute men appen kör den gamla → raden blir en uppdateringsknapp.
+   Full opacitet och accentfärg, annars läses den som vanlig grå versionstext. */
+.version-tag.update-ready { color: var(--accent); opacity: 1; font-weight: 600; }
 
 /* Riktning + kort per pass – pills med utfällbar väljare (lektionsskärmen) */
 .opt-row { display: flex; gap: 10px; margin: 0 16px; }

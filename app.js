@@ -6623,12 +6623,71 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v356";
+const APP_VERSION = "v357";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
-if (versionTag) {
-  versionTag.textContent = "Flippa " + APP_VERSION;
-  versionTag.classList.add("tappable"); // klickbar → versionshistorik
-  versionTag.onclick = openChangelog;
+let availableVersion = null; // version som ligger på servern, om den skiljer sig
+function renderVersionTag() {
+  if (!versionTag) return;
+  versionTag.textContent = availableVersion
+    ? `Flippa ${APP_VERSION} → ${availableVersion} · tryck för att uppdatera`
+    : "Flippa " + APP_VERSION;
+  versionTag.classList.add("tappable");
+  versionTag.classList.toggle("update-ready", !!availableVersion);
+  // Finns en ny version är raden en uppdateringsknapp, annars versionshistoriken.
+  versionTag.onclick = availableVersion
+    ? () => { track("uppdatering/manuell"); forceUpdate(); }
+    : openChangelog;
+}
+renderVersionTag();
+
+// Service workern är enda vägen till ny kod (fetch-handlern är cache-first), och den
+// vägen kan fastna: GitHub Pages sätter max-age=600 på sw.js, så en uppdateringskoll kan
+// få en gammal fil ur CDN-noden, och misslyckas en installation behåller iOS den gamla
+// arbetaren. Därför frågar appen SJÄLV vad som ligger ute – sw.js med en unik query, som
+// varken webbläsaren eller CDN:en har sett förut. Cachenamnet i sw.js bumpas vid varje
+// deploy, så det är en sanningskälla som inte kan glömmas bort.
+const VERSION_RE = /flashcards-(v\d+)/;
+async function checkForNewVersion() {
+  if (swReloading) return;
+  try {
+    const r = await fetch(`sw.js?cb=${Date.now()}`, { cache: "no-store" });
+    if (!r.ok) return;
+    const m = VERSION_RE.exec(await r.text());
+    const live = m && m[1];
+    if (!live || live === APP_VERSION) {
+      if (availableVersion) { availableVersion = null; renderVersionTag(); }
+      return;
+    }
+    if (availableVersion !== live) {
+      availableVersion = live;
+      renderVersionTag();
+      track("uppdatering/upptackt");
+    }
+    pendingReload = true;       // vanliga vägen först: service workern kanske hinner själv
+    maybeReloadForUpdate();
+  } catch (_) { /* offline – försök igen vid nästa koll */ }
+}
+
+// Sista utväg när service workern inte byts ut: töm cacherna och ladda om. Fetch-handlern
+// är `cached || fetch`, så utan cache hämtas allt från nätet igen och den nya koden når
+// fram även om den gamla arbetaren lever kvar. Görs BARA en gång per version och session
+// (annars kan en seg CDN-nod ge en omladdningsloop).
+const FORCED_KEY = "flippa-forced-update";
+async function forceUpdate() {
+  if (swReloading) return;
+  swReloading = true;
+  try { sessionStorage.setItem(FORCED_KEY, availableVersion || "?"); } catch (_) {}
+  try { sessionStorage.setItem("flippa-updated", "1"); } catch (_) {}
+  try {
+    const reg = await navigator.serviceWorker.getRegistration();
+    if (reg) await reg.update();
+    const keys = await caches.keys();
+    await Promise.all(keys.map((k) => caches.delete(k)));
+  } catch (_) {}
+  location.reload();
+}
+function alreadyForced() {
+  try { return sessionStorage.getItem(FORCED_KEY) === availableVersion; } catch (_) { return false; }
 }
 
 // Ladda bara om för en ny version när det är ofarligt: på ämnes-/lektionslistan eller i
@@ -6643,6 +6702,9 @@ function isSafeToReloadForUpdate() {
 function maybeReloadForUpdate() {
   if (!pendingReload || swReloading) return;
   if (!isSafeToReloadForUpdate()) return;
+  // Vet vi att servern har en nyare version men service workern inte har bytts ut,
+  // räcker inte en vanlig omladdning – då serveras samma cachade filer igen.
+  if (availableVersion && !alreadyForced()) { forceUpdate(); return; }
   swReloading = true;
   // Flagga att NÄSTA laddning är en uppdaterings-omladdning (ej vanlig kallstart) →
   // splashen visar en lugn text så det inte ser ut som en krasch. sessionStorage
@@ -6677,11 +6739,12 @@ if ("serviceWorker" in navigator) {
     .register("sw.js", { updateViaCache: "none" })
     .then((reg) => {
       reg.update();
+      checkForNewVersion();
       // Leta efter ny version när appen kommer i förgrunden + periodiskt
       document.addEventListener("visibilitychange", () => {
-        if (document.visibilityState === "visible") reg.update();
+        if (document.visibilityState === "visible") { reg.update(); checkForNewVersion(); }
       });
-      setInterval(() => reg.update(), 60000);
+      setInterval(() => { reg.update(); checkForNewVersion(); }, 60000);
     })
     .catch(() => {});
 }

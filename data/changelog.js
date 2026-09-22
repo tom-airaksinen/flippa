@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "22 september 2026", ver: "v357", items: [
+    { t: "Appen hittar nu nya versioner själv i stället för att lita på att telefonen gör det – och fastnar den ändå står det \"tryck för att uppdatera\" på versionsraden längst ner", type: "fixed",
+      hi: true, ico: "🔄", desc: "Slut på att sitta fast på en gammal version" },
+  ]},
   { date: "22 september 2026", ver: "v356", items: [
     { t: "Slå upp-frågan ber nu om ordets alla böjningsformer, inte bara förklaringen till dem som står på kortet", type: "improved" },
   ]},
