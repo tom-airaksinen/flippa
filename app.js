@@ -2316,6 +2316,13 @@ undoBtn.addEventListener("click", (e) => {
   track("angra/knapp");
   undoLastAnswer(true); // knapp → snabb inglidning utan paus
 });
+// Samma knapp på Klar-skärmen. Den går via undoFromCongrats (återupptar passet först).
+const congratsUndoBtn = $("congrats-undo");
+if (congratsUndoBtn) congratsUndoBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  track("angra/knapp-klar");
+  undoFromCongrats();
+});
 // Kort som redan visats i den pågående "Fortsätt"-kedjan (rundan). Nollställs vid ny
 // runda (när man startar från knappen, inte via Fortsätt) så att fel-svarade ord inte
 // kommer tillbaka förrän man tryckt Klar och börjar om.
@@ -2993,19 +3000,21 @@ function finishSession() {
   lastSessionWasHF = wasHF;
   session = null;
 
-  // Hint om röst-/skakkommandon (skaka-ångra alltid; röst om handsfree).
+  // Ångra-knappen: samma knapp som i träningsbaren, samma plats på skärmen. Finns bara
+  // när det FINNS något att ångra – annars ingen nedtonad knapp att undra över.
   const undoHint = $("congrats-undo-hint");
   const canUndo = undoStack.length > 0;
+  const cgUndo = $("congrats-undo");
+  if (cgUndo) cgUndo.classList.toggle("hidden", !canUndo);
+  // Hinten säger numera bara det knappen inte kan säga: röstkommandona i handsfree.
+  // (Skaka funkar kvar, men behöver ingen instruktion när knappen står där.)
   if (wasHF && remaining > 0) {
-    // Handsfree med "Fortsätt": lyft fram röstkommandot (det var det som saknades).
     undoHint.textContent = canUndo
       ? 'Säg "fortsätt" för fler – eller "ångra" om sista blev fel.'
       : 'Säg "fortsätt" för fler.';
     undoHint.classList.remove("hidden");
-  } else if (canUndo) {
-    undoHint.textContent = wasHF
-      ? 'Fel på sista? Säg "ångra" eller skaka telefonen.'
-      : "Fel på sista? Skaka telefonen för att ta tillbaka.";
+  } else if (canUndo && wasHF) {
+    undoHint.textContent = 'Fel på sista? Säg "ångra" eller tryck på knappen.';
     undoHint.classList.remove("hidden");
   } else {
     undoHint.classList.add("hidden");
@@ -3036,6 +3045,8 @@ function undoFromCongrats() {
   session = lastSession;
   lastSession = null;
   $("congrats-undo-hint").classList.add("hidden");
+  const cgUndoBtn = $("congrats-undo");
+  if (cgUndoBtn) cgUndoBtn.classList.add("hidden");
   setOnlyScreen("training"); // direkt byte – kortets in-glidning är feedbacken
   shownScreen = "training";
   activeScreen = "training";
@@ -6623,7 +6634,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v357";
+const APP_VERSION = "v358";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

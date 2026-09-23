@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "23 september 2026", ver: "v358", items: [
+    { t: "Ångra-knappen finns nu även på Klar-skärmen – blev sista kortet fel behöver du inte skaka telefonen", type: "new" },
+  ]},
   { date: "22 september 2026", ver: "v357", items: [
     { t: "Appen hittar nu nya versioner själv i stället för att lita på att telefonen gör det – och fastnar den ändå står det \"tryck för att uppdatera\" på versionsraden längst ner", type: "fixed",
       hi: true, ico: "🔄", desc: "Slut på att sitta fast på en gammal version" },

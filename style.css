@@ -836,6 +836,11 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   to   { opacity: 1; transform: translateX(-50%); }
 }
 @media (prefers-reduced-motion: reduce) { .undo-btn.slide-in { animation: none; } }
+/* Samma knapp på Klar-skärmen. Den ligger UNDER konfettilagret (canvas z-index 400),
+   precis som ringen och Klar-knappen – konfettin ska falla över den, och fysiken i
+   launchConfetti känner medvetet inte till den: inga studsar, inga bitar som blir
+   liggande på en knapp man vill kunna trycka på. */
+.cg-undo { z-index: 1; }
 #progress-pill {
   margin-left: auto; /* puttas till höger (riktningsväljaren som låg här är flyttad) */
   /* Samma höjd som .back-btn och .undo-btn – annars linjerar de tre inte i baren. */
