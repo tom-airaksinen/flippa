@@ -530,8 +530,13 @@ function getUnitProgress(sid) {
   return { dayCount, weekCount: wk.size };
 }
 
-// Unika kort (distinkta ord+riktning per dag, summerat) inom en period & scope –
-// samma mått som dagsmålet räknar mot. cutoff "" = allt. Källa: unitcount (~140 dgr).
+// Unika kort (distinkta ord+riktning per dag, SUMMERAT över dagarna) inom en period &
+// scope – samma mått som dagsmålet räknar mot. cutoff "" = allt. Källa: unitcount.
+// OBS: ingen avdubblering över perioden. Ett ord du mött måndag och onsdag räknas två
+// gånger, så siffran kan överstiga antalet kort man äger – exakt bara för "Idag".
+// Ett äkta periodmått kräver att dagsmängderna (ordnycklarna) sparas, inte bara
+// antalen; units-nyckeln rensas till innevarande vecka just för att hålla nere
+// localStorage, som tog slut på iOS vid 1,67 MB (se docs/framtida-utveckling.md §19).
 const KORT_MODE_KEY = "flippa-kort-mode"; // "kort" (svep/repetitioner) | "unika"
 function uniqueUnitsInPeriod(subjects, cutoff) {
   const cu = loadLS(UNITCOUNT_KEY)[unitUser()] || {};
@@ -6634,7 +6639,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v358";
+const APP_VERSION = "v359";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
