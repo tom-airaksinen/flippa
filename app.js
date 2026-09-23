@@ -441,7 +441,12 @@ function markFirstStudied(card) {
 //  Enhet = cardKey|dir. Samma ord åt två håll = två enheter; samma håll upprepat
 //  (t.ex. efter felsvar) = en. Räknas PER ÄMNE och per profil.
 // =========================================================================
-const UNITS_KEY = "flippa-units-v1";          // mängder per vecka: user → subject → datum → [cardKey|dir]
+const UNITS_KEY = "flippa-units-v1";          // dagsmängder: user → subject → datum → [cardKey|dir]
+// Hur många dagar dagsmängderna sparas. 35 = 30-dagarsfönstret plus marginal, så
+// 7- och 30-dagarsmåtten kan avdubblas på riktigt (samma ord två dagar = ett ord).
+// Rullande, alltså självstädande: ~1 kB per aktiv dag och ämne, inget som växer
+// för evigt. Därför finns inget exakt "Totalt" – se uniqueUnitsDistinct.
+const UNIT_SET_DAYS = 35;
 const UNITCOUNT_KEY = "flippa-unitcount-v1";  // långsiktigt: user → subject → datum → antal (för heatmap)
 function loadLS(key) { try { return JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch { return {}; } }
 
@@ -490,11 +495,12 @@ function recordUnitFlip(card, dir) {
   const today = todayStr();
   const unit = `${cardKeyOf(card)}|${dir}`;
 
-  // Veckomängder (rensas till innevarande vecka)
+  // Dagsmängder (rullande fönster, se UNIT_SET_DAYS)
   const units = loadLS(UNITS_KEY);
   const us = ((units[user] || (units[user] = {}))[sid] || (units[user][sid] = {}));
-  const week = currentWeekDates(), weekSet = new Set(week);
-  Object.keys(us).forEach((d) => { if (!weekSet.has(d)) delete us[d]; });
+  const week = currentWeekDates();
+  const keepFrom = ymdLocal((() => { const d = new Date(); d.setDate(d.getDate() - (UNIT_SET_DAYS - 1)); return d; })());
+  Object.keys(us).forEach((d) => { if (d < keepFrom) delete us[d]; });
   // Dagsposten ska vara en array. Är den det inte (trasig eller äldre form i
   // localStorage) skulle .includes() kasta och slå ut hela svarshanteringen.
   if (!Array.isArray(us[today])) us[today] = [];
@@ -530,22 +536,26 @@ function getUnitProgress(sid) {
   return { dayCount, weekCount: wk.size };
 }
 
-// Unika kort (distinkta ord+riktning per dag, SUMMERAT över dagarna) inom en period &
-// scope – samma mått som dagsmålet räknar mot. cutoff "" = allt. Källa: unitcount.
-// OBS: ingen avdubblering över perioden. Ett ord du mött måndag och onsdag räknas två
-// gånger, så siffran kan överstiga antalet kort man äger – exakt bara för "Idag".
-// Ett äkta periodmått kräver att dagsmängderna (ordnycklarna) sparas, inte bara
-// antalen; units-nyckeln rensas till innevarande vecka just för att hålla nere
-// localStorage, som tog slut på iOS vid 1,67 MB (se docs/framtida-utveckling.md §19).
 const KORT_MODE_KEY = "flippa-kort-mode"; // "kort" (svep/repetitioner) | "unika"
-function uniqueUnitsInPeriod(subjects, cutoff) {
+// Exakt antal distinkta ord+riktning i perioden: dagsmängderna slås ihop till EN mängd,
+// så ett ord du mött både måndag och onsdag räknas en gång. Dagar utan sparad mängd
+// (äldre än fönstret, eller innan appen började spara dem) kan inte avdubblas – då
+// används dagens summa i stället. Siffran blir alltså exakt för 7 och 30 dagar så fort
+// fönstret hunnit fyllas, och är fram till dess densamma som förut för de äldsta dagarna.
+function uniqueUnitsDistinct(subjects, cutoff) {
+  const units = loadLS(UNITS_KEY)[unitUser()] || {};
   const cu = loadLS(UNITCOUNT_KEY)[unitUser()] || {};
-  let n = 0;
+  const set = new Set();
+  let utanMangd = 0;
   subjects.forEach((s) => {
-    const cs = cu[s.id] || {};
-    Object.keys(cs).forEach((d) => { if (!cutoff || d >= cutoff) n += cs[d]; });
+    const us = units[s.id] || {}, cs = cu[s.id] || {};
+    Object.keys(cs).forEach((d) => {
+      if (cutoff && d < cutoff) return;
+      if (Array.isArray(us[d])) us[d].forEach((k) => set.add(s.id + "|" + k)); // ämnet i nyckeln: samma ord i två ämnen är två ord
+      else utanMangd += cs[d];
+    });
   });
-  return n;
+  return set.size + utanMangd;
 }
 
 // =========================================================================
@@ -2747,7 +2757,8 @@ function renderStats() {
     const pRecs = recs.filter((r) => r.d && (p === "all" || r.d >= cutoff));
     const pass = pRecs.length;
     const kort = pRecs.reduce((a, r) => a + (r.cards || 0), 0);
-    const unika = uniqueUnitsInPeriod(ltSubjects, cutoff); // distinkta ord+riktning (= dagsmålets mått)
+    // Totalt har inget unika-tal: dagsmängderna sparas bara UNIT_SET_DAYS dagar.
+    const unika = p === "all" ? null : uniqueUnitsDistinct(ltSubjects, cutoff);
     const min = Math.round(pRecs.reduce((a, r) => a + (r.ms || 0), 0) / 60000);
     // Totalt = alla kort ute ur låda 0 (livstid); fönster = stämplade datum inom perioden
     const nya = p === "all" ? studiedEver : firstDates.filter((d) => d >= cutoff).length;
@@ -2824,7 +2835,8 @@ function renderStats() {
     segs.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === period));
     moveThumb();
     const k = periodKpis(period);
-    const unika = localStorage.getItem(KORT_MODE_KEY) === "unika";
+    // Läget kommer ihåg sig, men Totalt visar alltid KORT (det finns inget unika-tal där).
+    const unika = localStorage.getItem(KORT_MODE_KEY) === "unika" && k.unika !== null;
     grid.innerHTML = `
       <div class="st-b"><div class="st-v">${k.pass}</div><div class="st-l">PASS</div></div>
       <div class="st-b st-b-tap" id="kpi-kort"><div class="st-v">${unika ? k.unika : k.kort}</div><div class="st-l">${unika ? "UNIKA" : "KORT"}</div></div>
@@ -2838,6 +2850,11 @@ function renderStats() {
   // Tryck på KORT-rutan → växla mellan svep/repetitioner och unika kort (kommer ihåg läget)
   grid.addEventListener("click", (e) => {
     if (!e.target.closest("#kpi-kort")) return;
+    if (period === "all") { // inget att växla till – säg varför i stället för att ignorera trycket
+      toast("Unika kort går inte att visa för Totalt – de sparas bara för de senaste 30 dagarna.", 3800);
+      track("statistik/unika-totalt");
+      return;
+    }
     const cur = localStorage.getItem(KORT_MODE_KEY) === "unika" ? "unika" : "kort";
     lsSet(KORT_MODE_KEY, cur === "unika" ? "kort" : "unika");
     renderKpis();
@@ -6639,7 +6656,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v359";
+const APP_VERSION = "v360";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

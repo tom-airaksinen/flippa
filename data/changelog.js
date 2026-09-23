@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "23 september 2026", ver: "v360", items: [
+    { t: "UNIKA i statistiken räknar nu varje ord en gång för hela perioden – förut lades varje dags siffra ihop, så ett ord du mött tre dagar räknades tre gånger", type: "fixed",
+      hi: true, ico: "📊", desc: "Unika kort räknas rätt för 7 och 30 dagar" },
+    { t: "Totalt visar alltid antal flippade kort; trycker du på rutan där får du veta varför unika inte går att visa så långt bakåt", type: "improved" },
+  ]},
   { date: "23 september 2026", ver: "v358", items: [
     { t: "Ångra-knappen finns nu även på Klar-skärmen – blev sista kortet fel behöver du inte skaka telefonen", type: "new" },
   ]},
