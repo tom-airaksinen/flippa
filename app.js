@@ -430,6 +430,29 @@ function loadFirstStudied() {
   try { return JSON.parse(localStorage.getItem(FIRST_STUDIED_KEY) || "{}") || {}; } catch { return {}; }
 }
 function cardKeyOf(c) { return `${normPart(c.front)}|${normPart(c.back)}`; }
+
+// ---- Sökning: diakritikblind på målspråket, exakt på svenskan -------------
+// "bra" ska hitta brâ/bră – man minns sällan vilket tecken ordet hade. Men SVENSKAN
+// får inte vikas: då skulle "ram" träffa "kräm" (kräm → kram, som innehåller ram).
+// Därför viks bara framsidan och böjningen, aldrig baksidan.
+// Vikningen är TECKEN FÖR TECKEN och behåller längden, så träffens index gäller även
+// i originaltexten (markeringen i träfflistan pekar annars fel).
+const FOLD_EXTRA = { ø: "o", Ø: "O", ł: "l", Ł: "L", đ: "d", Đ: "D", ð: "d", Ð: "D" }; // saknar NFD-uppdelning
+function foldDia(str) {
+  return String(str || "").replace(/[^\x00-\x7F]/g, (ch) => {
+    const bas = ch.normalize("NFD").replace(/\p{M}/gu, "");
+    return bas.length === 1 ? bas : (FOLD_EXTRA[ch] || ch); // flertecknigt (ß, æ …) lämnas
+  });
+}
+function foldLower(str) { return foldDia(str).toLowerCase(); }
+// q = redan trimmad och gemener. Returnerar true om kortet matchar sökningen.
+function cardMatchesQuery(c, q) {
+  return foldLower(c.front).includes(foldDia(q))
+    || String(c.back || "").toLowerCase().includes(q)
+    // böjningen är sökbar: stamväxlande ord (fată → fete) hittas annars bara
+    // om man råkar minnas grundformen
+    || foldLower(c.form || "").includes(foldDia(q));
+}
 function markFirstStudied(card) {
   const k = cardKeyOf(card);
   const m = loadFirstStudied();
@@ -1915,9 +1938,7 @@ function renderLessons(keepChoosers) {
     const groups = [];
     let totalMatches = 0;
     currentSubject.lessons.forEach((l) => {
-      const hits = l.cards.filter((c) =>
-        c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter)
-        || (c.form || "").toLowerCase().includes(filter));
+      const hits = l.cards.filter((c) => cardMatchesQuery(c, filter));
       if (hits.length) { groups.push({ l, hits }); totalMatches += hits.length; }
     });
     groups.sort((a, b) => sortCollator.compare(a.l.name, b.l.name)); // alfabetiskt per lektionsnamn
@@ -1928,10 +1949,14 @@ function renderLessons(keepChoosers) {
       if (canLookUp) $("lookup-add").onclick = () => openAddDialog({ segment: "lookup", prefill: raw, pickLesson: true });
       return;
     }
-    const hl = (text) => { // markera första träffen (skydda mot HTML i speglat innehåll via esc)
-      const i = text.toLowerCase().indexOf(filter);
+    // Markera första träffen (skydda mot HTML i speglat innehåll via esc). fold=true på
+    // målspråkssidan, så markeringen hittar samma träff som filtret gjorde.
+    const hl = (text, fold) => {
+      const hay = fold ? foldLower(text) : String(text || "").toLowerCase();
+      const needle = fold ? foldDia(filter) : filter;
+      const i = hay.indexOf(needle);
       if (i < 0) return esc(text);
-      return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + filter.length)) + "</mark>" + esc(text.slice(i + filter.length));
+      return esc(text.slice(0, i)) + "<mark>" + esc(text.slice(i, i + needle.length)) + "</mark>" + esc(text.slice(i + needle.length));
     };
     let shown = 0, truncated = false, html = "";
     for (const g of groups) {
@@ -1939,7 +1964,7 @@ function renderLessons(keepChoosers) {
       let rows = "";
       for (const c of g.hits) {
         if (shown >= CAP) { truncated = true; break; }
-        rows += `<div class="row search-hit" data-lesson="${g.l.id}" data-card="${c.id}"><span class="sh-front">${hl(c.front)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
+        rows += `<div class="row search-hit" data-lesson="${g.l.id}" data-card="${c.id}"><span class="sh-front">${hl(c.front, true)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
         shown++;
       }
       html += `<div class="search-group"><span class="sg-name">${esc(g.l.name)}</span><span class="sg-count">${g.hits.length}</span></div>` + rows;
@@ -5502,12 +5527,7 @@ function renderEditor() {
   }
   const sorted = sortedCards(lesson);
   const filter = (editorSearch.value || "").trim().toLowerCase();
-  const cards = filter
-    ? sorted.filter((c) => c.front.toLowerCase().includes(filter) || c.back.toLowerCase().includes(filter)
-        // böjningen är sökbar: stamväxlande ord (fată → fete) hittas annars bara
-        // om man råkar minnas grundformen
-        || (c.form || "").toLowerCase().includes(filter))
-    : sorted;
+  const cards = filter ? sorted.filter((c) => cardMatchesQuery(c, filter)) : sorted;
   if (!cards.length) {
     const raw = (editorSearch.value || "").trim();
     const canLookUp = !!subjectLang(currentSubject);
@@ -6656,7 +6676,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v360";
+const APP_VERSION = "v361";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

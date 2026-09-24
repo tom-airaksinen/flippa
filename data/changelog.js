@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "24 september 2026", ver: "v361", items: [
+    { t: "Sök på ord i målspråket utan att pricka accenterna rätt – \"bra\" hittar brâ och bră. Svenska sidan matchas fortfarande exakt, så \"ram\" ger inte träff på \"kräm\"", type: "improved",
+      hi: true, ico: "🔍", desc: "Sök utan att jaga accenter" },
+  ]},
   { date: "23 september 2026", ver: "v360", items: [
     { t: "UNIKA i statistiken räknar nu varje ord en gång för hela perioden – förut lades varje dags siffra ihop, så ett ord du mött tre dagar räknades tre gånger", type: "fixed",
       hi: true, ico: "📊", desc: "Unika kort räknas rätt för 7 och 30 dagar" },
