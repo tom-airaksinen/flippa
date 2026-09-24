@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "24 september 2026", ver: "v362", items: [
+    { t: "Lättare att träffa glödlampan på kortet – trycket landar inte längre på kortet och flippar fram svaret när man siktar lite snett", type: "fixed" },
+  ]},
   { date: "24 september 2026", ver: "v361", items: [
     { t: "Sök på ord i målspråket utan att pricka accenterna rätt – \"bra\" hittar brâ och bră. Svenska sidan matchas fortfarande exakt, så \"ram\" ger inte träff på \"kräm\"", type: "improved",
       hi: true, ico: "🔍", desc: "Sök utan att jaga accenter" },

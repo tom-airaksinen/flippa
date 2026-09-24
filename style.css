@@ -893,9 +893,15 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .corner-speak { top: 12px; right: 12px; }
 .corner-hint  { bottom: 12px; right: 12px; }
 .corner-btn:active { background: var(--accent); }
-/* Osynlig, något större träffyta runt högtalaren och ⋯-fliken – lättare att pricka.
-   Måttlig (≈12–14 px) så den inte äter flipp/svep. */
+/* Osynlig, något större träffyta runt hörnknapparna och ⋯-fliken – lättare att pricka.
+   Måttlig så den inte äter flipp/svep: en tryckning som börjar i halon startar inget
+   drag (knapparna stoppar pointerdown).
+   Glödlampan får mest marginal (16 px). Att missa den kostar mer än att missa de
+   andra: tappet går då till kortet, som flippar och avslöjar svaret – precis det man
+   ville undvika genom att be om en ledtråd. Halon når inte ⋯-fliken (bottencentrerad,
+   94 px bred) ens på en smal skärm, så de kan inte stjäla tryck från varandra. */
 .corner-speak::before { content: ""; position: absolute; inset: -12px; }
+.corner-hint::before  { content: ""; position: absolute; inset: -16px; }
 .menu-tab::before { content: ""; position: absolute; inset: -14px -14px 0; }
 
 .menu-tab {
