@@ -1238,6 +1238,7 @@ function normalize(subjectsObj) {
             .map(([cid, c]) => ({
               id: cid, front: c.front, back: c.back, hint: c.hint ?? null,
               form: c.form ?? null, // böjning, t.ex. "o casă, două case"
+              tr: c.tr ?? null,     // translitterering, t.ex. "salâm" (visas för persiska)
               prio: c.prio === 1 || c.prio === 2 || c.prio === 3 ? c.prio : null,
               order: c.order ?? 0,
             }))
@@ -6777,7 +6778,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v366";
+const APP_VERSION = "v367";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
