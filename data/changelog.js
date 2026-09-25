@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v369", items: [
+    { t: "Inklistring lagar nu rader som kopian slagit ihop med ett mellanslag – förut varnade appen i stället för att rätta", type: "fixed" },
+    { t: "Kryssrutan \"Kom ihåg mitt val\" är ritad av appen i stället för av telefonen: samma utseende överallt och luft mellan rutan och texten", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v368", items: [
     { t: "Persiska ord läses nu upp även på iPhone – uttalet är inläst i förväg med en AI-röst och spelas som ljudfil när enheten saknar röst för språket", type: "new",
       hi: true, ico: "🔊", desc: "Uttal för språk telefonen inte kan" },

@@ -4869,15 +4869,36 @@ function actionSheet(title, actions, message) {
 const RTL_LANGS = new Set(["ar", "fa", "he", "ur", "ps", "sd", "ckb", "yi", "dv", "ug"]);
 function isRtlLang(code) { return RTL_LANGS.has(String(code || "").split("-")[0].toLowerCase()); }
 
+// Tappad radbrytning: varje glosrad slutar på ;1/;2/;3, så en prio-siffra följd av mer
+// text är två glosor på samma rad – oavsett om kopian satte ett mellanslag emellan
+// eller inte. Resten måste själv innehålla ett semikolon för att räknas som en ny
+// glosa, vilket skyddar en äkta baksida: "avgår 12;13 varje dag" delas inte (siffra
+// följer siffra), och inte heller "klart;1" sist på raden (inget efter).
+function splitGlued(line) {
+  const re = /;([123])(?=\s*[^\s\d])/;
+  const ut = [];
+  let rest = line;
+  for (let varv = 0; varv < 200; varv++) {
+    const m = re.exec(rest);
+    if (!m) break;
+    const brytpunkt = m.index + m[0].length;
+    const svans = rest.slice(brytpunkt).trim();
+    if (!svans.includes(";")) break;   // resten är ingen egen glosa – lämna raden hel
+    ut.push(rest.slice(0, brytpunkt));
+    rest = svans;
+  }
+  ut.push(rest);
+  return ut;
+}
+
 function parseLines(text) {
   return text
     // Alla radseparatorer, inte bara \n: CRLF, ensam CR (äldre klipp), NEL och
     // Unicodes LS/PS – en enda oväntad separator gjorde annars hela klippet till EN rad.
     .replace(/\r\n|[\r\u0085\u2028\u2029]/g, "\n")
-    // Tappad radbrytning: varje glosrad slutar på ;1/;2/;3, så en prio-siffra som sitter
-    // ihop med en bokstav är en rad som klistrats ihop med nästa. Siffra efter siffra
-    // rörs inte (kan vara äkta innehåll, t.ex. "12;13").
-    .replace(/;([123])(?=[^\s\d])/g, ";$1\n")
+    .split("\n")
+    .flatMap(splitGlued)
+    .join("\n")
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
@@ -6829,7 +6850,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v368";
+const APP_VERSION = "v369";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
