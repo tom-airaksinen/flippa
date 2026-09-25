@@ -4596,22 +4596,30 @@ function looksSliced(cards, lang) {
   const medPrio = cards.filter((c) => c.prio).length;
   const rtl = isRtlLang(lang);
   const skriftRe = rtl ? /[\u0600-\u06FF\u0750-\u077F\u0590-\u05FF]/ : null;
-  return cards.filter((c) => {
-    if (c.back.includes(";")) return true;                    // hopslagen rad
-    if (c.back.includes("{") || c.front.includes("}")) return true; // kluven böjning
-    if (medPrio && !c.prio) return true;                      // prio kapad mitt i
-    if (skriftRe && LATIN_RE.test(c.front)) return true;      // latinsk text på målspråkssidan
-    if (skriftRe && skriftRe.test(c.back)) return true;       // målspråket på svenska sidan
-    return false;
-  }).length;
+  // Returnerar RADERNA, inte bara antalet: varningen visar dem, så man ser vad appen
+  // reagerade på i stället för att gissa. Varje rad får med sitt skäl.
+  const ut = [];
+  cards.forEach((c) => {
+    let skal = "";
+    if (c.back.includes(";")) skal = "två glosor på samma rad";
+    else if (c.back.includes("{") || c.front.includes("}")) skal = "kluven böjning";
+    else if (medPrio && !c.prio) skal = "prio saknas";
+    else if (skriftRe && LATIN_RE.test(c.front)) skal = "latinska bokstäver i ordet";
+    else if (skriftRe && skriftRe.test(c.back)) skal = "målspråket på svenska sidan";
+    if (skal) ut.push({ c, skal });
+  });
+  return ut;
 }
 // Varnar innan något skrivs. Resolve(true) = lägg till ändå, resolve(false) = avbryt.
-function confirmSliced(antal, total) {
+function confirmSliced(traffar, total) {
   return new Promise((resolve) => {
     track("inklistring/varning-trasiga-rader");
+    const lista = traffar.slice(0, 3).map(({ c, skal }) =>
+      `<li>${esc(c.front.trim().slice(0, 40))} <span class="dup-lesson">→ ${esc(c.back.trim().slice(0, 40))} (${skal})</span></li>`).join("");
+    const fler = traffar.length > 3 ? `<li class="dup-lesson">…och ${traffar.length - 3} till</li>` : "";
     const m = openModal(`<h3>Ser texten rätt ut?</h3>
-      <p class="modal-warn">⚠️ <b>${antal} av ${total}</b> rader ser sönderklippta ut – ord som delats mitt itu
-        eller två glosor på samma rad.</p>
+      <p class="modal-warn">⚠️ <b>${traffar.length} av ${total}</b> rader ser sönderklippta ut.</p>
+      <ul class="dup-list">${lista}${fler}</ul>
       <p class="modal-hint">Det brukar betyda att kopian kastat om texten. Kopiera hellre med
         <b>kopieringsknappen</b> i AI-svarets kodblock än genom att markera texten – eller be om en
         CSV-fil och använd Importera CSV.</p>
@@ -6008,8 +6016,8 @@ function openAddDialog(opts = {}) {
     // Trasig inklistring fångas FÖRE dubblettdialogen: annars frågar appen om dubbletter
     // bland rader som ändå inte borde läggas till. Två rader räcker som tröskel – en
     // enstaka udda rad är oftast ett äkta ord med ovanlig interpunktion.
-    const trasiga = cards.length > 2 ? looksSliced(cards, subjectLang(currentSubject)) : 0;
-    if (trasiga >= 2 && !(await confirmSliced(trasiga, cards.length))) return;
+    const trasiga = cards.length > 2 ? looksSliced(cards, subjectLang(currentSubject)) : [];
+    if (trasiga.length >= 2 && !(await confirmSliced(trasiga, cards.length))) return;
     const finalCards = await confirmDuplicates(currentSubject, cards); // ersätter modalen
     if (!finalCards) return;
     if (!finalCards.length) { toast("Inget nytt – alla fanns redan", 3000); return; }
@@ -6850,7 +6858,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v369";
+const APP_VERSION = "v370";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
