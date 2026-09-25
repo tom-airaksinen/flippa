@@ -310,8 +310,22 @@ function langLabel(code) {
   return code;
 }
 
-// Språkalternativ för väljaren: alla språk enheten faktiskt kan uttala (Web Speech-
-// röster), deduppade per språk, svenska namn, alfabetiskt, "Inget / ej språk" överst.
+// Språk appen har stöd för i AI-prompten (exempelrader, ev. genusregel) men som
+// enheten kan sakna röst för. Persiska, isländska och flera slaviska språk finns inte
+// som TTS-röst på iPhone – utan den här listan gick de inte ens att VÄLJA, och då föll
+// AI-prompten, uppslaget och flaggan bort för ett område som i övrigt fungerar fint.
+// Regiondelen finns för flaggans skull (flagForLang läser den).
+const KNOWN_LANGS = [
+  "ar-SA", "bg-BG", "bs-BA", "ca-ES", "cs-CZ", "da-DK", "de-DE", "el-GR", "en-GB",
+  "es-ES", "et-EE", "fa-IR", "fi-FI", "fr-FR", "gl-ES", "he-IL", "hi-IN", "hr-HR",
+  "hu-HU", "id-ID", "is-IS", "it-IT", "ja-JP", "ko-KR", "lt-LT", "lv-LV", "mk-MK",
+  "ms-MY", "nb-NO", "nl-NL", "pl-PL", "pt-PT", "ro-RO", "ru-RU", "sk-SK", "sl-SI",
+  "sr-RS", "sv-SE", "sw-KE", "th-TH", "tr-TR", "uk-UA", "vi-VN", "zh-CN",
+];
+
+// Språkalternativ för väljaren: enhetens röstspråk FÖRST (de ger uttal), sedan övriga
+// språk appen kan – märkta så man ser att uttalet saknas. Svenska namn, alfabetiskt,
+// "Inget / ej språk" överst.
 function langOptionsForPicker(selected) {
   const byBase = new Map(); // 'it' -> 'it-IT'
   const voices = ("speechSynthesis" in window) ? (speechSynthesis.getVoices() || []) : [];
@@ -323,11 +337,20 @@ function langOptionsForPicker(selected) {
   });
   // Fallback om rösterna inte hunnit laddas än: kuraterad grundlista
   if (!byBase.size) LANG_OPTIONS.forEach((o) => { if (o.code) byBase.set(o.code.slice(0, 2).toLowerCase(), o.code); });
+  const medRost = new Set(byBase.keys()); // språk enheten kan uttala
+  // Språk utan röst här: valbara, men märkta. Rösten är ett plus, inte ett krav –
+  // korten, lådorna, prio och AI-prompten fungerar lika bra utan den.
+  KNOWN_LANGS.forEach((code) => {
+    const base = code.slice(0, 2).toLowerCase();
+    if (!byBase.has(base)) byBase.set(base, code);
+  });
   // Behåll nuvarande val exakt (så koden inte tyst ändras när man sparar)
   if (selected) byBase.set(selected.slice(0, 2).toLowerCase(), selected);
   const items = [...byBase.values()].map((code) => {
     const flag = flagForLang(code);
-    return { value: code, label: (flag ? flag + " " : "") + langLabel(code), sortKey: langLabel(code) };
+    const namn = langLabel(code);
+    const stum = !medRost.has(code.slice(0, 2).toLowerCase());
+    return { value: code, label: (flag ? flag + " " : "") + namn + (stum ? " · inget uttal" : ""), sortKey: namn };
   });
   items.sort((a, b) => a.sortKey.localeCompare(b.sortKey, "sv"));
   return [{ value: "", label: "Inget / ej språk" }, ...items];
@@ -1964,7 +1987,7 @@ function renderLessons(keepChoosers) {
       let rows = "";
       for (const c of g.hits) {
         if (shown >= CAP) { truncated = true; break; }
-        rows += `<div class="row search-hit" data-lesson="${g.l.id}" data-card="${c.id}"><span class="sh-front">${hl(c.front, true)}</span><span class="sh-back">${hl(c.back)}</span></div>`;
+        rows += `<div class="row search-hit" data-lesson="${g.l.id}" data-card="${c.id}"><span class="sh-front" dir="auto">${hl(c.front, true)}</span><span class="sh-back" dir="auto">${hl(c.back)}</span></div>`;
         shown++;
       }
       html += `<div class="search-group"><span class="sg-name">${esc(g.l.name)}</span><span class="sg-count">${g.hits.length}</span></div>` + rows;
@@ -4568,14 +4591,14 @@ function askWord(front, back, hint, opts = {}) {
       // Böjningen hör till det utländska ordet → fältet ligger direkt under det.
       const formBlock = forms ? `
       <label>Böjning (valfritt)</label>
-      <input type="text" id="m-form" value="${esc(fo || "")}" placeholder="t.ex. o casă, două case" autocomplete="off" autocapitalize="none" spellcheck="false" />` : "";
+      <input type="text" id="m-form" value="${esc(fo || "")}" dir="auto" placeholder="t.ex. o casă, două case" autocomplete="off" autocapitalize="none" spellcheck="false" />` : "";
       const lessonBlock = showLesson ? `
       <label>Lektion</label>
       <div id="m-lesson-mount"></div>` : "";
       const m = openModal(`
       <div class="modal-head"><h3>Redigera ord</h3><div class="modal-head-btns">${speakBtnHtml}${globeBtn}${delBtn}</div></div>
       <label>Utländskt (framsida)</label>
-      <input type="text" id="m-front" value="${esc(f)}" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${formBlock}
+      <input type="text" id="m-front" value="${esc(f)}" dir="auto" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${formBlock}
       <label>Svenska (baksida)</label>
       <input type="text" id="m-back" value="${esc(b)}" autocomplete="off" autocapitalize="none" lang="sv" spellcheck="true" />
       <div class="hint-lbl">
@@ -5557,8 +5580,8 @@ function renderEditor() {
         <button class="word-row-del" data-del="${c.id}" aria-label="Ta bort ord" title="Ta bort ord">${TRASH_ICON_SVG}</button>
         <div class="word-row-main">
           <div class="word-texts">
-            <div class="word-front">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
-            <div class="word-back">${esc(c.back)}</div>
+            <div class="word-front" dir="auto">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
+            <div class="word-back" dir="auto">${esc(c.back)}</div>
           </div>
           ${badge}
           <button class="word-row-star${fav ? " on" : ""}" data-star="${c.id}" aria-label="Stjärnmärk" title="Stjärnmärk som favorit">${fav ? "★" : "☆"}</button>
@@ -6676,7 +6699,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v362";
+const APP_VERSION = "v363";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 september 2026", ver: "v363", items: [
+    { t: "Fler språk går att välja – även de din enhet saknar röst för. De märks \"· inget uttal\", allt annat fungerar som vanligt", type: "new",
+      hi: true, ico: "🌍", desc: "Välj språk även utan uttalsröst" },
+    { t: "Språk som skrivs från höger till vänster (persiska, arabiska, hebreiska) visas nu åt rätt håll på korten och i ordlistan", type: "fixed" },
+  ]},
   { date: "24 september 2026", ver: "v362", items: [
     { t: "Lättare att träffa glödlampan på kortet – trycket landar inte längre på kortet och flippar fram svaret när man siktar lite snett", type: "fixed" },
   ]},
