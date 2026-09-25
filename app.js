@@ -3327,13 +3327,17 @@ function answer(grade) {
   session.queue.shift();
   if (grade === "fail") session.queue.push(c);
   else if (grade === "hard") session.queue.splice(Math.min(3, session.queue.length), 0, c);
-  // Autouppspelning: svepte man direkt från svenska sidan (b2f, utan att flippa)
-  // hann man aldrig se/höra det utländska ordet – läs upp det nu så uttalet alltid
-  // ges. Nästa kort i b2f visar svenska (ingen autospeak) så inget krockar.
+  // Svepte man utan att flippa hann man aldrig se svaret – läs upp det, så hör man om
+  // man trodde fel. Vilket svar det är beror på riktningen: i b2f är det det utländska
+  // ordet (och uttalet man är där för), i f2b den svenska sidan. Nästa kort visar
+  // frågesidan, så inget krockar med den vanliga autouppläsningen.
   try {
-    if (autoSpeak && !handsfreeActive && dir === "b2f" && !card.classList.contains("flipped")
-        && hasVoiceFor(subjectLang(currentSubject))) {
-      speak(c.front, subjectLang(currentSubject));
+    const talLang = subjectLang(currentSubject);
+    if (autoSpeak && !handsfreeActive && !card.classList.contains("flipped")) {
+      // canSpeakText, inte hasVoiceFor: språket kan sakna röst i enheten men ha
+      // färdiga ljudfiler – då ska ordet höras ändå.
+      if (dir === "b2f" && canSpeakText(c.front, talLang)) speak(c.front, talLang);
+      else if (dir === "f2b" && hasVoiceFor("sv-SE")) speak(c.back, "sv-SE");
     }
   } catch (err) { console.error("autouppspelning kastade – passet fortsätter", err); }
   loadCard();
@@ -6889,7 +6893,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v376";
+const APP_VERSION = "v377";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
