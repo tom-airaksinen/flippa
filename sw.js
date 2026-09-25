@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v374";
+const CACHE = "flashcards-v375";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.

@@ -4189,7 +4189,7 @@ async function editCurrentCard() {
   }
   if (!lid) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid, prio: c.prio, forms: !!subj.forms, form: c.form });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lid, prio: c.prio, forms: !!subj.forms, form: c.form, tr: c.tr });
   if (!res) return;
   if (res._delete) {
     const ok = await confirmDanger("Ta bort ord?", `"${c.front}" tas bort.`);
@@ -4212,14 +4212,15 @@ async function editCurrentCard() {
   c.back = res.back;
   c.hint = res.hint || null;
   c.form = res.form || null;
+  c.tr = res.tr || null;
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lid) {
     moveCard(currentSubject.id, lid, res.lessonId, c.id,
-             { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
+             { front: res.front, back: res.back, hint: res.hint, form: res.form, tr: res.tr, prio: res.prio });
   } else {
     updateCard(currentSubject.id, lid, c.id,
-               { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
+               { front: res.front, back: res.back, hint: res.hint, form: res.form, tr: res.tr, prio: res.prio });
   }
   // uppdatera visat kort direkt
   const showFrontFirst = session.shownDir === "f2b";
@@ -4696,12 +4697,12 @@ function askWords() {
 // opts.forms = ämnet har böjning påslaget → visa böjningsfältet. Av för alla andra
 // ämnen, så deras redigeringsdialog ser ut precis som förut.
 function askWord(front, back, hint, opts = {}) {
-  const { allowDelete, explore, lessons, lessonId, prio, forms, form } = opts;
+  const { allowDelete, explore, lessons, lessonId, prio, forms, form, tr } = opts;
   const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
   const showLesson = lessons && lessons.length > 1; // bara meningsfullt att flytta om det finns fler lektioner
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
-    const open = (f, b, h, fo) => {
+    const open = (f, b, h, fo, tl) => {
       // Högtalaren till VÄNSTER om AI-stjärnorna. Visas bara när språket har en röst,
       // samma villkor som kortets egen högtalare.
       const talLang = subjectLang(currentSubject);
@@ -4715,13 +4716,19 @@ function askWord(front, back, hint, opts = {}) {
       const formBlock = forms ? `
       <label>Böjning (valfritt)</label>
       <input type="text" id="m-form" value="${esc(fo || "")}" dir="auto" placeholder="t.ex. o casă, două case" autocomplete="off" autocapitalize="none" spellcheck="false" />` : "";
+      // Uttalsfältet följer samma logik som kortet: bara språk som använder
+      // translitterering (i dag persiska) har det, och det står direkt under ordet
+      // eftersom det hör till det utländska ordet – precis som böjningen.
+      const trBlock = subjectUsesTranslit() ? `
+      <label>Uttal med latinska bokstäver (valfritt)</label>
+      <input type="text" id="m-tr" value="${esc(tl || "")}" placeholder="t.ex. salâm" autocomplete="off" autocapitalize="none" spellcheck="false" />` : "";
       const lessonBlock = showLesson ? `
       <label>Lektion</label>
       <div id="m-lesson-mount"></div>` : "";
       const m = openModal(`
       <div class="modal-head"><h3>Redigera ord</h3><div class="modal-head-btns">${speakBtnHtml}${globeBtn}${delBtn}</div></div>
       <label>Utländskt (framsida)</label>
-      <input type="text" id="m-front" value="${esc(f)}" dir="auto" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${formBlock}
+      <input type="text" id="m-front" value="${esc(f)}" dir="auto" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" />${trBlock}${formBlock}
       <label>Svenska (baksida)</label>
       <input type="text" id="m-back" value="${esc(b)}" autocomplete="off" autocapitalize="none" lang="sv" spellcheck="true" />
       <div class="hint-lbl">
@@ -4762,6 +4769,7 @@ function askWord(front, back, hint, opts = {}) {
         b: m.querySelector("#m-back").value.trim(),
         h: m.querySelector("#m-hint").value.trim(),
         fo: forms ? m.querySelector("#m-form").value.trim() : "",
+        tl: subjectUsesTranslit() ? m.querySelector("#m-tr").value.trim() : "",
       });
       // Prio-segment: ingen vald = ovärderat (fältet lagras aldrig som default).
       // Tryck på vald igen → avmarkera. Explicit val 1/2/3 sparas.
@@ -4833,10 +4841,10 @@ function askWord(front, back, hint, opts = {}) {
         const v = vals();
         const chosenLid = lessonSel ? lessonSel.value : lessonId;
         closeModal();
-        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, form: v.fo, lessonId: chosenLid, prio: curPrio } : null);
+        resolve(v.f && v.b ? { front: v.f, back: v.b, hint: v.h, form: v.fo, tr: v.tl, lessonId: chosenLid, prio: curPrio } : null);
       };
     };
-    open(front, back, hint, form);
+    open(front, back, hint, form, tr);
   });
 }
 
@@ -5222,6 +5230,7 @@ function updateCard(sid, lid, cid, fields) {
     back: fields.back,
     hint: fields.hint || null,
     form: fields.form || null,
+    tr: fields.tr || null,   // translitterering, tomt fält tar bort den
     prio: (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) ? fields.prio : null,
   };
   enqueue([{ op: "update", path: `${sid}/lessons/${lid}/cards/${cid}`, value }]);
@@ -5232,12 +5241,13 @@ function removeCard(sid, lid, cid) {
 // Flytta ett kort till en annan lektion (atomiskt: lägg till nytt + ta bort gammalt).
 // SRS följer med automatiskt eftersom inlärningen nycklas på ordet, inte kort-id:t.
 // prio måste däremot skickas med explicit – annars tappas den vid flytt.
-// fields: { front, back, hint, form, prio } – se kommentaren vid updateCard.
+// fields: { front, back, hint, form, tr, prio } – se kommentaren vid updateCard.
 function moveCard(sid, fromLid, toLid, cid, fields) {
   const newKey = db.ref(`content/subjects/${sid}/lessons/${toLid}/cards`).push().key;
   const card = { front: fields.front, back: fields.back, hint: fields.hint || null,
                  order: Date.now(), createdAt: TS };
   if (fields.form) card.form = fields.form;
+  if (fields.tr) card.tr = fields.tr;
   if (fields.prio === 1 || fields.prio === 2 || fields.prio === 3) card.prio = fields.prio;
   enqueue([{ op: "batch", updates: {
     [`${sid}/lessons/${toLid}/cards/${newKey}`]: card,
@@ -5841,19 +5851,20 @@ async function editWord(cid) {
   const c = lesson.cards.find((x) => x.id === cid);
   if (!c) return;
   const subj = freshSubject();
-  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id, prio: c.prio, forms: !!subj.forms, form: c.form });
+  const res = await askWord(c.front, c.back, c.hint, { allowDelete: true, explore: !!subjectLang(subj), lessons: subj.lessons, lessonId: lesson.id, prio: c.prio, forms: !!subj.forms, form: c.form, tr: c.tr });
   if (!res) return;
   if (res._delete) { deleteWord(cid); return; }
   c.hint = res.hint || null;
   c.form = res.form || null;
+  c.tr = res.tr || null;
   if (res.prio !== c.prio) track("prio-justerad");
   c.prio = (res.prio === 1 || res.prio === 2 || res.prio === 3) ? res.prio : null;
   if (res.lessonId && res.lessonId !== lesson.id) {
     moveCard(currentSubject.id, lesson.id, res.lessonId, cid,
-             { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
+             { front: res.front, back: res.back, hint: res.hint, form: res.form, tr: res.tr, prio: res.prio });
   } else {
     updateCard(currentSubject.id, lesson.id, cid,
-               { front: res.front, back: res.back, hint: res.hint, form: res.form, prio: res.prio });
+               { front: res.front, back: res.back, hint: res.hint, form: res.form, tr: res.tr, prio: res.prio });
   }
 }
 
@@ -6876,7 +6887,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v374";
+const APP_VERSION = "v375";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
