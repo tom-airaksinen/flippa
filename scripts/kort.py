@@ -7,6 +7,7 @@ skrivning verifieras genom att läsa tillbaka.
   visa      <sid> <lid>              lista kortens id, framsida, baksida, prio, böjning
   radera    <sid> <lid> <fil.json>   {kortId: "förväntad framsida"} – raderar bara om
                                      framsidan stämmer EXAKT (skydd mot fel kort)
+  tr        <sid> <lid> <fil.json>  skriver bara translittereringsfältet: {kortId: "salâm"}
   lagg-till <sid> <lid> <fil.txt>    rader i inklistringsformat
                                      "framsida;baksida;{böjning};prio".
                                      Framsidor som redan finns i lektionen hoppas över.
@@ -112,6 +113,28 @@ def cmd_lagg_till(sid, lid, fil, dry):
     if saknas: die(f"följande skrevs inte: {saknas}")
     print(f"TILLAGT: {len(nya)} kort. Lektionen har nu {len(efter)}.")
 
+def cmd_tr(sid, lid, fil, dry):
+    """Skriver BARA fältet "tr" (translitterering). fil.json: {kortId: "salâm"}.
+    Kortet måste finnas; inget annat fält rörs."""
+    spec = json.load(open(fil))
+    db = cards(sid, lid)
+    saknas = [cid for cid in spec if cid not in db]
+    if saknas: die(f"{len(saknas)} kort-id finns inte i lektionen: {saknas[:3]}")
+    for cid, v in list(spec.items())[:8]:
+        print(f"  {db[cid].get('front')!r} → {v!r}")
+    if len(spec) > 8: print(f"  … och {len(spec)-8} till")
+    print(f"{len(spec)} translittereringar {'skulle skrivas' if dry else 'skrivs'}")
+    if dry: return
+    for cid, v in spec.items():
+        http("PATCH", f"{DB}/content/subjects/{sid}/lessons/{lid}/cards/{cid}.json?auth={token()}", {"tr": v})
+    efter = cards(sid, lid)
+    fel = [cid for cid, v in spec.items() if efter[cid].get("tr") != v]
+    if fel: die(f"{len(fel)} skrevs inte korrekt")
+    andrat = [cid for cid in spec if efter[cid].get("front") != db[cid].get("front")
+              or efter[cid].get("back") != db[cid].get("back")]
+    if andrat: die("andra fält ändrades – kontrollera manuellt")
+    print(f"SKRIVET: {len(spec)} translittereringar. Front/back oförändrade.")
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     dry = bool(a) and a[-1] == "plan"
@@ -120,4 +143,5 @@ if __name__ == "__main__":
     if a[0] == "visa" and len(a) == 3: cmd_visa(a[1], a[2])
     elif a[0] == "radera" and len(a) == 4: cmd_radera(a[1], a[2], a[3], dry)
     elif a[0] == "lagg-till" and len(a) == 4: cmd_lagg_till(a[1], a[2], a[3], dry)
+    elif a[0] == "tr" and len(a) == 4: cmd_tr(a[1], a[2], a[3], dry)
     else: die("okänt kommando – kör utan argument för hjälp")

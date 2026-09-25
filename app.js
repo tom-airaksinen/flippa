@@ -2346,6 +2346,15 @@ const cardAnswer = $("card-answer");
 const cardHint = $("card-hint");
 const cardFrontForm = $("card-front-form");
 const cardForm = $("card-form");
+const cardFrontTr = $("card-front-tr");
+const cardTr = $("card-tr");
+// Translitterering (fältet "tr" på kortet): latinsk uttalsform av det utländska ordet,
+// för den som inte läser skriften än. HÅRDKODAT till persiska så länge – det här är
+// ett försök, och först när mekaniken visat sig bära är det värt att bygga ut den till
+// redigering, CSV-import och AI-prompt.
+function subjectUsesTranslit() {
+  return String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase() === "fa";
+}
 // Böjningen hör till det UTLÄNDSKA ordet och följer med dit det visas: i f2b står
 // det på frågesidan (syns direkt), i b2f på svarssidan (efter flippen). Tomt när
 // ämnet inte har böjning påslaget, så inget renderas för andras ämnen.
@@ -2353,6 +2362,12 @@ function paintCardForm(c, showFrontFirst) {
   const v = (currentSubject && currentSubject.forms && c && c.form) ? c.form : "";
   cardFrontForm.textContent = showFrontFirst ? v : "";
   cardForm.textContent = showFrontFirst ? "" : v;
+}
+// Följer det utländska ordet på samma sätt som böjningen: syns där ordet syns.
+function paintCardTranslit(c, showFrontFirst) {
+  const v = (subjectUsesTranslit() && c && c.tr) ? c.tr : "";
+  cardFrontTr.textContent = showFrontFirst ? v : "";
+  cardTr.textContent = showFrontFirst ? "" : v;
 }
 const dirSelect = $("dir-select");
 const progressPill = $("progress-pill");
@@ -2961,6 +2976,7 @@ function loadCard(forceDir) {
   // är utländskt (b2f). Kör man TILL svenska vore den en gratisledtråd – göm den.
   cardHint.textContent = !showFrontFirst ? (c.hint || "") : "";
   paintCardForm(c, showFrontFirst);
+  paintCardTranslit(c, showFrontFirst);
   cardFrontHint.textContent = ""; cardFrontHint.classList.add("hidden"); // ny ledtråd döljs tills lampan trycks
   updateProgress();
   updateStack();
@@ -4153,6 +4169,7 @@ async function editCurrentCard() {
   cardAnswer.textContent = showFrontFirst ? c.back : c.front;
   cardHint.textContent = !showFrontFirst ? (c.hint || "") : "";
   paintCardForm(c, showFrontFirst);
+  paintCardTranslit(c, showFrontFirst);
   cardFrontHint.textContent = ""; cardFrontHint.classList.add("hidden");
   updateHintBtn();
 }
@@ -5636,6 +5653,7 @@ function renderEditor() {
         <div class="word-row-main">
           <div class="word-texts">
             <div class="word-front" dir="auto">${esc(c.front)}${c.hint ? ' <span class="word-hint-flag" title="Har minnesregel">💡</span>' : ""}</div>
+            ${subjectUsesTranslit() && c.tr ? `<div class="word-tr">${esc(c.tr)}</div>` : ""}
             <div class="word-back" dir="auto">${esc(c.back)}</div>
           </div>
           ${badge}
@@ -6759,7 +6777,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v365";
+const APP_VERSION = "v366";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

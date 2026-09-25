@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 september 2026", ver: "v366", items: [
+    { t: "Persiska områden visar uttalet med latinska bokstäver under ordet – för den som inte läser skriften än (försök, bara persiska tills vidare)", type: "new" },
+  ]},
   { date: "25 september 2026", ver: "v365", items: [
     { t: "Inklistring varnar när raderna ser sönderklippta ut – ord som delats mitt itu eller två glosor på samma rad – innan något läggs till", type: "new" },
   ]},
