@@ -3337,7 +3337,7 @@ function answer(grade) {
       // canSpeakText, inte hasVoiceFor: språket kan sakna röst i enheten men ha
       // färdiga ljudfiler – då ska ordet höras ändå.
       if (dir === "b2f" && canSpeakText(c.front, talLang)) speak(c.front, talLang);
-      else if (dir === "f2b" && hasVoiceFor("sv-SE")) speak(c.back, "sv-SE");
+      else if (dir === "f2b" && hasVoiceFor("sv-SE")) { speak(c.back, "sv-SE"); skipNextAutoSpeak = true; }
     }
   } catch (err) { console.error("autouppspelning kastade – passet fortsätter", err); }
   loadCard();
@@ -3677,13 +3677,19 @@ function hasVoiceFor(lang) {
 function updateSpeakBtn() { updateCardActions(); } // alias – klustret sköter allt
 
 // Dölj klustret direkt och visa det först när animationen (flipp/emerge) är klar.
+// Sätts när svaret precis lästs upp (svep utan flipp). Nästa kort visar i f2b det
+// utländska ordet direkt, och dess autouppläsning skulle annars AVBRYTA svaret 300 ms
+// in – det var därför den svenska uppläsningen aldrig hördes.
+let skipNextAutoSpeak = false;
 function showSpeakSoon(delay) {
   hideCardActions();
   closeFan();
   setTimeout(() => {
     updateCardActions();
+    const hoppaOver = skipNextAutoSpeak;
+    skipNextAutoSpeak = false;
     // autoläge: läs upp så fort den utländska sidan blir synlig
-    if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible()
+    if (!hoppaOver && autoSpeak && !handsfreeActive && session && session.current && foreignVisible()
         && canSpeakText(session.current.front, subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
     }
@@ -5632,7 +5638,9 @@ function buildAiPrompt(count, theme) {
         // tecken byter plats och ord delas mitt itu, även när man kopierar från ett kodblock.
         // En fil går utanför urklippet helt och kommer fram hel.
         ? `Ge svaret som en nedladdningsbar CSV-fil med kolumnerna `
-          + `sektion;ord;svenska;favorit;minnesregel;prio (sektion = temat, favorit och minnesregel tomma). `
+          + `sektion;ord;svenska;favorit;minnesregel;prio${subjectUsesTranslit() ? ";böjning;uttal" : ""} `
+          + `(sektion = temat, favorit och minnesregel tomma`
+          + `${subjectUsesTranslit() ? ", böjning tom, uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salâm" : ""}). `
           + `Kan du inte skapa filer: lägg svaret i ett kodblock i stället.\n\n`
         : "")
     + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
@@ -6313,7 +6321,7 @@ $("translate-subject").onclick = () => openTranslate(null); // lektionslistans �
 // (＋ Lägg till ord på lektionsskärmen går via openAddDialog; #translate-words-knappen borttagen)
 
 // =========================================================================
-//  CSV-import → lektioner (sektion;ord;svenska;favorit;minnesregel;prio;böjning)
+//  CSV-import → lektioner (sektion;ord;svenska;favorit;minnesregel;prio;böjning;uttal)
 // =========================================================================
 // Tecken-för-tecken-parser som klarar citerade fält (med ; eller , inuti) och "" som escape.
 function parseCsvRecords(text, delim) {
@@ -6360,7 +6368,10 @@ function readCsvFiles(files) {
         // Kolumn 7 = böjning (kortets form-fält). Klammer runt värdet är tillåten,
         // så en rad kopierad från inklistringsformatet funkar rakt av.
         const form = (r[6] || "").trim().replace(/^\{|\}$/g, "").trim();
-        out.push({ sektion, front, back, fav, hint, prio, form });
+        // Kolumn 8 = uttal med latinska bokstäver, för språk vars skrift man inte läser
+        // än. Visas bara i ämnen där appen använder translitterering (i dag persiska).
+        const tr = (r[7] || "").trim();
+        out.push({ sektion, front, back, fav, hint, prio, form, tr });
       });
     });
     return out;
@@ -6417,6 +6428,7 @@ function commitImport(subject, plan) {
       const card = { front: rec.front, back: rec.back, hint: rec.hint || null, order: order0 + si * 1000 + ci, createdAt: TS };
       if (rec.prio === 1 || rec.prio === 2 || rec.prio === 3) card.prio = rec.prio;
       if (rec.form) card.form = rec.form;
+      if (rec.tr) card.tr = rec.tr;
       updates[`${sid}/lessons/${lid}/cards/${ck}`] = card;
       if (rec.fav) favKeys.push(`${normPart(rec.front)}|${normPart(rec.back)}`);
     });
@@ -6893,7 +6905,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v377";
+const APP_VERSION = "v378";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
