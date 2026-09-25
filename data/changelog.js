@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v373", items: [
+    { t: "Persiskan har fått en riktig röst: alla 139 ord och bokstäver är omlästa med Microsofts Dilara, och orden som saknade uttal har fått det", type: "improved",
+      hi: true, ico: "🔊", desc: "Uttal på alla persiska ord" },
+  ]},
   { date: "26 september 2026", ver: "v371", items: [
     { t: "För språk som skrivs från höger till vänster ber AI-prompten nu om en CSV-fil i stället för text att kopiera – urklippet kastar om sådan text på vissa telefoner", type: "improved" },
     { t: "Varningen om sönderklippta rader visar vilka rader den reagerade på, och varför", type: "improved" },
