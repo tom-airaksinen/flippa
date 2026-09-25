@@ -1,4 +1,8 @@
-const CACHE = "flashcards-v367";
+const CACHE = "flashcards-v368";
+// Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
+// egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
+// så lektioner man kört fungerar sedan offline.
+const AUDIO_CACHE = "flippa-audio-v1";
 const ASSETS = [
   "./",
   "./index.html",
@@ -32,7 +36,7 @@ self.addEventListener("install", (e) => {
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
+      Promise.all(keys.filter((k) => k !== CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k)))
     ).then(() => self.clients.claim())
   );
 });
@@ -70,6 +74,20 @@ self.addEventListener("fetch", (e) => {
   // Firebase realtime/auth-trafik ska alltid gå till nätet
   if (url.includes("firebasedatabase.app") || url.includes("identitytoolkit") || url.includes("googleapis.com")) {
     return; // låt webbläsaren hantera (nätverk)
+  }
+  // Uttalsfiler: cache-first mot den egna cachen, annars hämta och spara.
+  if (url.includes("/audio/")) {
+    e.respondWith(
+      caches.open(AUDIO_CACHE).then((c) =>
+        c.match(e.request).then((hit) =>
+          hit || fetch(e.request).then((r) => {
+            if (r.ok) c.put(e.request, r.clone());
+            return r;
+          })
+        )
+      )
+    );
+    return;
   }
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))

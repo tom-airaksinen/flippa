@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v368", items: [
+    { t: "Persiska ord läses nu upp även på iPhone – uttalet är inläst i förväg med en AI-röst och spelas som ljudfil när enheten saknar röst för språket", type: "new",
+      hi: true, ico: "🔊", desc: "Uttal för språk telefonen inte kan" },
+  ]},
   { date: "25 september 2026", ver: "v366", items: [
     { t: "Persiska områden visar uttalet med latinska bokstäver under ordet – för den som inte läser skriften än (försök, bara persiska tills vidare)", type: "new" },
   ]},

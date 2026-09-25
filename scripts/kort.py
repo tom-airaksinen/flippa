@@ -44,9 +44,9 @@ def delete(p):     return http("DELETE", f"{DB}/{p}.json?auth={token()}")
 def post(p, v):    return http("POST", f"{DB}/{p}.json?auth={token()}", v)
 
 def cards(sid, lid):
-    c = get(f"content/subjects/{sid}/lessons/{lid}/cards")
-    if c is None: die("hittade ingen lektion på den sökvägen")
-    return c
+    lesson = get(f"content/subjects/{sid}/lessons/{lid}")
+    if lesson is None: die("hittade ingen lektion på den sökvägen")
+    return lesson.get("cards") or {}   # en nyskapad lektion saknar cards-noden helt
 
 def parse_line(line):
     """Appens inklistringsformat → (front, back, form, prio). Samma regler som parseLines."""

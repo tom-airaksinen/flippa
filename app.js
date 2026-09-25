@@ -1897,6 +1897,7 @@ function dueCountForLessons(lessons, starredOnly) {
 }
 
 function renderLessons(keepChoosers) {
+  if (currentSubject) loadAudioMap(subjectLang(currentSubject)); // färdiga uttalsfiler, om språket har några
   if (!currentSubject) return renderSubjects();
   stopHandsfree();
   if (!keepChoosers) closeChoosers(); // priofilter-toggle uppdaterar listan men håller väljaren öppen
@@ -3577,12 +3578,62 @@ function speakable(text) {
     .trim();
 }
 
+// ---- Förgenererat uttal ------------------------------------------------
+// Web Speech saknar röst för flera språk – persiska finns t.ex. inte på iPhone.
+// För dem ligger färdiga ljudfiler i repot: audio/<språk>/<hash>.mp3, och
+// audio/<språk>/index.json mappar ordet till sitt filnamn. Kartan hämtas en gång
+// per språk och ämne; saknas den beter sig appen som förut.
+const audioMaps = {};   // "fa" -> {ord: hash} · null = hämtad men finns inte
+function audioBase(lang) { return String(lang || "").split("-")[0].toLowerCase(); }
+function loadAudioMap(lang) {
+  const b = audioBase(lang);
+  if (!b || b in audioMaps) return;
+  audioMaps[b] = null;
+  fetch(`audio/${b}/index.json`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => {
+      if (!j || !j.words) return;
+      audioMaps[b] = j.words;
+      updateCardActions(); updateAutospeakRow(); // knappen kan dyka upp nu
+    })
+    .catch(() => {});
+}
+function hasAudioFor(lang) { return !!audioMaps[audioBase(lang)]; }
+function audioUrlFor(text, lang) {
+  const b = audioBase(lang), m = audioMaps[b];
+  if (!m) return "";
+  const h = m[String(text || "").trim()] || m[speakable(text).trim()];
+  return h ? `audio/${b}/${h}.mp3` : "";
+}
+// Appen kan låta ordet höras – via enhetens röst ELLER en färdig fil.
+function canSpeak(lang) { return hasVoiceFor(lang) || hasAudioFor(lang); }
+// Ett enda Audio-element återanvänds: iOS släpper igenom uppspelning på ett element
+// som en gång startats i ett användartryck, vilket gör att autouppläsningen funkar
+// resten av passet.
+let fileAudio = null;
+function playAudioFile(url, onEnd) {
+  if (!fileAudio) fileAudio = new Audio();
+  fileAudio.onended = onEnd || null;
+  fileAudio.src = url;
+  const p = fileAudio.play();
+  if (p && p.catch) p.catch(() => { if (onEnd) onEnd(); });
+}
+
 // koa = lägg efter det som redan talas i stället för att avbryta det. Används av
 // dubbeltappet: ordet hinner börja på första tappet, och böjningen ska glida på efter
 // utan omstart. Allt annat avbryter som förut.
 function speak(text, lang, onEnd, koa) {
   const talat = speakable(text);
-  if (!talat || !("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
+  if (!talat) { if (onEnd) setTimeout(onEnd, 0); return; }
+  // Finns ordet som färdig fil vinner den: enheten kanske saknar röst för språket,
+  // och filen låter dessutom likadant på alla enheter.
+  const url = audioUrlFor(text, lang);
+  if (url) {
+    if (!koa && "speechSynthesis" in window) speechSynthesis.cancel();
+    playAudioFile(url, onEnd);
+    return;
+  }
+  if (!("speechSynthesis" in window)) { if (onEnd) setTimeout(onEnd, 0); return; }
   const u = new SpeechSynthesisUtterance(talat);
   if (lang) {
     u.lang = lang;
@@ -3621,7 +3672,7 @@ function showSpeakSoon(delay) {
   setTimeout(() => {
     updateCardActions();
     // autoläge: läs upp så fort den utländska sidan blir synlig
-    if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && hasVoiceFor(subjectLang(currentSubject))) {
+    if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && canSpeak(subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
     }
   }, delay);
@@ -3815,7 +3866,7 @@ autospeakToggle.addEventListener("change", () => {
 // Visa toggeln bara om ämnet har en röst på enheten
 function updateAutospeakRow() {
   // Dölj i handsfree – appen läser ju upp ändå, så toggeln är överflödig där.
-  autospeakRow.classList.toggle("hidden", handsfreeActive || !hasVoiceFor(subjectLang(currentSubject)));
+  autospeakRow.classList.toggle("hidden", handsfreeActive || !canSpeak(subjectLang(currentSubject)));
 }
 
 // Förladda röstlistan (laddas asynkront i vissa webbläsare)
@@ -4067,7 +4118,7 @@ function updateCardActions(){
   moreBtn.classList.toggle("hidden", !hasCard);
   if(!hasCard){ closeFan(); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); return; }
   const foreign = foreignVisible(), lang = subjectLang(currentSubject), c = session.current;
-  speakBtn.classList.toggle("hidden", !(foreign && lang && hasVoiceFor(lang)));
+  speakBtn.classList.toggle("hidden", !(foreign && lang && canSpeak(lang)));
   hintBtn.classList.toggle("hidden", !(!foreign && c.hint && cardFrontHint.classList.contains("hidden")));
   // Fliken ska kontrastera mot kortytan bakom: baksidan (surface-2) → mörkare front-färg.
   moreBtn.classList.toggle("on-back", card.classList.contains("flipped"));
@@ -4640,7 +4691,7 @@ function askWord(front, back, hint, opts = {}) {
       // Högtalaren till VÄNSTER om AI-stjärnorna. Visas bara när språket har en röst,
       // samma villkor som kortets egen högtalare.
       const talLang = subjectLang(currentSubject);
-      const kanTala = !!(talLang && hasVoiceFor(talLang));
+      const kanTala = !!(talLang && canSpeak(talLang));
       const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa eller håll in för böjningen)" aria-label="Läs upp">${IC_SPEAK}</button>` : "";
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
@@ -6778,7 +6829,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v367";
+const APP_VERSION = "v368";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
