@@ -77,6 +77,13 @@ def saknade():
 # En ensam bokstav är degenererad indata för en meningstränad modell (och det man vill
 # höra är ändå bokstavens NAMN, inte glyfen). Nyckeln i manifestet är kortets framsida,
 # men det som läses upp är namnet.
+# Den persiska MMS-checkpointen kan inte säga ل: i dess teckentabell ÄR pad-token
+# (tomrummet som stoppas in mellan alla tecken) bokstaven ل, id 0. Varje ل blir därför
+# tystnad – "salâm" låter "sa-âm". Ord med ل får därför inget ljud alls; ett felaktigt
+# uttal är sämre än inget för den som ska lära sig ordet. Byts rösten ut faller den
+# här spärren bort.
+SAKNAS_I_MODELLEN = "ل"
+
 UTTAL = {
     "ا": "الف", "ب": "به", "پ": "په", "ت": "ته", "ث": "ثه", "ج": "جیم", "چ": "چه",
     "ح": "حه", "خ": "خه", "د": "دال", "ذ": "ذال", "ر": "ره", "ز": "زه", "ژ": "ژه",
@@ -112,7 +119,10 @@ def cmd_bygg():
     mod = VitsModel.from_pretrained(MODEL); tok = AutoTokenizer.from_pretrained(MODEL)
     sr = mod.config.sampling_rate
     dåliga, gjorda = [], 0
+    hoppade_lam = 0
     for ord_ in ut:
+        if SAKNAS_I_MODELLEN in UTTAL.get(ord_, ord_):
+            hoppade_lam += 1; continue
         h = hasha(ord_)
         i = tok(ren(UTTAL.get(ord_, ord_)), return_tensors="pt")
         with torch.no_grad(): w = mod(**i).waveform[0].numpy()
@@ -129,6 +139,8 @@ def cmd_bygg():
         ix["words"][ord_] = h; gjorda += 1
     json.dump(ix, open(INDEX, "w", encoding="utf-8"), ensure_ascii=False)
     print(f"KLART: {gjorda} nya ljudfiler · manifestet har nu {len(ix['words'])} ord")
+    if hoppade_lam:
+        print(f"{hoppade_lam} ord hoppades över för att de innehåller ل, som rösten inte kan uttala")
     if dåliga:
         print(f"\n{len(dåliga)} ord gav brus och hoppades över – de får inget ljud i appen:")
         for o, q in dåliga[:10]: print(f"  {o}  (kvalitet {q})")
