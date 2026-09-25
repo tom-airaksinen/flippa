@@ -5599,7 +5599,12 @@ function buildAiPrompt(count, theme) {
     + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
     + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
     + (isRtlLang(subjectLang(currentSubject))
-        ? `Lägg hela svaret i ett kodblock (\`\`\`), annars blir raderna ihopblandade när jag kopierar dem.\n\n`
+        // Urklippet klarar inte blandad höger-vänster- och latinsk text på alla telefoner:
+        // tecken byter plats och ord delas mitt itu, även när man kopierar från ett kodblock.
+        // En fil går utanför urklippet helt och kommer fram hel.
+        ? `Ge svaret som en nedladdningsbar CSV-fil med kolumnerna `
+          + `sektion;ord;svenska;favorit;minnesregel;prio (sektion = temat, favorit och minnesregel tomma). `
+          + `Kan du inte skapa filer: lägg svaret i ett kodblock i stället.\n\n`
         : "")
     + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
 }
@@ -6858,7 +6863,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v370";
+const APP_VERSION = "v371";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
