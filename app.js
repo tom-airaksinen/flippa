@@ -1897,7 +1897,10 @@ function dueCountForLessons(lessons, starredOnly) {
 }
 
 function renderLessons(keepChoosers) {
-  if (currentSubject) loadAudioMap(subjectLang(currentSubject)); // färdiga uttalsfiler, om språket har några
+  if (currentSubject) {
+    loadAudioMap(subjectLang(currentSubject)); // färdiga uttalsfiler, om språket har några
+    applySavedDir();                           // ämnets egen riktning
+  }
   if (!currentSubject) return renderSubjects();
   stopHandsfree();
   if (!keepChoosers) closeChoosers(); // priofilter-toggle uppdaterar listan men håller väljaren öppen
@@ -2431,9 +2434,22 @@ onlyStarredToggle.addEventListener("change", () => {
 });
 
 // ---- Riktning (kommer ihåg senaste valet) ----
+// Riktningen sparas PER ÄMNE: persiskan vill man kanske läsa åt ena hållet och
+// italienskan åt det andra, och en global inställning kändes som att den nollställdes
+// när man bytte ämne. Den gamla globala nyckeln får leva kvar som utgångsvärde för
+// ämnen man inte ställt in – och som default för helt nya användare ("Från svenska").
 const DIR_KEY = "flashcards-dir";
-dirSelect.value = localStorage.getItem(DIR_KEY) || "b2f";
-dirSelect.addEventListener("change", () => lsSet(DIR_KEY, dirSelect.value));
+const dirKeyFor = (sid) => (sid ? `${DIR_KEY}-${sid}` : DIR_KEY);
+function savedDir(sid) {
+  return localStorage.getItem(dirKeyFor(sid)) || localStorage.getItem(DIR_KEY) || "b2f";
+}
+function applySavedDir() { dirSelect.value = savedDir(currentSubject && currentSubject.id); }
+function saveDir() {
+  lsSet(dirKeyFor(currentSubject && currentSubject.id), dirSelect.value);
+  lsSet(DIR_KEY, dirSelect.value);   // senaste valet blir utgångsvärde för nya ämnen
+}
+dirSelect.value = savedDir(null);
+dirSelect.addEventListener("change", saveDir);
 
 // ---- Alternativ-pills: riktning + kort per pass (lektionsskärmen) ----
 const dirPill = $("dir-pill"), limitPill = $("limit-pill");
@@ -2475,7 +2491,7 @@ $("opt-backdrop").onclick = closeChoosers;
 $("dir-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
   dirSelect.value = b.dataset.v;
-  lsSet(DIR_KEY, dirSelect.value);
+  saveDir();
   syncOptionPills(); closeChoosers();
 });
 $("limit-segs").addEventListener("click", (e) => {
@@ -3337,7 +3353,11 @@ function answer(grade) {
       // canSpeakText, inte hasVoiceFor: språket kan sakna röst i enheten men ha
       // färdiga ljudfiler – då ska ordet höras ändå.
       if (dir === "b2f" && canSpeakText(c.front, talLang)) speak(c.front, talLang);
-      else if (dir === "f2b" && hasVoiceFor("sv-SE")) { speak(c.back, "sv-SE"); skipNextAutoSpeak = true; }
+      else if (dir === "f2b" && hasVoiceFor("sv-SE")) {
+        // Svaret först, sedan nästa korts ord – annars avbryter det ena det andra.
+        skipNextAutoSpeak = true;
+        speak(c.back, "sv-SE", () => setTimeout(autoSpeakCurrent, 120));
+      }
     }
   } catch (err) { console.error("autouppspelning kastade – passet fortsätter", err); }
   loadCard();
@@ -3681,18 +3701,23 @@ function updateSpeakBtn() { updateCardActions(); } // alias – klustret sköter
 // utländska ordet direkt, och dess autouppläsning skulle annars AVBRYTA svaret 300 ms
 // in – det var därför den svenska uppläsningen aldrig hördes.
 let skipNextAutoSpeak = false;
+// Läser upp det utländska ordet på kortet som visas just nu, om autoläget är på och
+// ordet går att höra. Bryts ut för att kunna köras både direkt (vanligt kortbyte) och
+// fördröjt (efter att svaret lästs upp).
+function autoSpeakCurrent() {
+  if (!autoSpeak || handsfreeActive || activeScreen !== "training") return;
+  if (!session || !session.current || !foreignVisible()) return;
+  const lang = subjectLang(currentSubject);
+  if (canSpeakText(session.current.front, lang)) speak(session.current.front, lang);
+}
 function showSpeakSoon(delay) {
   hideCardActions();
   closeFan();
   setTimeout(() => {
     updateCardActions();
-    const hoppaOver = skipNextAutoSpeak;
+    const hoppaOver = skipNextAutoSpeak;   // svaret läses upp – frågan kommer efter det
     skipNextAutoSpeak = false;
-    // autoläge: läs upp så fort den utländska sidan blir synlig
-    if (!hoppaOver && autoSpeak && !handsfreeActive && session && session.current && foreignVisible()
-        && canSpeakText(session.current.front, subjectLang(currentSubject))) {
-      speak(session.current.front, subjectLang(currentSubject));
-    }
+    if (!hoppaOver) autoSpeakCurrent();
   }, delay);
 }
 
@@ -6905,7 +6930,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v378";
+const APP_VERSION = "v379";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

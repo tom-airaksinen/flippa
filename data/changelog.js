@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v379", items: [
+    { t: "Översättningsriktningen minns nu sig själv per område – persiskan kan stå på Till svenska medan italienskan står på Från svenska", type: "improved" },
+    { t: "Svepte du utan att flippa läses först svaret upp och sedan nästa kort, i stället för att det ena avbryter det andra", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v378", items: [
     { t: "Uppläsningen av svaret hördes inte när man svepte utan att flippa – nästa kort avbröt den", type: "fixed" },
     { t: "CSV-importen tar uttal med latinska bokstäver i en åttonde kolumn, och AI-prompten ber om den för persiska", type: "new" },
