@@ -3589,7 +3589,9 @@ function loadAudioMap(lang) {
   const b = audioBase(lang);
   if (!b || b in audioMaps) return;
   audioMaps[b] = null;
-  fetch(`audio/${b}/index.json`)
+  // Versionen i frågan gör att ett nytt bygge alltid får en färsk lista, oavsett
+  // vad webbläsaren och CDN:en har sparat.
+  fetch(`audio/${b}/index.json?v=${APP_VERSION}`)
     .then((r) => (r.ok ? r.json() : null))
     .then((j) => {
       if (!j || !j.words) return;
@@ -6887,7 +6889,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v375";
+const APP_VERSION = "v376";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

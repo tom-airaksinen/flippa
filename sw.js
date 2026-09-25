@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v375";
+const CACHE = "flashcards-v376";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.
@@ -76,7 +76,10 @@ self.addEventListener("fetch", (e) => {
     return; // låt webbläsaren hantera (nätverk)
   }
   // Uttalsfiler: cache-first mot den egna cachen, annars hämta och spara.
-  if (url.includes("/audio/")) {
+  // BARA ljudfilerna. Manifestet (index.json) måste gå till nätet – det ändras när nya
+  // ord fått ljud, och cache-first gjorde att appen satt kvar på en gammal lista och
+  // trodde att de nya orden saknade uttal.
+  if (url.includes("/audio/") && url.split("?")[0].endsWith(".mp3")) {
     e.respondWith(
       caches.open(AUDIO_CACHE).then((c) =>
         c.match(e.request).then((hit) =>

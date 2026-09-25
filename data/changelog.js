@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v376", items: [
+    { t: "Nya ord fick inget uttal förrän appen installerades om – listan över inspelade ord låg kvar i cachen", type: "fixed" },
+  ]},
   { date: "26 september 2026", ver: "v375", items: [
     { t: "Uttalet med latinska bokstäver går nu att redigera i Redigera ord – fältet visas för språk som använder det (i dag persiska)", type: "new" },
   ]},
