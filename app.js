@@ -3606,7 +3606,12 @@ function audioUrlFor(text, lang) {
   return h ? `audio/${b}/${h}.mp3` : "";
 }
 // Appen kan låta ordet höras – via enhetens röst ELLER en färdig fil.
+// canSpeak() svarar för SPRÅKET (räcker för att visa autouppläsnings-raden), medan
+// canSpeakText() svarar för ETT ord. Skillnaden syns i språk som bara har filer: där
+// har vissa ord ljud och andra inte, och en högtalarknapp som inte låter är sämre än
+// ingen knapp alls.
 function canSpeak(lang) { return hasVoiceFor(lang) || hasAudioFor(lang); }
+function canSpeakText(text, lang) { return hasVoiceFor(lang) || !!audioUrlFor(text, lang); }
 // Ett enda Audio-element återanvänds: iOS släpper igenom uppspelning på ett element
 // som en gång startats i ett användartryck, vilket gör att autouppläsningen funkar
 // resten av passet.
@@ -3672,7 +3677,8 @@ function showSpeakSoon(delay) {
   setTimeout(() => {
     updateCardActions();
     // autoläge: läs upp så fort den utländska sidan blir synlig
-    if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible() && canSpeak(subjectLang(currentSubject))) {
+    if (autoSpeak && !handsfreeActive && session && session.current && foreignVisible()
+        && canSpeakText(session.current.front, subjectLang(currentSubject))) {
       speak(session.current.front, subjectLang(currentSubject));
     }
   }, delay);
@@ -4118,7 +4124,7 @@ function updateCardActions(){
   moreBtn.classList.toggle("hidden", !hasCard);
   if(!hasCard){ closeFan(); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); return; }
   const foreign = foreignVisible(), lang = subjectLang(currentSubject), c = session.current;
-  speakBtn.classList.toggle("hidden", !(foreign && lang && canSpeak(lang)));
+  speakBtn.classList.toggle("hidden", !(foreign && lang && canSpeakText(c.front, lang)));
   hintBtn.classList.toggle("hidden", !(!foreign && c.hint && cardFrontHint.classList.contains("hidden")));
   // Fliken ska kontrastera mot kortytan bakom: baksidan (surface-2) → mörkare front-färg.
   moreBtn.classList.toggle("on-back", card.classList.contains("flipped"));
@@ -4699,7 +4705,9 @@ function askWord(front, back, hint, opts = {}) {
       // Högtalaren till VÄNSTER om AI-stjärnorna. Visas bara när språket har en röst,
       // samma villkor som kortets egen högtalare.
       const talLang = subjectLang(currentSubject);
-      const kanTala = !!(talLang && canSpeak(talLang));
+      // Knappen ska spegla ordet som står i fältet just nu – skriver man om ordet kan
+      // ljudet försvinna eller dyka upp. Startläget avgörs av det sparade ordet.
+      const kanTala = !!(talLang && canSpeakText(f, talLang));
       const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa eller håll in för böjningen)" aria-label="Läs upp">${IC_SPEAK}</button>` : "";
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
@@ -4805,9 +4813,14 @@ function askWord(front, back, hint, opts = {}) {
         closeAiPop();
       });
 
-      if (kanTala) wireSpeakButton(m.querySelector("#m-speak"),
-        () => vals().f || f,
-        () => (forms ? vals().fo : ""), "uttala-redigera");
+      if (kanTala) {
+        const sb = m.querySelector("#m-speak");
+        wireSpeakButton(sb, () => vals().f || f, () => (forms ? vals().fo : ""), "uttala-redigera");
+        // Döljs igen om man skriver in ett ord som varken har röst eller fil.
+        m.querySelector("#m-front").addEventListener("input", () => {
+          sb.classList.toggle("hidden", !canSpeakText(vals().f || f, talLang));
+        });
+      }
       if (explore) m.querySelector("#m-globe").onclick = () => {
         const v = vals();
         // Samma SÄKRA väg som fan-menyns Webbsök (window.open, med location.href-fallback +
@@ -6863,7 +6876,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v373";
+const APP_VERSION = "v374";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
