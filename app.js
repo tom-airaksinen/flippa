@@ -4518,6 +4518,44 @@ function askLesson(title, name = "", allowDelete = false) {
 
 // Dubblettkontroll: kollar om de utländska orden (front) redan finns i området
 // (case-insensitive). Returnerar korten som ska läggas till, eller null vid avbryt.
+// Ser inklistrade rader sönderklippta ut? Kopierar man blandad höger-vänster- och
+// latinsk text ur en renderad vy följer den VISUELLA ordningen med: rader slås ihop
+// och ord delas mitt itu ("snälla" → "s" + "1nälla"). parseLines lagar det den kan,
+// resten syns som spår i de färdiga korten – de spåren letar vi efter här.
+const LATIN_RE = /[A-Za-zÅÄÖåäö]/;
+function looksSliced(cards, lang) {
+  const medPrio = cards.filter((c) => c.prio).length;
+  const rtl = isRtlLang(lang);
+  const skriftRe = rtl ? /[\u0600-\u06FF\u0750-\u077F\u0590-\u05FF]/ : null;
+  return cards.filter((c) => {
+    if (c.back.includes(";")) return true;                    // hopslagen rad
+    if (c.back.includes("{") || c.front.includes("}")) return true; // kluven böjning
+    if (medPrio && !c.prio) return true;                      // prio kapad mitt i
+    if (skriftRe && LATIN_RE.test(c.front)) return true;      // latinsk text på målspråkssidan
+    if (skriftRe && skriftRe.test(c.back)) return true;       // målspråket på svenska sidan
+    return false;
+  }).length;
+}
+// Varnar innan något skrivs. Resolve(true) = lägg till ändå, resolve(false) = avbryt.
+function confirmSliced(antal, total) {
+  return new Promise((resolve) => {
+    track("inklistring/varning-trasiga-rader");
+    const m = openModal(`<h3>Ser texten rätt ut?</h3>
+      <p class="modal-warn">⚠️ <b>${antal} av ${total}</b> rader ser sönderklippta ut – ord som delats mitt itu
+        eller två glosor på samma rad.</p>
+      <p class="modal-hint">Det brukar betyda att kopian kastat om texten. Kopiera hellre med
+        <b>kopieringsknappen</b> i AI-svarets kodblock än genom att markera texten – eller be om en
+        CSV-fil och använd Importera CSV.</p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="sl-cancel">Avbryt</button>
+        <button class="btn-secondary" id="sl-add">Lägg till ändå</button>
+      </div>`);
+    modalRoot.querySelector(".modal-backdrop").addEventListener("click", () => resolve(false));
+    m.querySelector("#sl-cancel").onclick = () => { closeModal(); resolve(false); };
+    m.querySelector("#sl-add").onclick = () => { closeModal(); track("inklistring/trasiga-anda"); resolve(true); };
+  });
+}
+
 function confirmDuplicates(subject, cards) {
   return new Promise((resolve) => {
     const where = new Map(); // normaliserad front -> lektionsnamn (första träffen)
@@ -5876,6 +5914,11 @@ function openAddDialog(opts = {}) {
       else lid = lessonSel.value;
       if (!lid && !newName) { toast("Välj en lektion", 3000, "error"); return; }
     }
+    // Trasig inklistring fångas FÖRE dubblettdialogen: annars frågar appen om dubbletter
+    // bland rader som ändå inte borde läggas till. Två rader räcker som tröskel – en
+    // enstaka udda rad är oftast ett äkta ord med ovanlig interpunktion.
+    const trasiga = cards.length > 2 ? looksSliced(cards, subjectLang(currentSubject)) : 0;
+    if (trasiga >= 2 && !(await confirmSliced(trasiga, cards.length))) return;
     const finalCards = await confirmDuplicates(currentSubject, cards); // ersätter modalen
     if (!finalCards) return;
     if (!finalCards.length) { toast("Inget nytt – alla fanns redan", 3000); return; }
@@ -6716,7 +6759,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v364";
+const APP_VERSION = "v365";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

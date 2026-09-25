@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 september 2026", ver: "v365", items: [
+    { t: "Inklistring varnar när raderna ser sönderklippta ut – ord som delats mitt itu eller två glosor på samma rad – innan något läggs till", type: "new" },
+  ]},
   { date: "25 september 2026", ver: "v364", items: [
     { t: "Inklistring av glosor tål trasiga radbrytningar – rader som klistrats ihop delas upp igen i stället för att bli ett hopkok", type: "fixed" },
     { t: "För språk som skrivs från höger till vänster ber AI-prompten om ett kodblock, så kopian inte kastar om orden på vägen", type: "improved" },
