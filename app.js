@@ -4755,8 +4755,22 @@ function actionSheet(title, actions, message) {
   });
 }
 
+// Språk som skrivs från höger till vänster. Blandas de med latinsk text på samma rad
+// kan en kopia ta den VISUELLA ordningen i stället för den logiska – då slås rader
+// ihop och latinska svansar bryts loss. Därför ber AI-prompten om ett kodblock för
+// de här språken, och parseLines lagar det som ändå går att laga.
+const RTL_LANGS = new Set(["ar", "fa", "he", "ur", "ps", "sd", "ckb", "yi", "dv", "ug"]);
+function isRtlLang(code) { return RTL_LANGS.has(String(code || "").split("-")[0].toLowerCase()); }
+
 function parseLines(text) {
   return text
+    // Alla radseparatorer, inte bara \n: CRLF, ensam CR (äldre klipp), NEL och
+    // Unicodes LS/PS – en enda oväntad separator gjorde annars hela klippet till EN rad.
+    .replace(/\r\n|[\r\u0085\u2028\u2029]/g, "\n")
+    // Tappad radbrytning: varje glosrad slutar på ;1/;2/;3, så en prio-siffra som sitter
+    // ihop med en bokstav är en rad som klistrats ihop med nästa. Siffra efter siffra
+    // rörs inte (kan vara äkta innehåll, t.ex. "12;13").
+    .replace(/;([123])(?=[^\s\d])/g, ";$1\n")
     .split("\n")
     .map((l) => l.trim())
     .filter(Boolean)
@@ -5448,6 +5462,9 @@ function buildAiPrompt(count, theme) {
     + `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet. `
     + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
     + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
+    + (isRtlLang(subjectLang(currentSubject))
+        ? `Lägg hela svaret i ett kodblock (\`\`\`), annars blir raderna ihopblandade när jag kopierar dem.\n\n`
+        : "")
     + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
 }
 // A2-mönstret för "fyll med AI": EN knapp som antingen går direkt (sparat val i
@@ -6699,7 +6716,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v363";
+const APP_VERSION = "v364";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
