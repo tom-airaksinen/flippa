@@ -5301,7 +5301,16 @@ async function editSubject(sid) {
   const res = await askSubject("Redigera ämne", s.name, subjectLang(s), true, !!s.forms);
   if (!res) return;
   if (res.delete) {
-    const ok = await confirmDanger("Ta bort ämne?", `"${s.name}" och alla dess lektioner tas bort permanent.`);
+    // Säg hur mycket det gäller. "Alla dess lektioner" läses förbi; "3 lektioner och
+    // 149 ord" gör det uppenbart att man står i fel dialog. (Tom raderade ett helt
+    // område när han skulle ta bort EN lektion.)
+    const antalL = s.lessons.length;
+    const antalO = s.lessons.reduce((n, l) => n + l.cards.length, 0);
+    const omfang = antalL
+      ? `${antalL} ${antalL === 1 ? "lektion" : "lektioner"} och ${antalO} ${antalO === 1 ? "ord" : "ord"}`
+      : "området";
+    const ok = await confirmDanger("Ta bort hela området?",
+      `"${s.name}" med ${omfang} tas bort permanent. Vill du bara ta bort en lektion – stäng det här och tryck på lektionen i stället.`);
     if (ok) { removeSubject(sid); renderSubjects(); }
     return;
   }
@@ -6930,7 +6939,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v379";
+const APP_VERSION = "v380";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

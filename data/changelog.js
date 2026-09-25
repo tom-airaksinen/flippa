@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v380", items: [
+    { t: "Frågan innan ett område tas bort säger nu hur mycket som försvinner – \"3 lektioner och 149 ord\" – och påminner om att lektioner tas bort på lektionen", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v379", items: [
     { t: "Översättningsriktningen minns nu sig själv per område – persiskan kan stå på Till svenska medan italienskan står på Från svenska", type: "improved" },
     { t: "Svepte du utan att flippa läses först svaret upp och sedan nästa kort, i stället för att det ena avbryter det andra", type: "improved" },
