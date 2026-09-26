@@ -5105,6 +5105,10 @@ const IC_EDIT   = `<svg ${_ICL}><g transform="translate(2.05 0.1) scale(0.88)"><
 const IC_MIC    = `<svg ${_ICL}><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M6 11a6 6 0 0 0 12 0"/><line x1="12" y1="17" x2="12" y2="21"/><line x1="9" y1="21" x2="15" y2="21"/></svg>`;
 const IC_LOCK   = `<svg ${_ICL}><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>`;
 const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" y1="4" x2="12" y2="15"/><path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"/></svg>`;
+// Menyvalen ska ha samma ikonbox allihop. En glyf i textnoden (＋, 📄) får ingen
+// del av flex-gapet, så de raderna satt tätare än de med SVG – därför egna ikoner.
+const IC_PLUS   = `<svg ${_ICL}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
+const IC_DOC    = `<svg ${_ICL}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="16.5" x2="13" y2="16.5"/></svg>`;
 const IC_LOOKUP = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/><line x1="11" y1="8.4" x2="11" y2="13.6"/><line x1="8.4" y1="11" x2="13.6" y2="11"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
@@ -5115,7 +5119,9 @@ const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" a
   set("edit-subject", IC_EDIT);
   set("rename-lesson", IC_EDIT);
   set("speak-btn", IC_SPEAK);
+  set("add-lesson", IC_PLUS + " Ny lektion");
   set("import-csv", IC_IMPORT + " Importera CSV");
+  set("dl-template", IC_DOC + " Ladda ner CSV-mall");
   set("translate-subject", IC_LOOKUP + " Slå upp &amp; lägg till ord");
   const asr = document.querySelector("#autospeak-row > span");
   if (asr) asr.innerHTML = IC_SPEAK + " Automatisk uppläsning";
@@ -6977,7 +6983,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v381";
+const APP_VERSION = "v382";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

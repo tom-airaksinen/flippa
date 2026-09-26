@@ -318,7 +318,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
    blir lika stor som Sök/Pausa bredvid) */
 .ic-svg { width: 1.15em; height: 1.15em; vertical-align: -0.2em; }
 .icon-btn .ic-svg, .corner-btn .ic-svg { width: 20px; height: 20px; vertical-align: middle; }
-.add-menu-item .ic-svg { width: 19px; height: 19px; vertical-align: -0.28em; margin-right: 1px; }
+/* Alla menyval har nu SVG, aldrig glyfer – då bär flex-gapet avståndet till texten
+   och raderna linjerar. vertical-align/margin hörde till glyf-tiden och är borta. */
+.add-menu-item .ic-svg { width: 19px; height: 19px; flex: none; }
 .mode-opt .ic-svg { width: 17px; height: 17px; vertical-align: -0.18em; }
 .lesson-paused-ico .ic-svg { width: 15px; height: 15px; vertical-align: -0.15em; }
 .wc-lock .ic-svg { width: 17px; height: 17px; vertical-align: -0.2em; }

@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v382", items: [
+    { t: "＋-menyns val har fått egna ikoner i samma stil, så raderna linjerar i stället för att sitta olika tätt", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v381", items: [
     { t: "Ett område med ord kräver nu att du skriver \"radera ämne\" för att tas bort – tomma områden räcker det att bekräfta", type: "improved" },
   ]},
