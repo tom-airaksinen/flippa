@@ -4835,8 +4835,12 @@ function askWord(front, back, hint, opts = {}) {
         f: m.querySelector("#m-front").value.trim(),
         b: m.querySelector("#m-back").value.trim(),
         h: m.querySelector("#m-hint").value.trim(),
-        fo: forms ? m.querySelector("#m-form").value.trim() : "",
-        tl: subjectUsesTranslit() ? m.querySelector("#m-tr").value.trim() : "",
+        // Fält som INTE ritats får behålla sitt sparade värde. Returnerades tom sträng
+        // tolkade updateCard det som "ta bort", så en böjning raderades tyst så fort
+        // man redigerade ordet i ett område med böjningsfältet avslaget – tvärtemot
+        // vad dialogen lovar ("Slår du av det döljs fältet – inget raderas").
+        fo: forms ? m.querySelector("#m-form").value.trim() : (fo || ""),
+        tl: subjectUsesTranslit() ? m.querySelector("#m-tr").value.trim() : (tl || ""),
       });
       // Prio-segment: ingen vald = ovärderat (fältet lagras aldrig som default).
       // Tryck på vald igen → avmarkera. Explicit val 1/2/3 sparas.
@@ -7102,7 +7106,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v387";
+const APP_VERSION = "v388";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v388", items: [
+    { t: "Böjningen raderades om man redigerade ett ord i ett område med böjningsfältet avslaget – nu behålls den, precis som texten lovar", type: "fixed" },
+  ]},
   { date: "26 september 2026", ver: "v385", items: [
     { t: "Hämta färdigt innehåll: kurerade ordlistor för områdets språk, hämtas in som din egen kopia. Första paketet är spanska – 12 lektioner, 447 ord", type: "new",
       hi: true, ico: "⬇", desc: "Färdiga ordlistor att hämta" },
