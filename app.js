@@ -139,6 +139,7 @@ const USERS = [
   { id: "maria", name: "Maria", salt: "9a9181985b110d03", lock: "ebb28041cad6b7717eacba4eff5db93bd8d28cd3827b2838006526efeeba9bb0" },
   { id: "harry", name: "Harry", salt: "da5f40ca984b5953", lock: "5de48f97abb9587bc7dcbae60b18861130b6cd9177137a35461e79a2cc200c23" },
   { id: "lucas", name: "Lucas", salt: "7d165322677e29d5", lock: "565fba8f4007823840e4a974165d11a2851fa85408f82d619cdc92e9edc6c4c5" },
+  { id: "malin", name: "Malin", salt: "0ff549487fc54f38", lock: "d81e07ca9bbca8fc1ae2dd67180f860d8b742dd0904d043b71006dfbb839f738" },
   { id: "guest", name: "Gäst" },
 ];
 // Verifierar inknappat lösenord mot salt+hash (Web Crypto SHA-256). Async.
@@ -1909,6 +1910,8 @@ function renderLessons(keepChoosers) {
   if (currentSubject) {
     loadAudioMap(subjectLang(currentSubject)); // färdiga uttalsfiler, om språket har några
     applySavedDir();                           // ämnets egen riktning
+    if (libIndex) uppdateraBibliotekUI();
+    else loadLibrary().then(uppdateraBibliotekUI);
   }
   if (!currentSubject) return renderSubjects();
   stopHandsfree();
@@ -1961,7 +1964,15 @@ function renderLessons(keepChoosers) {
   clearListShadow($("lessons-scroll"));
   const filter = ($("lessons-search").value || "").trim().toLowerCase();
   if (!currentSubject.lessons.length) {
-    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`;
+    // Tomt område är enda stället där erbjudandet är efterfrågat i stället för i vägen.
+    list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`
+      + `<button type="button" class="lib-promo hidden" id="lib-promo">
+           <span class="lib-t">Hämta färdigt innehåll</span>
+           <span class="lib-d">Kurerade ordlistor för det här språket – klara att träna på.</span>
+         </button>`;
+    const promo = $("lib-promo");
+    if (promo) promo.onclick = () => { track("bibliotek/via-tomt-omrade"); openLibrary(); };
+    uppdateraBibliotekUI();
     return;
   }
   // Global sök: visa matchande ORD direkt (platt lista grupperad per lektion) i stället
@@ -4919,6 +4930,96 @@ function confirmPrimary(title, message, okLabel) {
 // försvinner är stort nog att man ska behöva stanna upp: ett område med innehåll.
 // Knappen är låst tills frasen stämmer (gemener/versaler och extra mellanslag spelar
 // ingen roll), och Enter i fältet raderar inte – man måste trycka på knappen.
+// =========================================================================
+//  Färdigt innehåll (bibliotek)
+// =========================================================================
+// Paketen ligger som statiska filer i repot (data/bibliotek/), inte som dolda områden
+// i databasen: appen prenumererar bara på egen profil, innehållet hör hemma i git och
+// service workern cachar det offline. Den som hämtar får en KOPIA – inget synkas
+// tillbaka, och inget kan skriva över det användaren själv ändrat.
+let libIndex = null;        // null = ej hämtat än · [] = inga paket
+const libCache = {};        // id -> paketet, hämtas en gång per session
+function loadLibrary() {
+  if (libIndex) return Promise.resolve(libIndex);
+  return fetch(`data/bibliotek/index.json?v=${APP_VERSION}`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((j) => { libIndex = (j && j.paket) || []; return libIndex; })
+    .catch(() => { libIndex = []; return libIndex; });
+}
+function libForSubject() {
+  const bas = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
+  return bas ? (libIndex || []).filter((p) => p.lang === bas) : [];
+}
+// Menyvalet och reklamkortet syns bara när det FINNS något att hämta för språket.
+function uppdateraBibliotekUI() {
+  const btn = $("library-btn");
+  if (btn) btn.classList.toggle("hidden", !libForSubject().length);
+  const kort = $("lib-promo");
+  if (kort) kort.classList.toggle("hidden", !libForSubject().length);
+}
+function openLibrary() {
+  const paket = libForSubject();
+  if (!paket.length) return;
+  track("bibliotek/oppnat");
+  const items = paket.map((p) => `
+    <button type="button" class="lib-pkg" data-id="${esc(p.id)}">
+      <span class="lib-t">${esc(p.namn)}</span>
+      <span class="lib-m">${p.lektioner} lektioner · ${p.ord} ord</span>
+      <span class="lib-d">${esc(p.beskrivning || "")}</span>
+    </button>`).join("");
+  const m = openModal(`
+    <h3>Färdigt innehåll</h3>
+    <p class="modal-hint">Kurerade ordlistor att lägga till här. Du får en egen kopia som du kan ändra i.</p>
+    ${items}
+    <div class="modal-actions"><button class="btn-secondary" id="m-cancel">Stäng</button></div>`);
+  m.querySelector("#m-cancel").onclick = closeModal;
+  m.querySelectorAll(".lib-pkg").forEach((b) =>
+    b.onclick = () => openLibraryPackage(paket.find((p) => p.id === b.dataset.id)));
+}
+function openLibraryPackage(meta) {
+  if (!meta) return;
+  const visa = (pkg) => {
+    const lektioner = pkg.lektioner.map((l) =>
+      `<div class="lib-lesson"><span>${esc(l.namn)}</span><span>${l.kort.length}</span></div>`).join("");
+    const ord = pkg.lektioner.reduce((n, l) => n + l.kort.length, 0);
+    const m = openModal(`
+      <h3>${esc(pkg.namn)}</h3>
+      <p class="modal-hint">${esc(pkg.beskrivning || "")}</p>
+      <div class="lib-lessons">${lektioner}</div>
+      <p class="modal-hint">Lektionerna läggs till <b>pausade</b>. Vill du börja smalt – filtrera på prio i stället för att välja bort ord.</p>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="m-cancel">Avbryt</button>
+        <button class="btn-primary" id="lib-add">Lägg till ${ord} ord</button>
+      </div>`);
+    m.querySelector("#m-cancel").onclick = closeModal;
+    m.querySelector("#lib-add").onclick = () => hamtaPaket(pkg);
+  };
+  if (libCache[meta.id]) return visa(libCache[meta.id]);
+  fetch(`data/bibliotek/${meta.id}.json?v=${APP_VERSION}`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((pkg) => { if (!pkg) return toast("Kunde inte hämta paketet", 3000, "error");
+                     libCache[meta.id] = pkg; visa(pkg); })
+    .catch(() => toast("Kunde inte hämta paketet", 3000, "error"));
+}
+// Går via SAMMA maskineri som CSV-importen: dubbletter mot hela området hoppas över,
+// lektioner med samma namn slås ihop, nya lektioner kommer in pausade.
+function hamtaPaket(pkg) {
+  const subject = freshSubject();
+  if (!subject) return;
+  const records = [];
+  pkg.lektioner.forEach((l) => l.kort.forEach((k) => records.push({
+    sektion: l.namn, front: k.f, back: k.b, fav: false, hint: k.h || "",
+    prio: k.p === 1 || k.p === 2 || k.p === 3 ? k.p : null, form: k.form || "", tr: k.tr || "",
+  })));
+  const plan = buildImportPlan(subject, records);
+  closeModal();
+  if (!plan.wordCount) { toast("Inget nytt – allt fanns redan", 3000); return; }
+  track("bibliotek/hamtat/" + pkg.id);
+  commitImport(subject, plan)
+    .then(() => flash(`Lade till ${plan.wordCount} ord i ${plan.list.length} lektioner ✓`, 3000))
+    .catch((e) => { writeError(e); toast("Kunde inte lägga till: " + (e.code || e.message), 5000, "error"); });
+}
+
 function confirmDangerTyped(title, message, phrase) {
   return new Promise((resolve) => {
     const m = openModal(`
@@ -5116,6 +5217,7 @@ const IC_IMPORT = `<svg ${_ICL}><polyline points="8,8 12,4 16,8"/><line x1="12" 
 // del av flex-gapet, så de raderna satt tätare än de med SVG – därför egna ikoner.
 const IC_PLUS   = `<svg ${_ICL}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`;
 const IC_DOC    = `<svg ${_ICL}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><polyline points="14,3 14,8 19,8"/><line x1="8.5" y1="13" x2="15.5" y2="13"/><line x1="8.5" y1="16.5" x2="13" y2="16.5"/></svg>`;
+const IC_DOWNLOAD = `<svg ${_ICL}><polyline points="8,12 12,16 16,12"/><line x1="12" y1="4" x2="12" y2="16"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`;
 const IC_LOOKUP = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/><line x1="11" y1="8.4" x2="11" y2="13.6"/><line x1="8.4" y1="11" x2="13.6" y2="11"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
@@ -5129,6 +5231,7 @@ const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" a
   set("add-lesson", IC_PLUS + " Ny lektion");
   set("import-csv", IC_IMPORT + " Importera CSV");
   set("dl-template", IC_DOC + " Ladda ner CSV-mall");
+  set("library-btn", IC_DOWNLOAD + " Hämta färdigt innehåll");
   set("translate-subject", IC_LOOKUP + " Slå upp &amp; lägg till ord");
   const asr = document.querySelector("#autospeak-row > span");
   if (asr) asr.innerHTML = IC_SPEAK + " Automatisk uppläsning";
@@ -6606,6 +6709,7 @@ addMenuBtn.onclick = (e) => {
   const open = addMenu.classList.toggle("hidden") === false;
   addMenuBtn.classList.toggle("active", open);
 };
+$("library-btn").onclick = openLibrary;
 addMenu.addEventListener("click", () => closeAddMenu()); // klick på ett val stänger menyn (valets handler kör ändå)
 document.addEventListener("click", (e) => {
   if (!addMenu.classList.contains("hidden") && !addMenu.contains(e.target) && e.target !== addMenuBtn) closeAddMenu();
@@ -6990,7 +7094,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v384";
+const APP_VERSION = "v385";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
