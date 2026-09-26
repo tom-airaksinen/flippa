@@ -984,3 +984,47 @@ Frågan om Gnugga (grammatikdrill) ska bli en modul i Flippa har fått ett eget 
 [`flippa-x-gnugga.md`](flippa-x-gnugga.md). Beslut 2026-09-13: variant B (grammatik
 som segment per ämne) är huvudspåret på sikt, men Gnugga vidareutvecklas separat
 tills vidare. Mockup: [`../mockups/gnugga-integration.html`](../mockups/gnugga-integration.html).
+
+## 21) Vardagsordslagret – vad innehållet saknar (framtida)
+
+**Bakgrund.** Både rumänskan (625 ord) och spanskpaketet "Resa och vardag" (447 ord)
+är byggda situation för situation: restaurang, hotell, hyrbil, apotek. Det gör dem
+användbara på plats men lämnar ett hål i vardagsorden – färger, familj, yrken,
+kroppsdelar, veckodagar, vanliga verb, prepositioner, känslor, länder.
+
+**Fyndet (2026-09-26).** Harrys *Spanska* i databasen (38 lektioner, 1 022 kort,
+prio-klassade) är exakt det lagret. Den är **inte** en Collins-konvertering, vilket
+kontrollerades så här:
+
+| Mätning | Resultat |
+|---|---|
+| Gemensamma lektionsnamn med franska Collins | 0 av 38 |
+| Harrys svenska begrepp som finns i franska Collins | 30 % |
+| … i italienskan (Collins-källan) | 38 % |
+| Franska Collins mot italienskan (känd delad källa) | **92 %** |
+
+92 % är hur delad källa ser ut; 30–38 % är vad två nybörjarlistor råkar dela (bröd,
+vatten, mamma). Stilen skiljer sig också: Harry har `la manzana = äpple`, Collins har
+`le rayon traiteur = delikatessdisk`. Harry har dessutom grammatikkapitel
+(prepositioner, konjunktioner, reflexiva verb) som Collins saknar helt. Slutsats: en
+skolgloslista, inte en ordbokskonvertering.
+
+**Vad det skulle ge.**
+
+- **834** av Harrys 1 009 begrepp saknas i spanskpaketet → nya för Lucas.
+- **718** saknas i rumänskan.
+- Omvänt saknas 270 av paketets 445 hos Harry – de kompletterar varandra.
+
+**Möjliga steg, i stigande arbetsinsats.**
+
+1. **Spanska "Vardagsord" som andra bibliotekspaket.** Innehållet är redan spanskt och
+   redan prio-klassat – ingen översättning alls, bara paketering till
+   `data/bibliotek/es-vardag.json`. Öppen fråga: det är sonens skolglosor, och att
+   lägga dem i ett bibliotek andra hämtar från är ett ägarbeslut, inte ett tekniskt.
+2. **Rumänskt vardagslager.** Harrys svenska sidor blir beställningslista, som när
+   rumänskans tolv lektioner byggdes ur italienskans. 718 begrepp är mycket – börja
+   med prio 1–2 och mät om det räcker.
+3. **Samma lager till fler språk** när biblioteket har fler paket.
+
+**Status 2026-09-26: avvaktar.** Görs när vi ser om Lucas faktiskt kommer igång med
+resepaketet – hellre veta att innehållet används än att producera mer av det.
