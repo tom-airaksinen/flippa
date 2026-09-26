@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v384", items: [
+    { t: "Byter du översättningsriktning räknas lektionernas procent om direkt – förut stod siffrorna kvar från den förra riktningen och kunde se ut som att allt var nollställt", type: "fixed" },
+    { t: "Ny profil: Lucas", type: "new" },
+  ]},
   { date: "26 september 2026", ver: "v382", items: [
     { t: "＋-menyns val har fått egna ikoner i samma stil, så raderna linjerar i stället för att sitta olika tätt", type: "improved" },
   ]},

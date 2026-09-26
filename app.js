@@ -138,6 +138,7 @@ const USERS = [
   { id: "martin", name: "Martin H", salt: "019f77985b46c8c5", lock: "dd3d1ccbe2ab3949137cc22f582d50d2e66898cce2ae05f61caf38e4e1620833" },
   { id: "maria", name: "Maria", salt: "9a9181985b110d03", lock: "ebb28041cad6b7717eacba4eff5db93bd8d28cd3827b2838006526efeeba9bb0" },
   { id: "harry", name: "Harry", salt: "da5f40ca984b5953", lock: "5de48f97abb9587bc7dcbae60b18861130b6cd9177137a35461e79a2cc200c23" },
+  { id: "lucas", name: "Lucas", salt: "7d165322677e29d5", lock: "565fba8f4007823840e4a974165d11a2851fa85408f82d619cdc92e9edc6c4c5" },
   { id: "guest", name: "Gäst" },
 ];
 // Verifierar inknappat lösenord mot salt+hash (Web Crypto SHA-256). Async.
@@ -2501,6 +2502,12 @@ $("dir-segs").addEventListener("click", (e) => {
   dirSelect.value = b.dataset.v;
   saveDir();
   syncOptionPills(); closeChoosers();
+  // Behärskningen per lektion (procenten och stapeln) räknas i VALD riktning, så
+  // listan måste ritas om – annars står siffrorna kvar från den förra riktningen.
+  // Det var därför allt såg nollställt ut efter ett byte till Till svenska och
+  // tillbaka: procenten var räknad för en riktning man inte tränat i, och frös där.
+  // Priofiltret gjorde redan detta (rad ~2521); riktningen gjorde det aldrig.
+  if (activeScreen === "lessons") renderLessons(true);
 });
 $("limit-segs").addEventListener("click", (e) => {
   const b = e.target.closest("button"); if (!b) return;
@@ -6983,7 +6990,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v382";
+const APP_VERSION = "v384";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
