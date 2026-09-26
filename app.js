@@ -506,11 +506,14 @@ const UNIT_SET_DAYS = 35;
 const UNITCOUNT_KEY = "flippa-unitcount-v1";  // långsiktigt: user → subject → datum → antal (för heatmap)
 function loadLS(key) { try { return JSON.parse(localStorage.getItem(key) || "{}") || {}; } catch { return {}; } }
 
-// Prestationsnivåer – inställbara per profil. Default: 100/150/250 ord/dag + 1000/vecka.
+// Prestationsnivåer – inställbara per profil. Default: se DEFAULT_DAY_TIERS nedan.
 // Allt (taggar, toaster, Klar-skärm, heatmapens guldprick) läser dessa live.
 const LEVELS_KEY = "flippa-levels-v1";
-const DEFAULT_DAY_TIERS = [100, 150, 250];
-const DEFAULT_WEEK_GOAL = 1000;
+// Startnivåer för den som inte ställt in egna. Sänkta 2026-09-26 från 100/150/250
+// och 1000: den lägsta dagsnivån är också DAGENS MÅL (dailyGoal), och 100 ord kräver
+// flera pass – en ny användare ska kunna nå målet på ett pass och få fira det.
+const DEFAULT_DAY_TIERS = [50, 100, 150];
+const DEFAULT_WEEK_GOAL = 500;
 function levels() {
   const o = loadLS(LEVELS_KEY)[unitUser()] || {};
   let days = Array.isArray(o.days) && o.days.length === 3 ? o.days.map((n) => parseInt(n, 10)) : null;
@@ -579,7 +582,7 @@ function recordUnitFlip(card, dir) {
 
   recordAchv(user, sid, dayCount, weekCount); // livstidshistorik för prestationer
 
-  // dagströskel som passerades just nu (100/150/250) – för firande-toast
+  // dagströskel som passerades just nu (se dayTiers) – för firande-toast
   const dayCrossed = isNew && dayTiers().includes(dayCount) ? dayCount : 0;
   return { dayCount, weekCount, dayCrossed, crossedWeek: isNew && weekCount === weeklyGoal() };
 }
@@ -7106,7 +7109,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v388";
+const APP_VERSION = "v389";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

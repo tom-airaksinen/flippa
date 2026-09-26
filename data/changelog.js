@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v389", items: [
+    { t: "Startnivåerna för prestationer är sänkta till 50/100/150 ord per dag och 500 i veckan – har du egna nivåer rörs de inte", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v388", items: [
     { t: "Böjningen raderades om man redigerade ett ord i ett område med böjningsfältet avslaget – nu behålls den, precis som texten lovar", type: "fixed" },
   ]},
