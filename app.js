@@ -1967,8 +1967,11 @@ function renderLessons(keepChoosers) {
     // Tomt område är enda stället där erbjudandet är efterfrågat i stället för i vägen.
     list.innerHTML = `<p class="empty">Inga lektioner än. Tryck ＋ för att skapa en.</p>`
       + `<button type="button" class="lib-promo hidden" id="lib-promo">
-           <span class="lib-t">Hämta färdigt innehåll</span>
-           <span class="lib-d">Kurerade ordlistor för det här språket – klara att träna på.</span>
+           <span class="lib-ico" aria-hidden="true">📚</span>
+           <span class="lib-txt">
+             <span class="lib-t">Hämta färdigt innehåll</span>
+             <span class="lib-d">Kurerade ordlistor för det här språket – klara att träna på.</span>
+           </span>
          </button>`;
     const promo = $("lib-promo");
     if (promo) promo.onclick = () => { track("bibliotek/via-tomt-omrade"); openLibrary(); };
@@ -4961,11 +4964,16 @@ function openLibrary() {
   const paket = libForSubject();
   if (!paket.length) return;
   track("bibliotek/oppnat");
+  // Ikonen kommer från paketet (emoji i index.json) – den gör raden till ett kort man
+  // ser att man kan trycka på, i stället för ännu ett stycke text i dialogen.
   const items = paket.map((p) => `
     <button type="button" class="lib-pkg" data-id="${esc(p.id)}">
-      <span class="lib-t">${esc(p.namn)}</span>
-      <span class="lib-m">${p.lektioner} lektioner · ${p.ord} ord</span>
-      <span class="lib-d">${esc(p.beskrivning || "")}</span>
+      <span class="lib-ico" aria-hidden="true">${esc(p.ikon || "📚")}</span>
+      <span class="lib-txt">
+        <span class="lib-t">${esc(p.namn)}</span>
+        <span class="lib-m">${p.lektioner} lektioner · ${p.ord} ord</span>
+        <span class="lib-d">${esc(p.beskrivning || "")}</span>
+      </span>
     </button>`).join("");
   const m = openModal(`
     <h3>Färdigt innehåll</h3>
@@ -7094,7 +7102,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v385";
+const APP_VERSION = "v386";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

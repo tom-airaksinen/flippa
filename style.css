@@ -1651,11 +1651,15 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* Paketvalen i listan och reklamkortet i tomt område delar utseende: en knapp med
    tre rader (namn, omfång, beskrivning) som läser som ett kort, inte som en rad. */
 .lib-pkg, .lib-promo {
-  display: flex; flex-direction: column; gap: 2px; width: 100%; text-align: left;
-  background: var(--surface); border: none; border-radius: 13px; padding: 12px 14px;
-  margin-bottom: 8px; color: var(--text); font-family: inherit; cursor: pointer;
+  display: flex; gap: 12px; align-items: flex-start; width: 100%; text-align: left;
+  /* Modalen är --surface, så kortet måste vara ljusare för att läsas som tryckbart.
+     (Mockupen hade en mörkare sheet och klarade sig med --surface.) */
+  background: var(--surface-2); border: 1px solid var(--line); border-radius: 13px;
+  padding: 12px 14px; margin-bottom: 8px; color: var(--text); font-family: inherit; cursor: pointer;
 }
-.lib-pkg:active, .lib-promo:active { background: var(--surface-2); }
+.lib-pkg:active, .lib-promo:active { background: var(--line); }
+.lib-ico { font-size: 1.45rem; line-height: 1.15; flex: none; }
+.lib-txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .lib-t { font-weight: 600; font-size: 0.95rem; }
 .lib-m { color: var(--muted); font-size: 0.78rem; font-variant-numeric: tabular-nums; }
 .lib-d { color: var(--muted); font-size: 0.78rem; line-height: 1.35; margin-top: 3px; }
@@ -1667,7 +1671,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .lib-lesson:last-child { border-bottom: none; }
 .lib-lesson span:last-child { color: var(--muted); font-variant-numeric: tabular-nums; }
 /* Reklamkortet står i en tom lista och ska synas utan att skrika. */
-.lib-promo { margin: 4px 16px; width: auto; border: 1px solid var(--accent); background: rgba(91,140,255,0.10); }
+.lib-promo { margin: 4px 16px; width: auto; border-color: var(--accent); background: rgba(91,140,255,0.12); }
 .lib-promo.hidden { display: none; }
 
 /* Varning i importdialogen (t.ex. "nästan varje lektion får ett enda ord").
