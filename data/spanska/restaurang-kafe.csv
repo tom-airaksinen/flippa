@@ -1,0 +1,53 @@
+sektion;ord;svenska;favorit;minnesregel;prio
+Restaurang & kafé;el camarero;servitör;;;1
+Restaurang & kafé;la camarera;servitris;;;2
+Restaurang & kafé;la mesa;bord;;;1
+Restaurang & kafé;la terraza;uteservering;;;2
+Restaurang & kafé;la cafetería;kafé;;;1
+Restaurang & kafé;la pastelería;konditori (kaffe och bakverk);;;3
+Restaurang & kafé;la reserva;bordsbokning;;;1
+Restaurang & kafé;el pedido;beställning;;;2
+Restaurang & kafé;la tapa;förrätt, tilltugg;;"litet tilltugg till drickan – Spaniens signum";1
+Restaurang & kafé;el plato principal;huvudrätt;;;2
+Restaurang & kafé;la taza;kopp;;;2
+Restaurang & kafé;la servilleta;servett;;;2
+Restaurang & kafé;la caña;stor öl (halvliter);;"caña = fatöl i litet glas, det man beställer på bar";2
+Restaurang & kafé;el hielo;is;;;2
+Restaurang & kafé;la propina;dricks;;;1
+Restaurang & kafé;el recibo;kvitto;;;2
+Restaurang & kafé;la tarjeta;kort (betalkort);;;1
+Restaurang & kafé;el efectivo;kontanter;;;2
+Restaurang & kafé;el gazpacho;kall tomatsoppa;;"serveras kyld på sommaren";1
+Restaurang & kafé;la tortilla de patatas;potatisomelett;;"Spaniens vanligaste rätt – finns överallt";1
+Restaurang & kafé;la paella;paella (risrätt);;;2
+Restaurang & kafé;los churros;churros med choklad;;;2
+Restaurang & kafé;el jamón ibérico;iberisk skinka;;;2
+Restaurang & kafé;la empanada;pirog, fylld paj;;;2
+Restaurang & kafé;el bocadillo;baguettemacka;;"standardlunchen: bröd med skinka eller ost";2
+Restaurang & kafé;el flan;karamellpudding;;;2
+Restaurang & kafé;el vino tinto;rött vin;;;1
+Restaurang & kafé;el vino blanco;vitt vin;;;1
+Restaurang & kafé;el agua sin gas;stilla vatten;;;1
+Restaurang & kafé;el agua con gas;kolsyrat vatten;;;1
+Restaurang & kafé;pedir;att beställa;;;1
+Restaurang & kafé;reservar;att boka;;;1
+Restaurang & kafé;recomendar;att rekommendera;;;2
+Restaurang & kafé;probar;att smaka;;;2
+Restaurang & kafé;elegir;att välja;;;2
+Restaurang & kafé;servir;att servera;;;3
+Restaurang & kafé;picante;stark (kryddstark);;;2
+Restaurang & kafé;dulce;söt;;;2
+Restaurang & kafé;fresco;färsk;;;2
+Restaurang & kafé;a la plancha;grillad;;;2
+Restaurang & kafé;frito;stekt;;;3
+Restaurang & kafé;Una mesa para cuatro, por favor.;Ett bord för fyra, tack.;;;1
+Restaurang & kafé;Tenemos una reserva.;Vi har en bokning.;;;1
+Restaurang & kafé;¿Me trae la carta?;Kan jag få se menyn?;;"la carta = menyn; el menú är dagens rätt";1
+Restaurang & kafé;Otra cerveza, por favor.;En öl till, tack.;;;1
+Restaurang & kafé;¿Puedo pagar con tarjeta?;Kan jag betala med kort?;;;1
+Restaurang & kafé;Pagamos por separado.;Vi betalar var för sig.;;;2
+Restaurang & kafé;Quédese con el cambio.;Behåll växeln.;;;2
+Restaurang & kafé;¡Buen provecho!;Smaklig måltid!;;;1
+Restaurang & kafé;Soy vegetariano.;Jag är vegetarian.;;;2
+Restaurang & kafé;¿Es picante?;Är det starkt?;;;2
+Restaurang & kafé;¿Desea algo más?;Önskas det något mer? (det servitören frågar);;;2
