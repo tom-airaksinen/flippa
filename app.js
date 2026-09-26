@@ -4609,7 +4609,7 @@ function askSubject(title, name = "", lang = "", allowDelete = false, forms = fa
           <span class="slider"></span>
         </label>
       </div>
-      <p class="modal-hint">Ger ett extra fält för t.ex. "o casă, două case". Visas diskret under ordet och läses aldrig upp. Slår du av det döljs fältet – inget raderas.</p>
+      <p class="modal-hint">Ger ett extra fält för böjningar – substantivens plural, verbens stamformer. Visas diskret under ordet och läses aldrig upp. Slår du av det döljs fältet – inget raderas.</p>
       <div class="modal-actions">
         <button class="btn-secondary" id="m-cancel">Avbryt</button>
         <button class="btn-primary" id="m-ok">Spara</button>
@@ -7102,7 +7102,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v386";
+const APP_VERSION = "v387";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
