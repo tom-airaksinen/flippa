@@ -98,6 +98,14 @@ let pendingReload = false, swReloading = false;
 
 // ---- Analytics (GoatCounter): lätta custom-events. Sidvisningar sköts av count.js. ----
 const GC_ENDPOINT = "https://flippa.goatcounter.com/count";
+// Språkkoden som suffix på pass-events, så statistiken kan svara på VILKET språk som
+// flippas – inte bara hur mycket. Basdelen räcker (sv, es, fa); regionen säger inget.
+// Ämnen utan språk (Morsekod, Learning science) får "ej-sprak".
+function trackLang() {
+  const kod = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
+  return kod || "ej-sprak";
+}
+
 function track(path, opts) {
   opts = opts || {};
   // Toms eget konto genererar aldrig statistik – han vill bara mäta ANDRAS användning.
@@ -2604,7 +2612,7 @@ async function startLessonSession(lessonId, force = false, continuing = false, i
   const note = lim && pool.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${pool.length} ord – resten kommer nästa pass.`
     : "";
-  if (!continuing) track("pass-lektion");
+  if (!continuing) { track("pass-lektion"); track("pass-sprak/" + trackLang()); }
   beginSession({ queue, dirMode, label: lesson.name, note, kind: "lesson", lessonId, forced: force, continueLimit: (lim && pool.length > queue.length) ? lim : 0 });
 }
 
@@ -2642,7 +2650,7 @@ function startDueSession(continuing = false) {
   const note = lim && due.length > queue.length
     ? `Pass klart! 🎉 ${queue.length} av ${due.length} förfallna ord – resten kvar.`
     : "";
-  if (!continuing) track("pass-dags");
+  if (!continuing) { track("pass-dags"); track("pass-sprak/" + trackLang()); }
   beginSession({ queue, dirMode, label: "Dags att öva", note, kind: "due", continueLimit: (lim && due.length > queue.length) ? lim : 0 });
 }
 
@@ -3052,6 +3060,7 @@ function finishSession() {
   const wasHF = handsfreeActive;
   commitSessionStats(); // logga passet innan vi släpper session-objektet
   track("pass-klart");
+  track("pass-klart-sprak/" + trackLang());
   stopHandsfree();
   const cont = session ? { limit: session.continueLimit, kind: session.kind, lessonId: session.lessonId, forced: session.forced } : null;
 
@@ -4899,6 +4908,31 @@ function confirmPrimary(title, message, okLabel) {
   });
 }
 
+// Som confirmDanger men kräver att man skriver en bekräftelsefras. Används när det som
+// försvinner är stort nog att man ska behöva stanna upp: ett område med innehåll.
+// Knappen är låst tills frasen stämmer (gemener/versaler och extra mellanslag spelar
+// ingen roll), och Enter i fältet raderar inte – man måste trycka på knappen.
+function confirmDangerTyped(title, message, phrase) {
+  return new Promise((resolve) => {
+    const m = openModal(`
+      <h3>${esc(title)}</h3>
+      <p class="modal-hint">${esc(message)}</p>
+      <label>Skriv <b>${esc(phrase)}</b> för att bekräfta</label>
+      <input type="text" id="m-phrase" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="${esc(phrase)}" />
+      <div class="modal-actions">
+        <button class="btn-secondary" id="m-cancel">Avbryt</button>
+        <button class="btn-danger" id="m-ok" disabled>Ta bort</button>
+      </div>`);
+    const inp = m.querySelector("#m-phrase"), ok = m.querySelector("#m-ok");
+    const matchar = () => inp.value.trim().toLowerCase().replace(/\s+/g, " ") === phrase.toLowerCase();
+    inp.addEventListener("input", () => { ok.disabled = !matchar(); });
+    inp.addEventListener("keydown", (e) => { if (e.key === "Enter") e.preventDefault(); });
+    m.querySelector("#m-cancel").onclick = () => { closeModal(); resolve(false); };
+    ok.onclick = () => { if (!matchar()) return; closeModal(); resolve(true); };
+    setTimeout(() => inp.focus(), 50);
+  });
+}
+
 function confirmDanger(title, message, okLabel = "Ta bort") {
   return new Promise((resolve) => {
     const m = openModal(`
@@ -5309,8 +5343,12 @@ async function editSubject(sid) {
     const omfang = antalL
       ? `${antalL} ${antalL === 1 ? "lektion" : "lektioner"} och ${antalO} ${antalO === 1 ? "ord" : "ord"}`
       : "området";
-    const ok = await confirmDanger("Ta bort hela området?",
-      `"${s.name}" med ${omfang} tas bort permanent. Vill du bara ta bort en lektion – stäng det här och tryck på lektionen i stället.`);
+    const text = `"${s.name}" med ${omfang} tas bort permanent. Vill du bara ta bort en lektion – stäng det här och tryck på lektionen i stället.`;
+    // Har området innehåll krävs att man skriver frasen: ett felklick ska inte kunna
+    // radera hundratals ord. Tomma område tas bort med ett vanligt ja.
+    const ok = antalO > 0
+      ? await confirmDangerTyped("Ta bort hela området?", text, "radera ämne")
+      : await confirmDanger("Ta bort hela området?", text);
     if (ok) { removeSubject(sid); renderSubjects(); }
     return;
   }
@@ -6939,7 +6977,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v380";
+const APP_VERSION = "v381";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

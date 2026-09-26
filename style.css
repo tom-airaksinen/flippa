@@ -1659,6 +1659,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   line-height: 1.45;
 }
 .modal-actions { display: flex; gap: 10px; margin-top: 4px; }
+/* Låst raderingsknapp (skriv-för-att-bekräfta): tydligt av, men inte osynlig. */
+.modal-actions button[disabled] { opacity: 0.4; cursor: not-allowed; }
 .modal-actions button {
   flex: 1;
   padding: 13px;

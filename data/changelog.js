@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "26 september 2026", ver: "v381", items: [
+    { t: "Ett område med ord kräver nu att du skriver \"radera ämne\" för att tas bort – tomma områden räcker det att bekräfta", type: "improved" },
+  ]},
   { date: "26 september 2026", ver: "v380", items: [
     { t: "Frågan innan ett område tas bort säger nu hur mycket som försvinner – \"3 lektioner och 149 ord\" – och påminner om att lektioner tas bort på lektionen", type: "improved" },
   ]},
