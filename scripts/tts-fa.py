@@ -9,6 +9,8 @@ Kör när någon lagt till nya ord; det tar en sekund per tio ord och rör inget
 redan finns. Sedan: granska, committa, deploya.
 
   plan     visar vilka ord som saknar ljud
+  saknas   skriver bara antalet – automatiken i .github/workflows/persiskt-uttal.yml
+           kör den var 15:e minut och drar igång bygg först när siffran är över noll
   bygg     genererar de som saknas och uppdaterar manifestet
 
 Rösten är fa-IR-DilaraNeural via edge-tts – Microsofts persiska neurala röst, samma
@@ -68,13 +70,32 @@ def las_index():
 
 def hasha(ord_): return hashlib.sha1(ord_.encode()).hexdigest()[:16]
 
+# Ord som rösten inte klarar (brus, för kort klipp) skulle annars räknas som saknade
+# för evigt, och automatiken varje kvart skulle bygga om dem varje kvart. Efter tre
+# försök läggs ordet här och lämnas i fred. Filen är INTE appens manifest – appen
+# läser bara index.json och ser ordet som ett utan uttal, precis som förut.
+# Radera posten (eller hela filen) för att ge ett ord en ny chans.
+GIVET_UPP = os.path.join(OUT, "givet-upp.json")
+FORSOK_MAX = 3
+
+def las_givet_upp():
+    if not os.path.exists(GIVET_UPP): return {}
+    try: return json.load(open(GIVET_UPP, encoding="utf-8"))
+    except Exception: return {}
+
+def spara_givet_upp(d):
+    if d: json.dump(d, open(GIVET_UPP, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    elif os.path.exists(GIVET_UPP): os.remove(GIVET_UPP)
+
 def saknade():
     ix = las_index()
     alla = persiska_ord()
+    upp = las_givet_upp()
     ut = {}
     for ord_, var in alla.items():
         h = ix["words"].get(ord_) or hasha(ord_)
         if ord_ not in ix["words"] or not os.path.exists(os.path.join(OUT, h + ".mp3")):
+            if upp.get(ord_, {}).get("forsok", 0) >= FORSOK_MAX: continue
             ut[ord_] = var
     return ix, alla, ut
 
@@ -106,9 +127,15 @@ def kvalitet(x, sr):
 
 def cmd_plan():
     ix, alla, ut = saknade()
+    upp = las_givet_upp()
     for ord_, var in list(ut.items())[:20]: print(f"  + {ord_}   ({var})")
     if len(ut) > 20: print(f"  … och {len(ut)-20} till")
-    print(f"\n{len(alla)} persiska ord i databasen · {len(alla)-len(ut)} har ljud · {len(ut)} saknar")
+    print(f"\n{len(alla)} persiska ord i databasen · {len(alla)-len(ut)-len(upp)} har ljud · "
+          f"{len(ut)} saknar" + (f" · {len(upp)} uppgivna (se {GIVET_UPP})" if upp else ""))
+
+def cmd_saknas():
+    """Bara siffran, för automatiken. Inga beroenden utöver standardbiblioteket."""
+    print(len(saknade()[2]))
 
 def las_pcm(mp3):
     """mp3 → (samples, sr) via ffmpeg, utan extra beroenden."""
@@ -143,17 +170,24 @@ def cmd_bygg():
     async def hamta(text, fil):
         await edge_tts.Communicate(text, ROST).save(fil)
 
+    upp = las_givet_upp()
+
+    def misslyckades(ord_, skal):
+        p = upp.setdefault(ord_, {"forsok": 0})
+        p["forsok"] += 1; p["skal"] = str(skal)
+        dåliga.append((ord_, skal, p["forsok"]))
+
     for ord_ in ut:
         h = hasha(ord_)
         tmp = os.path.join(OUT, h + ".raw.mp3")
         try:
             asyncio.run(hamta(ren(UTTAL.get(ord_, ord_)), tmp))
         except Exception as e:
-            dåliga.append((ord_, f"nätfel: {type(e).__name__}")); continue
+            misslyckades(ord_, f"nätfel: {type(e).__name__}"); continue
         x, sr = las_pcm(tmp)
         q = kvalitet(x, sr)
         if q < KVALITETSGRANS or len(x) / sr < 0.15:
-            dåliga.append((ord_, round(q, 2))); os.remove(tmp); continue   # skriv ALDRIG brus till repot
+            misslyckades(ord_, round(q, 2)); os.remove(tmp); continue   # skriv ALDRIG brus till repot
         x = klipp_tystnad(x, sr)
         wav = os.path.join(OUT, h + ".wav")
         with wave.open(wav, "wb") as f:
@@ -163,15 +197,19 @@ def cmd_bygg():
                         "-codec:a", "libmp3lame", "-b:a", "64k", os.path.join(OUT, h + ".mp3")], check=True)
         os.remove(wav); os.remove(tmp)
         ix["words"][ord_] = h; gjorda += 1
+        upp.pop(ord_, None)          # lyckades till slut – glöm de gamla försöken
     json.dump(ix, open(INDEX, "w", encoding="utf-8"), ensure_ascii=False)
+    spara_givet_upp(upp)
     print(f"KLART: {gjorda} nya ljudfiler · manifestet har nu {len(ix['words'])} ord")
     if dåliga:
-        print(f"\n{len(dåliga)} ord gav brus och hoppades över – de får inget ljud i appen:")
-        for o, q in dåliga[:10]: print(f"  {o}  (kvalitet {q})")
+        print(f"\n{len(dåliga)} ord gick inte att läsa in och fick inget ljud:")
+        for o, q, n in dåliga[:10]:
+            print(f"  {o}  ({q}){'  – uppgivet efter ' + str(n) + ' försök' if n >= FORSOK_MAX else f'  – försök {n}/{FORSOK_MAX}'}")
 
 if __name__ == "__main__":
     a = sys.argv[1:]
     if not a: die(__doc__)
     if a[0] == "plan": cmd_plan()
+    elif a[0] == "saknas": cmd_saknas()
     elif a[0] == "bygg": cmd_bygg()
     else: die("okänt kommando – kör utan argument för hjälp")

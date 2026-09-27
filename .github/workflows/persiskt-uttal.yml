@@ -1,0 +1,58 @@
+name: Persiskt uttal
+
+# Lägger någon till persiska glosor – Malin i sina egna lektioner, jag i mina – får de
+# ljud av sig själva inom en kvart. Ljudfilerna är medvetet frikopplade från releaser:
+# jobbet rör ALDRIG app.js eller sw.js, bara audio/fa/. Appen hämtar manifestet från
+# nätet vid varje start och service workern har en egen, versionsoberoende ljudcache,
+# så nya filer når alla utan att någon behöver uppdatera appen.
+#
+# Nästan alla körningar är no-ops: "saknas" är ett par HTTP-anrop med bara
+# standardbiblioteket, och pip/ffmpeg-steget körs först när siffran är över noll.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"    # var 15:e min (UTC); GitHub kan fördröja vid hög last
+  workflow_dispatch: {}        # kör manuellt för test
+
+concurrency:
+  group: persiskt-uttal
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  ljud:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: kolla
+        name: Hur många ord saknar ljud?
+        run: |
+          n=$(python3 scripts/tts-fa.py saknas)
+          echo "saknas=$n" >> "$GITHUB_OUTPUT"
+          echo "$n ord saknar ljud" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Beroenden
+        if: steps.kolla.outputs.saknas != '0'
+        run: |
+          python3 -m pip install --quiet edge-tts numpy
+          which ffmpeg || { sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg; }
+
+      - name: Generera
+        if: steps.kolla.outputs.saknas != '0'
+        run: python3 scripts/tts-fa.py bygg | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Committa det som blev
+        if: steps.kolla.outputs.saknas != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add audio/fa
+          git diff --cached --quiet && { echo "inget nytt att committa"; exit 0; }
+          antal=$(git diff --cached --name-only | grep -c '\.mp3$' || true)
+          git commit -m "Uttal för $antal nya persiska ord (automatiskt)"
+          # Rebase före push: jobbet kör var 15:e minut och kan krocka med en egen push.
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
