@@ -9,10 +9,18 @@ name: Persiskt uttal
 # Nästan alla körningar är no-ops: "saknas" är ett par HTTP-anrop med bara
 # standardbiblioteket, och pip/ffmpeg-steget körs först när siffran är över noll.
 
+# TRIGGERN: GitHubs egen schedule-cron är opålitlig för det här repot – uppmätta gap
+# på 56 min till 2,7 h (se docs/framtida-utveckling.md "GitHub struntar i cron-schemat"),
+# och de första 84 minuterna efter att jobbet lades upp fyrade den inte alls. Push-
+# påminnelserna löste det redan med en extern schemaläggare (cron-job.org) som
+# dispatchar var 15:e minut på minuten. Vi hänger på samma trigger i stället för att
+# sätta upp en till: push-reminders.yml anropar den här som workflow_call.
+# schedule ligger kvar som ren backup – skadar inte, men räkna inte med den.
 on:
-  schedule:
-    - cron: "*/15 * * * *"    # var 15:e min (UTC); GitHub kan fördröja vid hög last
+  workflow_call: {}            # push-reminders.yml – den pålitliga kvartstriggern
   workflow_dispatch: {}        # kör manuellt för test
+  schedule:
+    - cron: "*/15 * * * *"     # backup; GitHub hoppar över den ofta
 
 concurrency:
   group: persiskt-uttal

@@ -556,6 +556,12 @@ och närmaste körning är 16:42/17:00 ser det ut som "en timme sent".
   Token klistras **aldrig** in i chatten.
 - Behåll gärna GitHubs egna `schedule:`-cron kvar som backup (skadar inte).
 
+### Piggyback: persiskt uttal (2026-09-27)
+Samma rotorsak drabbade `persiskt-uttal.yml` direkt: `*/15`-schemat fyrade inte en
+enda gång på 84 minuter efter att jobbet lagts upp. I stället för ett andra
+cron-job.org-jobb anropas det som `workflow_call` från `push-reminders.yml`, som
+redan får sin dispatch på minuten. Ett jobb att hålla vid liv, inte två.
+
 ### Alternativ (om det skalas)
 - **B) Cloudflare Worker med Cron Trigger** som gör hela sändningen (pålitligt på
   minuten, GitHub helt ur bilden) – mer jobb: VAPID-signering i Web Crypto + secrets

@@ -22,3 +22,12 @@ jobs:
         env:
           FIREBASE_DB_SECRET: ${{ secrets.FIREBASE_DB_SECRET }}
           VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+
+  # Persiska glosor utan ljud får ljud. Åker med här för att det här är den enda
+  # triggern som faktiskt går var 15:e minut (extern cron → workflow_dispatch);
+  # GitHubs schedule hoppar över körningar i timmar. Jobben är oberoende – går
+  # uttalet fel skickas påminnelserna ändå.
+  uttal:
+    permissions:
+      contents: write
+    uses: ./.github/workflows/persiskt-uttal.yml
