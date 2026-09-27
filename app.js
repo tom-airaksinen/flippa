@@ -1473,7 +1473,10 @@ latchSafeArea();
 ["resize", "orientationchange", "pageshow"].forEach((ev) =>
   window.addEventListener(ev, () => { latchSafeArea(); updateTabbar(); }));
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") { latchSafeArea(); updateTabbar(); }
+  if (document.visibilityState !== "visible") return;
+  latchSafeArea(); updateTabbar();
+  // Appen kan ha legat i bakgrunden medan nya uttalsfiler publicerades.
+  if (currentSubject) loadAudioMap(subjectLang(currentSubject));
 });
 
 function renderCurrentScreen() {
@@ -3641,11 +3644,22 @@ function speakable(text) {
 // audio/<språk>/index.json mappar ordet till sitt filnamn. Kartan hämtas en gång
 // per språk och ämne; saknas den beter sig appen som förut.
 const audioMaps = {};   // "fa" -> {ord: hash} · null = hämtad men finns inte
+const audioMapTid = {}; // "fa" -> när listan hämtades
+// Nya uttalsfiler läggs upp automatiskt var 15:e minut (se .github/workflows/
+// persiskt-uttal.yml), så listan blir gammal medan appen står öppen. Hämtades den
+// en enda gång per sidladdning trodde en PWA som legat i bakgrunden i timmar att
+// nya ord saknade uttal – högtalaren dök aldrig upp förrän man tvångsstängde appen.
+// Tio minuter matchar Pages egen max-age: ett omhämtningsförsök som kommer tidigare
+// än så serveras ändå ur webbläsarens cache, alltså gratis.
+const AUDIO_KARTA_FRISK_MS = 10 * 60 * 1000;
 function audioBase(lang) { return String(lang || "").split("-")[0].toLowerCase(); }
 function loadAudioMap(lang) {
   const b = audioBase(lang);
-  if (!b || b in audioMaps) return;
-  audioMaps[b] = null;
+  if (!b) return;
+  const fardig = audioMaps[b] !== undefined && audioMaps[b] !== null;
+  if (b in audioMaps && (!fardig || Date.now() - (audioMapTid[b] || 0) < AUDIO_KARTA_FRISK_MS)) return;
+  if (!fardig) audioMaps[b] = null;
+  audioMapTid[b] = Date.now();
   // Versionen i frågan gör att ett nytt bygge alltid får en färsk lista, oavsett
   // vad webbläsaren och CDN:en har sparat.
   fetch(`audio/${b}/index.json?v=${APP_VERSION}`)
@@ -3653,11 +3667,18 @@ function loadAudioMap(lang) {
     .then((j) => {
       if (!j || !j.words) return;
       audioMaps[b] = j.words;
-      updateCardActions(); updateAutospeakRow(); // knappen kan dyka upp nu
+      updateCardActions(); updateAutospeakRow(); uppdateraModalHogtalare(); // knappen kan dyka upp nu
     })
     .catch(() => {});
 }
 function hasAudioFor(lang) { return !!audioMaps[audioBase(lang)]; }
+// En öppen redigeringsdialog ritas inte om när listan kommer in – högtalaren där
+// får i stället visas på plats.
+function uppdateraModalHogtalare() {
+  const sb = document.getElementById("m-speak"), fr = document.getElementById("m-front");
+  if (!sb || !fr || !currentSubject) return;
+  sb.classList.toggle("hidden", !canSpeakText(fr.value.trim(), subjectLang(currentSubject)));
+}
 function audioUrlFor(text, lang) {
   const b = audioBase(lang), m = audioMaps[b];
   if (!m) return "";
@@ -4770,6 +4791,9 @@ function askWord(front, back, hint, opts = {}) {
   const { allowDelete, explore, lessons, lessonId, prio, forms, form, tr } = opts;
   const PRIO_NAMES = { 1: "Kärna", 2: "Vanlig", 3: "Nisch" };
   const showLesson = lessons && lessons.length > 1; // bara meningsfullt att flytta om det finns fler lektioner
+  // Uttalslistan kan ha vuxit sedan appen startade (nya filer publiceras var 15:e
+  // minut). Gratis när den är färsk; annars ritas högtalaren om när svaret kommer.
+  loadAudioMap(subjectLang(currentSubject));
   return new Promise((resolve) => {
     // (åter)öppna redigeringen – samma promise lever vidare tills man Sparar/Avbryter/raderar.
     const open = (f, b, h, fo, tl) => {
@@ -4778,8 +4802,12 @@ function askWord(front, back, hint, opts = {}) {
       const talLang = subjectLang(currentSubject);
       // Knappen ska spegla ordet som står i fältet just nu – skriver man om ordet kan
       // ljudet försvinna eller dyka upp. Startläget avgörs av det sparade ordet.
+      // Knappen ritas alltid men göms när ordet saknar ljud: uttalslistan kan komma in
+      // strax efter att dialogen öppnats (den hämtas om när den är gammal), och då
+      // räcker det att ta bort .hidden. Fanns knappen inte i DOM:en gick den inte att
+      // få fram utan att stänga och öppna dialogen igen.
       const kanTala = !!(talLang && canSpeakText(f, talLang));
-      const speakBtnHtml = kanTala ? `<button class="modal-speak" id="m-speak" title="Läs upp (dubbeltappa eller håll in för böjningen)" aria-label="Läs upp">${IC_SPEAK}</button>` : "";
+      const speakBtnHtml = `<button class="modal-speak${kanTala ? "" : " hidden"}" id="m-speak" title="Läs upp (dubbeltappa eller håll in för böjningen)" aria-label="Läs upp">${IC_SPEAK}</button>`;
       const globeBtn = explore ? `<button class="modal-globe" id="m-globe" title="AI-kontext" aria-label="AI-kontext">${AI_STARS_SVG}</button>` : "";
       const delBtn = allowDelete ? `<button class="modal-del" id="m-del" title="Ta bort ord" aria-label="Ta bort ord">${TRASH_ICON_SVG}</button>` : "";
       // Böjningen hör till det utländska ordet → fältet ligger direkt under det.
@@ -4895,10 +4923,10 @@ function askWord(front, back, hint, opts = {}) {
         closeAiPop();
       });
 
-      if (kanTala) {
+      {
         const sb = m.querySelector("#m-speak");
         wireSpeakButton(sb, () => vals().f || f, () => (forms ? vals().fo : ""), "uttala-redigera");
-        // Döljs igen om man skriver in ett ord som varken har röst eller fil.
+        // Visas/döljs när man skriver om ordet – ljudet kan försvinna eller dyka upp.
         m.querySelector("#m-front").addEventListener("input", () => {
           sb.classList.toggle("hidden", !canSpeakText(vals().f || f, talLang));
         });
@@ -7249,7 +7277,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v397";
+const APP_VERSION = "v398";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

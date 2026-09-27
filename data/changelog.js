@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "27 september 2026", ver: "v398", items: [
+    { t: "Persiska: nya uttalsfiler dyker upp medan appen är igång – förut syntes högtalaren först efter en omstart", type: "fixed" },
+  ] },
   { date: "27 september 2026", ver: "v396", items: [
     { t: "⋯-fliken på kortet säger nu MENY – lättare att se vad den är för nya användare", type: "improved" },
   ] },
