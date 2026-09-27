@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "27 september 2026", ver: "v391", items: [
+    { t: "AI:n bad om svensk böjning i stället för målspråkets ({ett träd, träd} på ett persiskt ord) – nu står det uttryckligen vilket språk böjningen ska vara på", type: "fixed" },
+    { t: "Inklistring av höger-vänster-språk lagar rader där mobilen slagit ihop ordet med sin översättning", type: "fixed" },
+  ] },
   { date: "27 september 2026", ver: "v390", items: [
     { t: "Persiska, arabiska och hebreiska: AI-prompten ber nu om ordet på en egen rad och översättningen på nästa, så att inget går sönder när du kopierar. Inget CSV-krångel längre", type: "improved" },
     { t: "Persiska: uttalet kan följa med direkt i inklistringen (svenskt;uttal;prio)", type: "new" },

@@ -5124,18 +5124,48 @@ function splitGlued(line) {
 // varje rad en enda riktning och det finns ingenting att kasta om. Ihopparningen görs
 // BARA för RTL-ämnen: i övriga språk är en rad utan semikolon skräp (en rubrik man
 // råkat få med), och den ska fortsätta ignoreras.
+// Höger-vänster-tecken (arabiska/hebreiska block + presentationsformer). ZWNJ och
+// riktningsmarkörer räknas som luft: de sitter inuti persiska ord (همیشه‌سبز).
+const RTL_CHAR = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
+const RTL_LUFT = "[\\s\\u200b-\\u200f\\u202a-\\u202e\\u2066-\\u2069]*";
+const RTL_KLISTER = [
+  // "…;1گیاه" – nästa glosas ord har klistrats på föregående svans.
+  new RegExp(`(;[123])${RTL_LUFT}(?=${RTL_CHAR.source})`, "g"),
+  // "درختträd {…};derakht;1" – ordet har klistrats ihop med sin egen svans.
+  new RegExp(`(${RTL_CHAR.source})${RTL_LUFT}(?=[A-Za-zÅÄÖåäö])`, "g"),
+];
+// Urklippet tappar ibland radbrytningen mellan ordet och svansen, trots att raderna
+// var rena var för sig. Skriften byter då mitt i raden – och just det gör det säkert
+// att dela där: ett persiskt ord och en svensk översättning hör aldrig ihop på samma
+// rad i det här formatet. Räddar raderna som annars bara hade blivit en varning.
+function delaRtlRader(rader) {
+  return rader.flatMap((rad) =>
+    RTL_KLISTER.reduce((r, re) => r.replace(re, "$1\n"), rad).split("\n").map((r) => r.trim()).filter(Boolean));
+}
 function parRTLrader(rader) {
   if (!isRtlLang(subjectLang(currentSubject))) return rader;
+  rader = delaRtlRader(rader);
   // Saknar HELA klippet semikolon har AI:n hoppat över prion på varannan rad. Då är
   // paren entydiga (rad 1 ord, rad 2 svenska) och alternativet vore att tappa allt.
   const utanPrio = !rader.some((r) => r.includes(";"));
   const ut = [];
   for (let i = 0; i < rader.length; i++) {
     const rad = rader[i], nasta = rader[i + 1];
-    if (rad && !rad.includes(";") && nasta && (utanPrio || nasta.includes(";"))) { ut.push(rad + ";" + nasta); i++; }
+    if (rad && !rad.includes(";") && nasta && (utanPrio || nasta.includes(";"))) { ut.push(slaIhopRTL(rad, nasta)); i++; }
     else ut.push(rad);
   }
   return ut;
+}
+// Böjningen står på ORDETS rad ({نان‌ها} efter نان) – den hör till det utländska ordet
+// och får inte ligga på den svenska raden, för då blandas skrifterna igen. Här flyttas
+// den in i svansen före prion, så att resten av parsningen ser samma format som alltid.
+function slaIhopRTL(ord, svans) {
+  const m = ord.match(/\s*\{([^}]*)\}\s*$/);
+  if (!m) return ord + ";" + svans;
+  const boj = ";{" + m[1].trim() + "}";
+  const p = svans.match(/;[123]\s*$/);
+  return ord.slice(0, m.index).trim() + ";"
+    + (p ? svans.slice(0, p.index) + boj + p[0] : svans + boj);
 }
 
 function parseLines(text) {
@@ -5809,7 +5839,10 @@ const AI_EXAMPLES = {
 const AI_VERB_EXAMPLES = {
   ro: "înțeleg, înțelege · am înțeles · să înțeleagă",
 };
+// Persiskan saknar obestämd artikel – "obestämd singular" är meningslöst där.
+const AI_FORM_LABELS = { fa: "singular + plural" };
 const AI_FORM_EXAMPLES = {
+  fa: "نان, نان‌ها",
   ro: "o pâine, două pâini",
   fr: "un pain, des pains",
   it: "un pane, due pani",
@@ -5829,8 +5862,15 @@ function formPromptNote(harGenus) {
   // Exemplet MÅSTE vara på målspråket. Saknas ett skickas en schematisk form i
   // stället – ett rumänskt exempel i en finsk prompt styr mål-LLM:en helt fel.
   const substExempel = AI_FORM_EXAMPLES[bas];
+  // Böjningen är det UTLÄNDSKA ordets. Utan den skrivningen svarade ChatGPT med svensk
+  // böjning ({ett träd, träd}) för språk som saknar exempel i tabellen – oanvändbart.
+  const malspraket = currentForeignLabel();
+  const plats = isRtlLang(subjectLang(currentSubject))
+    ? `i klamrar direkt efter ordet på DESS egen rad (aldrig på den svenska raden)`
+    : `i klamrar efter den svenska sidan`;
   const subst = (harGenus ? " Ta dessutom med böjningen" : " För substantiv: ta med böjningen")
-    + ` i klamrar efter den svenska sidan – obestämd singular + obestämd plural, `
+    + ` av ordet på ${malspraket} ${plats} – ${AI_FORM_LABELS[bas] || "obestämd singular + obestämd plural"} `
+    + `på ${malspraket}, ALDRIG den svenska böjningen, `
     + (substExempel ? `t.ex. {${substExempel}}.` : `i formen {obestämd singular, obestämd plural}.`);
   const verbExempel = AI_VERB_EXAMPLES[bas];
   const verb = verbExempel
@@ -5851,13 +5891,17 @@ function rtlRadPar(rad, base, i) {
   if (!RTL_LANGS.has(base)) return rad;
   const d = rad.indexOf(";");
   if (d < 0) return rad;
-  let svans = rad.slice(d + 1);
+  let ord = rad.slice(0, d), svans = rad.slice(d + 1);
+  // Klammern hör till ordet och flyttas till ordets rad – annars står persiska och
+  // latinska bokstäver på samma rad i själva exemplet.
+  const bm = svans.match(/;?\s*\{([^}]*)\}/);
+  if (bm) { ord += " {" + bm[1].trim() + "}"; svans = (svans.slice(0, bm.index) + svans.slice(bm.index + bm[0].length)).replace(/^;|;$/g, ""); }
   const tr = (AI_TR_EXAMPLES[base] || [])[i];
   if (tr) {
     const k = svans.indexOf(";");
     svans = k < 0 ? `${svans};${tr}` : `${svans.slice(0, k)};${tr}${svans.slice(k)}`;
   }
-  return `${rad.slice(0, d)}\n${svans}`;
+  return `${ord}\n${svans}`;
 }
 function aiExampleLines(label) {
   const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
@@ -7176,7 +7220,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v390";
+const APP_VERSION = "v391";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
