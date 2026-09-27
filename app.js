@@ -5955,13 +5955,15 @@ function buildAiPrompt(count, theme) {
   const svansFormat = `svensk översättning${uttal ? ";uttal" : ""};prio`;
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
     + (rtl
-        ? `VIKTIGT – hela svaret måste bestå av enbart ASCII-tecken. Mobilens urklipp kastar om `
-          + `tecknen i ${lang} och förstör orden, men har ingenting att kasta om i ren ASCII.\n`
+        ? `VIKTIGT – svaret får inte innehålla ett enda tecken skrivet i ${lang}s alfabet. `
+          + `Mobilens urklipp kastar nämligen om den skriften och förstör orden.\n`
           + `Skriv därför ordet med en Unicode-escape per tecken (\\u062f\\u0631\\u062e\\u062a och så `
-          + `vidare). Mellanslag i fraser skrivs som vanligt mellanslag. Inga bokstäver från `
-          + `${lang} någonstans i svaret – varken i ordet, översättningen eller uttalet.\n`
+          + `vidare). Mellanslag i fraser skrivs som vanligt mellanslag.\n`
+          + `Den svenska översättningen skriver du som vanlig svensk text – å, ä och ö ska vara `
+          + `kvar${uttal ? `, och uttalet skrivs med vanliga latinska bokstäver (gärna â för långt a)` : ""}. `
+          + `Det är BARA ${lang}s eget alfabet som ska bytas mot escapes.\n`
           + `Format: en glosa per rad – "escape-sekvenserna;${svansFormat}" med semikolon emellan.\n`
-          + (uttal ? `Uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salam.\n` : "")
+          + (uttal ? `Uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salâm.\n` : "")
           + `Lägg hela svaret i ett kodblock.\n`
         : `Format: en glosa per rad – "ord/fras;${svansFormat}" med semikolon emellan.\n`
           + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
@@ -7247,7 +7249,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v393";
+const APP_VERSION = "v394";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
