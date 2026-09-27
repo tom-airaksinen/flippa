@@ -5128,11 +5128,15 @@ function splitGlued(line) {
 // riktningsmarkörer räknas som luft: de sitter inuti persiska ord (همیشه‌سبز).
 const RTL_CHAR = /[\u0590-\u05FF\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB1D-\uFDFF\uFE70-\uFEFF]/;
 const RTL_LUFT = "[\\s\\u200b-\\u200f\\u202a-\\u202e\\u2066-\\u2069]*";
+// Tecken som får hänga kvar på ordets sida när raden delas: avslutande klammer,
+// parentes och skiljetecken hör till ordet, inte till den svenska översättningen.
+// Utan dem stannade delningen vid "…درخت‌ها}träd" – klammern stod i vägen.
+const RTL_SVANS = "[\\s\\u200b-\\u200f\\u202a-\\u202e\\u2066-\\u2069}\\)\\]»\u201d'،؛.,:!?]*";
 const RTL_KLISTER = [
   // "…;1گیاه" – nästa glosas ord har klistrats på föregående svans.
   new RegExp(`(;[123])${RTL_LUFT}(?=${RTL_CHAR.source})`, "g"),
   // "درختträd {…};derakht;1" – ordet har klistrats ihop med sin egen svans.
-  new RegExp(`(${RTL_CHAR.source})${RTL_LUFT}(?=[A-Za-zÅÄÖåäö])`, "g"),
+  new RegExp(`(${RTL_CHAR.source}${RTL_SVANS})(?=[A-Za-zÅÄÖåäö])`, "g"),
 ];
 // Urklippet tappar ibland radbrytningen mellan ordet och svansen, trots att raderna
 // var rena var för sig. Skriften byter då mitt i raden – och just det gör det säkert
@@ -7220,7 +7224,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v391";
+const APP_VERSION = "v392";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
