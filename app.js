@@ -5172,7 +5172,23 @@ function slaIhopRTL(ord, svans) {
     + (p ? svans.slice(0, p.index) + boj + p[0] : svans + boj);
 }
 
+// Urklippet på iOS kastar om höger-vänster-skrift: tecken byter plats mellan
+// intilliggande rader ("گگیاه", "hل"). Ingen parsning i världen kan gissa sig till
+// originalet. Enda immuniteten är att texten aldrig innehåller höger-vänster-skrift –
+// då finns ingenting för bidi-algoritmen att kasta om. Därför ber prompten om ordet
+// som Unicode-escapes, och här packas de upp igen. Accepterar både \u062f, \u{62f}
+// och U+062F, och lämnar allt annat orört – ett ämne kan mycket väl ha både
+// escape-rader och vanliga rader i samma klipp.
+function avkodaEscapes(text) {
+  return text.replace(/\\u\{([0-9a-fA-F]{2,6})\}|\\u([0-9a-fA-F]{4})|U\+([0-9a-fA-F]{4,6})/g,
+    (hel, a, b, c) => {
+      const kod = parseInt(a || b || c, 16);
+      return kod > 0 && kod <= 0x10ffff ? String.fromCodePoint(kod) : hel;
+    });
+}
+
 function parseLines(text) {
+  if (isRtlLang(subjectLang(currentSubject))) text = avkodaEscapes(text);
   const rader = text
     // Alla radseparatorer, inte bara \n: CRLF, ensam CR (äldre klipp), NEL och
     // Unicodes LS/PS – en enda oväntad separator gjorde annars hela klippet till EN rad.
@@ -5891,21 +5907,26 @@ function formPromptNote(harGenus) {
 const AI_TR_EXAMPLES = { fa: ["nân", "sobh bekheyr"] };
 // Höger-vänster-språk: bryt raden efter ordet, så att ordet står ensamt och resten
 // av glosan hamnar på en ren latinsk rad. Se parRTLrader för varför.
+// Bara höger-vänster-skriften escapas – svenskans å/ä/ö kastas inte om av urklippet
+// och ska synas som bokstäver i exemplet.
+const ESCAPA_RE = new RegExp(`[${RTL_CHAR.source.slice(1, -1)}\\u200b-\\u200f\\u202a-\\u202e\\u2066-\\u2069]`, "g");
+function tillEscapes(text) {
+  return text.replace(ESCAPA_RE, (t) => "\\u" + t.codePointAt(0).toString(16).padStart(4, "0"));
+}
+// Exempelraden för ett höger-vänster-språk skrivs i escapes den också: annars bär
+// SJÄLVA PROMPTEN runt på höger-vänster-skrift, och den kopieras via urklippet den
+// med. Uttalet hakas in efter svenskan för språk som visar translitterering.
 function rtlRadPar(rad, base, i) {
   if (!RTL_LANGS.has(base)) return rad;
   const d = rad.indexOf(";");
   if (d < 0) return rad;
-  let ord = rad.slice(0, d), svans = rad.slice(d + 1);
-  // Klammern hör till ordet och flyttas till ordets rad – annars står persiska och
-  // latinska bokstäver på samma rad i själva exemplet.
-  const bm = svans.match(/;?\s*\{([^}]*)\}/);
-  if (bm) { ord += " {" + bm[1].trim() + "}"; svans = (svans.slice(0, bm.index) + svans.slice(bm.index + bm[0].length)).replace(/^;|;$/g, ""); }
+  let svans = rad.slice(d + 1);
   const tr = (AI_TR_EXAMPLES[base] || [])[i];
   if (tr) {
     const k = svans.indexOf(";");
     svans = k < 0 ? `${svans};${tr}` : `${svans.slice(0, k)};${tr}${svans.slice(k)}`;
   }
-  return `${ord}\n${svans}`;
+  return `${tillEscapes(rad.slice(0, d))};${tillEscapes(svans)}`;
 }
 function aiExampleLines(label) {
   const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
@@ -5934,12 +5955,14 @@ function buildAiPrompt(count, theme) {
   const svansFormat = `svensk översättning${uttal ? ";uttal" : ""};prio`;
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
     + (rtl
-        ? `Format: TVÅ rader per glosa. Först ordet eller frasen på ${lang} helt ensamt på en rad, `
-          + `sedan "${svansFormat}" med semikolon emellan på raden efter.\n`
-          + `Skriv ALDRIG ${lang} och latinska bokstäver på samma rad – inte ens inom parentes – `
-          + `eftersom mobilens urklipp då kastar om tecknen och orden går sönder.`
-          + (uttal ? ` Uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salâm.` : "")
-          + ` Lägg hela svaret i ett kodblock.\n`
+        ? `VIKTIGT – hela svaret måste bestå av enbart ASCII-tecken. Mobilens urklipp kastar om `
+          + `tecknen i ${lang} och förstör orden, men har ingenting att kasta om i ren ASCII.\n`
+          + `Skriv därför ordet med en Unicode-escape per tecken (\\u062f\\u0631\\u062e\\u062a och så `
+          + `vidare). Mellanslag i fraser skrivs som vanligt mellanslag. Inga bokstäver från `
+          + `${lang} någonstans i svaret – varken i ordet, översättningen eller uttalet.\n`
+          + `Format: en glosa per rad – "escape-sekvenserna;${svansFormat}" med semikolon emellan.\n`
+          + (uttal ? `Uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salam.\n` : "")
+          + `Lägg hela svaret i ett kodblock.\n`
         : `Format: en glosa per rad – "ord/fras;${svansFormat}" med semikolon emellan.\n`
           + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
           + `och aldrig radbrytning inuti en glosa (fraser med flera ord står kvar på samma rad).\n`)
@@ -6384,10 +6407,10 @@ function openAddDialog(opts = {}) {
     // formatet direkt, annars klistrar man in enradigt och får sönderklippta ord.
     if (isRtlLang(fullLang)) {
       const tr = subjectUsesTranslit();
-      return `<p class="modal-hint">Två rader per glosa: ordet på ${esc(foreignLabel)} på en egen rad, `
-        + `<b>svenskt${tr ? ";uttal" : ""};prio</b> på nästa. Håll skrifterna på var sin rad – annars kastar `
-        + `mobilens urklipp om tecknen.</p>
-      <textarea id="add-manual" rows="5" autocapitalize="none" autocorrect="off" placeholder="سلام&#10;hej${tr ? ";salâm" : ""};1"></textarea>
+      return `<p class="modal-hint">En rad per glosa: <b>ord;svenskt${tr ? ";uttal" : ""};prio</b>. `
+        + `Skriver du själv går det bra – men <b>klistra inte in</b> ${esc(foreignLabel)} härifrån en chatt: `
+        + `mobilens urklipp kastar om tecknen. Använd AI-fliken, den ber om ett format som tål det.</p>
+      <textarea id="add-manual" rows="5" autocapitalize="none" autocorrect="off" placeholder="سلام;hej${tr ? ";salâm" : ""};1"></textarea>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="add-manual-ok">Lägg till</button></div>`;
     }
     return `<p class="modal-hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfri prio (1–3) sist: <code>grazie;tack;1</code></p>
@@ -7224,7 +7247,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v392";
+const APP_VERSION = "v393";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
