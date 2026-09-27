@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Flippa – statistikvy (mockup)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+  :root {
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8;
+    --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --easy:#f4c542; --fire:#ff8a3d;
+  }
+  html,body { height:100%; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; padding:16px 14px 60px; }
+  h1 { font-size:1.15rem; margin-bottom:4px; }
+  .lead { color:var(--muted); font-size:.82rem; line-height:1.45; margin-bottom:14px; }
+
+  /* Förhandsvisning: var knappen sitter */
+  .preview { background:var(--surface); border-radius:14px; padding:12px; margin-bottom:16px; }
+  .preview .cap { color:var(--muted); font-size:.72rem; margin-bottom:8px; }
+  .hdr { display:flex; align-items:center; gap:8px; }
+  .hdr .back, .hdr .ic { background:var(--surface-2); border:none; color:var(--text); width:34px; height:34px; border-radius:9px; display:flex; align-items:center; justify-content:center; flex:none; }
+  .hdr h3 { flex:1; font-size:1rem; }
+  .hdr .ic.hot { color:var(--accent); }
+
+  /* Variantval */
+  .tabs { display:flex; gap:6px; margin-bottom:16px; }
+  .tabs button { flex:1; background:var(--surface); color:var(--text); border:none; border-radius:10px; padding:10px 4px; font-size:.82rem; font-family:inherit; line-height:1.2; }
+  .tabs button .s { display:block; color:var(--muted); font-size:.64rem; margin-top:3px; }
+  .tabs button.on { background:var(--accent); color:#fff; } .tabs button.on .s { color:#dce6ff; }
+
+  .view { background:var(--bg); }
+  .sheet { background:var(--surface); border-radius:16px; padding:16px; }
+  .sheet h2 { font-size:1.05rem; margin-bottom:2px; }
+  .sheet .sub { color:var(--muted); font-size:.78rem; margin-bottom:14px; }
+
+  /* KPI-kort */
+  .kpis { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+  .kpi { background:var(--surface-2); border-radius:12px; padding:12px 10px; text-align:center; }
+  .kpi .v { font-size:1.5rem; font-weight:700; line-height:1.1; }
+  .kpi .l { color:var(--muted); font-size:.66rem; margin-top:4px; letter-spacing:.02em; }
+  .kpi.fire .v { color:var(--fire); }
+  .kpi.wide { grid-column:span 3; display:flex; align-items:center; justify-content:center; gap:10px; }
+
+  /* hero (variant B) */
+  .hero { text-align:center; padding:8px 0 16px; }
+  .hero .big { font-size:3.4rem; font-weight:800; color:var(--fire); line-height:1; }
+  .hero .big .u { font-size:1rem; color:var(--muted); font-weight:600; }
+  .hero .cap { color:var(--muted); font-size:.85rem; margin-top:4px; }
+  .row3 { display:flex; gap:10px; margin-top:6px; }
+  .row3 .b { flex:1; text-align:center; background:var(--surface-2); border-radius:12px; padding:10px; }
+  .row3 .b .v { font-size:1.15rem; font-weight:700; } .row3 .b .l { color:var(--muted); font-size:.64rem; margin-top:3px; }
+
+  /* Månadskalender */
+  .calhead { display:flex; align-items:center; justify-content:space-between; margin:18px 2px 10px; }
+  .calhead .m { font-weight:600; font-size:.95rem; }
+  .calhead button { background:var(--surface-2); border:none; color:var(--text); width:30px; height:30px; border-radius:8px; }
+  .cal { display:grid; grid-template-columns:repeat(7,1fr); gap:5px; }
+  .cal .dow { color:var(--muted); font-size:.62rem; text-align:center; padding-bottom:2px; }
+  .cal .cell { aspect-ratio:1; border-radius:9px; display:flex; align-items:center; justify-content:center; font-size:.78rem; color:var(--muted); background:transparent; }
+  .cal .cell.has { background:var(--accent); color:#fff; font-weight:600; }
+  .cal .cell.lite { background:rgba(91,140,255,.28); color:var(--text); }
+  .cal .cell.today { box-shadow:inset 0 0 0 2px var(--easy); }
+  .cal .cell.empty { visibility:hidden; }
+
+  /* Heatmap */
+  .heat-wrap { overflow-x:auto; padding-bottom:4px; margin-top:6px; }
+  .heat { display:flex; gap:4px; }
+  .heat .wk { display:flex; flex-direction:column; gap:4px; }
+  .heat .d { width:15px; height:15px; border-radius:4px; background:var(--surface-2); }
+  .heat .d.l1 { background:rgba(91,140,255,.32); }
+  .heat .d.l2 { background:rgba(91,140,255,.55); }
+  .heat .d.l3 { background:rgba(91,140,255,.78); }
+  .heat .d.l4 { background:var(--accent); }
+  .heat .d.today { box-shadow:0 0 0 2px var(--easy); }
+  .legend { display:flex; align-items:center; gap:6px; justify-content:flex-end; margin-top:10px; color:var(--muted); font-size:.66rem; }
+  .legend .d { width:12px; height:12px; border-radius:3px; }
+
+  /* Veckostaplar */
+  .bars { display:flex; align-items:flex-end; gap:8px; height:120px; margin-top:8px; }
+  .bars .col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; height:100%; justify-content:flex-end; }
+  .bars .bar { width:70%; background:var(--accent); border-radius:6px 6px 0 0; min-height:3px; position:relative; }
+  .bars .bar.today { background:var(--easy); }
+  .bars .num { font-size:.62rem; color:var(--text); }
+  .bars .dl { font-size:.62rem; color:var(--muted); }
+  .section-l { color:var(--muted); font-size:.72rem; font-weight:600; letter-spacing:.03em; margin:18px 2px 4px; }
+
+  .note { color:var(--muted); font-size:.74rem; line-height:1.45; margin-top:14px; }
+</style>
+</head>
+<body>
+  <h1>Statistikvy – 3 varianter</h1>
+  <p class="lead">En 📊-knapp till vänster om pennan högst upp i ett område öppnar den här vyn. KPI:er överst, kalender under. Tryck runt – kalender/heatmap är byggda av exempeldata. Säg vilken du gillar (eller en mix), så bygger vi den på riktigt.</p>
+
+  <div class="preview">
+    <div class="cap">Så här sitter knappen (📊 till vänster om ✎):</div>
+    <div class="hdr">
+      <button class="back">←</button>
+      <h3>🇮🇹 Italienska</h3>
+      <button class="ic hot" id="statbtn" title="Statistik">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="5"/><line x1="18" y1="20" x2="18" y2="9"/></svg>
+      </button>
+      <button class="ic">✎</button>
+      <button class="ic">＋</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabs">
+    <button data-v="A" class="on">A · Månadskalender<span class="s">KPI-kort + månad</span></button>
+    <button data-v="B">B · Heatmap<span class="s">streak-hjälte + rutnät</span></button>
+    <button data-v="C">C · Veckofokus<span class="s">staplar + månad</span></button>
+  </div>
+
+  <div class="view" id="view"></div>
+
+  <p class="note">Exempel-KPI:er vi kan visa: 🔥 nuvarande streak, längsta streak, kort totalt/denna vecka, total tid, antal övade dagar, snitt/dag. Kalendern kan färga dagar efter hur mycket man övat (intensitet). Vi väljer den slutliga uppsättningen när du sett varianterna.</p>
+
+<script>
+  // ---- Exempeldata: datum -> {cards, ms} ----
+  const today = new Date(); today.setHours(12,0,0,0);
+  const ymd = (d) => d.toLocaleDateString("sv-SE");
+  const addDays = (base,n) => { const d=new Date(base); d.setDate(d.getDate()+n); return d; };
+  const data = {};
+  let seed = 7;
+  const rnd = () => { seed = (seed*1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+  for (let i=130;i>=0;i--){
+    const d = addDays(today,-i);
+    const practiced = i<=4 ? true : (i>=7 && i<=8 ? false : rnd()<0.68); // garanterad färsk streak + lite hål
+    if (practiced){
+      const cards = 6 + Math.floor(rnd()*38);
+      data[ymd(d)] = { cards, ms: cards*(3200+rnd()*3500) };
+    }
+  }
+
+  // ---- KPI:er ----
+  function currentStreak(){ let n=0,d=new Date(today); if(!data[ymd(d)]) d=addDays(d,-1); while(data[ymd(d)]){n++; d=addDays(d,-1);} return n; }
+  function longestStreak(){ let best=0,run=0,d=addDays(today,-200); for(let i=0;i<=200;i++){ if(data[ymd(d)]){run++; best=Math.max(best,run);} else run=0; d=addDays(d,1);} return best; }
+  function sumLast(days,key){ let s=0; for(let i=0;i<days;i++){ const r=data[ymd(addDays(today,-i))]; if(r) s+=r[key]; } return s; }
+  function totalCards(){ return Object.values(data).reduce((a,r)=>a+r.cards,0); }
+  function totalMin(){ return Math.round(Object.values(data).reduce((a,r)=>a+r.ms,0)/60000); }
+  function daysThisMonth(){ const m=today.getMonth(),y=today.getFullYear(); return Object.keys(data).filter(k=>{const d=new Date(k); return d.getMonth()===m&&d.getFullYear()===y;}).length; }
+  function fmtTime(min){ return min>=60 ? (min/60).toFixed(1).replace(".0","")+" h" : min+" min"; }
+
+  // ---- Renderare ----
+  const view = document.getElementById("view");
+  let calY = today.getFullYear(), calM = today.getMonth();
+  const MONTHS = ["januari","februari","mars","april","maj","juni","juli","augusti","september","oktober","november","december"];
+  const DOW = ["M","T","O","T","F","L","S"];
+
+  function calLevel(cards){ if(!cards) return ""; return cards>=22 ? "has" : "lite"; }
+
+  function renderMonth(){
+    const first = new Date(calY,calM,1);
+    let startDow = (first.getDay()+6)%7; // måndag=0
+    const days = new Date(calY,calM+1,0).getDate();
+    let cells = "";
+    DOW.forEach(d=>cells+=`<div class="dow">${d}</div>`);
+    for(let i=0;i<startDow;i++) cells+=`<div class="cell empty"></div>`;
+    for(let day=1;day<=days;day++){
+      const d=new Date(calY,calM,day); const r=data[ymd(d)];
+      const cls=["cell"]; if(r) cls.push(calLevel(r.cards)); if(ymd(d)===ymd(today)) cls.push("today");
+      cells+=`<div class="${cls.join(" ")}">${day}</div>`;
+    }
+    return cells;
+  }
+  function monthControls(){
+    document.getElementById("prevm").onclick=()=>{ calM--; if(calM<0){calM=11;calY--;} document.getElementById("cal").innerHTML=renderMonth(); document.getElementById("mlabel").textContent=MONTHS[calM]+" "+calY; };
+    document.getElementById("nextm").onclick=()=>{ calM++; if(calM>11){calM=0;calY++;} document.getElementById("cal").innerHTML=renderMonth(); document.getElementById("mlabel").textContent=MONTHS[calM]+" "+calY; };
+  }
+
+  function viewA(){
+    view.innerHTML = `<div class="sheet">
+      <h2>📊 Statistik</h2><div class="sub">🇮🇹 Italienska</div>
+      <div class="kpis">
+        <div class="kpi fire"><div class="v">${currentStreak()}</div><div class="l">DAGARS STREAK 🔥</div></div>
+        <div class="kpi"><div class="v">${sumLast(7,"cards")}</div><div class="l">KORT / VECKA</div></div>
+        <div class="kpi"><div class="v">${fmtTime(Math.round(sumLast(7,"ms")/60000))}</div><div class="l">TID / VECKA</div></div>
+      </div>
+      <div class="calhead">
+        <button id="prevm">‹</button><span class="m" id="mlabel">${MONTHS[calM]} ${calY}</span><button id="nextm">›</button>
+      </div>
+      <div class="cal" id="cal">${renderMonth()}</div>
+      <div class="legend"><span>mindre</span><span class="d" style="background:rgba(91,140,255,.28)"></span><span class="d" style="background:var(--accent)"></span><span>mer</span></div>
+    </div>`;
+    monthControls();
+  }
+
+  function renderHeat(){
+    // 18 veckor bakåt, måndag överst
+    const weeks=18; let end=new Date(today); end=addDays(end,(7-((end.getDay()+6)%7))-1); // till veckans söndag
+    let html="";
+    for(let w=weeks-1; w>=0; w--){
+      let col="";
+      for(let dow=0; dow<7; dow++){
+        const d=addDays(end, -(w*7) - (6-dow));
+        const r=data[ymd(d)]; const c=r?r.cards:0;
+        let lvl=""; if(c){ lvl = c>=33?"l4":c>=22?"l3":c>=12?"l2":"l1"; }
+        const tdy = ymd(d)===ymd(today)?"today":"";
+        col+=`<div class="d ${lvl} ${tdy}"></div>`;
+      }
+      html+=`<div class="wk">${col}</div>`;
+    }
+    return html;
+  }
+  function viewB(){
+    view.innerHTML = `<div class="sheet">
+      <div class="hero">
+        <div class="big">${currentStreak()}<span class="u"> dagar</span></div>
+        <div class="cap">🔥 nuvarande streak</div>
+      </div>
+      <div class="row3">
+        <div class="b"><div class="v">${longestStreak()}</div><div class="l">LÄNGSTA STREAK</div></div>
+        <div class="b"><div class="v">${sumLast(30,"cards")}</div><div class="l">KORT / 30 D</div></div>
+        <div class="b"><div class="v">${daysThisMonth()}</div><div class="l">DAGAR I MÅN</div></div>
+      </div>
+      <div class="section-l">SENASTE 18 VECKORNA</div>
+      <div class="heat-wrap"><div class="heat">${renderHeat()}</div></div>
+      <div class="legend"><span>mindre</span>
+        <span class="d" style="background:var(--surface-2)"></span>
+        <span class="d" style="background:rgba(91,140,255,.32)"></span>
+        <span class="d" style="background:rgba(91,140,255,.55)"></span>
+        <span class="d" style="background:rgba(91,140,255,.78)"></span>
+        <span class="d" style="background:var(--accent)"></span>
+        <span>mer</span>
+      </div>
+    </div>`;
+  }
+
+  function renderWeekBars(){
+    const labels=["Må","Ti","On","To","Fr","Lö","Sö"];
+    // senaste 7 dagar (idag sist)
+    const vals=[]; for(let i=6;i>=0;i--){ const d=addDays(today,-i); const r=data[ymd(d)]; vals.push({cards:r?r.cards:0, dow:(d.getDay()+6)%7, today:i===0}); }
+    const max=Math.max(10,...vals.map(v=>v.cards));
+    return vals.map(v=>`<div class="col">
+        <div class="num">${v.cards||""}</div>
+        <div class="bar ${v.today?"today":""}" style="height:${Math.round(v.cards/max*100)}%"></div>
+        <div class="dl">${labels[v.dow]}</div>
+      </div>`).join("");
+  }
+  function viewC(){
+    view.innerHTML = `<div class="sheet">
+      <h2>📊 Statistik</h2><div class="sub">🇮🇹 Italienska</div>
+      <div class="kpis">
+        <div class="kpi fire"><div class="v">${currentStreak()}</div><div class="l">STREAK 🔥</div></div>
+        <div class="kpi"><div class="v">${data[ymd(today)]?data[ymd(today)].cards:0}</div><div class="l">KORT IDAG</div></div>
+        <div class="kpi"><div class="v">${totalCards()}</div><div class="l">KORT TOTALT</div></div>
+      </div>
+      <div class="section-l">SENASTE 7 DAGARNA</div>
+      <div class="bars">${renderWeekBars()}</div>
+      <div class="calhead"><button id="prevm">‹</button><span class="m" id="mlabel">${MONTHS[calM]} ${calY}</span><button id="nextm">›</button></div>
+      <div class="cal" id="cal">${renderMonth()}</div>
+    </div>`;
+    monthControls();
+  }
+
+  const RENDER = { A:viewA, B:viewB, C:viewC };
+  document.getElementById("tabs").addEventListener("click", e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    calY=today.getFullYear(); calM=today.getMonth();
+    RENDER[b.dataset.v]();
+  });
+  viewA();
+</script>
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+<title>Flippa – navigeringsanimationer (mockup)</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; touch-action: manipulation; }
+  :root {
+    --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8;
+    --muted:#9aa3b2; --accent:#5b8cff; --good:#5bbf72; --easy:#f4c542;
+  }
+  html, body { height:100%; }
+  body { background:var(--bg); color:var(--text); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    display:flex; flex-direction:column; min-height:100dvh; }
+
+  /* Variantväljare */
+  .picker { padding:14px 14px 8px; }
+  .picker h1 { font-size:1rem; font-weight:700; margin-bottom:3px; }
+  .picker p { color:var(--muted); font-size:.78rem; line-height:1.4; margin-bottom:10px; }
+  .segs { display:flex; gap:6px; }
+  .segs button { flex:1; background:var(--surface); color:var(--text); border:none; border-radius:10px; padding:10px 4px; font-size:.8rem; font-family:inherit; line-height:1.25; }
+  .segs button .s { display:block; color:var(--muted); font-size:.66rem; margin-top:2px; }
+  .segs button.on { background:var(--accent); color:#fff; }
+  .segs button.on .s { color:#dce6ff; }
+  .speedrow { display:flex; align-items:center; gap:8px; margin-top:8px; color:var(--muted); font-size:.74rem; }
+  .speedrow input { flex:1; }
+
+  /* "Telefon"-ytan där skärmarna lever */
+  .stage { position:relative; flex:1; margin:8px 10px 10px; border-radius:18px; overflow:hidden;
+    background:var(--bg); box-shadow:inset 0 0 0 1px #243352; }
+
+  .scr { position:absolute; inset:0; display:flex; flex-direction:column; background:var(--bg);
+    will-change:transform,opacity; }
+  .scr.hidden { display:none; }
+
+  /* header inne i en skärm */
+  .hd { display:flex; align-items:center; gap:10px; padding:14px 12px 6px; }
+  .hd .back { background:var(--surface-2); border:none; color:var(--text); width:34px; height:34px; border-radius:9px; font-size:1.05rem; flex:none; }
+  .hd .logo { width:26px; height:26px; border-radius:7px; background:linear-gradient(135deg,#5b8cff,#3a5bd0); display:flex; align-items:center; justify-content:center; font-size:.8rem; flex:none; }
+  .hd h2 { font-size:1.1rem; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hd .ic { background:var(--surface-2); border:none; color:var(--text); width:34px; height:34px; border-radius:9px; font-size:1rem; flex:none; }
+
+  .body { flex:1; overflow-y:auto; padding:8px 12px 14px; }
+  .duebtn { width:100%; background:var(--easy); color:#0d1426; border:none; border-radius:12px; padding:12px; font-weight:600; font-size:.9rem; margin-bottom:10px; }
+  .row { display:flex; align-items:center; background:var(--surface); border-radius:12px; padding:15px; margin-bottom:9px; transition:transform .12s ease, background .12s ease; }
+  .row:active { transform:scale(.975); background:var(--surface-2); }
+  .row .t { flex:1; font-weight:500; }
+  .row .m { color:var(--muted); font-size:.8rem; margin-left:8px; }
+  .row .tag { background:#6b5a16; color:#f4c542; border-radius:6px; padding:2px 7px; font-size:.7rem; margin-left:8px; }
+  .row .pen { background:var(--surface-2); border:none; color:var(--text); width:30px; height:30px; border-radius:8px; margin-left:10px; flex:none; }
+
+  /* träningskort */
+  .train { flex:1; display:flex; align-items:center; justify-content:center; padding:20px; }
+  .tcard { width:100%; aspect-ratio:3/2; background:var(--surface); border-radius:18px; display:flex; align-items:center; justify-content:center;
+    font-size:1.6rem; font-weight:600; box-shadow:0 10px 30px rgba(0,0,0,.35); }
+  .hint { text-align:center; color:var(--muted); font-size:.78rem; padding:0 20px 18px; }
+
+  .tip { text-align:center; color:var(--muted); font-size:.72rem; padding:6px 16px 12px; }
+</style>
+</head>
+<body>
+  <div class="picker">
+    <h1>Navigeringsanimationer</h1>
+    <p>Tryck dig in/ut i ämnen → lektioner → träning. Byt variant och känn skillnaden. Inget av detta är inbyggt än – välj den du gillar (eller en mix).</p>
+    <div class="segs" id="variants">
+      <button data-v="fade" class="on">A · Fade<span class="s">mjuk in/ut-toning</span></button>
+      <button data-v="slide">B · Push/pop<span class="s">glider i sidled</span></button>
+      <button data-v="depth">C · Glid + djup<span class="s">glid med skala</span></button>
+    </div>
+    <div class="speedrow">
+      <span>Snabb</span><input type="range" id="speed" min="120" max="420" value="220" step="10"><span>Lugn</span>
+      <span id="ms" style="min-width:46px;text-align:right">220ms</span>
+    </div>
+  </div>
+
+  <div class="stage" id="stage" data-variant="fade">
+    <!-- Skärm 0: Ämnen -->
+    <section class="scr" data-depth="0">
+      <div class="hd">
+        <div class="logo">📚</div>
+        <h2>Flippa</h2>
+        <button class="ic">＋</button>
+        <button class="ic">⋯</button>
+      </div>
+      <div class="body">
+        <div class="row" data-go="1"><span class="t">🇮🇹 Italienska</span><span class="m">8 lekt · 312 ord</span></div>
+        <div class="row" data-go="1"><span class="t">🇮🇩 Bahasa Indonesia</span><span class="m">1 lekt · 30 ord</span></div>
+        <div class="row" data-go="1"><span class="t">🇫🇷 Franska</span><span class="m">3 lekt · 96 ord</span></div>
+        <div class="row" data-go="1"><span class="t">🇩🇪 Tyska</span><span class="m">2 lekt · 54 ord</span></div>
+      </div>
+    </section>
+
+    <!-- Skärm 1: Lektioner -->
+    <section class="scr hidden" data-depth="1">
+      <div class="hd">
+        <button class="back" data-back>←</button>
+        <h2>🇮🇹 Italienska</h2>
+        <button class="ic">✎</button>
+        <button class="ic">＋</button>
+      </div>
+      <div class="body">
+        <button class="duebtn">⏰ Dags att öva (12)</button>
+        <div class="row" data-go="2"><span class="t">Mat och dryck</span><span class="tag">5 dags</span><span class="m">52 ord</span><button class="pen">✎</button></div>
+        <div class="row" data-go="2"><span class="t">Glassmaker</span><span class="m">50 ord</span><button class="pen">✎</button></div>
+        <div class="row" data-go="2"><span class="t">Kläder & accessoarer</span><span class="m">50 ord</span><button class="pen">✎</button></div>
+        <div class="row" data-go="2"><span class="t">Prepositioner</span><span class="tag">7 dags</span><span class="m">25 ord</span><button class="pen">✎</button></div>
+        <div class="row" data-go="2"><span class="t">Verb – presens</span><span class="m">40 ord</span><button class="pen">✎</button></div>
+      </div>
+    </section>
+
+    <!-- Skärm 2: Träning -->
+    <section class="scr hidden" data-depth="2">
+      <div class="hd">
+        <button class="back" data-back>←</button>
+        <h2>Mat och dryck</h2>
+        <span style="color:var(--muted);font-size:.85rem">12 kvar</span>
+      </div>
+      <div class="train"><div class="tcard" id="tcard">blomkål</div></div>
+      <div class="hint">👈 kan inte · 👆 kan bra · kan 👉 · 👇 hopplöst<br>(tryck på kortet för att vända)</div>
+    </section>
+  </div>
+
+  <p class="tip">Tips: tryck snabbt fram och tillbaka för att känna tempot. Reglaget ändrar hastigheten.</p>
+
+<script>
+  const stage = document.getElementById('stage');
+  const scrs = [...stage.querySelectorAll('.scr')];
+  let cur = 0, busy = false;
+  let dur = 220;
+
+  // Variantväljare
+  document.getElementById('variants').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    document.querySelectorAll('#variants button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    stage.dataset.variant = b.dataset.v;
+  });
+  // Hastighet
+  const speed = document.getElementById('speed'), msLbl = document.getElementById('ms');
+  speed.addEventListener('input', () => { dur = +speed.value; msLbl.textContent = dur + 'ms'; });
+
+  // reducerad rörelse → korta ner
+  if (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) { dur = 80; speed.value = 120; msLbl.textContent = '~0ms'; }
+
+  function transform(variant, role, dir) {
+    // role: 'in' | 'out' ; dir: +1 djupare, -1 bakåt
+    if (variant === 'fade') return { from: role==='in' ? 'none' : 'none', op: role==='in' ? 0 : 1 };
+    if (variant === 'slide') {
+      if (role === 'in')  return { from: `translateX(${dir>0?100:-100}%)`, op: 1 };
+      else                return { from: `translateX(${dir>0?-28:28}%)`, op: 1 };
+    }
+    // depth
+    if (role === 'in')  return { from: `translateX(${dir>0?100:-40}%) scale(${dir>0?1:0.92})`, op: dir>0?1:0.6 };
+    else                return { from: `translateX(${dir>0?-40:100}%) scale(${dir>0?0.92:1})`, op: dir>0?0.6:1 };
+  }
+
+  function go(target) {
+    if (busy || target === cur) return;
+    const dir = target > cur ? 1 : -1;
+    const variant = stage.dataset.variant;
+    const inEl = scrs[target], outEl = scrs[cur];
+    busy = true;
+
+    // startläge
+    const inStart = transform(variant, 'in', dir);
+    const outEnd  = transform(variant, 'out', dir);
+    inEl.classList.remove('hidden');
+    inEl.style.transition = 'none';
+    inEl.style.transform = inStart.from === 'none' ? 'none' : inStart.from;
+    inEl.style.opacity = variant === 'fade' ? 0 : 1;
+    inEl.style.zIndex = 2; outEl.style.zIndex = 1;
+    // reflow
+    void inEl.offsetWidth;
+
+    const ease = 'cubic-bezier(.4,0,.2,1)';
+    inEl.style.transition = `transform ${dur}ms ${ease}, opacity ${dur}ms ${ease}`;
+    outEl.style.transition = `transform ${dur}ms ${ease}, opacity ${dur}ms ${ease}`;
+    inEl.style.transform = 'none';
+    inEl.style.opacity = 1;
+    outEl.style.transform = outEnd.from === 'none' ? 'none' : outEnd.from;
+    outEl.style.opacity = variant === 'fade' ? 0 : outEnd.op;
+
+    const done = () => {
+      outEl.classList.add('hidden');
+      outEl.style.transition = 'none';
+      outEl.style.transform = 'none';
+      outEl.style.opacity = 1;
+      inEl.style.transition = 'none';
+      cur = target; busy = false;
+    };
+    setTimeout(done, dur + 30);
+  }
+
+  stage.addEventListener('click', e => {
+    if (busy) return;
+    const goEl = e.target.closest('[data-go]');
+    if (goEl) { go(+goEl.dataset.go); return; }
+    if (e.target.closest('[data-back]')) { go(cur - 1); return; }
+    // vänd kortet
+    if (e.target.id === 'tcard') {
+      const c = e.target;
+      c.textContent = c.textContent === 'blomkål' ? 'cavolfiore' : 'blomkål';
+    }
+  });
+</script>
+</body>
+</html>

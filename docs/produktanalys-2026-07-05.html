@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flippa – produkt- & UX-analys</title>
+
+</head>
+<body>
+<title>Flippa – produkt- & UX-analys</title>
+<style>
+  :root {
+    --bg: #f4f6fc;
+    --surface: #ffffff;
+    --surface-2: #eef1fa;
+    --ink: #1d2436;
+    --muted: #5b6478;
+    --line: #dbe1f0;
+    --accent: #3a63d8;
+    --accent-ink: #2b4dad;
+    --accent-soft: rgba(58, 99, 216, 0.10);
+    --good: #35804e;
+    --good-soft: rgba(53, 128, 78, 0.12);
+    --warn: #a06f14;
+    --warn-soft: rgba(176, 126, 24, 0.13);
+    --crit: #b34a3e;
+    --crit-soft: rgba(179, 74, 62, 0.12);
+    --card-face: #26304d;
+    --card-text: #f0f3fb;
+    --shadow: 0 1px 2px rgba(29, 36, 54, 0.05), 0 6px 20px rgba(29, 36, 54, 0.06);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1424;
+      --surface: #161e33;
+      --surface-2: #1d2740;
+      --ink: #e8edf8;
+      --muted: #98a3bc;
+      --line: #2b3550;
+      --accent: #7597ff;
+      --accent-ink: #a5bcff;
+      --accent-soft: rgba(117, 151, 255, 0.13);
+      --good: #82c795;
+      --good-soft: rgba(130, 199, 149, 0.14);
+      --warn: #e0b45e;
+      --warn-soft: rgba(224, 180, 94, 0.13);
+      --crit: #e58a7d;
+      --crit-soft: rgba(229, 138, 125, 0.13);
+      --card-face: #26304d;
+      --card-text: #f0f3fb;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6fc; --surface: #ffffff; --surface-2: #eef1fa; --ink: #1d2436; --muted: #5b6478;
+    --line: #dbe1f0; --accent: #3a63d8; --accent-ink: #2b4dad; --accent-soft: rgba(58, 99, 216, 0.10);
+    --good: #35804e; --good-soft: rgba(53, 128, 78, 0.12); --warn: #a06f14; --warn-soft: rgba(176, 126, 24, 0.13);
+    --crit: #b34a3e; --crit-soft: rgba(179, 74, 62, 0.12); --card-face: #26304d; --card-text: #f0f3fb;
+    --shadow: 0 1px 2px rgba(29, 36, 54, 0.05), 0 6px 20px rgba(29, 36, 54, 0.06);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1424; --surface: #161e33; --surface-2: #1d2740; --ink: #e8edf8; --muted: #98a3bc;
+    --line: #2b3550; --accent: #7597ff; --accent-ink: #a5bcff; --accent-soft: rgba(117, 151, 255, 0.13);
+    --good: #82c795; --good-soft: rgba(130, 199, 149, 0.14); --warn: #e0b45e; --warn-soft: rgba(224, 180, 94, 0.13);
+    --crit: #e58a7d; --crit-soft: rgba(229, 138, 125, 0.13); --card-face: #26304d; --card-text: #f0f3fb;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Seravek", "Avenir Next", "Avenir", -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px 96px; }
+
+  /* ---- Header ---- */
+  header.hero {
+    padding: 56px 0 36px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  .hero-text { flex: 1; min-width: 0; }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.35rem);
+    line-height: 1.15;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+    margin: 0 0 12px;
+    text-wrap: balance;
+  }
+  .hero-sub { color: var(--muted); margin: 0; max-width: 46ch; }
+
+  .minicard {
+    flex-shrink: 0;
+    width: 108px; height: 140px;
+    perspective: 500px;
+  }
+  .minicard-inner {
+    width: 100%; height: 100%;
+    position: relative;
+    transform: rotate(4deg);
+    transform-style: preserve-3d;
+    animation: cardflip 9s ease-in-out infinite;
+  }
+  @media (prefers-reduced-motion: reduce) { .minicard-inner { animation: none; } }
+  @keyframes cardflip {
+    0%, 42%  { transform: rotate(4deg) rotateY(0deg); }
+    50%, 92% { transform: rotate(4deg) rotateY(180deg); }
+    100%     { transform: rotate(4deg) rotateY(360deg); }
+  }
+  .minicard-face {
+    position: absolute; inset: 0;
+    border-radius: 12px;
+    background: var(--card-face);
+    color: var(--card-text);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 4px;
+    backface-visibility: hidden;
+    box-shadow: var(--shadow);
+    font-weight: 600;
+  }
+  .minicard-face.back { transform: rotateY(180deg); background: #2e3a5e; }
+  .minicard-face .w { font-size: 1.02rem; }
+  .minicard-face .l { font-size: 0.62rem; font-weight: 400; opacity: 0.55; letter-spacing: 0.1em; text-transform: uppercase; }
+  @media (max-width: 560px) { .minicard { display: none; } }
+
+  /* ---- TOC ---- */
+  nav.toc {
+    margin: 28px 0 8px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 8px 20px;
+  }
+  nav.toc a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 0.92rem;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); }
+  nav.toc a .n {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.7rem; color: var(--accent-ink);
+  }
+
+  /* ---- Sections ---- */
+  section { margin-top: 56px; scroll-margin-top: 24px; }
+  h2 {
+    font-size: 1.42rem;
+    font-weight: 650;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  .sec-eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent-ink); margin: 0 0 8px;
+  }
+  .sec-lead { color: var(--muted); margin: 0 0 24px; max-width: 62ch; }
+  h3 { font-size: 1.06rem; font-weight: 650; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 7px; max-width: 64ch; }
+  strong { font-weight: 650; }
+  em { font-style: italic; }
+  a { color: var(--accent-ink); }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.85em;
+    background: var(--surface-2);
+    padding: 1px 5px; border-radius: 5px;
+  }
+
+  /* ---- Chips ---- */
+  .chip {
+    display: inline-block;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.66rem;
+    letter-spacing: 0.06em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    vertical-align: 2px;
+    white-space: nowrap;
+  }
+  .chip.good { background: var(--good-soft); color: var(--good); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.crit { background: var(--crit-soft); color: var(--crit); }
+  .chip.info { background: var(--accent-soft); color: var(--accent-ink); }
+
+  /* ---- Scorecard ---- */
+  .score { display: flex; flex-direction: column; gap: 10px; margin: 20px 0 6px; }
+  .score-row {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 4px 14px;
+    align-items: start;
+  }
+  .score-row .g { font-weight: 650; }
+  .score-row .why { grid-column: 1 / -1; color: var(--muted); font-size: 0.93rem; margin: 0; max-width: none; }
+
+  /* ---- Recommendation cards ---- */
+  .rec {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 20px 14px;
+    margin: 14px 0;
+    box-shadow: var(--shadow);
+  }
+  .rec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; margin-bottom: 8px; }
+  .rec-head h3 { margin: 0; }
+  .rec-head .id {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.72rem; color: var(--accent-ink);
+  }
+  .rec p:last-child { margin-bottom: 4px; }
+  .rec.flag { border-left: 3px solid var(--warn); }
+
+  /* ---- Callout ---- */
+  .callout {
+    background: var(--accent-soft);
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin: 18px 0;
+  }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout.warm { background: var(--warn-soft); }
+
+  /* ---- Top-5 list ---- */
+  ol.top5 { margin: 18px 0 0; padding-left: 0; list-style: none; counter-reset: t5; }
+  ol.top5 li {
+    counter-increment: t5;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 14px 16px 14px 54px;
+    margin-bottom: 10px;
+    position: relative;
+    max-width: none;
+  }
+  ol.top5 li::before {
+    content: counter(t5);
+    position: absolute; left: 16px; top: 14px;
+    width: 26px; height: 26px;
+    border-radius: 8px;
+    background: var(--accent-soft);
+    color: var(--accent-ink);
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.8rem; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+  }
+  ol.top5 b { display: block; margin-bottom: 2px; }
+  ol.top5 span { color: var(--muted); font-size: 0.93rem; }
+
+  /* ---- Tables ---- */
+  .tablewrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  th {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+    background: var(--surface-2);
+  }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  .small-note { font-size: 0.85rem; color: var(--muted); }
+  hr.thin { border: none; border-top: 1px solid var(--line); margin: 32px 0; }
+
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <div class="hero-text">
+    <p class="eyebrow">Produkt- &amp; UX-genomgång · 5 juli 2026</p>
+    <h1>Flippa med fräscha ögon</h1>
+    <p class="hero-sub">En genomgång av hela appen – SRS-motorn, flödena, statistiken, dokumenten och planerna – bedömd mot dina tio uttalade mål. Med prioriterade förslag, uppdelat på <em>nu</em> och <em>vägen mot fler användare</em>.</p>
+  </div>
+  <div class="minicard" aria-hidden="true">
+    <div class="minicard-inner">
+      <div class="minicard-face"><span class="w">la parola</span><span class="l">italienska</span></div>
+      <div class="minicard-face back"><span class="w">ordet</span><span class="l">svenska</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Innehåll">
+  <a href="#tldr"><span class="n">00</span>Sammanfattning</a>
+  <a href="#mal"><span class="n">01</span>Måluppfyllnad</a>
+  <a href="#nu"><span class="n">02</span>Gör appen bättre nu</a>
+  <a href="#bredare"><span class="n">03</span>Vägen mot fler användare</a>
+  <a href="#luckor"><span class="n">04</span>Luckor i resonemanget</a>
+  <a href="#utmaning"><span class="n">05</span>Mer än glosor?</a>
+  <a href="#labli"><span class="n">06</span>Ta bort / låt bli</a>
+  <a href="#roadmap"><span class="n">07</span>Prioriterad roadmap</a>
+</nav>
+
+<!-- ============================================================ -->
+<section id="tldr">
+  <p class="sec-eyebrow">00</p>
+  <h2>Sammanfattning</h2>
+  <p class="sec-lead">Först det viktigaste: det här är en ovanligt genomtänkt app, inte ett hobbyhack.</p>
+
+  <p>Mycket i Flippa håller en kvalitet som kommersiella appar sällan når: SRS-nycklad på <em>ordet</em> i stället för kortet (så inlärningen följer med mellan lektioner), separata riktningar, bara första svaret per pass räknas mot schemat, daglig nyordskvot med proportionell fördelning, dubblettkontroll, paus/stjärnor som komponerbara filter, uppskjuten omladdning mitt i pass, ångra via skak även <em>efter</em> passet. Hjälpfliken förklarar Leitner bättre än de flesta appars onboarding. Den grunden ska du inte röra – den är din största tillgång.</p>
+
+  <p>Analysen hittar i stället ett tydligt mönster: <strong>appen är byggd för den som redan är igång, och mäter arbete snarare än kunnande.</strong> De fem största dragen:</p>
+
+  <ol class="top5">
+    <li><b>”Kunde direkt”-placering – största gapet mot dina egna mål.</b><span>Den som redan kan en del franska måste idag tröska varje banalt ord genom lådsystemet (👆 på ett nytt ord ger bara låda 2 → tillbaka om 4 dagar). Precis den Duolingo-frustration du vill undvika. En liten regeländring löser det mesta.</span></li>
+    <li><b>Visa behärskning, inte bara arbetsbörda.</b><span>Lektionslistan visar ”12 nya · 5 dags” – vad som <em>återstår</em>. Målet ”känna tydliga framsteg” kräver att man också ser vad man <em>kan</em>: en behärskningsindikator per lektion.</span></li>
+    <li><b>Innehållsbiblioteket är nyckeln till låg tröskel – kör piloten.</b><span>Planen i <code>innehallsbibliotek.md</code> är rätt tänkt och kräver noll ny appkod. En ny användare måste idag författa sitt eget innehåll innan hen kan lära sig något – det är onboarding-mördaren.</span></li>
+    <li><b>Skydda det värdefullaste: flytta SRS/statistik till molnet per profil.</b><span>Streak, lådor och års inlärningshistorik ligger i localStorage på en enda telefon, skyddat endast av manuell JSON-export. Detta är dessutom förkravet för klocka, Flutter och fler användare – gör det en gång, snart.</span></li>
+    <li><b>Kontext via exempelmeningar.</b><span>Målet ”förstå hur ordet hänger ihop med andra” löses idag genom att lämna appen (Google/Wikipedia). Ett valfritt exempelmeningsfält – AI-genererat, TTS-uppläst – är den billigaste vägen till kontext i appen, och öppnar dörren till luck-kort senare.</span></li>
+  </ol>
+</section>
+
+<!-- ============================================================ -->
+<section id="mal">
+  <p class="sec-eyebrow">01</p>
+  <h2>Måluppfyllnad – dina mål mot dagens app</h2>
+  <p class="sec-lead">Varje mål du listade, ärligt betygsatt. ”Stark” = i princip löst, ”Delvis” = fungerar men med tydlig lucka, ”Gap” = saknar mekanism.</p>
+
+  <div class="score">
+    <div class="score-row">
+      <span class="g">Effektiv inlärning genom spaced repetition</span><span class="chip good">Stark</span>
+      <p class="why">Graderad Leitner med datum är rätt val för svep-input, och implementationen är gedigen. Kvarstående förfiningar: leech-hantering (öppen fråga sedan juni), tak på 32 dagar som aldrig släpper mogna ord, ingen utjämning av förfallo-toppar efter stora importer.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Känsla av tydliga framsteg</span><span class="chip warn">Delvis</span>
+      <p class="why">Firandet är rikt (konfetti, nivåer, streak, heatmap) men mäter nästan bara volym: kort, pass, minuter. ”Lär jag mig faktiskt?” besvaras bara indirekt av Leitner-stapeln på statistikfliken. Framstegen syns inte där besluten fattas – i lektionslistan.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Låg tröskel att komma igång</span><span class="chip warn">Delvis</span>
+      <p class="why">För familjen (du onboardar personligen): funkar. För en okänd användare: profilvägg med hårdkodade namn, tomt innehåll, och kravet att själv skapa ämne → lektion → ord innan första kortet kan vändas. ”Time to first flip” är idag flera minuter och kräver egen kreativitet.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Lära från sin nivå (inte tröska banalt)</span><span class="chip crit">Gap</span>
+      <p class="why">Ingen mekanism finns – varken i appen eller i planerna. Nivåindelade lektioner (biblioteksplanen) hjälper vid <em>valet</em> av innehåll, men inte att snabbt beta av det man redan kan i det man valt. Se förslag A1.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Enkelt fylla på ord – enskilda och teman</span><span class="chip good">Stark</span>
+      <p class="why">Bäst-i-klassen för poweruser: Slå upp (MyMemory) åt båda håll, semikolonlistor, sök-som-inte-träffar → ”Slå upp &amp; lägg till”, fjädermenyn mitt i passet, CSV-import med förhandsgranskning, AI-promptmallen. Små luckor: tre olika uppslagskoncept med överlappande namn (se A7).</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Kontext – hur ordet hänger ihop med andra</span><span class="chip warn">Delvis</span>
+      <p class="why">Minnesregler är en riktig styrka (inklusive uppläsning vid ”hopplöst” i handsfree). Men all övrig kontext – etymologi, närliggande ord, bilder – kräver att man lämnar appen. Inget i datamodellen binder ord till varandra eller till meningar.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Passar både poweruser och nybörjare</span><span class="chip warn">Delvis</span>
+      <p class="why">Powerusern är mycket väl försörjd (favoriter, paus, sortering på svaghet per riktning, inställbara nivåer, CSV, handsfree). Nybörjarens upplevelse står och faller med färdigt innehåll och första-gången-flödet – båda saknas ännu.</p>
+    </div>
+    <div class="score-row">
+      <span class="g">Språkfokus (inte generisk Anki)</span><span class="chip good">Rätt beslut</span>
+      <p class="why">Håll fast vid det. Uttal, riktningar, artiklar, minnesregler, uppslagning och det planerade biblioteket är alla språkspecifika – där ligger differentieringen mot Anki. Att land–huvudstad ändå <em>går</em> (ämne utan språk) är rätt ambitionsnivå för det generiska.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="nu">
+  <p class="sec-eyebrow">02</p>
+  <h2>Gör appen bättre nu – för dig och familjen</h2>
+  <p class="sec-lead">Sorterat efter effekt per timme. Insats: <span class="chip info">Liten</span> = timmar, <span class="chip info">Medel</span> = någon/några kvällar, <span class="chip info">Stor</span> = flera veckoslut.</p>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A1</span><h3>”Kunde direkt” – placering av nya ord</h3><span class="chip info">Liten</span></div>
+    <p>Enklaste versionen är en ren regeländring: <strong>👆 ”kan bra” på ett ord i låda 0 skickar det till låda 4–5</strong> (8–16 dagar) i stället för låda 2. Logiken är självklar för användaren: kunde du ordet utan att någonsin ha övat det, kan du det ju redan. Ordet försvinner ur vardagen direkt men får ändå en kontrollrepetition.</p>
+    <p>Steg två (medel): ett <em>snabbsorteringsläge</em> efter import eller vid start av stor lektion – blixtsnabba svep utan flipp, ”kan redan / vill lära mig”, som placerar hela lektionen på en minut. Det är hela skillnaden mellan ”appen respekterar min nivå” och ”appen behandlar mig som nybörjare”. Din 3000-orders Collins-import gör det här akut även för dig själv.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A2</span><h3>Behärskning i lektionslistan</h3><span class="chip info">Liten</span></div>
+    <p>En tunn progressindikator per lektionsrad: andel ord i låda ≥ 3 (eller ≥ 4 = ”inlärt”). All data finns redan i <code>srs</code>. Då visar samma lista både skulden (”5 dags”) och belöningen (”82 % inlärt”) – och känslan av framsteg flyttar in där man faktiskt väljer vad man ska göra, i stället för att bo på en egen statistikflik. Detta är den billigaste enskilda åtgärden för mål 2.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A3</span><h3>Leech-hantering som knyter ihop två befintliga funktioner</h3><span class="chip info">Medel</span></div>
+    <p>Ni har redan diskuterat det (öppna frågor, juni): ren Leitner är minneslös och märker inte att vissa ord alltid bommas. Räkna fel per ordnyckel; efter t.ex. 5 bommar visa 🔥 på ordet och – här är poängen – <strong>föreslå aktivt att skriva en minnesregel</strong>, gärna med er befintliga AI-prompt förifylld (”ge mig en minnesregel för <em>lampone</em>…”). Ni har redan botemedlet (minnesregler + uppläsning vid ”hopplöst”); det som saknas är diagnosen och kopplingen däremellan.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A4</span><h3>Exempelmening per ord</h3><span class="chip info">Medel</span></div>
+    <p>Ett valfritt fält <code>example</code> bredvid minnesregeln: en kort mening på målspråket (+ ev. översättning). Visas diskret på kortets baksida, läses upp av TTS efter ordet. AI-promptmallen och biblioteksgenereringen utökas med en kolumn – innehållet är nästan gratis att producera. Detta är den konkreta, billiga formen av ditt kontextmål, och det gör uttalsuppläsningen dubbelt så värdefull (ord i sats ≫ ord i isolering).</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A5</span><h3>Släpp taket: låda 7–8, eller ”vilande” ord</h3><span class="chip info">Liten</span></div>
+    <p>Idag är 32 dagar max – varje inlärt ord återkommer var 32:a dag för evigt. Med din volym växer den mogna kvarnen tills ”Dags att öva” domineras av ord du kunnat i ett år. Två extra lådor (64/128 dagar) är en femminutersändring som skjuter problemet många år framåt.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A6</span><h3>Stäng dagen med besked – och öppna morgondagen</h3><span class="chip info">Liten</span></div>
+    <p>När det inte finns något att öva försvinner ”Dags att öva”-knappen bara – tomrum i stället för belöning. Visa i stället ett lugnt ”Klart för idag ✓ · imorgon väntar ~23 ord”. Prognosen (räkna kort med förfallodatum imorgon + nyordskvot) gör vanan konkret: man vet vad man säger ja till imorgon. Samma siffra passar på Klar-skärmen.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">A7</span><h3>UX-städning – småsaker som skaver</h3><span class="chip info">Liten</span></div>
+    <ul>
+      <li><strong>”Nya kort per dag” bor fel.</strong> Den ligger i KORT/PASS-väljaren men är en ämnestakt, inte en passinställning. Och eftersom dagens set låses vid första läsningen gäller en sänkning först imorgon – förvirrande just när man är överväldigad och vill sänka <em>nu</em>. Låt en sänkning krympa dagens ännu-ointroducerade set direkt.</li>
+      <li><strong>Tre uppslagskoncept, ett namn.</strong> ”Slå upp ord” (MyMemory-modalen som lägger till glosor), ”Slå upp” i fjädern (Google AI-sökning som lämnar appen) och Utforska-arket (Wikipedia/Commons). Döp efter jobbet: <em>Lägg till ord</em> vs <em>Utforska ordet</em>.</li>
+      <li><strong>Dolt mått-byte i statistiken.</strong> Att KORT-rutan byter till UNIKA vid tryck är osynligt – gör det till en synlig segmentväxel eller visa båda.</li>
+      <li><strong>Streak utan skydd.</strong> En missad dag nollar allt – onödigt hårt straff för den mest lojala användaren. En ”frysdag” per vecka (eller: streaken överlever en lucka på en dag, markerad i heatmapen) minskar ångesten utan att urholka vanan.</li>
+      <li><strong>Skak är enda ångra-vägen i svepläge.</strong> Diskret ↩︎ i några sekunder efter ett svar hjälper i miljöer där man inte vill skaka telefonen (bussen, sängen) – och den som aldrig läst hjälpfliken.</li>
+      <li><strong>Rad-tryck startar pass direkt.</strong> Bra friktionsval, men överraskande första gången (särskilt för nya användare som väntar sig att ”öppna” lektionen). En engångshint räcker.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="bredare">
+  <p class="sec-eyebrow">03</p>
+  <h2>Vägen mot fler användare</h2>
+  <p class="sec-lead">Din instinkt att validera innan du investerar är rätt. Här är sekvensen jag skulle köra – med kostnaden tydligt flaggad.</p>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">B1</span><h3>Kör biblioteks-piloten – innan mer appkod</h3><span class="chip good">Innehåll, noll kod</span></div>
+    <p>Planen (italienska × Djur/Familj/Mat × 3 nivåer via CSV) är redo. Den testar samtidigt tre saker: nivåkonceptet, produktionspipelinen och hur paus-som-nivåfilter känns i praktiken. Allt som byggs för onboarding senare (B2) står på det här innehållet – därför går det först.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">B2</span><h3>Onboarding: från installation till första flippen på 60 sekunder</h3><span class="chip info">Medel</span></div>
+    <p>Målbild för en okänd användare: öppna appen → ”Vilket språk vill du lära dig?” → ”Var är du – nybörjare eller kan en del?” → startpaket läggs in (nivå 1 aktiv, resten pausad; ”kan en del” går direkt till snabbsortering, A1) → första passet startar. Inga ämnen att skapa, inga ord att skriva.</p>
+    <p>Mät det: ni har redan GoatCounter-events – definiera <em>time to first flip</em> och <em>andel som kör pass dag 2</em> som appens två viktigaste tal. Dagens ”Vem är du?”-vägg med familjenamn och skämtlösenord måste förstås bort ur det flödet.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><span class="id">B4</span><h3>Mellansteget: SRS + statistik till Firebase per profil – redan nu</h3><span class="chip info">Stor</span></div>
+    <p>Ni har korrekt identifierat att riktig auth + per-uid-data är det stora jobbet. Men det finns ett värdefullt mellansteg som inte kräver inloggning: spegla SRS, statistik, favoriter och paus till Firebase under befintligt profil-id (<code>progress/tom/…</code>). Det ger omedelbart: backup utan manuella JSON-filer, samma progress på två enheter, och – viktigast – <strong>datamodellen som klockapp, Flutter och riktig auth sedan ärver</strong>. När riktiga uid kommer mappar man bara profil → uid. localStorage blir cache i stället för sanning.</p>
+    <p class="small-note">Kräver: konflikthantering (senaste skrivning vinner per ordnyckel räcker långt) och lite disciplin i skrivvägarna. Ingen server, ingen kostnad.</p>
+  </div>
+
+  <div class="rec flag">
+    <div class="rec-head"><span class="id">B5</span><h3>Påminnelser – den saknade vanedrivaren</h3><span class="chip warn">Kräver server/Blaze</span></div>
+    <p>Appen belönar flitigt men påminner aldrig – en streak-mekanik utan trigger. För en pluggapp är den dagliga knuffen (”🇮🇹 23 ord väntar”) sannolikt den enskilt största retention-faktorn. iOS stöder web push för hemskärmsinstallerade PWA:er sedan 16.4, men <em>skicka</em> kräver en serverkomponent (t.ex. en schemalagd Cloud Function eller Cloudflare Worker) – och kortantalet ligger idag bara i localStorage (löses av B4). Rimlig ordning: B4 först, sedan är detta en liten funktion. Tills dess är detta det tyngsta argumentet för native-spåret ni redan skissat.</p>
+  </div>
+
+  <div class="rec flag">
+    <div class="rec-head"><span class="id">B3</span><h3>Riktig auth + per-användardata – först när efterfrågan är bevisad</h3><span class="chip warn">Störst; GDPR</span></div>
+    <p>Er egen analys i <code>framtida-utveckling.md</code> är korrekt (social login, EU-region, radera-konto-knapp, per-uid-regler). Min enda tillägg som PM: <strong>gör inte detta förrän 5–10 personer utanför familjen har använt appen i några veckor och kommit tillbaka.</strong> Rekrytera dem manuellt, onboarda personligen, ge dem varsin gäst-profil. Om retention finns är auth-jobbet motiverat; om inte har du sparat månader. Dagens läge – anonymt inloggad kan skriva i hela trädet, lösenord i publik källkod – är okej som familjeskämt men är en hård grind före någon främmande användare.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="luckor">
+  <p class="sec-eyebrow">04</p>
+  <h2>Luckor i resonemanget hittills</h2>
+  <p class="sec-lead">Du bad mig fånga upp dem – här är de, rakt på sak.</p>
+
+  <ul>
+    <li><strong>Huvudmål utan mekanism.</strong> ”Från sin nivå” är ett av dina starkast formulerade mål, men varken appen eller något dokument innehåller en design för det. Nivåbiblioteket löser <em>innehållsvalet</em>, inte <em>avbetningen</em> av redan kunnat – de är två olika problem och bara det första är planerat.</li>
+    <li><strong>Volym förväxlas med framsteg.</strong> Nästan hela belönings- och statistikapparaten (nivåer 100/150/250, veckomål, heatmap, KPI:er) mäter aktivitet. Aktivitet är medlet; behärskning är målet. Risken är en app som känns som Duolingos poängjakt – det du uttryckligen vill bort från – fast med bättre SRS under huven.</li>
+    <li><strong>Det värdefullaste är det minst skyddade.</strong> Innehållet (lätt att återskapa) ligger tryggt i molnet; inlärningshistoriken (omöjlig att återskapa) ligger i localStorage på en telefon. Asymmetrin är bakvänd, och manuell export är inte ett skydd – det är en förhoppning. Du älskar appen och har använt den i över ett år; en tappad telefon raderar det.</li>
+    <li><strong>Belöning utan trigger.</strong> Vanepsykologins tre delar är trigger → handling → belöning. Flippa har byggt belöningen till perfektion och triggern inte alls. Streak-mekaniken förutsätter en daglig knuff som inte finns (och som PWA:n inte kan ge utan hjälp – se B5).</li>
+    <li><strong>En arkitekturskuld blockerar fyra framtidsspår.</strong> Klockappen, Flutter, multi-user och notiser strandar alla på samma sak: progress per enhet i localStorage. Ni har sett det i varje enskild analys – men slutsatsen förtjänar att dras ihop: det är <em>ett</em> jobb (B4), och varje månad det väntar byggs mer ovanpå fel grund.</li>
+    <li><strong>Din egen hemlighet skalar inte.</strong> Appen fungerar så bra för dig delvis för att du är både användare och innehållsredaktör – du kurerar, skriver minnesregler, städar dubbletter. En ny användare har ingen sådan loop. Biblioteket ersätter halva (startinnehåll); den andra halvan (levande kuratering) behöver AI-stödet i appen bli bättre på över tid.</li>
+    <li><strong>Publikt repo med ”lösenord”.</strong> Ofarligt idag (du vet om det, det står t.o.m. en blinkning i koden), men det illustrerar att profiler ≠ användare. Värt att hålla i minnet så att inget känsligare någonsin smyger in i samma mönster.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="utmaning">
+  <p class="sec-eyebrow">05</p>
+  <h2>Utmaningen du bad om: mer än glosor, utan att bygga en kursplattform</h2>
+  <p class="sec-lead">Du har rätt i att inte bygga övningsfabrik. Men det finns fyra vägar till ”mer än isolerade glosor” som återanvänder exakt den mekanik du redan har.</p>
+
+  <ul>
+    <li><strong>Grammatik som innehåll, inte som funktion – noll kod.</strong> Kortformatet klarar redan böjningar: <code>io sono;jag är</code>, <code>tu sei;du är</code>. En grammatikvariant av generationsprompten (”ge mig presens av de 10 viktigaste italienska verben som glosrader”) ger verbdrillar idag. Testa själv en vecka – om det känns bra är ”Grammatik”-paket bara en till kategori i biblioteket.</li>
+    <li><strong>Luck-kort (cloze) – samma svep, ny front.</strong> Med exempelmeningar på plats (A4) kan ett kort visas som ”Vorrei un bicchiere di ___” → svar ”vino”. Ingen ny övningstyp, ingen inmatning – bara ett annat sätt att rendera fronten. Det är den billigaste formen av grammatik-i-kontext som finns, och AI genererar meningarna.</li>
+    <li><strong>Lyssningsläge finns redan – det heter handsfree.</strong> Uppläst ord → återkalla betydelsen är hörförståelseträning. Rama in det så (”🎧 Lyssningsläge”) i stället för bara ”beta”, så blir en teknisk finess en pedagogisk funktion.</li>
+    <li><strong>Skrivläge som poweruser-tillval.</strong> Självskattning via svep överskattar systematiskt stavning (svårt i italienska: dubbelkonsonanter, accenter). En valfri toggle ”skriv svaret” per pass – rätta mjukt, gradera som vanligt – är den enda ”nya övningstypen” jag skulle överväga, och den är fortfarande samma kort och samma SRS.</li>
+  </ul>
+  <div class="callout">
+    <p><strong>Det du fortsatt ska säga nej till:</strong> meningsbyggnadsövningar, uttalsbedömning, ordföljdspussel, lektionsbanor med progression. Allt sådant kräver innehålls- och rättningsmaskineri som är ett heltidsjobb – och det är exakt där Duolingo redan vunnit. Din nisch är motsatsen: maximal inlärning per minut för folk som vet vad de vill lära sig.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="labli">
+  <p class="sec-eyebrow">06</p>
+  <h2>Ta bort, frysa eller låta bli</h2>
+  <p class="sec-lead">Produktledning är mest att säga nej. Inget här är dåligt byggt – men allt konkurrerar om samma begränsade hobbytimmar.</p>
+
+  <ul>
+    <li><strong>Frys gamification-utbyggnad.</strong> Konfettifysik, prestationsnivåer, banners, pepp-fraser – ni är redan vid taket där mer firande ger avtagande avkastning och börjar kännas som brus. Låt A2 (synlig behärskning) bli nästa ”belöning” i stället.</li>
+    <li><strong>Frys handsfree-expansion.</strong> Behåll och underhåll – det är en genuin differentierare (diska-och-plugga är ett riktigt användningsfall) – men bygg inte vidare på det förrän A1–A4 är klara. Det är appens mest sköra yta (iOS-taligenkänning) med minst antal betjänade användare.</li>
+    <li><strong>PDF/AI-import: experiment, inte produkt.</strong> Er egen analys landar rätt (BYO-nyckel, bara Tom). Lägg den inte i någon roadmap mot andra användare – nyckelproblemet gör den till en annan produkt.</li>
+    <li><strong>Ingen Anki-drift.</strong> Kortmallar, taggsystem, inställbar schemaläggningsalgoritm – powerusers kommer be om det om appen sprids. Svaret är nej; den som vill ha Anki har Anki. Flippas löfte är att man <em>inte</em> behöver konfigurera.</li>
+    <li><strong>Städa i stället för att bygga:</strong> uppslags-namngivningen (A7) och den vilande Utforska-koden (Wikipedia/Commons-arket) – bestäm om den ska tillbaka in i fjädern eller bort ur kodbasen.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ -->
+<section id="roadmap">
+  <p class="sec-eyebrow">07</p>
+  <h2>Prioriterad roadmap</h2>
+  <p class="sec-lead">Om jag fick bestämma ordningen. Varje rad är släppbar för sig – i din anda av små deploybara steg.</p>
+
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>När</th><th>Vad</th><th>Insats</th><th>Träffar mål</th></tr>
+      </thead>
+      <tbody>
+        <tr><td rowspan="4"><strong>Nu</strong><br><span class="small-note">närmaste veckorna</span></td>
+            <td><strong>A1</strong> ”Kunde direkt”-regeln (👆 på nytt ord → hög låda)</td><td>Liten</td><td>Från sin nivå</td></tr>
+        <tr><td><strong>A2</strong> Behärskningsindikator per lektion</td><td>Liten</td><td>Tydliga framsteg</td></tr>
+        <tr><td><strong>A5</strong> Låda 7–8 (64/128 dagar)</td><td>Liten</td><td>SRS / poweruser</td></tr>
+        <tr><td><strong>B1</strong> Biblioteks-pilot (italienska × 3 teman × 3 nivåer, CSV)</td><td>Innehåll</td><td>Låg tröskel, nivå</td></tr>
+        <tr><td rowspan="4"><strong>Närtid</strong><br><span class="small-note">1–2 månader</span></td>
+            <td><strong>A6</strong> ”Klart för idag ✓” + morgondagsprognos</td><td>Liten</td><td>Framsteg, vana</td></tr>
+        <tr><td><strong>A3</strong> Leech-detektion → föreslå minnesregel</td><td>Medel</td><td>SRS, kontext</td></tr>
+        <tr><td><strong>A4</strong> Exempelmeningar (fält + TTS + promptar)</td><td>Medel</td><td>Kontext</td></tr>
+        <tr><td><strong>A7</strong> UX-städning (nyordstakt, namngivning, streak-frys, ↩︎)</td><td>Liten</td><td>Upplevelse</td></tr>
+        <tr><td rowspan="2"><strong>Sedan</strong><br><span class="small-note">när ovan sitter</span></td>
+            <td><strong>B4</strong> SRS/statistik → Firebase per profil (synk + backup)</td><td>Stor</td><td>Skydd; låser upp allt</td></tr>
+        <tr><td><strong>B2</strong> Onboarding-flöde: språk → nivå → startpaket → första pass</td><td>Medel</td><td>Låg tröskel</td></tr>
+        <tr><td rowspan="3"><strong>Villkorat</strong><br><span class="small-note">om 5–10 externa testare kommer tillbaka</span></td>
+            <td><strong>B3</strong> Riktig auth + per-uid-data + GDPR-paketet</td><td>Störst</td><td>Fler användare</td></tr>
+        <tr><td><strong>B5</strong> Dagliga påminnelser (web push / native)</td><td>Medel + server</td><td>Vana, retention</td></tr>
+        <tr><td>Luck-kort &amp; skrivläge (bygger på A4)</td><td>Medel</td><td>Mer än glosor</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout warm">
+    <p><strong>Om du bara gör tre saker:</strong> A1 + A2 + B1. Tillsammans stänger de dina två röda/gula huvudmål (från sin nivå, tydliga framsteg, låg tröskel) för under en veckas total insats – och ingenting av det behöver rivas upp den dag backend-spåret byggs.</p>
+  </div>
+</section>
+
+<footer>
+  <p>Underlag: <code>app.js</code> (v212, hela), <code>index.html</code>, <code>PLAN.md</code>, <code>docs/oppna-fragor.md</code>, <code>docs/framtida-utveckling.md</code>, <code>docs/innehallsbibliotek.md</code>, <code>docs/import-paus-favoriter.md</code>, <code>README.md</code> samt mockup-katalogen. Inga ändringar gjorda i appen. · Analys av Claude, 5 juli 2026.</p>
+</footer>
+
+</div>
+
+</body>
+</html>

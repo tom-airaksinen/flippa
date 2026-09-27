@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flippa – plan: prio per kort</title>
+</head>
+<body>
+<style>
+  :root {
+    --bg: #f4f6fc;
+    --surface: #ffffff;
+    --surface-2: #eef1fa;
+    --ink: #1d2436;
+    --muted: #5b6478;
+    --line: #dbe1f0;
+    --accent: #3a63d8;
+    --accent-ink: #2b4dad;
+    --accent-soft: rgba(58, 99, 216, 0.10);
+    --good: #35804e;
+    --good-soft: rgba(53, 128, 78, 0.12);
+    --warn: #a06f14;
+    --warn-soft: rgba(176, 126, 24, 0.13);
+    --crit: #b34a3e;
+    --crit-soft: rgba(179, 74, 62, 0.12);
+    --shadow: 0 1px 2px rgba(29, 36, 54, 0.05), 0 6px 20px rgba(29, 36, 54, 0.06);
+    --p1: #3a63d8;
+    --p2: #7a90c9;
+    --p3: #c2cbe4;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1424; --surface: #161e33; --surface-2: #1d2740; --ink: #e8edf8; --muted: #98a3bc;
+      --line: #2b3550; --accent: #7597ff; --accent-ink: #a5bcff; --accent-soft: rgba(117, 151, 255, 0.13);
+      --good: #82c795; --good-soft: rgba(130, 199, 149, 0.14); --warn: #e0b45e; --warn-soft: rgba(224, 180, 94, 0.13);
+      --crit: #e58a7d; --crit-soft: rgba(229, 138, 125, 0.13);
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+      --p1: #7597ff; --p2: #4d629e; --p3: #2c3a63;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6fc; --surface: #ffffff; --surface-2: #eef1fa; --ink: #1d2436; --muted: #5b6478;
+    --line: #dbe1f0; --accent: #3a63d8; --accent-ink: #2b4dad; --accent-soft: rgba(58, 99, 216, 0.10);
+    --good: #35804e; --good-soft: rgba(53, 128, 78, 0.12); --warn: #a06f14; --warn-soft: rgba(176, 126, 24, 0.13);
+    --crit: #b34a3e; --crit-soft: rgba(179, 74, 62, 0.12);
+    --shadow: 0 1px 2px rgba(29, 36, 54, 0.05), 0 6px 20px rgba(29, 36, 54, 0.06);
+    --p1: #3a63d8; --p2: #7a90c9; --p3: #c2cbe4;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1424; --surface: #161e33; --surface-2: #1d2740; --ink: #e8edf8; --muted: #98a3bc;
+    --line: #2b3550; --accent: #7597ff; --accent-ink: #a5bcff; --accent-soft: rgba(117, 151, 255, 0.13);
+    --good: #82c795; --good-soft: rgba(130, 199, 149, 0.14); --warn: #e0b45e; --warn-soft: rgba(224, 180, 94, 0.13);
+    --crit: #e58a7d; --crit-soft: rgba(229, 138, 125, 0.13);
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --p1: #7597ff; --p2: #4d629e; --p3: #2c3a63;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: "Seravek", "Avenir Next", "Avenir", -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 16.5px; line-height: 1.6;
+  }
+  .wrap { max-width: 780px; margin: 0 auto; padding: 0 20px 96px; }
+
+  header.hero { padding: 56px 0 36px; border-bottom: 1px solid var(--line); }
+  .eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent-ink); margin: 0 0 10px;
+  }
+  h1 {
+    font-size: clamp(1.7rem, 5vw, 2.35rem); line-height: 1.15; font-weight: 650;
+    letter-spacing: -0.015em; margin: 0 0 12px; text-wrap: balance;
+  }
+  .hero-sub { color: var(--muted); margin: 0 0 22px; max-width: 56ch; }
+
+  /* Prio-visual i heron: viktade staplar */
+  .prio-demo { display: flex; flex-direction: column; gap: 8px; max-width: 420px; }
+  .pd-row { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; }
+  .pd-label { width: 84px; flex-shrink: 0; font-weight: 600; }
+  .pd-track { flex: 1; height: 14px; border-radius: 7px; background: var(--surface-2); overflow: hidden; }
+  .pd-fill { height: 100%; border-radius: 7px; }
+  .pd-pct { width: 40px; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.75rem; }
+
+  nav.toc {
+    margin: 28px 0 8px; display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px 20px;
+  }
+  nav.toc a {
+    color: var(--ink); text-decoration: none; font-size: 0.92rem; padding: 6px 10px;
+    border-radius: 8px; background: var(--surface); border: 1px solid var(--line);
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  nav.toc a:hover, nav.toc a:focus-visible { border-color: var(--accent); }
+  nav.toc a .n { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.7rem; color: var(--accent-ink); }
+
+  section { margin-top: 56px; scroll-margin-top: 24px; }
+  h2 { font-size: 1.42rem; font-weight: 650; letter-spacing: -0.01em; margin: 0 0 6px; text-wrap: balance; }
+  .sec-eyebrow {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--accent-ink); margin: 0 0 8px;
+  }
+  .sec-lead { color: var(--muted); margin: 0 0 24px; max-width: 62ch; }
+  h3 { font-size: 1.06rem; font-weight: 650; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; max-width: 68ch; }
+  ul, ol { margin: 0 0 14px; padding-left: 22px; }
+  li { margin-bottom: 7px; max-width: 64ch; }
+  strong { font-weight: 650; }
+  a { color: var(--accent-ink); }
+  code {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.85em;
+    background: var(--surface-2); padding: 1px 5px; border-radius: 5px;
+  }
+
+  .chip {
+    display: inline-block; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-size: 0.66rem; letter-spacing: 0.06em; padding: 2px 8px; border-radius: 999px;
+    vertical-align: 2px; white-space: nowrap;
+  }
+  .chip.good { background: var(--good-soft); color: var(--good); }
+  .chip.warn { background: var(--warn-soft); color: var(--warn); }
+  .chip.info { background: var(--accent-soft); color: var(--accent-ink); }
+
+  .rec {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 14px;
+    padding: 18px 20px 14px; margin: 14px 0; box-shadow: var(--shadow);
+  }
+  .rec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 10px; margin-bottom: 8px; }
+  .rec-head h3 { margin: 0; }
+  .rec-head .id { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.72rem; color: var(--accent-ink); }
+  .rec p:last-child, .rec ul:last-child { margin-bottom: 4px; }
+  .rec.flag { border-left: 3px solid var(--warn); }
+
+  .callout { background: var(--accent-soft); border-radius: 14px; padding: 18px 20px; margin: 18px 0; }
+  .callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+  .callout.warm { background: var(--warn-soft); }
+
+  .qa {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 16px; margin: 12px 0;
+  }
+  .qa .q { font-weight: 650; margin-bottom: 6px; }
+  .qa .q::before { content: "Du: "; color: var(--accent-ink); font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.75em; }
+  .qa p:last-child, .qa ul:last-child { margin-bottom: 0; }
+
+  .tablewrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  th {
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 0.66rem;
+    letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+    font-weight: 600; background: var(--surface-2);
+  }
+  td.num { font-variant-numeric: tabular-nums; }
+
+  .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 2px; vertical-align: 0; }
+  .dot.d1 { background: var(--p1); }
+  .dot.d2 { background: var(--p2); }
+  .dot.d3 { background: var(--p3); }
+
+  .small-note { font-size: 0.85rem; color: var(--muted); }
+  footer { margin-top: 72px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+  footer ul { padding-left: 18px; }
+  footer li { font-size: 0.85rem; }
+</style>
+
+<div class="wrap">
+
+<header class="hero">
+  <p class="eyebrow">Designplan · 6 juli 2026 · uppföljning till produktanalysen</p>
+  <h1>Prio per kort – rätt idé, så här bygger vi den</h1>
+  <p class="hero-sub">Din instinkt bekräftas både av pedagogisk forskning och av SRS-historien: prioritet är en egenskap hos <em>ordet</em>, inte hos lektionen. Så här känns det i praktiken när alla nivåer är valda och nyordskvoten är 10/dag:</p>
+  <div class="prio-demo" aria-label="Viktad introduktion: 75/20/5">
+    <div class="pd-row"><span class="pd-label"><span class="dot d1"></span> Kärna</span><div class="pd-track"><div class="pd-fill" style="width:75%; background:var(--p1)"></div></div><span class="pd-pct">75 %</span></div>
+    <div class="pd-row"><span class="pd-label"><span class="dot d2"></span> Vanlig</span><div class="pd-track"><div class="pd-fill" style="width:20%; background:var(--p2)"></div></div><span class="pd-pct">20 %</span></div>
+    <div class="pd-row"><span class="pd-label"><span class="dot d3"></span> Nisch</span><div class="pd-track"><div class="pd-fill" style="width:5%; background:var(--p3)"></div></div><span class="pd-pct">5 %</span></div>
+  </div>
+</header>
+
+<nav class="toc" aria-label="Innehåll">
+  <a href="#bedomning"><span class="n">00</span>Min bedömning</a>
+  <a href="#forskning"><span class="n">01</span>Vad forskningen säger</a>
+  <a href="#fragor"><span class="n">02</span>Dina frågor, besvarade</a>
+  <a href="#design"><span class="n">03</span>Datamodell &amp; algoritm</a>
+  <a href="#ux"><span class="n">04</span>UX – osynligt tills man vill</a>
+  <a href="#migrering"><span class="n">05</span>Migrering av befintligt</a>
+  <a href="#biblioteket"><span class="n">06</span>Biblioteksplanen skrivs om</a>
+  <a href="#bygg"><span class="n">07</span>Byggordning</a>
+</nav>
+
+<!-- ============================================================ -->
+<section id="bedomning">
+  <p class="sec-eyebrow">00</p>
+  <h2>Min bedömning: byt – per kort slår per lektion</h2>
+  <p class="sec-lead">Inte bara ”också okej” – det är en bättre modell än den vi hade i biblioteksplanen, av fem skäl.</p>
+  <ul>
+    <li><strong>Centralitet är ordets egenskap.</strong> ”Il cane” är ett kärnord oavsett om det råkar ligga i <em>Djur</em>, <em>Hemma</em> eller Collins kapitel 4. Nivå-per-lektion tvingade in en ordegenskap i en behållarstruktur – därav de klumpiga <code>Djur · nybörjare</code>-namnen och tre lektioner där en räcker.</li>
+    <li><strong>Det komponerar med allt som finns.</strong> Paus, stjärnor och prio blir tre filter i samma behörighetssteg som redan är designat i <code>import-paus-favoriter.md</code> (”vilka kort är behöriga att dras in i ett pass”). Nivålektioner hade varit en parallell mekanism; prio är en rad till i en befintlig.</li>
+    <li><strong>Det löser Collins-problemet på riktigt.</strong> 3 000 ord i en hög går inte att nivådela genom att flytta ord mellan lektioner – men en LLM som sätter en siffra per rad är en eftermiddag. Sedan filtrerar/viktar appen.</li>
+    <li><strong>Viktning i stället för murar.</strong> Nivålektioner är binära (pausad eller inte). Prio möjliggör det smartare beteendet du beskrev: mest kärna, lite bredd, en gnutta nisch – utan att användaren behöver göra något alls.</li>
+    <li><strong>Färre begrepp för användaren.</strong> Lektionslistan förblir ren (en lektion per tema), och ”nivå” blir en inställning i stället för ett namngivningsschema man måste förstå.</li>
+  </ul>
+  <div class="callout">
+    <p><strong>Din framtidsbild stöder också valet:</strong> om biblioteksinnehåll så småningom <em>kopieras</em> in till varje användares konto (för att folk vill tweaka orden – en riktig insikt) måste all metadata bo på kortet och följa med kopian. Prio på kortet är exakt det. Bibliotekets prio blir ett <em>ursprungsförslag</em>; användarens justering ändrar bara den egna kopian. Modellen fungerar identiskt idag (ämnen ägs redan per profil) och den dagen ett riktigt bibliotek finns.</p>
+  </div>
+  <div class="callout">
+    <p><strong>Definition (beslutad 2026-07-06): prio anger relativ centralitet inom det innehåll ordet tillhör.</strong> Måttstocken är <em>temat i sin helhet</em> – inte språket som helhet, och inte den levererade listan. <code>Il porcino</code> får prio 1 i <em>Svampar</em> fast svampord är globalt lågfrekventa; <code>il cappello</code> i en klädlektion graderas mot alla klädord, inte mot sina 19 grannar i listan. För allmänna ordlistor (Collins, ”Kroatiska 101”) är temat = hela språket, så där sammanfaller prio med allmän frekvens/vardagsnytta. Logiken: användaren har redan gjort den globala prioriteringen genom att välja innehållet – <strong>lektionen svarar på ”vad vill jag lära mig”, prio på ”i vilken ordning inom det”.</strong> Tema-förankringen (i stället för list-förankring) gör också skalan stabil när en lektion växer: ber man senare om ”20 klädord till” graderas de mot samma måttstock och blir naturligt 2–3.</p>
+  </div>
+  <p>Kort sagt: kör. Resten av dokumentet är <em>hur</em>, så att det ”bara funkar” utan att bli tungt.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="forskning">
+  <p class="sec-eyebrow">01</p>
+  <h2>Vad forskningen säger</h2>
+  <p class="sec-lead">Du gissade ”primärt, sekundärt, perifert” – de etablerade begreppen ligger mycket nära, och de råkar alla vara tredelade.</p>
+
+  <h3>Frekvensband – fältets standardmodell</h3>
+  <p>Paul Nation, tongivande inom L2-ordförrådsforskning, delar ordförrådet i tre band: <strong>högfrekventa</strong> ord (~de 1 000–3 000 vanligaste – vardagens kärna, ska läras medvetet och nötas), <strong>mellanfrekventa</strong> (~3 000–9 000 – breddar mot självständig läsning) och <strong>lågfrekventa</strong> (9 000+ – plockas upp vid behov, ska inte prioriteras i undervisning). Schmitt &amp; Schmitt (2014) etablerade just den tredelningen som fältets referensram. Ditt prio 1/2/3 <em>är</em> den här modellen, per ord.</p>
+  <p>Varför prioritering lönar sig så brutalt är Zipfs lag: ordfrekvens är extremt skevt fördelad. De ~2 000 vanligaste ordfamiljerna täcker runt 80 % av löpande text; för godtagbar läsförståelse behövs ~95 % täckning (~4 000–5 000 ordfamiljer) och för obehindrad ~98 % (~8 000–9 000) enligt Hu &amp; Nation och Laufer. Översatt till Flippa: <strong>ett kärnord är i storleksordningen tio gånger mer värt per minut plugg än ett nischord</strong> – och därför är 75/20/5-viktningen inte en smaksak utan i linje med hur nyttan faktiskt är fördelad.</p>
+
+  <h3>Tiers – det pedagogiska syskonbegreppet</h3>
+  <p>Beck, McKeown &amp; Kucans ”three tiers of vocabulary” (2002) är standardramverket i läsundervisning: <strong>Tier 1</strong> = bas/vardagsord, <strong>Tier 2</strong> = högavkastande ord över många ämnen, <strong>Tier 3</strong> = domänspecifika ord (som lärs när domänen behövs – precis din sjöfart och dina svampar). Ramverket är byggt för modersmålsundervisning men lånas flitigt i språkinlärning, och bekräftar två saker: tre nivåer är den etablerade granulariteten, och den tredje nivån definieras av <em>domän</em>, inte bara sällsynthet.</p>
+
+  <h3>Prio i SRS-världen – prior art</h3>
+  <p>SuperMemo (spaced repetition-fältets urmoder) har haft exakt det här konceptet i decennier: <strong>Priority queue</strong>, där varje element får en prioritet och systemet sorterar både introduktion och repetitionsöverflöd efter den. Deras erfarenhet i korthet: prioritet är oumbärligt när samlingen växer förbi vad man hinner med – vilket är precis Collins-situationen. Skillnaden mot SuperMemo (kontinuerlig 0–100 %-skala, notoriskt svåranvänd) blir Flippas poäng: <strong>tre lägen och smarta defaults i stället för en ratt</strong>.</p>
+
+  <h3>Är tre nivåer rätt? Ja – och LLM klarar jobbet</h3>
+  <ul>
+    <li><strong>Tre är fältets svar</strong>: Nations tre band, Becks tre tiers. Fler nivåer (t.ex. CEFR:s sex) ger skenprecision – forskning på ordnivå visar att även människor är oense om finkorniga nivåer.</li>
+    <li><strong>LLM-klassning fungerar</strong>: studier på ordnivå-CEFR (sex klasser) når ~83–87 % träffsäkerhet med moderna modeller. En grov treskala är ett lättare problem, och i vår design är felkostnaden dessutom låg – en felklassad glosa hamnar inte bakom en mur utan får bara fel <em>sannolikhet</em>, och användaren kan justera. Din egen testkörning stämmer alltså med litteraturen.</li>
+    <li><strong>En brasklapp</strong>: LLM:er bedömer engelska bäst (mest data). För italienska/franska: be modellen resonera utifrån frekvens + vardagsnytta, inte ”CEFR-nivå”, och stickprova ~50 ord per körning. Ord med flera betydelser är den kända felkällan.</li>
+  </ul>
+
+  <h3>Namnfrågan</h3>
+  <p>Internt: kalla fältet <code>prio</code> (1–3) – kort, entydigt, sorterbart. Mot användaren skulle jag undvika både ”prio” (låter som en att-göra-lista) och forskningsjargong. Förslag, i preferensordning:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Alternativ</th><th>Nivå 1 / 2 / 3</th><th>Kommentar</th></tr></thead>
+    <tbody>
+      <tr><td><strong>Kärna · Vanlig · Nisch</strong> <span class="chip good">Rekommenderad</span></td><td>”Kärnord”, ”Vanliga ord”, ”Nischord”</td><td>Svenskt, självförklarande, mappar rakt på Nation/Beck. ”Nisch” är hedrande snarare än nedvärderande – dina svampar är nischade, inte oviktiga.</td></tr>
+      <tr><td>Bas · Bredd · Djup</td><td>—</td><td>Snyggt men abstrakt; ”djup” antyder svårighet snarare än sällsynthet.</td></tr>
+      <tr><td>●●● / ●●○ / ●○○</td><td>ren symbol</td><td>Som komplement i trånga ytor (ordlistan) – inte som enda bärare.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- ============================================================ -->
+<section id="fragor">
+  <p class="sec-eyebrow">02</p>
+  <h2>Dina frågor, besvarade</h2>
+
+  <div class="qa">
+    <p class="q">Ska nyords-slumpen vikta smart när flera nivåer är valda, t.ex. 75/20/5?</p>
+    <p>Ja – och gör viktningen till <em>normalläget</em> så att filtret nästan aldrig behövs. Fasta vikter per prio: <strong>15 / 4 / 1</strong>. Normalisera över de valda nivåerna:</p>
+    <div class="tablewrap"><table>
+      <thead><tr><th>Valda nivåer</th><th>Fördelning</th></tr></thead>
+      <tbody>
+        <tr><td><span class="dot d1"></span><span class="dot d2"></span><span class="dot d3"></span> alla</td><td class="num">75 / 20 / 5</td></tr>
+        <tr><td><span class="dot d1"></span><span class="dot d2"></span> kärna + vanlig</td><td class="num">79 / 21</td></tr>
+        <tr><td><span class="dot d2"></span><span class="dot d3"></span> vanlig + nisch</td><td class="num">80 / 20</td></tr>
+        <tr><td><span class="dot d1"></span><span class="dot d3"></span> kärna + nisch</td><td class="num">94 / 6</td></tr>
+        <tr><td>en nivå</td><td class="num">100</td></tr>
+      </tbody>
+    </table></div>
+    <p>Dragningen görs som viktat urval utan återläggning när dagens nyordsset väljs (i <code>todaysNewCards</code>), och tar slut en nivå fylls resten från nästa. Med kvot 10/dag betyder det i praktiken ~7–8 kärnord, ~2 vanliga och ett nischord var annan dag – kärnan först, utan att nischen någonsin dör. Behåll den befintliga proportionella fördelningen över lektioner <em>inom</em> varje nivå, så små lektioner inte svälts.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Om ingen prio finns – hantera som prio 2?</p>
+    <p>Ja, med en viktig detalj: <strong>lagra aldrig defaulten</strong>. Saknat fält tolkas som 2 vid läsning (<code>prio ?? 2</code>); fältet skrivs bara när import/LLM/användare uttryckligen satt något. Då är hela funktionen bakåtkompatibel gratis: oklassat innehåll med alla nivåer valda beter sig <em>exakt</em> som idag, ingen migrering krävs för att inget ska gå sönder, och man kan alltid skilja ”bedömd som vanlig” (2) från ”aldrig bedömd” (tomt) – värdefullt när LLM-backfillen ska veta vad som återstår.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Ska framstegsmätare och antal räknas mot valda nivåer i stället för lektionens alla ord?</p>
+    <p>Ja på alla <em>handlingsytor</em>, med helheten synlig sekundärt:</p>
+    <ul>
+      <li><strong>”Dags att öva (n)”, lektionsradernas ”X nya · Y dags” och Fortsätt-räknaren</strong>: räkna i filtrets scope. Koden har redan en varning om exakt detta (<code>isDueNow</code>-kommentaren: räknare och pass måste dela urvalslogik, annars ”ur synk”) – så prio-villkoret ska in i <em>ett</em> gemensamt behörighetssteg som alla ytor anropar, samma mönster som paus.</li>
+      <li><strong>Behärskningsmätaren per lektion</strong> (A2 från förra analysen): mät mot valda nivåer – ”kan 82 % av kärnorden” är ett ärligare och mer motiverande mått än en siffra som dras ner av 2 000 ofiltrerade nischord man aktivt valt bort.</li>
+      <li><strong>Statistikfliken</strong>: låt den visa allt (den är retrospektiv, inte handlingsyta). Eventuellt en diskret rad ”varav utanför ditt nivåfilter: …” senare.</li>
+      <li><strong>Ordlistan i editorn</strong>: visa alltid alla ord (det är förvaltningsytan) – med prio-punkt per rad.</li>
+    </ul>
+  </div>
+
+  <div class="qa">
+    <p class="q">Kan vi sätta prio på befintliga användares ord utan att störa deras SRS?</p>
+    <p><strong>Ja, helt riskfritt – med ett villkor.</strong> All personlig data (SRS-lådor, favoriter, statistik) nycklas på <em>ordtexten</em> (<code>front|back</code>), inte på kort-id eller kortets övriga fält. Att lägga till <code>prio</code> på ett kort i Firebase rör varken text eller id → ingen SRS-post, stjärna eller streak påverkas. Villkoret: backfillen får <em>bara</em> skriva <code>prio</code>-fältet (multi-path-update à la <code>cards/&lt;id&gt;/prio</code>), aldrig ”skriva tillbaka” hela kortet – om LLM:en råkar normalisera en stavning i front/back byts ordnyckeln och SRS:en tappas. Se migreringsplanen i §05.</p>
+    <p>Och eftersom filtret default är ”alla nivåer” märker Hedvig ingenting förrän den dag hon själv öppnar inställningen.</p>
+  </div>
+
+  <div class="qa">
+    <p class="q">Kan det byggas utan att bli tungt – ”bara funkar” men justerbart?</p>
+    <p>Ja, och nyckeln är beslutet ovan: <strong>viktningen är alltid på, filtret är opt-in.</strong> Nybörjaren ser aldrig ordet prio – hen märker bara att appen ger vettiga ord i vettig ordning. Powerusern (du, med Collins) öppnar KORT/PASS-väljaren och bockar ur nivåer. Den enda nya alltid-synliga ytan är en liten prio-väljare i Redigera ord-modalen och en punkt i ordlistan. Det är hela fotavtrycket.</p>
+  </div>
+
+  <div class="callout">
+    <p><strong>En konsekvens av ditt filterval (nya + repetitioner) att vara medveten om:</strong> bockar man ur ”Nisch” göms även förfallna nischord man redan börjat lära sig – de fryser, precis som ord i pausade lektioner gör idag (samma semantik, vilket är argumentet för valet). När nivån bockas i igen kommer de tillbaka som en puckel av försenade repetitioner; några har man glömt, de bommas och åker till låda 1 – Leitner självkorrigerar, och kort/pass-taket gör att puckeln betas av i lagom bitar. Rimligt pris, men värt en rad i hjälpfliken.</p>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="design">
+  <p class="sec-eyebrow">03</p>
+  <h2>Datamodell &amp; algoritm</h2>
+
+  <h3>Datafältet</h3>
+  <ul>
+    <li><code>content/…/cards/&lt;id&gt;/prio</code>: <code>1 | 2 | 3</code>, frånvarande = 2. Delat med kortet (ägs av den som äger ämnet – och följer automatiskt med den dag biblioteksinnehåll kopieras per användare).</li>
+    <li><strong>Filtret</strong> är däremot personligt och per ämne: <code>flippa-priofilter-v1</code> i localStorage, <code>profil → ämnes-id → [1,2]</code>, frånvarande = alla. Per ämne för att man typiskt är nybörjare i ett språk och avancerad i ett annat. (Flyttar med i B4-synken sedan, som paus/favoriter.)</li>
+    <li><strong>CSV-importen</strong> får kolumnen <code>prio</code> (tom = 2). Snabbinmatningen kan ta en valfri tredje kolumn: <code>ord;översättning;3</code>. ”Slå upp ord” sätter inget (= 2).</li>
+  </ul>
+
+  <h3>Ett behörighetssteg, tre filter</h3>
+  <p>Designen från <code>import-paus-favoriter.md</code> fullbordas: en enda predikatfunktion avgör om ett kort är behörigt för automatiska pass, och <em>alla</em> räknare och passbyggare använder den.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Steg</th><th>Regel</th></tr></thead>
+    <tbody>
+      <tr><td>1. Paus</td><td>Kortets lektion pausad → obehörigt (som idag)</td></tr>
+      <tr><td>2. Prio</td><td><code>(card.prio ?? 2)</code> ∉ valda nivåer → obehörigt <em>(nytt)</em></td></tr>
+      <tr><td>3. Stjärnfokus</td><td>”Endast stjärnord” på och kortet ostjärnat → obehörigt (som idag)</td></tr>
+    </tbody>
+  </table></div>
+  <p>Gäller ”Dags att öva” (nya + förfallna), alla räknare och Fortsätt-logiken. <strong>Reviderat 2026-07-06 (skarpt bygge):</strong> även <strong>manuell lektionsträning respekterar filtret</strong> – användaren vill kunna öva bara t.ex. nivå 1 av en lektion (Sjöfart inför färjan). Ger filtret 0 ord i lektionen visas en toast. (Ursprunglig plan: manuell träning ignorerade filtret som paus.)</p>
+
+  <h3>Viktad introduktion i <code>todaysNewCards</code></h3>
+  <ol>
+    <li>Bygg poolen av låda 0-kort från aktiva lektioner, filtrerad genom behörighetssteget (som idag + prio).</li>
+    <li>Dela poolen i nivåhinkar. Fördela dagens kvot med vikterna 15/4/1 över valda nivåer (största-rest, samma Hamilton-metod som redan finns i <code>allocProportional</code> – återanvänd den). Underskott i en hink spiller till nästa nivå i prio-ordning.</li>
+    <li>Inom varje hink: befintlig proportionell fördelning över lektioner + slump. Persistera dagens set som idag.</li>
+    <li><em>Samtidig A7-fix:</em> ändras filter eller nyordstakt under dagen, räkna om dagens ännu-ointroducerade set direkt i stället för ”gäller imorgon”.</li>
+  </ol>
+
+  <h3>Prio-byte på ett kort</h3>
+  <p>Ren fältuppdatering (<code>update({prio})</code>) – ordnyckeln rörs inte, så SRS/stjärnor/statistik är opåverkade per definition. Om kortet står i dagens redan valda nyordsset och prio ändras ut ur filtret faller det bort vid nästa läsning (samma mönster som paus-koden redan hanterar med kommentaren ”pausade ord faller bort även om de valdes tidigare idag”).</p>
+
+  <h3>Nya analytics-events</h3>
+  <p>Enligt projektets tracking-konvention: <code>priofilter-andrad</code> (med vald kombination som del av pathen, t.ex. <code>priofilter/1</code>, <code>priofilter/12</code>), <code>prio-justerad</code> (manuellt byte på ett kort) och <code>import-med-prio</code>. Ger svar på om funktionen används alls, av vem och åt vilket håll – innan mer byggs på den.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="ux">
+  <p class="sec-eyebrow">04</p>
+  <h2>UX – osynligt tills man vill något</h2>
+
+  <div class="rec">
+    <div class="rec-head"><h3>Priofiltret</h3><span class="chip info">KORT/PASS-väljaren</span></div>
+    <p>En rad i den befintliga KORT/PASS-poppen (granne med ”Endast stjärnord”): <strong>PRIO</strong> med tre bock-chips <span class="dot d1"></span>Kärna · <span class="dot d2"></span>Vanliga · <span class="dot d3"></span>Nisch, alla ibockade som default. Under: en rad förklaring (”Styr vilka ord som introduceras och repeteras. Kärnord prioriteras alltid mest.”). När något är urbockat speglas det i pillen, som stjärnan idag: <code>KORT/PASS · 10 ⭐ ●●○</code>. Ingen egen skärm, ingen onboarding.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><h3>Redigera ord</h3><span class="chip info">+ ordlistan</span></div>
+    <p>I Redigera ord-modalen: en segmentrad ”Prio: Kärna / Vanlig / Nisch” (förvald = kortets värde, absent visas som Vanlig). I editorlistan: den lilla prio-punkten vid varje ord (som 💡-flaggan för minnesregel), och ett nytt sorteringsval ”Efter nivå”. Fjädermenyn på kortet lämnas orörd – fyra val är redan dess max, och prio-justering mitt i ett pass är sällsynt nog att gå via ✎ Redigera.</p>
+  </div>
+
+  <div class="rec">
+    <div class="rec-head"><h3>Vad nybörjaren ser</h3><span class="chip good">Ingenting</span></div>
+    <p>Det är hela poängen. Default (alla nivåer + 75/20/5-viktning) ger nybörjaren kärnord först utan ett enda beslut. Första gången begreppet blir synligt är om hen själv öppnar KORT/PASS-väljaren eller Redigera ord. Hjälpfliken får ett kort stycke (”Prio: alla ord är märkta Kärna/Vanlig/Nisch – det styr i vilken ordning de introduceras, inte hur viktiga de är för dig”), inklusive raden om att urbockad prio pausar även repetitioner.</p>
+  </div>
+
+  <div class="rec flag">
+    <div class="rec-head"><h3>Avgränsning – det vi inte bygger nu</h3></div>
+    <ul>
+      <li>Ingen ”auto-avancemang” (typ ”när 90 % av kärnan sitter, föreslå nivå 2”) – snygg idé, men viktningen gör den nästan onödig. Ompröva när data finns.</li>
+      <li>Ingen prio-visning på själva träningskortet – kortytan är helig.</li>
+      <li>Ingen fjärde nivå, ingen procentskala. SuperMemo-fällan.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<section id="migrering">
+  <p class="sec-eyebrow">05</p>
+  <h2>Migrering: Collins, Hedvig och allt befintligt</h2>
+  <p class="sec-lead">Engångsjobb, per ämne, utanför appen – med appens dubblettsäkra id:n som adress.</p>
+  <ol>
+    <li><strong>Exportera</strong>: läs ämnets kort ur Firebase (id, front, back) – t.ex. via ett litet skript eller den befintliga innehålls-JSON:en.</li>
+    <li><strong>Klassa med LLM – per lektion, med lektionens tema som måttstock</strong> (den relativa semantiken): skicka varje lektions ord i batchar (~200) och ange temat i prompten. För allmänna samlingar (Collins ”Div. ord”) är temat = hela språket, så där blir definitionerna frekvens + vardagsnytta: <em>”1 = kärnan inom temat: det man möter först och oftast · 2 = vanligt inom temat men inte det första man behöver · 3 = perifert eller specialiserat även inom temat. Svara som <code>id;prio</code>.”</em> Be om motivering endast för osäkra fall – håller kostnaden nere och granskningen fokuserad.</li>
+    <li><strong>Granska stickprov</strong>: ~50 ord per ämne, särskilt gränsfall 1↔2 (forskningens kända svåra zon). Din bedömning trumfar.</li>
+    <li><strong>Skriv tillbaka enbart prio-fälten</strong> som en multi-path-update (<code>…/cards/&lt;id&gt;/prio</code>). Aldrig hela kort. Chunka som CSV-importen redan gör.</li>
+    <li><strong>Verifiera</strong>: öppna appen, kontrollera att lådfördelningen i statistiken och några stjärnor/streak är intakta (de kan inte ha påverkats, men förtroende byggs av kontrollen).</li>
+  </ol>
+  <h3>Promptprinciper – gäller backfillen, promptmallen i tomma lektioner och biblioteksgenereringen</h3>
+  <ul>
+    <li><strong>Urvalet först, prio sen.</strong> Orden väljs enbart efter användbarhet inom temat – som om prio inte fanns. Prompten ska uttryckligen förbjuda att ovanligare ord letas upp för att ge spridning i prio (annars smittar fördelningshinten urvalet).</li>
+    <li><strong>Prio relativt hela temat, inte listan.</strong> En kort lista på ett vardagstema (”20 klädord”) kan helt sakna prio 3 – det är korrekt, inte ett fel. Viktningen degenererar då graciöst till dagens beteende (allt lika), och filtret kan aldrig frysa ord som felstämplats som nisch av list-tvång.</li>
+    <li><strong>Villkorad fördelningshint.</strong> I längre listor (30+ ord) är ”ungefär hälften 1, en tredjedel 2, resten 3” ett riktmärke mot 1-inflation (utan hint stämplar modellen nästan allt som kärna, eftersom den valde orden för att de är relevanta). Aldrig ett kvoteringsmål. Variant att A/B-testa: rangordna-först, buckla sedan.</li>
+  </ul>
+  <p>För Hedvigs spanska och gästernas ämnen: samma körning, noll synlig förändring (default = alla nivåer). Det enda de <em>kan</em> märka är förbättringen – att nya ord kommer i vettigare ordning – om de har många otränade ord kvar.</p>
+  <p class="small-note">Ordningsfråga: gör backfillen <em>efter</em> att viktningen är släppt (steg 3 i byggordningen), så att effekten slår igenom direkt när datat landar – annars ligger prio där passivt och ”borde göra något” utan att göra det.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="biblioteket">
+  <p class="sec-eyebrow">06</p>
+  <h2>Biblioteksplanen skrivs om – och blir enklare</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>I planen idag (<code>innehallsbibliotek.md</code>)</th><th>Blir i stället</th></tr></thead>
+    <tbody>
+      <tr><td>Lektion per topic × nivå (<code>Djur · nybörjare</code>, <code>Djur · medel</code>, …) – 33 lektioner för 11 teman</td><td>En lektion per topic (<code>Djur</code>) med prio 1–3 på korten – 11 lektioner</td></tr>
+      <tr><td>CSV-sektioner bär nivån i namnet</td><td>CSV-kolumnen <code>prio</code> bär nivån; sektion = rent temanamn</td></tr>
+      <tr><td>Nivåaktivering via paus av nivå 2–3-lektioner; auto-paus som ny kodfunktion</td><td>Nivåval via priofiltret – funktionen finns redan, auto-paus-koden behövs aldrig</td></tr>
+      <tr><td>Nivåetiketter i lektionsnamn (öppen fråga om ”Medel” vs ”kan en del”)</td><td>Frågan försvinner ur namnen; etiketterna bor i filter-UI:t (Kärna/Vanlig/Nisch)</td></tr>
+      <tr><td>App-roadmap: level-fält på lektioner, nivåmärken, nivåfilter per topic</td><td>Utgår – ersätts av denna plan</td></tr>
+    </tbody>
+  </table></div>
+  <p>Generationsprompten uppdateras: be om ~90 ord per topic i <em>en</em> sektion med prio-kolumn (samma definitioner som i migreringsprompten) i stället för tre sektioner à 30. Mini-piloten (italienska × Djur/Familj/Mat) blir alltså ännu enklare än planerat – tre lektioner, inte nio. Behåll principerna som redan är bra: artikel på utländska sidan, obestämd form på svenska, minnesregel för kulturord (som naturligt hamnar i prio 3).</p>
+  <p>Kopplingen till onboarding består: ”nybörjare” = startpaket med filter default (viktningen sköter resten); ”kan en del” = samma paket + snabbsortering (A1-förslaget) för att beta av kärnan man redan kan.</p>
+</section>
+
+<!-- ============================================================ -->
+<section id="bygg">
+  <p class="sec-eyebrow">07</p>
+  <h2>Byggordning – fem släppbara steg</h2>
+  <div class="tablewrap"><table>
+    <thead><tr><th>#</th><th>Steg</th><th>Insats</th><th>Synligt för användare?</th></tr></thead>
+    <tbody>
+      <tr><td class="num">1</td><td><strong>Datafält + inläsning</strong>: <code>prio</code> i normalize/cache, CSV-kolumn, snabbinmatningens tredje kolumn. Default-tolkning <code>?? 2</code>.</td><td>Liten</td><td>Nej</td></tr>
+      <tr><td class="num">2</td><td><strong>Viktad introduktion</strong>: nivåhinkar + 15/4/1 i <code>todaysNewCards</code> (återanvänd <code>allocProportional</code>).</td><td>Liten–medel</td><td>Bara som ”vettigare ordning”</td></tr>
+      <tr><td class="num">3</td><td><strong>LLM-backfill</strong> av allt befintligt innehåll (Collins, Hedvig, allt) enligt §05.</td><td>Engångsjobb</td><td>Nej (men steg 2 börjar verka på riktigt)</td></tr>
+      <tr><td class="num">4</td><td><strong>Redigering + indikator</strong>: nivåval i Redigera ord, punkt + sortering i ordlistan. Event: <code>prio-justerad</code>.</td><td>Liten</td><td>Ja, diskret</td></tr>
+      <tr><td class="num">5</td><td><strong>Priofiltret</strong>: chips i KORT/PASS-väljaren, gemensamt behörighetssteg i alla räknare/passbyggare, pill-indikator, hjälptext. Event: <code>priofilter-andrad</code>. Inkl. A7-fixen ”filter-/taktändring gäller direkt”.</td><td>Medel</td><td>Ja – hela funktionen klar</td></tr>
+    </tbody>
+  </table></div>
+  <p>Varje steg är deploybart för sig och inget kräver att användare gör något. Efter steg 5: uppdatera <code>innehallsbibliotek.md</code> och kör bibliotekspiloten på nya formatet.</p>
+
+  <div class="callout warm">
+    <p><strong>Öppna frågor att avgöra under bygget</strong> (läggs i <code>oppna-fragor.md</code>): exakta vikterna (15/4/1 är startförslag – justera efter känsla, precis som lådintervallen en gång); UI-namnen (Kärna/Vanlig/Nisch?); om spill mellan nivåer ska gå uppåt eller nedåt när en hink sinar (förslag: mot närmast högre prio först); om hjälpflikens Leitner-avsnitt ska nämna nivåer eller om det räcker i eget stycke.</p>
+  </div>
+</section>
+
+<footer>
+  <p><strong>Källor (urval):</strong></p>
+  <ul>
+    <li>Nations frekvensband &amp; ordinlärning: <a href="https://www.wgtn.ac.nz/lals/resources/paul-nations-resources">Paul Nation, Victoria University of Wellington – resurser</a> · <a href="https://www.cambridge.org/core/journals/language-teaching/article/abs/reassessment-of-frequency-and-vocabulary-size-in-l2-vocabulary-teaching1/F6D6D1445DD9D5B6806BDA1B0E186DF5">Schmitt &amp; Schmitt (2014): A reassessment of frequency and vocabulary size in L2 vocabulary teaching</a></li>
+    <li>Täckningströsklar 95/98 %: <a href="https://onlinelibrary.wiley.com/doi/10.1111/lang.12622">Kremmel m.fl. (2023): Replicating Hu and Nation (2000)</a> · <a href="https://files.eric.ed.gov/fulltext/EJ887873.pdf">Laufer &amp; Ravenhorst-Kalovski (2010): Lexical text coverage, learners' vocabulary size</a></li>
+    <li>Tredelad ordförrådsmodell: <a href="https://www.justinbaeder.com/p/tiered-vocabulary-instructionbeck">Beck, McKeown &amp; Kucan – Tiered Vocabulary Instruction (översikt)</a></li>
+    <li>CEFR &amp; ordförrådsstorlek: <a href="http://www.eurosla.org/monographs/EM01/211-232Milton.pdf">Milton (2010): The development of vocabulary breadth across the CEFR levels</a></li>
+    <li>LLM-klassning av ordnivå: <a href="https://www.anlp.jp/proceedings/annual_meeting/2026/pdf_dir/Q4-9.pdf">Using the CEFR for Guiding LLMs in Lexical Complexity Prediction (2026)</a> · <a href="https://arxiv.org/pdf/2506.02758">Exploiting the English Vocabulary Profile for L2 word-level vocabulary assessment with LLMs</a></li>
+    <li>Prior art i SRS: <a href="https://help.supermemo.org/wiki/Priority_queue">SuperMemo: Priority queue</a></li>
+  </ul>
+  <p>Plan av Claude, 6 juli 2026 · uppföljning till <em>Flippa med fräscha ögon</em> (5 juli). Ingen kod ändrad.</p>
+</footer>
+
+</div>
+
+</body>
+</html>

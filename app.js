@@ -5114,8 +5114,32 @@ function splitGlued(line) {
   return ut;
 }
 
+// Höger-vänster-språk: ordet på EGEN rad, resten på nästa.
+//
+//   سلام
+//   hej;1
+//
+// iPhones urklipp kastar om tecken när RTL och latinsk text delar rad – "vit" tappade
+// sitt t och ett persiskt ord vävdes in mitt i baksidan. Ligger de på var sin rad har
+// varje rad en enda riktning och det finns ingenting att kasta om. Ihopparningen görs
+// BARA för RTL-ämnen: i övriga språk är en rad utan semikolon skräp (en rubrik man
+// råkat få med), och den ska fortsätta ignoreras.
+function parRTLrader(rader) {
+  if (!isRtlLang(subjectLang(currentSubject))) return rader;
+  // Saknar HELA klippet semikolon har AI:n hoppat över prion på varannan rad. Då är
+  // paren entydiga (rad 1 ord, rad 2 svenska) och alternativet vore att tappa allt.
+  const utanPrio = !rader.some((r) => r.includes(";"));
+  const ut = [];
+  for (let i = 0; i < rader.length; i++) {
+    const rad = rader[i], nasta = rader[i + 1];
+    if (rad && !rad.includes(";") && nasta && (utanPrio || nasta.includes(";"))) { ut.push(rad + ";" + nasta); i++; }
+    else ut.push(rad);
+  }
+  return ut;
+}
+
 function parseLines(text) {
-  return text
+  const rader = text
     // Alla radseparatorer, inte bara \n: CRLF, ensam CR (äldre klipp), NEL och
     // Unicodes LS/PS – en enda oväntad separator gjorde annars hela klippet till EN rad.
     .replace(/\r\n|[\r\u0085\u2028\u2029]/g, "\n")
@@ -5124,7 +5148,8 @@ function parseLines(text) {
     .join("\n")
     .split("\n")
     .map((l) => l.trim())
-    .filter(Boolean)
+    .filter(Boolean);
+  return parRTLrader(rader)
     .map((line) => {
       const i = line.indexOf(";");
       if (i < 0) return null;
@@ -5146,11 +5171,23 @@ function parseLines(text) {
       // Klammern tas alltid emot, även när ämnet har böjning avslaget – annars
       // tappas innehåll om man klistrar in innan flaggan slagits på.
       let form = null;
-      const fm = back.match(/^(.*?);?\s*\{([^}]*)\}\s*$/);
-      if (fm) { form = fm[2].trim() || null; back = fm[1].trim(); }
+      const fm = back.match(/;?\s*\{([^}]*)\}\s*/);
+      if (fm) {
+        form = fm[1].trim() || null;
+        back = (back.slice(0, fm.index) + back.slice(fm.index + fm[0].length)).replace(/;\s*$/, "").trim();
+      }
+      // Translittereringsspråk (persiska): det som står EFTER svenskan är uttalet.
+      //   سلام
+      //   hej;salâm;1
+      let tr = null;
+      if (subjectUsesTranslit()) {
+        const d = back.indexOf(";");
+        if (d >= 0) { tr = back.slice(d + 1).trim() || null; back = back.slice(0, d).trim(); }
+      }
       if (!front || !back) return null;
       const out = { front, back };
       if (form) out.form = form;
+      if (tr) out.tr = tr;
       if (prio) out.prio = prio;
       return out;
     })
@@ -5416,6 +5453,7 @@ function addCards(sid, lid, cards) {
   cards.forEach((c, i) => {
     const card = { front: c.front, back: c.back, order: order + i, createdAt: TS };
     if (c.form) card.form = c.form;
+    if (c.tr) card.tr = c.tr;
     if (c.prio === 1 || c.prio === 2 || c.prio === 3) card.prio = c.prio; // default (2) skrivs aldrig
     value[base.push().key] = card;
   });
@@ -5804,31 +5842,59 @@ function formPromptNote(harGenus) {
     + (verbExempel ? ` Klammern utelämnas för ord som varken är substantiv eller verb.`
                    : ` Klammern utelämnas för ord som inte är substantiv.`);
 }
+// Uttalsexempel för de språk som visar translitterering, i samma ordning som
+// AI_EXAMPLES-raderna. Bara persiska i dag.
+const AI_TR_EXAMPLES = { fa: ["nân", "sobh bekheyr"] };
+// Höger-vänster-språk: bryt raden efter ordet, så att ordet står ensamt och resten
+// av glosan hamnar på en ren latinsk rad. Se parRTLrader för varför.
+function rtlRadPar(rad, base, i) {
+  if (!RTL_LANGS.has(base)) return rad;
+  const d = rad.indexOf(";");
+  if (d < 0) return rad;
+  let svans = rad.slice(d + 1);
+  const tr = (AI_TR_EXAMPLES[base] || [])[i];
+  if (tr) {
+    const k = svans.indexOf(";");
+    svans = k < 0 ? `${svans};${tr}` : `${svans.slice(0, k)};${tr}${svans.slice(k)}`;
+  }
+  return `${rad.slice(0, d)}\n${svans}`;
+}
 function aiExampleLines(label) {
   const base = String(subjectLang(currentSubject) || "").split("-")[0].toLowerCase();
   const ex = AI_EXAMPLES[base];
-  if (ex) {
-    if (!formsOn()) return ex.join("\n");
-    // Klammern hakas in före prion på substantivraden (den första).
-    const boj = AI_FORM_EXAMPLES[base];
-    return ex.map((rad, i) => {
-      if (i !== 0 || !boj) return rad;
-      const d = rad.lastIndexOf(";");
-      return d < 0 ? rad : rad.slice(0, d) + ";{" + boj + "}" + rad.slice(d);
-    }).join("\n");
-  }
   const l = base ? label : "målspråket";
-  return `[ord på ${l}];bröd;1\n[kort fras på ${l}];god morgon;2`;
+  // Klammern hakas in före prion på substantivraden (den första).
+  const boj = formsOn() ? AI_FORM_EXAMPLES[base] : null;
+  const rader = (ex || [`[ord på ${l}];bröd;1`, `[kort fras på ${l}];god morgon;2`]).map((rad, i) => {
+    if (i !== 0 || !boj) return rad;
+    const d = rad.lastIndexOf(";");
+    return d < 0 ? rad : rad.slice(0, d) + ";{" + boj + "}" + rad.slice(d);
+  });
+  return rader.map((rad, i) => rtlRadPar(rad, base, i)).join("\n");
 }
 // Sammansatt "avancerad" prompt: befintlig genus/artikel-mekanik + prio (3-kolumnsformat).
 function buildAiPrompt(count, theme) {
   const lang = currentForeignLabel();
   const genus = genderPromptNote(subjectLang(currentSubject)); // börjar med mellanslag, eller ""
   const note = genus + formPromptNote(!!genus);
+  // Höger-vänster-språk får ett eget radformat: ordet på egen rad, resten på nästa.
+  // Blandas höger-vänster-skrift och latinsk text på SAMMA rad kastar telefonens
+  // urklipp om tecknen – ord tappar bokstäver och vävs in i varandra, även från ett
+  // kodblock. Var rad med en enda skrivriktning har ingenting att kasta om.
+  const rtl = isRtlLang(subjectLang(currentSubject));
+  const uttal = subjectUsesTranslit();
+  const svansFormat = `svensk översättning${uttal ? ";uttal" : ""};prio`;
   return `Ge mig ${count} bra ord och fraser på temat "${theme}" på ${lang}.\n\n`
-    + `Format: en glosa per rad – "ord/fras;svensk översättning;prio" med semikolon emellan.\n`
-    + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
-    + `och aldrig radbrytning inuti en glosa (fraser med flera ord står kvar på samma rad).\n`
+    + (rtl
+        ? `Format: TVÅ rader per glosa. Först ordet eller frasen på ${lang} helt ensamt på en rad, `
+          + `sedan "${svansFormat}" med semikolon emellan på raden efter.\n`
+          + `Skriv ALDRIG ${lang} och latinska bokstäver på samma rad – inte ens inom parentes – `
+          + `eftersom mobilens urklipp då kastar om tecknen och orden går sönder.`
+          + (uttal ? ` Uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salâm.` : "")
+          + ` Lägg hela svaret i ett kodblock.\n`
+        : `Format: en glosa per rad – "ord/fras;${svansFormat}" med semikolon emellan.\n`
+          + `Sätt radbrytning efter varje glosa: exakt en glosa per rad, aldrig två glosor på samma rad, `
+          + `och aldrig radbrytning inuti en glosa (fraser med flera ord står kvar på samma rad).\n`)
     + `Svara med enbart glosraderna – ingen numrering, inga punktlistor, ingen tabell, `
     + `ingen inledande eller avslutande text.${note}\n\n`
     + `Prio (1–3) = hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket i stort:\n`
@@ -5836,17 +5902,8 @@ function buildAiPrompt(count, theme) {
     + `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet. `
     + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
     + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
-    + (isRtlLang(subjectLang(currentSubject))
-        // Urklippet klarar inte blandad höger-vänster- och latinsk text på alla telefoner:
-        // tecken byter plats och ord delas mitt itu, även när man kopierar från ett kodblock.
-        // En fil går utanför urklippet helt och kommer fram hel.
-        ? `Ge svaret som en nedladdningsbar CSV-fil med kolumnerna `
-          + `sektion;ord;svenska;favorit;minnesregel;prio${subjectUsesTranslit() ? ";böjning;uttal" : ""} `
-          + `(sektion = temat, favorit och minnesregel tomma`
-          + `${subjectUsesTranslit() ? ", böjning tom, uttal = ordet skrivet med latinska bokstäver som det uttalas, t.ex. salâm" : ""}). `
-          + `Kan du inte skapa filer: lägg svaret i ett kodblock i stället.\n\n`
-        : "")
-    + `Exempel på radformat (två rader – ett ensamt ord och en flerordsfras):\n${aiExampleLines(lang)}`;
+    + `Exempel på radformat (${rtl ? "två glosor, fyra rader" : "två rader"} – ett ensamt ord och `
+    + `en flerordsfras):\n${aiExampleLines(lang)}`;
 }
 // A2-mönstret för "fyll med AI": EN knapp som antingen går direkt (sparat val i
 // profilen) eller fäller ut de tre valen med "Kom ihåg mitt val". Identiskt med
@@ -6275,6 +6332,16 @@ function openAddDialog(opts = {}) {
 
   // ---- Manuellt ----
   function manualBody() {
+    // Höger-vänster-språk skriver ordet på egen rad – se parRTLrader. Rutan visar det
+    // formatet direkt, annars klistrar man in enradigt och får sönderklippta ord.
+    if (isRtlLang(fullLang)) {
+      const tr = subjectUsesTranslit();
+      return `<p class="modal-hint">Två rader per glosa: ordet på ${esc(foreignLabel)} på en egen rad, `
+        + `<b>svenskt${tr ? ";uttal" : ""};prio</b> på nästa. Håll skrifterna på var sin rad – annars kastar `
+        + `mobilens urklipp om tecknen.</p>
+      <textarea id="add-manual" rows="5" autocapitalize="none" autocorrect="off" placeholder="سلام&#10;hej${tr ? ";salâm" : ""};1"></textarea>
+      <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="add-manual-ok">Lägg till</button></div>`;
+    }
     return `<p class="modal-hint">En rad per glosa: <b>utländskt;svenskt</b> — t.ex. <code>grazie;tack</code>. Valfri prio (1–3) sist: <code>grazie;tack;1</code></p>
       <textarea id="add-manual" rows="4" autocapitalize="none" autocorrect="off" placeholder="ciao;hej&#10;grazie;tack;1"></textarea>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="add-manual-ok">Lägg till</button></div>`;
@@ -7109,7 +7176,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v389";
+const APP_VERSION = "v390";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
