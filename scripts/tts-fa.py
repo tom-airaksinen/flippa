@@ -10,7 +10,8 @@ redan finns. Sedan: granska, committa, deploya.
 
   plan     visar vilka ord som saknar ljud
   saknas   skriver bara antalet – automatiken i .github/workflows/persiskt-uttal.yml
-           kör den var 15:e minut och drar igång bygg först när siffran är över noll
+           kör den var 15:e minut och drar igång bygg först när siffran är över noll.
+           Svarar 0 när audio/fa/paus.json finns (nödbroms efter haveri, se PAUS)
   bygg     genererar de som saknas och uppdaterar manifestet
 
 Rösten är fa-IR-DilaraNeural via edge-tts – Microsofts persiska neurala röst, samma
@@ -78,6 +79,14 @@ def hasha(ord_): return hashlib.sha1(ord_.encode()).hexdigest()[:16]
 GIVET_UPP = os.path.join(OUT, "givet-upp.json")
 FORSOK_MAX = 3
 
+# Nödbroms. Kraschar bygget (edge-tts borta, ffmpeg borta) skulle automatiken annars
+# försöka igen var 15:e minut och GitHub skicka ett mejl per misslyckad körning – 96
+# om dygnet. Workflowen lägger därför den här filen vid haveri, och "saknas" svarar 0
+# så länge den finns: ett mejl, sedan tyst. Radera filen för att köra igång igen.
+PAUS = os.path.join(OUT, "paus.json")
+def pausad():
+    return json.load(open(PAUS, encoding="utf-8")) if os.path.exists(PAUS) else None
+
 def las_givet_upp():
     if not os.path.exists(GIVET_UPP): return {}
     try: return json.load(open(GIVET_UPP, encoding="utf-8"))
@@ -128,6 +137,10 @@ def kvalitet(x, sr):
 def cmd_plan():
     ix, alla, ut = saknade()
     upp = las_givet_upp()
+    p = pausad()
+    if p:
+        print(f"!! AUTOMATIKEN ÄR PAUSAD efter ett haveri: {p.get('orsak', '?')}")
+        print(f"   Kör: {p.get('kor', '?')} · radera {PAUS} för att starta om den.\n")
     for ord_, var in list(ut.items())[:20]: print(f"  + {ord_}   ({var})")
     if len(ut) > 20: print(f"  … och {len(ut)-20} till")
     print(f"\n{len(alla)} persiska ord i databasen · {len(alla)-len(ut)-len(upp)} har ljud · "
@@ -135,7 +148,7 @@ def cmd_plan():
 
 def cmd_saknas():
     """Bara siffran, för automatiken. Inga beroenden utöver standardbiblioteket."""
-    print(len(saknade()[2]))
+    print(0 if pausad() else len(saknade()[2]))
 
 def las_pcm(mp3):
     """mp3 → (samples, sr) via ffmpeg, utan extra beroenden."""

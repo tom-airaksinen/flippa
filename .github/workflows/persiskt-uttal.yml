@@ -64,3 +64,20 @@ jobs:
           # Rebase före push: jobbet kör var 15:e minut och kan krocka med en egen push.
           git pull --rebase --autostash origin main
           git push origin HEAD:main
+
+      # Nödbroms: kraschar något ovanför skulle jobbet annars försöka igen var 15:e
+      # minut, och GitHub mejla vid varje miss – 96 om dygnet. Vi lägger en paus-fil
+      # som får "saknas" att svara 0, så det blir ett mejl och sedan tyst. Radera
+      # audio/fa/paus.json (eller kör tts-fa.py bygg lokalt) för att starta om.
+      - name: Pausa automatiken efter haveri
+        if: failure()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          printf '{"orsak":"bygget misslyckades","kor":"%s/%s/actions/runs/%s"}\n' \
+            "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" > audio/fa/paus.json
+          git add audio/fa/paus.json
+          git commit -m "Pausar uttalsautomatiken efter haveri (kör $GITHUB_RUN_ID)"
+          git pull --rebase --autostash origin main
+          git push origin HEAD:main
+          echo "Automatiken pausad – radera audio/fa/paus.json för att starta om." >> "$GITHUB_STEP_SUMMARY"
