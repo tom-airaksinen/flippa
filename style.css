@@ -914,7 +914,9 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   position: absolute; z-index: 16; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 104px; height: 30px; border-radius: 120px 120px 0 0;
   border: 1px solid var(--line); border-bottom: none; background: var(--surface-2);
-  color: var(--text); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em;
+  /* Dämpad text, inte --text: fliken ska gå att hitta men inte dra blicken från ordet
+     man tränar på. Armerad tar den full kontrast (vit på accent) och syns då tydligt. */
+  color: var(--muted); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em;
   line-height: 1; padding-bottom: 1px;
   display: flex; align-items: center; justify-content: center; cursor: pointer;
   touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
