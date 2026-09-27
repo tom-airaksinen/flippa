@@ -898,20 +898,24 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* Osynlig, något större träffyta runt hörnknapparna och ⋯-fliken – lättare att pricka.
    Måttlig så den inte äter flipp/svep: en tryckning som börjar i halon startar inget
    drag (knapparna stoppar pointerdown).
-   Glödlampan och högtalaren får 16 px. Att missa dem kostar mer än att missa ⋯-fliken:
+   Glödlampan och högtalaren får 16 px. Att missa dem kostar mer än att missa MENY-fliken:
    tappet går då till kortet, som flippar – för glödlampan avslöjas svaret man just bad
-   om en ledtråd till, för högtalaren tappar man ordet man ville höra. Halona sitter i
-   var sitt hörn (högtalaren uppe, glödlampan nere) och når inte ⋯-fliken
-   (bottencentrerad, 94 px bred) ens på en smal skärm – ingen kan stjäla tryck. */
+   om en ledtråd till, för högtalaren tappar man ordet man ville höra.
+   MENY-flikens halo är 10 px, inte 14: fliken blev själv 10 px bredare när ⋯ byttes mot
+   ordet, så träffytan är lika bred som förr (104+2·10 = 124 mot 94+2·14 = 122) samtidigt
+   som marginalen till glödlampans halo behålls. På den smalaste skärmen (320 px → kort
+   276 px) slutar flikens halo vid 200 px och glödlampans börjar vid 206 – de kan alltså
+   inte stjäla tryck från varandra, och fliken ligger överst (z-index 16 mot 11). */
 .corner-speak::before { content: ""; position: absolute; inset: -16px; }
 .corner-hint::before  { content: ""; position: absolute; inset: -16px; }
-.menu-tab::before { content: ""; position: absolute; inset: -14px -14px 0; }
+.menu-tab::before { content: ""; position: absolute; inset: -14px -10px 0; }
 
 .menu-tab {
   position: absolute; z-index: 16; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 94px; height: 28px; border-radius: 120px 120px 0 0;
+  width: 104px; height: 30px; border-radius: 120px 120px 0 0;
   border: 1px solid var(--line); border-bottom: none; background: var(--surface-2);
-  color: var(--text); font-size: 1.35rem; font-weight: 700; line-height: 1; padding-bottom: 5px;
+  color: var(--text); font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em;
+  line-height: 1; padding-bottom: 1px;
   display: flex; align-items: center; justify-content: center; cursor: pointer;
   touch-action: none; -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none;
   -webkit-user-select: none; user-select: none; animation: speak-fade 0.2s ease-out;

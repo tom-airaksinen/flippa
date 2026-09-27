@@ -3603,7 +3603,7 @@ function onMotion(e) {
 // =========================================================================
 const speakBtn = $("speak-btn"); // 🔊 uppe till höger (utländska sidan)
 const hintBtn = $("hint-btn");   // 💡 nere till höger (svenska sidan m. minnesregel)
-const moreBtn = $("menu-tab");   // ⋯-fliken i kortets nederkant → fjädermeny
+const moreBtn = $("menu-tab");   // MENY-fliken i kortets nederkant → fjädermeny
 function hideCardActions(){ moreBtn.classList.add("hidden"); speakBtn.classList.add("hidden"); hintBtn.classList.add("hidden"); }
 
 // Autoläge: läs upp automatiskt varje gång den utländska sidan visas
@@ -7249,7 +7249,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v395";
+const APP_VERSION = "v396";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
