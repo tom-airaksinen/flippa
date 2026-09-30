@@ -3111,7 +3111,7 @@ function finishSession() {
     const dayDone = gp.dayCount >= dailyGoal(), weekDone = gp.weekCount >= weeklyGoal();
     if (dayDone || weekDone) {
       goalsEl.innerHTML =
-        `<div class="cg-goal ${dayDone ? "done" : ""}"><div class="cg-ico">${dayDone ? dayTierIcon(gp.dayCount) : "💪"}</div><div class="cg-num">${dayDone ? `${gp.dayCount} ✓` : `${gp.dayCount} / ${dailyGoal()}`}</div><div class="cg-lbl">kort idag</div></div>` +
+        `<div class="cg-goal ${dayDone ? "done" : ""}"><div class="cg-ico">${dayDone ? dayTierIcon(gp.dayCount) : "💪"}</div><div class="cg-num">${dayDone ? `${gp.dayCount} ✓` : `${gp.dayCount} / ${dailyGoal()}`}</div><div class="cg-lbl">unika kort idag</div></div>` +
         `<div class="cg-goal ${weekDone ? "done" : ""}"><div class="cg-ico">🏆</div><div class="cg-num">${weekDone ? `${gp.weekCount} ✓` : `${gp.weekCount} / ${weeklyGoal()}`}</div><div class="cg-lbl">denna vecka</div></div>`;
     } else {
       goalsEl.innerHTML = "";
@@ -7277,7 +7277,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v398";
+const APP_VERSION = "v399";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
