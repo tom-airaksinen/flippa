@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "30 september 2026", ver: "v401", items: [
+    { t: "Kort/pass går nu att sätta till 5, och \"Alla\" är borta – med \"Fortsätt med X till\" på Klar-skärmen behövs inget obegränsat pass. Hade du Alla valt står den nu på 50", type: "improved" },
+  ] },
   { date: "27 september 2026", ver: "v398", items: [
     { t: "Persiska: nya uttalsfiler dyker upp medan appen är igång – förut syntes högtalaren först efter en omstart", type: "fixed" },
   ] },

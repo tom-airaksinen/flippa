@@ -2444,11 +2444,16 @@ let runSeen = new Set();
 const SESSION_LIMIT_KEY = "flashcards-session-limit";
 const sessionLimitSel = $("session-limit");
 sessionLimitSel.value = localStorage.getItem(SESSION_LIMIT_KEY) || "10"; // default på ny enhet: 10 kort/pass
+// "Alla" togs bort som val: med "Fortsätt med X till" på Klar-skärmen är ett obegränsat
+// pass bara ett pass utan slut. Den som hade det sparat (värdet "0") får största
+// kvarvarande steget – annars hade select:en stått tom och passet blivit obegränsat
+// utan att det syntes någonstans. Okända värden fångas av samma rad.
+if (!sessionLimitSel.value) { sessionLimitSel.value = "50"; lsSet(SESSION_LIMIT_KEY, "50"); }
 sessionLimitSel.addEventListener("change", () => {
   lsSet(SESSION_LIMIT_KEY, sessionLimitSel.value);
 });
 function sessionLimit() {
-  return parseInt(sessionLimitSel.value, 10) || 0; // 0 = alla
+  return parseInt(sessionLimitSel.value, 10) || 0; // 0 = obegränsat (inget val ger det längre)
 }
 
 // ---- Fokuspass: bara stjärnmärkta ord (förfallna) i "Dags att öva" ----
@@ -2483,7 +2488,6 @@ dirSelect.addEventListener("change", saveDir);
 // ---- Alternativ-pills: riktning + kort per pass (lektionsskärmen) ----
 const dirPill = $("dir-pill"), limitPill = $("limit-pill");
 const dirChooser = $("dir-chooser"), limitChooser = $("limit-chooser");
-function limitLabel(v) { return v === "0" ? "Alla" : v; }
 function closeChoosers() {
   dirChooser.classList.remove("open");
   limitChooser.classList.remove("open");
@@ -2505,7 +2509,7 @@ function syncOptionPills() {
   $("dir-lbl").textContent = subjectLang(currentSubject) ? "ÖVERSÄTT" : "RIKTNING";
   const pf = currentSubject ? prioFilterFor(currentSubject.id) : null;
   const dots = pf ? ' <span class="limit-dots">' + [1, 2, 3].map((l) => `<i class="p${l}${pf.includes(l) ? "" : " off"}"></i>`).join("") + "</span>" : "";
-  $("limit-val").innerHTML = esc(limitLabel(sessionLimitSel.value)) + (onlyStarred() ? " ⭐" : "") + dots;
+  $("limit-val").innerHTML = esc(sessionLimitSel.value) + (onlyStarred() ? " ⭐" : "") + dots;
   if (onlyStarredToggle.checked !== onlyStarred()) onlyStarredToggle.checked = onlyStarred();
   dirChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === dirSelect.value));
   $("limit-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === sessionLimitSel.value));
@@ -7277,7 +7281,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v400";
+const APP_VERSION = "v401";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
