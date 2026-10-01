@@ -1283,8 +1283,13 @@ function boot() {
   if (offlineEditEnabled() && (serverRaw || loadOutbox().length)) {
     content = ownedByCurrent(normalize(applyOutbox(serverRaw || {}, loadOutbox())));
   }
-  // Visa cachat innehåll direkt (funkar offline)
-  if (content.length) renderSubjects();
+  // Visa cachat innehåll direkt (funkar offline).
+  // Utan vald profil MÅSTE vi rita ändå: då finns inget innehåll att vänta på och
+  // listenContent() startar ingen prenumeration (den kräver en ägare), så "Ansluter …"
+  // hade blivit stående för evigt och profilväljaren aldrig ritats. Det slog bara mot
+  // en enhet som var både ny OCH utan vald profil – alltså första gången någon annan
+  // installerar appen.
+  if (content.length || !currentUser) renderSubjects();
   else showStatus("Ansluter …");
   updatePendingStatus();
 
@@ -7287,7 +7292,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v405";
+const APP_VERSION = "v406";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
