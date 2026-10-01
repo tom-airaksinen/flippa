@@ -2443,7 +2443,9 @@ let runSeen = new Set();
 // ---- Antal kort per pass ----
 const SESSION_LIMIT_KEY = "flashcards-session-limit";
 const sessionLimitSel = $("session-limit");
-sessionLimitSel.value = localStorage.getItem(SESSION_LIMIT_KEY) || "10"; // default på ny enhet: 10 kort/pass
+// Default på ny enhet: 5 kort/pass. Ett kort pass som går att avsluta slår ett långt
+// man ger upp – vill man mer finns "Fortsätt med X till" på Klar-skärmen.
+sessionLimitSel.value = localStorage.getItem(SESSION_LIMIT_KEY) || "5";
 // "Alla" togs bort som val: med "Fortsätt med X till" på Klar-skärmen är ett obegränsat
 // pass bara ett pass utan slut. Den som hade det sparat (värdet "0") får största
 // kvarvarande steget – annars hade select:en stått tom och passet blivit obegränsat
@@ -7281,7 +7283,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v402";
+const APP_VERSION = "v403";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
