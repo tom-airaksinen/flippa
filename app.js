@@ -1511,7 +1511,9 @@ function renderSubjects() {
   // Bara den valda användarens områden
   const mine = content.filter((s) => s.owner === currentUser);
   if (!mine.length) {
-    list.innerHTML = `<p class="empty">Inga ämnen för ${esc(userName(currentUser))} än. Tryck ＋ för att skapa ett.</p>`;
+    // Tilltala den som läser, inte profilen. "Inga ämnen för Lucas än" är skrivet över
+    // axeln på användaren – han vet vem han är.
+    list.innerHTML = `<p class="empty">Du har inga ämnen än. Tryck ＋ för att skapa ett.</p>`;
     return;
   }
   list.innerHTML = mine
@@ -7285,7 +7287,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v404";
+const APP_VERSION = "v405";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
