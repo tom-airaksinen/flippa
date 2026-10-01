@@ -2443,14 +2443,19 @@ let runSeen = new Set();
 // ---- Antal kort per pass ----
 const SESSION_LIMIT_KEY = "flashcards-session-limit";
 const sessionLimitSel = $("session-limit");
+// "Alla" togs bort som val: med "Fortsätt med X till" på Klar-skärmen är ett obegränsat
+// pass bara ett pass utan slut. Ett värde som inte finns bland alternativen – "0" ur
+// localStorage eller ur en backup tagen före v401 – gör att <select> visar TOMT och
+// passet blir obegränsat utan att det syns någonstans. Allt sådant landar därför på
+// största kvarvarande steget. Går via samma funktion vid start och vid återställning.
+function settSessionLimit(v, spara) {
+  sessionLimitSel.value = String(v == null ? "" : v);
+  if (!sessionLimitSel.value) { sessionLimitSel.value = "50"; spara = true; }
+  if (spara) lsSet(SESSION_LIMIT_KEY, sessionLimitSel.value);
+}
 // Default på ny enhet: 5 kort/pass. Ett kort pass som går att avsluta slår ett långt
 // man ger upp – vill man mer finns "Fortsätt med X till" på Klar-skärmen.
-sessionLimitSel.value = localStorage.getItem(SESSION_LIMIT_KEY) || "5";
-// "Alla" togs bort som val: med "Fortsätt med X till" på Klar-skärmen är ett obegränsat
-// pass bara ett pass utan slut. Den som hade det sparat (värdet "0") får största
-// kvarvarande steget – annars hade select:en stått tom och passet blivit obegränsat
-// utan att det syntes någonstans. Okända värden fångas av samma rad.
-if (!sessionLimitSel.value) { sessionLimitSel.value = "50"; lsSet(SESSION_LIMIT_KEY, "50"); }
+settSessionLimit(localStorage.getItem(SESSION_LIMIT_KEY) || "5", false);
 sessionLimitSel.addEventListener("change", () => {
   lsSet(SESSION_LIMIT_KEY, sessionLimitSel.value);
 });
@@ -6917,7 +6922,7 @@ function buildBackup() {
     version: 1,
     exportedAt: new Date().toISOString(),
     srs: srs,
-    sessionLimit: localStorage.getItem(SESSION_LIMIT_KEY) || "0",
+    sessionLimit: localStorage.getItem(SESSION_LIMIT_KEY) || "5",
     newPerDay: localStorage.getItem(NEW_PER_DAY_KEY) || "10",
     stats: getStats(),
   }, null, 0);
@@ -6990,10 +6995,7 @@ function openImport() {
     for (const k in imported) { srs[k] = imported[k]; n++; }
     saveSRS();
     migrateSrsKeys(content); // konvertera ev. gammal ID-nycklad backup till ordnyckel
-    if (obj.sessionLimit != null) {
-      lsSet(SESSION_LIMIT_KEY, String(obj.sessionLimit));
-      sessionLimitSel.value = String(obj.sessionLimit);
-    }
+    if (obj.sessionLimit != null) settSessionLimit(obj.sessionLimit, true);
     if (obj.newPerDay != null) lsSet(NEW_PER_DAY_KEY, String(obj.newPerDay));
     if (Array.isArray(obj.stats)) { // slå ihop träningsstatistik (unik på ts), behåll båda
       const merged = new Map(getStats().map((r) => [r.ts, r]));
@@ -7283,7 +7285,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v403";
+const APP_VERSION = "v404";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
