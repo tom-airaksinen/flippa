@@ -5817,7 +5817,17 @@ function setAiPref(v) {
 function runAiChoice(val, prompt, evtBas) {
   const t = AI_TARGETS[val];
   if (!t) return;
-  if (t.url) { track(evtBas + "/" + (val === "gpt" ? "gpt" : val)); openExternal(t.url(prompt), true); return; }
+  if (t.url) {
+    track(evtBas + "/" + (val === "gpt" ? "gpt" : val));
+    // Frågan läggs i urklippet ÄVEN när vi öppnar appen med den i länken. ChatGPT-appen
+    // slutade hedra ?q= (vår länk är oförändrad sedan v314) och öppnar en tom ruta –
+    // då räcker det att hålla in och klistra in i stället för att gå tillbaka och
+    // kopiera om. Kostar inget när länken fungerar. Måste ske i tapphändelsen, före
+    // navigeringen, annars nekar iOS skrivningen.
+    try { if (navigator.clipboard) navigator.clipboard.writeText(prompt).catch(() => {}); } catch (_) {}
+    openExternal(t.url(prompt), true);
+    return;
+  }
   track(evtBas + "-kopierad");
   try { if (navigator.clipboard) navigator.clipboard.writeText(prompt).catch(() => {}); } catch (_) {}
   toast("Frågan kopierad – klistra in i din AI", 2600);
@@ -7292,7 +7302,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v406";
+const APP_VERSION = "v407";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
