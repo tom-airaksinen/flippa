@@ -25,6 +25,15 @@ SITE = "https://flippa.goatcounter.com"
 TOKENFIL = os.path.expanduser("~/.config/flippa-goatcounter-token")
 # Eventen vi bryr oss om. Prefixen sätts i app.js (track("pass-sprak/" + trackLang())).
 PASS_START, PASS_KLART = "pass-sprak/", "pass-klart-sprak/"
+# Pass utan språkmärkning – de mättes innan språket började följa med, och de
+# svarar på "har någon använt appen alls" även för äldre perioder.
+PASS_ALLA = ("pass-lektion", "pass-dags", "pass-klart")
+# Språket började följa med i mätningen här (v381). Dagar före det saknar språkdata
+# – vilket INTE är samma sak som att ingen övade. Står i utskriften så siffrorna inte
+# misstolkas när man frågar om en längre period.
+SPRAK_FRAN = "2026-09-26"
+# Över så många dagar blir dagstabellen oläslig → summering per språk i stället.
+MAX_KOLUMNER = 12
 
 def die(m, kod=1): print(m, file=sys.stderr); sys.exit(kod)
 
@@ -125,20 +134,45 @@ def main():
                     data.setdefault(kod, {}).setdefault(dag, {"start": 0, "klart": 0})[nyckel] += n
                 break
 
+    # Pass utan språkuppdelning: svarar på "har någon kört alls", även före SPRAK_FRAN.
+    alla = {"start": 0, "klart": 0}
+    for h in hits:
+        p = (h.get("path") or "").lstrip("/")
+        if p in ("pass-lektion", "pass-dags"): alla["start"] += h.get("count") or 0
+        elif p == "pass-klart": alla["klart"] += h.get("count") or 0
+
     print(f"Flippa · {start} – {slut}" + ("  (ur fil)" if fil else ""))
+    print(f"Pass totalt: {alla['start']} påbörjade · {alla['klart']} avslutade")
     if not data:
-        print("\nInga pass alls i perioden. (Din egen profil räknas aldrig.)")
-        return
-    dagar = sorted(dagar)
-    bredd = max(14, *(len(sprakanamn(k)) + 2 for k in data))
-    print("\n" + "språk".ljust(bredd) + "".join(d[5:].rjust(12) for d in dagar))
-    for kod in sorted(data, key=lambda k: -sum(v["start"] for v in data[k].values())):
-        rad = sprakanamn(kod).ljust(bredd)
-        for d in dagar:
-            v = data[kod].get(d)
-            rad += ("–" if not v or not v["start"] else f"{v['start']}/{v['klart']}").rjust(12)
-        print(rad)
-    print("\npåbörjade/avslutade pass per dag · – = inget")
+        print("\nInga språkmärkta pass i perioden. (Din egen profil räknas aldrig.)")
+    else:
+        dagar = sorted(dagar)
+        bredd = max(14, *(len(sprakanamn(k)) + 2 for k in data))
+        ordnade = sorted(data, key=lambda k: -sum(v["start"] for v in data[k].values()))
+        if len(dagar) > MAX_KOLUMNER:
+            # Summering: dagskolumnerna ryms inte, och en bred tabell döljer svaret.
+            print("\n" + "språk".ljust(bredd) + "påbörjade".rjust(11) + "avslutade".rjust(11)
+                  + "dagar".rjust(8) + "   senast")
+            for kod in ordnade:
+                v = data[kod]
+                aktiva = [d for d in v if v[d]["start"]]
+                print(sprakanamn(kod).ljust(bredd)
+                      + str(sum(x["start"] for x in v.values())).rjust(11)
+                      + str(sum(x["klart"] for x in v.values())).rjust(11)
+                      + str(len(aktiva)).rjust(8) + "   " + (max(aktiva) if aktiva else "–"))
+            print(f"\nhela perioden · dagar = dagar med minst ett pass")
+        else:
+            print("\n" + "språk".ljust(bredd) + "".join(d[5:].rjust(12) for d in dagar))
+            for kod in ordnade:
+                rad = sprakanamn(kod).ljust(bredd)
+                for d in dagar:
+                    v = data[kod].get(d)
+                    rad += ("–" if not v or not v["start"] else f"{v['start']}/{v['klart']}").rjust(12)
+                print(rad)
+            print("\npåbörjade/avslutade pass per dag · – = inget")
+    if start < SPRAK_FRAN:
+        print(f"\nOBS: språket började mätas {SPRAK_FRAN} (v381). Pass före det syns i "
+              f"totalraden men saknar språk.")
 
 if __name__ == "__main__":
     main()
