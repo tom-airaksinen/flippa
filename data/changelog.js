@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "3 oktober 2026", ver: "v408", items: [
+    { t: "Lägger du till ord utan att stå i en lektion förväljs ingen lektion längre – du får välja själv, så orden inte tyst hamnar i den alfabetiskt första", type: "fixed" },
+  ] },
   { date: "30 september 2026", ver: "v401", items: [
     { t: "Kort/pass går nu att sätta till 5, och \"Alla\" är borta – med \"Fortsätt med X till\" på Klar-skärmen behövs inget obegränsat pass. Hade du Alla valt står den nu på 50", type: "improved" },
   ] },

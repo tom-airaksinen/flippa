@@ -6426,10 +6426,16 @@ function openAddDialog(opts = {}) {
   let lessonSel = null, newLessonI = null;
   if (pickLesson) {
     const sorted = currentSubject.lessons.slice().sort((a, b) => sortCollator.compare(a.name, b.name)); // alfabetiskt i väljaren
-    const items = sorted.map((l) => ({ value: l.id, label: l.name })).concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
+    // Med flera lektioner förväljs INGEN. Förut stod den alfabetiskt första där, och
+    // orden kunde hamna i en lektion man aldrig valt – tyst, och först synligt efteråt.
+    // Finns bara en lektion är valet inte tvetydigt, då står den kvar förvald.
+    const kravVal = sorted.length > 1;
+    const items = (kravVal ? [{ value: "", label: "Välj lektion …" }] : [])
+      .concat(sorted.map((l) => ({ value: l.id, label: l.name })))
+      .concat([{ value: "__new__", label: "➕ Ny lektion…" }]);
     m.querySelector("#add-lesson-pick").innerHTML = `<label>Lägg till i</label><div id="add-lesson-mount"></div><input type="text" id="add-newlesson" class="hidden" placeholder="Namn på ny lektion" autocomplete="off" />`;
     newLessonI = m.querySelector("#add-newlesson");
-    lessonSel = buildSelect(items, sorted[0] && sorted[0].id, (v) => { newLessonI.classList.toggle("hidden", v !== "__new__"); });
+    lessonSel = buildSelect(items, kravVal ? "" : (sorted[0] && sorted[0].id), (v) => { newLessonI.classList.toggle("hidden", v !== "__new__"); });
     m.querySelector("#add-lesson-mount").appendChild(lessonSel.el);
     if (!currentSubject.lessons.length) { lessonSel.value = "__new__"; newLessonI.classList.remove("hidden"); }
   }
@@ -7302,7 +7308,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v407";
+const APP_VERSION = "v408";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
