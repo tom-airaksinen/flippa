@@ -18,7 +18,7 @@ det finns ingen tabell i app.js att läsa i stället. Okända koder skrivs som d
 OBS: Toms egen profil skickar aldrig events (se track() i app.js) – allt som syns
 här är någon annans användning.
 """
-import json, os, sys, urllib.request, urllib.error
+import json, os, sys, time, urllib.request, urllib.error
 from datetime import date, timedelta
 
 SITE = "https://flippa.goatcounter.com"
@@ -67,25 +67,37 @@ def token():
         f"  2. Spara den i {TOKENFIL} (en rad), eller sätt GOATCOUNTER_TOKEN.\n"
         "Filen ska INTE ligga i repot.")
 
+# GoatCounter svarar sporadiskt 404 {"error":"not found"} på ett anrop som fungerar
+# direkt när man gör om det – det slår till på första anropet efter en stunds paus.
+# Likaså 429 vid snabba anrop. Bägge går över av sig själva, så vi gör om i stället
+# för att skrika åt användaren.
+FLYKTIGA = (404, 429, 500, 502, 503, 504)
+
+def hamta_en(url, forsok=4):
+    for n in range(forsok):
+        req = urllib.request.Request(url, headers={"Authorization": "Bearer " + token(),
+                                                   "Content-Type": "application/json"})
+        try:
+            with urllib.request.urlopen(req) as r: return json.load(r)
+        except urllib.error.HTTPError as e:
+            kropp = e.read().decode("utf-8", "replace")[:300]
+            if e.code in (401, 403):
+                die(f"GoatCounter nekade token ({e.code}). Har den rättigheten "
+                    f"\"Read statistics\"? Svar: {kropp}")
+            if e.code in FLYKTIGA and n < forsok - 1:
+                time.sleep(1.5 * (n + 1)); continue
+            die(f"GoatCounter svarade {e.code} på {url}" + (f" ({forsok} försök)" if n else "") + f"\n{kropp}")
+        except urllib.error.URLError as e:
+            if n < forsok - 1: time.sleep(1.5 * (n + 1)); continue
+            die(f"Kom inte fram till {SITE}: {e.reason}")
+
 def hamta(start, slut):
     """Alla sidor av /api/v0/stats/hits för perioden, med dagsuppdelning."""
     hits, after = [], None
     for _ in range(20):                      # sidtak: 20 sidor räcker länge
         q = f"?start={start}&end={slut}&daily=true&limit=200"
         if after: q += f"&after={after}"
-        req = urllib.request.Request(f"{SITE}/api/v0/stats/hits{q}",
-                                     headers={"Authorization": "Bearer " + token(),
-                                              "Content-Type": "application/json"})
-        try:
-            with urllib.request.urlopen(req) as r: svar = json.load(r)
-        except urllib.error.HTTPError as e:
-            kropp = e.read().decode("utf-8", "replace")[:300]
-            if e.code in (401, 403):
-                die(f"GoatCounter nekade token ({e.code}). Har den rättigheten "
-                    f"\"Read statistics\"? Svar: {kropp}")
-            die(f"GoatCounter svarade {e.code} på {req.full_url}\n{kropp}")
-        except urllib.error.URLError as e:
-            die(f"Kom inte fram till {SITE}: {e.reason}")
+        svar = hamta_en(f"{SITE}/api/v0/stats/hits{q}")
         hits += svar.get("hits") or []
         if not svar.get("more"): break
         after = svar.get("after") or (hits[-1].get("path_id") if hits else None)
