@@ -3732,7 +3732,10 @@ function speak(text, lang, onEnd, koa) {
   // och filen låter dessutom likadant på alla enheter.
   const url = audioUrlFor(text, lang);
   if (url) {
-    if (!koa && "speechSynthesis" in window) speechSynthesis.cancel();
+    // Samma villkor som nedan: avbryt bara om något faktiskt talar.
+    if (!koa && "speechSynthesis" in window && (speechSynthesis.speaking || speechSynthesis.pending)) {
+      speechSynthesis.cancel();
+    }
     playAudioFile(url, onEnd);
     return;
   }
@@ -3746,7 +3749,18 @@ function speak(text, lang, onEnd, koa) {
     if (v) u.voice = v;
   }
   if (onEnd) u.onend = onEnd;
-  if (!koa) speechSynthesis.cancel();
+  // Avbryt BARA när något faktiskt låter. cancel() river ned ljudsessionen på iOS, och
+  // en uppläsning som startar i samma andetag får början avhuggen ("âine" i stället för
+  // "pâine"). Autouppläsningen körde cancel() varje gång, alltså även när det inte fanns
+  // något att avbryta – därför klipptes nästan varje ord.
+  if (!koa && (speechSynthesis.speaking || speechSynthesis.pending)) {
+    speechSynthesis.cancel();
+    // Måste ändå avbrytas ibland (man sveper vidare mitt i ett ord). Då får sessionen
+    // hämta andan först; 120 ms är knappt märkbart men räcker för att inledningen
+    // ska komma med.
+    setTimeout(() => speechSynthesis.speak(u), 120);
+    return;
+  }
   speechSynthesis.speak(u);
 }
 
@@ -7308,7 +7322,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v409";
+const APP_VERSION = "v410";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

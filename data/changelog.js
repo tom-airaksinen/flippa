@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "7 oktober 2026", ver: "v410", items: [
+    { t: "Början på ordet klipptes ofta bort vid automatisk uppläsning – nu kommer hela ordet med", type: "fixed" },
+  ] },
   { date: "7 oktober 2026", ver: "v409", items: [
     { t: "Appen stannar i stående läge – vrider du telefonen ber den dig vrida tillbaka i stället för att klämma ihop kortet", type: "improved" },
   ] },
