@@ -461,6 +461,16 @@
   <!-- Modal -->
   <div id="modal-root" class="hidden"></div>
 
+  <!-- Liggande läge: manifestets "orientation": "portrait" hedras av Android men inte
+       av iOS, och Screen Orientation API:t finns inte i Safari. Den här rutan är därför
+       den enda låsning som biter på iPhone. Visas bara på telefonhöjd (se style.css),
+       så iPad och dator rörs inte. -->
+  <div id="landscape-gate" aria-hidden="true">
+    <div class="lg-ico">🔄</div>
+    <p class="lg-title">Vrid tillbaka telefonen</p>
+    <p class="lg-sub">Flippa är gjord för stående läge.</p>
+  </div>
+
   <!-- Firebase compat-SDK -->
   <!-- Versionshistorik (helskärms-overlay, nås från Hjälp + versionsraden i Om) -->
   <div id="changelog-screen" class="clog-overlay hidden">
