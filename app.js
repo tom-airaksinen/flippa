@@ -6441,19 +6441,20 @@ async function slaUppViaAI(ord, dir, lang, sprakNamn) {
   const traffar = d.traffar || [];
   // Svaren paras mot inskickad ordning; modellen ombeds behålla den, men vi matchar
   // på ordet när den ändå kastar om något.
-  const rader = ord.map((o, i) => {
+  // Inga rader alls = API:t svarade konstigt → kasta, så MyMemory tar över. Tomma
+  // ÖVERSÄTTNINGAR är däremot ett riktigt svar: prompten ber modellen lämna tomt
+  // hellre än att hitta på. Förr tolkades det som fel, och då ersattes ett ärligt
+  // "vet inte" med MyMemorys gissning ("snorkråka" → "cârlig pentru muci").
+  if (!traffar.length) throw new Error("inga träffar");
+  return ord.map((o, i) => {
     const t = traffar.find((x) => (x.ord || "").trim().toLowerCase() === o.toLowerCase()) || traffar[i] || {};
-    const ut = (t.oversattning || "").trim();   // tom = modellen kände inte igen ordet
+    const ut = (t.oversattning || "").trim();
     const prio = [1, 2, 3].includes(t.prio) ? t.prio : null;
+    const bas = { prio, form: (t.bojning || "").trim(), tr: (t.uttal || "").trim(), tom: !ut };
     return dir === "sv2for"
-      ? { foreign: ut, swedish: o, prio, form: (t.bojning || "").trim(), tr: (t.uttal || "").trim() }
-      : { foreign: o, swedish: ut, prio, form: (t.bojning || "").trim(), tr: (t.uttal || "").trim() };
+      ? { ...bas, foreign: ut, swedish: o }
+      : { ...bas, foreign: o, swedish: ut };
   });
-  // Ett okänt ord bland flera ska inte kasta bort de andra träffarna – den tomma raden
-  // syns i granskningen och går att fylla i eller ta bort. Är ALLT tomt gick uppslaget
-  // fel på riktigt, och då är MyMemory bättre än ingenting.
-  if (rader.every((r) => !r.foreign.trim() || !r.swedish.trim())) throw new Error("inga träffar");
-  return rader;
 }
 
 async function doTranslate(text, fromCode, toCode) {
@@ -6504,6 +6505,7 @@ function openAddDialog(opts = {}) {
   let seg = opts.segment || (canLookUp ? "lookup" : "manual");
   if (seg === "lookup" && !canLookUp) seg = "manual";
   let luDir = "sv2for", luCards = [], luSrcVal = opts.prefill || "", luAutoDone = false;
+  let luKalla = "", luFelText = "";   // vilken källa som svarade senast, och ev. felet
 
   const m = openModal(`
     <h3>Lägg till ord</h3>
@@ -6585,7 +6587,7 @@ function openAddDialog(opts = {}) {
         <button data-d="for2sv">${pre(forFlag)}${esc(foreignLabel)} → Svenska</button>
       </div>
       <div class="t-row"><input type="text" id="lu-src" value="${esc(luSrcVal)}" placeholder="skriv ord (flera med ;)" autocomplete="off" autocapitalize="none" autocorrect="off"><button class="btn-secondary t-lookup" id="lu-go" title="Slå upp" aria-label="Slå upp">${IC_SEARCH}</button></div>
-      <p class="lu-note">⚠️ Översättningen kommer från en enkel gratistjänst – granska orden (särskilt böjning och genus) innan du lägger till.</p>
+      <p class="lu-note" id="lu-note"></p>
       <div id="lu-cards"></div>
       <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="lu-add">Lägg till</button></div>`;
   }
@@ -6604,6 +6606,7 @@ function openAddDialog(opts = {}) {
       <div class="add-card">
         ${luDir === "sv2for" ? fS(c, i) + fF(c, i) : fF(c, i) + fS(c, i)}
         ${fU(c, i)}${fB(c, i)}
+        ${c.tom ? `<div class="lu-tom">Modellen kände inte igen ordet – fyll i själv eller ta bort raden.</div>` : ""}
         <div class="add-card-foot"><span class="add-rprio" data-i="${i}"><span class="pl">Prio</span>
           <button data-p="1" class="${c.prio === 1 ? "on" : ""}">1</button><button data-p="2" class="${c.prio === 2 ? "on" : ""}">2</button><button data-p="3" class="${c.prio === 3 ? "on" : ""}">3</button></span>
           ${luCards.length > 1 ? `<button class="add-rm" data-i="${i}" title="Ta bort">✕</button>` : ""}</div>
@@ -6618,6 +6621,17 @@ function openAddDialog(opts = {}) {
     }));
     host.querySelectorAll(".add-rm").forEach((x) => x.onclick = () => { luCards.splice(+x.dataset.i, 1); renderLuCards(); });
     const addBtn = m.querySelector("#lu-add"); if (addBtn) addBtn.disabled = !luCards.length;
+    // Säg vilken källa som svarade. Förr stod MyMemory-varningen kvar även när
+    // språkmodellen svarat, och den enda ledtråden om att reservvägen slagit till var
+    // att prio och böjning saknades.
+    const note = m.querySelector("#lu-note");
+    if (note) {
+      note.innerHTML = luKalla === "ai"
+        ? `✨ Förslagen kommer från en språkmodell – granska dem innan du lägger till.`
+        : luKalla === "enkel"
+          ? `⚠️ Språkmodellen svarade inte${luFelText ? ` (${esc(luFelText)})` : ""} – det här kommer från en enkel gratistjänst, utan böjning och prio.`
+          : `Skriv ett eller flera ord (separera med <b>;</b>) och tryck på förstoringsglaset.`;
+    }
   }
   async function doLookup() {
     const parts = (m.querySelector("#lu-src").value || "").split(";").map((x) => x.trim()).filter(Boolean);
@@ -6627,14 +6641,16 @@ function openAddDialog(opts = {}) {
     go.classList.add("busy");
     try {
       let out = null;
+      luKalla = "";
       if (aiUppslagPa()) {
         // Ett anrop för hela listan: modellen ser orden tillsammans och kan hålla
         // stil och ordklass konsekvent, och det blir ett anrop mot kvoten i stället
         // för ett per ord.
-        try { out = await slaUppViaAI(parts, luDir, fullLang, foreignLabel); }
-        catch (e) { console.warn("AI-uppslag föll tillbaka:", e); }
+        try { out = await slaUppViaAI(parts, luDir, fullLang, foreignLabel); luKalla = "ai"; }
+        catch (e) { console.warn("AI-uppslag föll tillbaka:", e); luFelText = String(e.message || e); }
       }
       if (!out) {
+        luKalla = "enkel";
         out = [];
         for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
           out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
@@ -6841,7 +6857,11 @@ function openAddDialog(opts = {}) {
   function renderBody() {
     if (pickLesson) m.appendChild(lessonPickEl); // parkera i modal-roten så innerHTML-bytet inte kastar bort select:en
     bodyEl.innerHTML = seg === "manual" ? manualBody() : seg === "lookup" ? lookupBody() : aiBody();
-    m.querySelector("#add-cancel").onclick = closeModal;
+    // Inte alla lägen har en knapp som heter add-cancel (AI-fliken byter ut sina
+    // knappar per läge). Utan den här kontrollen kastade raden på null, renderingen
+    // dog mitt i, och INGA handtag kopplades – dialogen såg ut att hänga sig.
+    const avbryt = m.querySelector("#add-cancel");
+    if (avbryt) avbryt.onclick = closeModal;
     if (seg === "manual") m.querySelector("#add-manual-ok").onclick = () => commitCards(parseLines(m.querySelector("#add-manual").value));
     else if (seg === "lookup") { m.querySelector("#lu-add").onclick = () => commitCards(luCards.map((c) => ({ front: (c.foreign || "").trim(), back: (c.swedish || "").trim(), prio: c.prio, form: formsOn() ? (c.form || "") : "", tr: subjectUsesTranslit() ? (c.tr || "") : "" }))); wireLookup(); }
     else wireAi();
@@ -7556,7 +7576,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v413";
+const APP_VERSION = "v414";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

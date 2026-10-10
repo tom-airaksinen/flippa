@@ -2054,10 +2054,10 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 .paste-msg.warn { background: color-mix(in srgb, var(--easy) 15%, var(--surface-2)); border: 1px solid color-mix(in srgb, var(--easy) 45%, transparent); }
 
 /* Grupperad segmentkontroll (som prototypen) för toppvalen + riktningen */
-.add-seg, #lu-dir { background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
-.add-seg button, #lu-dir button { background: none; padding: 9px 6px; font-size: 0.88rem; font-weight: 600; border-radius: 9px; }
+.add-seg, #lu-dir, #ai2-lage { background: var(--surface-2); border-radius: 12px; padding: 4px; gap: 4px; }
+.add-seg button, #lu-dir button, #ai2-lage button { background: none; padding: 9px 6px; font-size: 0.88rem; font-weight: 600; border-radius: 9px; }
 #lu-dir button { white-space: nowrap; font-size: 0.8rem; }
-.add-seg button.seg-on, #lu-dir button.seg-on { background: var(--accent); color: #fff; }
+.add-seg button.seg-on, #lu-dir button.seg-on, #ai2-lage button.seg-on { background: var(--accent); color: #fff; }
 /* Luftigare vertikal rytm i dialogen */
 .add-seg { margin-bottom: 8px; }              /* mindre luft under segmentkontrollen */
 #add-lesson-pick:empty { margin: 0; }          /* tom väljare (i lektion) tar ingen plats */
@@ -2172,3 +2172,7 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 }
 .ai-fel b { display: block; margin-bottom: 3px; }
 .ai-fel-tips { color: var(--muted); font-size: 0.82rem; margin-top: 7px; }
+
+/* Uppslag som modellen inte kunde svara på – raden står kvar tom i stället för att
+   ersättas av en gissning från reservtjänsten. */
+.lu-tom { color: var(--paus); font-size: 0.78rem; margin-top: 6px; }
