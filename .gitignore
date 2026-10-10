@@ -10,3 +10,10 @@ session-exports/
 
 # Databasbackup av ett helt ämne – arbetsmaterial, repot är publikt
 data/rumanska/backup-*.json
+
+# Modelltestets körningar: data, inte kod. Facit hålls dessutom borta från repot
+# så att en blind bedömning inte kan spolieras av en ovarsam grep.
+scripts/modelltest/resultat/
+scripts/modelltest/facit/
+scripts/modelltest/domar/
+scripts/modelltest/*.xlsx

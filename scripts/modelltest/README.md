@@ -55,3 +55,24 @@ Nyckel i `~/.config/openrouter-nyckel` (en rad) eller `OPENROUTER_API_KEY`.
 
 Steg 1 är poängen med att inte bara läsa listorna: 150-ordslistor gånger nio modeller
 är 7 200 glosor, och det mesta som går fel i en lång lista går att mäta.
+
+## Domaren kör utan historik
+
+Bedömningen görs av en domare **utan den här sessionens minne** – ett eget
+sammanhang som bara ser `domare-instruktion.md`, en körnings blindade listor och
+ingenting annat. Skälet är att den som byggt harnesset redan har läst tidigare
+jämförelser och vet vad hen tyckte var bra; den förväntan ska inte följa med in i
+betygen. En domare per körning, så att inte heller ordningen mellan temana färgar.
+
+Vikterna: sakfel 40 %, relevans 30 %, prio 20 %, böjning 10 %.
+
+## Filer
+
+    prompts.py              prompterna (portade ur workern) + schemat
+    kor.py                  kör modellerna, skriver blindade svar + facit
+    matt.py                 maskinella mått
+    domare-instruktion.md   rubriken domaren får
+    excel.py                sammanställning till xlsx
+    resultat/<körning>/     blindade svar (skapas vid körning)
+    facit/                  kod -> modell, latens, kostnad – öppnas sist
+    domar/<körning>.json    domarens betyg
