@@ -2165,7 +2165,15 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   display: flex; align-items: center; justify-content: center;
 }
 .ai-p.p1 { background: var(--prio1); } .ai-p.p2 { background: var(--prio2); } .ai-p.p3 { background: var(--prio3); }
-.ai-mer { width: 100%; margin-top: 4px; }
+/* Står UTANFÖR .modal-actions, och därifrån kommer annars all storlek och typografi
+   för .btn-secondary – utan de här raderna blir knappen webbläsarens standardknapp
+   med bara en bakgrundsfärg. */
+.ai-mer {
+  width: 100%; margin-top: 8px; padding: 12px; border: none; border-radius: 11px;
+  background: var(--surface-2); color: var(--text);
+  font-family: inherit; font-size: 0.94rem; font-weight: 600; cursor: pointer;
+}
+.ai-mer:disabled { opacity: 0.4; }
 .ai-fel {
   background: rgba(224, 145, 90, 0.12); border: 1px solid var(--paus); border-radius: 12px;
   padding: 12px; margin-top: 14px; font-size: 0.88rem;
