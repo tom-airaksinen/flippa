@@ -37,7 +37,7 @@ export default {
     const ord = (kropp.ord || []).map((o) => String(o || "").trim()).filter(Boolean).slice(0, 25);
     if (!ord.length) return svar({ fel: "inga ord" }, 400);
 
-    const g = await fragaGemini(env, prompt(ord, kropp), schema());
+    const g = await fragaModell(env, prompt(ord, kropp), schema());
     if (g.fel) return svar(g, 502);
     return svar({ traffar: g.traffar });
   },
@@ -86,16 +86,58 @@ function schema() {
   };
 }
 
-async function fragaGemini(env, text, responseSchema) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${env.MODELL}:generateContent`;
+// Leverantören byts med LEVERANTOR i wrangler.toml. Båda vägarna hålls levande: att
+// byta tillbaka ska vara en rad, inte en utgrävning ur git-historiken. Svaret ser
+// likadant ut oavsett vem som räknade ut det.
+function fragaModell(env, text, schema) {
+  return (env.LEVERANTOR || "groq") === "gemini"
+    ? fragaGemini(env, text, schema)
+    : fragaGroq(env, text, schema);
+}
+
+// Groq: OpenAI-kompatibelt chat/completions med json_schema, alltså garanterat
+// schemaenligt svar. Gratisnivå utan kort.
+async function fragaGroq(env, text, schema) {
   let r;
   try {
-    r = await fetch(url, {
+    r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + (env.GROQ_API_KEY || "").trim(),
+      },
+      body: JSON.stringify({
+        model: env.MODELL_GROQ || "openai/gpt-oss-120b",
+        temperature: 0.2,
+        messages: [{ role: "user", content: text }],
+        response_format: { type: "json_schema", json_schema: { name: "uppslag", strict: true, schema } },
+      }),
+    });
+  } catch (e) {
+    return { fel: "nätfel mot Groq", detalj: String(e) };
+  }
+  const rå = await r.text();
+  if (!r.ok) return { fel: "groq", status: r.status, detalj: rå.slice(0, 500) };
+  let data;
+  try { data = JSON.parse(rå); } catch (_) { return { fel: "groq svarade inte json", detalj: rå.slice(0, 300) }; }
+  const txt = data?.choices?.[0]?.message?.content;
+  if (!txt) return { fel: "tomt svar", detalj: rå.slice(0, 300) };
+  return tolkaTraffar(txt);
+}
+
+// Interactions API, inte det gamla models/<namn>:generateContent. De nya modellerna
+// serveras inte av den gamla vägen alls – varenda flash-modell svarade 404 där, och
+// 3.8 svarade 403, vilket såg ut som ett behörighetsfel men var fel endpoint.
+async function fragaGemini(env, text, schema) {
+  let r;
+  try {
+    r = await fetch("https://generativelanguage.googleapis.com/v1beta/interactions", {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": (env.GEMINI_API_KEY || "").trim() },
       body: JSON.stringify({
-        contents: [{ parts: [{ text }] }],
-        generationConfig: { temperature: 0.2, responseMimeType: "application/json", responseSchema },
+        model: env.MODELL,
+        input: text,
+        response_format: { type: "text", mime_type: "application/json", schema },
       }),
     });
   } catch (e) {
@@ -107,13 +149,20 @@ async function fragaGemini(env, text, responseSchema) {
   if (!r.ok) return { fel: "gemini", status: r.status, detalj: rå.slice(0, 500) };
   let data;
   try { data = JSON.parse(rå); } catch (_) { return { fel: "gemini svarade inte json", detalj: rå.slice(0, 300) }; }
-  const txt = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+  // output_text är där modellens svar ligger i Interaction-objektet. Den gamla
+  // candidates-vägen läses också, så ett framtida formatbyte inte släcker allt.
+  const txt = data?.interaction?.output_text ?? data?.output_text
+            ?? data?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!txt) return { fel: "tomt svar", detalj: rå.slice(0, 300) };
+  return tolkaTraffar(txt);
+}
+
+function tolkaTraffar(txt) {
   try {
     const p = JSON.parse(txt);
     return { traffar: Array.isArray(p.traffar) ? p.traffar : [] };
   } catch (_) {
-    return { fel: "modellen svarade inte enligt schemat", detalj: txt.slice(0, 300) };
+    return { fel: "modellen svarade inte enligt schemat", detalj: String(txt).slice(0, 300) };
   }
 }
 

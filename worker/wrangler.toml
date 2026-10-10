@@ -10,6 +10,10 @@ compatibility_date = "2026-10-10"
 preview_urls = false
 
 [vars]
+# "groq" eller "gemini". Gemini-vägen är kvar och fungerar den dag Google slutar
+# neka projektet – byt raden och deploya, inget mer.
+LEVERANTOR = "groq"
+MODELL_GROQ = "openai/gpt-oss-120b"
 # Verifierat namn ur /v1beta/models för den här nyckeln – inte ett alias på chans.
 # 2.5-flash fanns i listan men ges inte ut till nya användare; Google pekade själv
 # på 3.8-flash i felsvaret. Modellen byts här om Google döper om den. Workern skickar
@@ -20,5 +24,6 @@ TILLATNA_ORIGIN = "https://flippa.tomairaksinen.se,https://tom-airaksinen.github
 # Firebase-projektet vars inloggningar vi litar på (samma som appens databas).
 FIREBASE_PROJEKT = "flashcards-484e9"
 
-# Nyckeln läggs ALDRIG här. Den sätts som secret:
+# Nycklarna läggs ALDRIG här. De sätts som secrets:
+#   npx wrangler secret put GROQ_API_KEY
 #   npx wrangler secret put GEMINI_API_KEY
