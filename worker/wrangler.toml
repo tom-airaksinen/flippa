@@ -2,6 +2,13 @@ name = "flippa-ai"
 main = "src/index.js"
 compatibility_date = "2026-10-10"
 
+# Varje deploy blir en version, och med preview_urls på får VARJE version en egen
+# permanent publik adress – med samma secrets. En gammal version med ett hål står
+# alltså kvar och svarar, och kan spendera Gemini-kvoten, långt efter att hålet är
+# lagat. Vinsten (testa en version innan den tar trafik) tar vi med curl i stället.
+# workers_dev = true är kvar: det är den riktiga adressen appen anropar.
+preview_urls = false
+
 [vars]
 # Modellen byts här om Google döper om den. Workern skickar tillbaka Googles eget
 # felmeddelande, så ett felaktigt namn syns direkt i svaret.
