@@ -10,9 +10,10 @@ compatibility_date = "2026-10-10"
 preview_urls = false
 
 [vars]
+# Verifierat namn ur /v1beta/models för den här nyckeln – inte ett alias på chans.
 # Modellen byts här om Google döper om den. Workern skickar tillbaka Googles eget
 # felmeddelande, så ett felaktigt namn syns direkt i svaret.
-MODELL = "gemini-flash-latest"
+MODELL = "gemini-2.5-flash"
 # Bara anrop från appen släpps in. Lägg till http://localhost:8080 om du kör lokalt.
 TILLATNA_ORIGIN = "https://flippa.tomairaksinen.se,https://tom-airaksinen.github.io"
 # Firebase-projektet vars inloggningar vi litar på (samma som appens databas).

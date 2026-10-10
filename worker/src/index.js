@@ -92,7 +92,7 @@ async function fragaGemini(env, text, responseSchema) {
   try {
     r = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+      headers: { "Content-Type": "application/json", "x-goog-api-key": (env.GEMINI_API_KEY || "").trim() },
       body: JSON.stringify({
         contents: [{ parts: [{ text }] }],
         generationConfig: { temperature: 0.2, responseMimeType: "application/json", responseSchema },
