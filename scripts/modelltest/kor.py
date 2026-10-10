@@ -95,6 +95,9 @@ def fraga(modell, prompt, nyck):
     return svar, time.time() - t0, None
 
 def tolka(svar):
+    """None = gick inte att tolka. Anroparen sparar råsvaret då, annars går det inte
+    att skilja ett avhugget svar (modellen orkade inte) från en vägran eller ett
+    formatfel – och de säger helt olika saker om modellen."""
     txt = (svar.get("choices") or [{}])[0].get("message", {}).get("content") or ""
     try:
         d = json.loads(txt)
@@ -143,6 +146,13 @@ def main():
             print(f"  {kid:<20} {m:<34} ", end="", flush=True)
             svar, sek, fel = fraga(m, prompt, nyck)
             traffar = tolka(svar) if svar else None
+            if svar and not traffar:
+                val = (svar.get("choices") or [{}])[0]
+                fel = (f'otolkbart (finish_reason={val.get("finish_reason")}, '
+                       f'{len((val.get("message") or {}).get("content") or "")} tecken)')
+                os.makedirs(os.path.join(HEMLIGT, "ratext"), exist_ok=True)
+                open(os.path.join(HEMLIGT, "ratext", f"{kid}-{k}.txt"), "w", encoding="utf-8").write(
+                    json.dumps(svar, ensure_ascii=False, indent=1))
             # Resultatfilen bär BARA glosorna. Allt som kan avslöja modellen -> facit.
             json.dump({"korning": kid, "meta": meta, "traffar": traffar or [], "fel": fel},
                       open(fil, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
