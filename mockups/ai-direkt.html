@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Flippa – AI-fliken direkt mot API:t</title>
+<style>
+  :root{ --bg:#0d1426; --surface:#16203a; --surface-2:#1f2c4d; --text:#f2f4f8; --muted:#9aa3b2;
+    --accent:#5b8cff; --line:#2c3c63; --good:#5bbf72; --warn:#e0915a;
+    --prio1:#5b8cff; --prio2:#6f7fc0; --prio3:#48557a; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#070b15;color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;padding:26px 14px 70px;display:flex;flex-direction:column;align-items:center}
+  h1{font-size:1.3rem;margin:0 0 4px;text-align:center}
+  .sub{color:var(--muted);text-align:center;margin:0 auto 22px;max-width:660px;font-size:.9rem}
+  .row{display:flex;gap:18px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+  .col{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .cap{color:var(--muted);font-size:.78rem;max-width:356px;text-align:center}
+  .cap b{color:var(--text)}
+  .step{font-size:.7rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:700}
+
+  .phone{background:#05070d;border:1px solid #26324f;border-radius:34px;padding:11px;
+    box-shadow:0 22px 55px rgba(0,0,0,.6)}
+  .screen{position:relative;width:340px;height:640px;background:var(--bg);border-radius:26px;
+    overflow:hidden;display:flex;flex-direction:column}
+  .sheet{position:absolute;left:0;right:0;bottom:0;top:0;background:var(--bg);
+    padding:16px 14px 14px;display:flex;flex-direction:column}
+  .sheet h2{font-size:1.16rem;margin:0 0 12px}
+  .seg{display:flex;background:var(--surface);border-radius:12px;padding:4px;gap:4px;flex:none}
+  .seg button{flex:1;background:none;border:none;color:var(--muted);font:inherit;font-size:.86rem;
+    padding:9px 4px;border-radius:9px}
+  .seg button.on{background:var(--accent);color:#fff;font-weight:700}
+  label.lbl{display:block;color:var(--muted);font-size:.78rem;margin:14px 0 5px}
+  .stepper{display:flex;align-items:center;gap:12px}
+  .stepper button{width:40px;height:40px;border-radius:11px;border:1px solid var(--line);
+    background:var(--surface);color:var(--text);font-size:1.1rem}
+  .stepper span{font-weight:700;min-width:30px;text-align:center}
+  .inp{width:100%;background:var(--surface);border:1px solid var(--line);border-radius:11px;
+    color:var(--text);font:inherit;padding:11px 12px}
+  .primary{width:100%;background:var(--accent);color:#fff;border:none;border-radius:13px;
+    padding:14px;font:inherit;font-weight:700;font-size:1rem}
+  .secondary{width:100%;background:var(--surface);color:var(--text);border:1px solid var(--line);
+    border-radius:13px;padding:13px;font:inherit}
+  .foot{margin-top:auto;display:flex;gap:9px;padding-top:12px;flex:none}
+  .foot .secondary,.foot .primary{width:auto;flex:1}
+  .note{color:var(--muted);font-size:.78rem;margin-top:10px}
+
+  /* laddning */
+  .center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  .spin{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);
+    border-top-color:var(--accent);animation:sp .9s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+
+  /* granskningslistan */
+  .bar{display:flex;align-items:center;gap:8px;flex:none;margin:12px 0 8px}
+  .bar .n{font-weight:700;font-size:.9rem}
+  .bar .lnk{margin-left:auto;color:var(--accent);font-size:.82rem;background:none;border:none;font:inherit}
+  .list{flex:1;overflow:auto;margin:0 -4px;padding:0 4px}
+  .w{display:flex;gap:10px;align-items:flex-start;background:var(--surface);border-radius:12px;
+    padding:10px 11px;margin-bottom:7px;border:1px solid transparent}
+  .w.off{opacity:.45}
+  .w.dup{border-color:var(--warn)}
+  .cb{width:21px;height:21px;border-radius:6px;border:1.5px solid var(--line);flex:none;margin-top:2px;
+    display:flex;align-items:center;justify-content:center;font-size:.8rem;color:#fff;background:var(--bg)}
+  .w.on .cb{background:var(--accent);border-color:var(--accent)}
+  .w .txt{flex:1;min-width:0}
+  .w .fo{font-weight:600}
+  .w .sv{color:var(--muted);font-size:.84rem}
+  .w .bo{color:var(--muted);font-size:.74rem;margin-top:3px;font-style:italic}
+  .w .tag{color:var(--warn);font-size:.72rem;margin-top:3px}
+  .p{flex:none;width:24px;height:24px;border-radius:7px;font-size:.74rem;font-weight:700;
+    display:flex;align-items:center;justify-content:center;color:#fff;margin-top:1px}
+  .p1{background:var(--prio1)} .p2{background:var(--prio2)} .p3{background:var(--prio3)}
+  .fel{background:rgba(224,145,90,.12);border:1px solid var(--warn);border-radius:12px;padding:12px}
+  .fel b{display:block;margin-bottom:3px}
+  .tip{max-width:700px;margin:30px auto 0;background:var(--surface);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;font-size:.88rem;color:var(--muted)}
+  .tip b{color:var(--text)}
+  .tip ul{margin:8px 0 0;padding-left:20px}
+  .tip li{margin:5px 0}
+</style>
+</head>
+<body>
+<h1>AI-fliken direkt mot API:t</h1>
+<p class="sub">Som Slå upp fungerar sedan v411: appen frågar modellen själv via proxyn, i stället för
+att du kopierar en prompt till ChatGPT och klistrar tillbaka svaret. Listan i steg 3 är klickbar –
+prova att kryssa av ord och se antalet ändras.</p>
+
+<div class="row">
+
+  <div class="col">
+    <span class="step">Steg 1</span>
+    <div class="phone"><div class="screen"><div class="sheet">
+      <h2>Lägg till ord</h2>
+      <div class="seg"><button>Slå upp</button><button class="on">AI</button><button>Manuellt</button></div>
+      <label class="lbl">Antal ord/fraser</label>
+      <div class="stepper"><button>−</button><span>30</span><button>+</button></div>
+      <label class="lbl">Tema</label>
+      <input class="inp" value="Frukter och växter" readonly>
+      <p class="note">Modellen får ämnets språk, böjningsinställning och genusregel automatiskt –
+        samma regler som Slå upp använder.</p>
+      <div class="foot"><button class="secondary">Stäng</button><button class="primary">Föreslå ord</button></div>
+    </div></div></div>
+    <p class="cap">Samma fält som idag, men knappen heter <b>Föreslå ord</b> och lämnar aldrig appen.
+      Ingen inklistringsruta längre.</p>
+  </div>
+
+  <div class="col">
+    <span class="step">Steg 2</span>
+    <div class="phone"><div class="screen"><div class="sheet">
+      <h2>Lägg till ord</h2>
+      <div class="seg"><button>Slå upp</button><button class="on">AI</button><button>Manuellt</button></div>
+      <div class="center">
+        <div class="spin"></div>
+        <div style="font-weight:600">Tar fram 30 ord …</div>
+        <div class="cap" style="max-width:240px">Temat "Frukter och växter" på italienska</div>
+      </div>
+      <div class="foot"><button class="secondary">Avbryt</button></div>
+    </div></div></div>
+    <p class="cap">Tar ett par sekunder. Ett anrop för hela lektionen, så modellen håller stil och
+      ordklass konsekvent.</p>
+  </div>
+
+  <div class="col">
+    <span class="step">Steg 3</span>
+    <div class="phone"><div class="screen"><div class="sheet">
+      <h2>Granska orden</h2>
+      <div class="bar"><span class="n" id="n">27 valda</span>
+        <button class="lnk" id="toggla">Avmarkera alla</button></div>
+      <div class="list" id="lista"></div>
+      <div class="foot"><button class="secondary">Fler 10</button>
+        <button class="primary" id="add">Lägg till 27</button></div>
+    </div></div></div>
+    <p class="cap">Varje ord går att välja bort, och prion syns direkt. <b>Ord som redan finns i
+      ämnet är markerade och avkryssade</b> – dubblettkollen flyttas fram till granskningen i
+      stället för att komma som en extra dialog efteråt.</p>
+  </div>
+
+  <div class="col">
+    <span class="step">Om det strular</span>
+    <div class="phone"><div class="screen"><div class="sheet">
+      <h2>Lägg till ord</h2>
+      <div class="seg"><button>Slå upp</button><button class="on">AI</button><button>Manuellt</button></div>
+      <div style="margin-top:16px" class="fel"><b>Kunde inte fråga modellen</b>
+        Dygnskvoten är slut (1 000 anrop). Den nollställs vid midnatt UTC.</div>
+      <label class="lbl">Reservväg</label>
+      <button class="secondary">Kopiera prompten</button>
+      <p class="note">Klistra in den i ChatGPT eller Claude och klistra tillbaka svaret här –
+        precis som förut.</p>
+      <label class="lbl">Klistra in AI:ns svar</label>
+      <textarea class="inp" rows="3" placeholder="ord;översättning;prio"></textarea>
+      <div class="foot"><button class="secondary">Stäng</button><button class="primary">Lägg till</button></div>
+    </div></div></div>
+    <p class="cap">Den gamla vägen försvinner inte – den blir reservväg och visas bara när API:t
+      inte svarar. Alltså körbar och testad, inte bortkommenterad.</p>
+  </div>
+
+</div>
+
+<div class="tip">
+  <b>Vad som faktiskt ändras</b>
+  <ul>
+    <li><b>Bort:</b> hoppet ut till ChatGPT, inklistringsrutan, urklippsstrulet med persiska och
+      arabiska — och hela escape-formatet vi byggde för att överleva det.</li>
+    <li><b>Kvar:</b> tema, antal, och prompten (den flyttar in i proxyn där den redan bor för
+      uppslagningen).</li>
+    <li><b>Nytt:</b> granskningssteget. Det är det som gör skillnad — i dag ser du orden först
+      efter att de sparats, och måste redigera bort dem ett i taget.</li>
+  </ul>
+  <b style="display:block;margin-top:12px">Öppet att bestämma</b>
+  <ul>
+    <li>Ska "Fler 10" fråga om fler ord på samma tema, eller ersätta de avvalda?</li>
+    <li>Prio direkt redigerbar i listan, eller bara synlig (och ändras efteråt på kortet)?</li>
+    <li>Ska granskningen gå att hoppa över när man litar på modellen, typ "Lägg till alla direkt"?</li>
+  </ul>
+</div>
+
+<script>
+  const ORD = [
+    ["il cetriolo","gurka","un cetriolo, due cetrioli",2,0],
+    ["la mela","äpple","una mela, due mele",1,1],
+    ["la pera","päron","una pera, due pere",1,0],
+    ["l'uva","vindruvor","un'uva, due uve",1,0],
+    ["la fragola","jordgubbe","una fragola, due fragole",1,0],
+    ["il pomodoro","tomat","un pomodoro, due pomodori",1,1],
+    ["la zucchina","zucchini","una zucchina, due zucchine",2,0],
+    ["il basilico","basilika","un basilico",2,0],
+    ["la radice","rot","una radice, due radici",2,0],
+    ["il seme","frö","un seme, due semi",1,0],
+    ["la foglia","blad","una foglia, due foglie",1,0],
+    ["potare","beskära","poto, pota · ho potato · poti",3,0],
+  ];
+  const lista = document.getElementById("lista");
+  const valda = ORD.map((o) => !o[4]);              // dubbletter avkryssade från start
+  function rita() {
+    lista.innerHTML = ORD.map(([fo, sv, bo, p, dup], i) => `
+      <div class="w ${valda[i] ? "on" : "off"} ${dup ? "dup" : ""}" data-i="${i}">
+        <div class="cb">${valda[i] ? "✓" : ""}</div>
+        <div class="txt">
+          <div class="fo">${fo}</div>
+          <div class="sv">${sv}</div>
+          ${bo ? `<div class="bo">${bo}</div>` : ""}
+          ${dup ? `<div class="tag">finns redan i Frukter och växter</div>` : ""}
+        </div>
+        <div class="p p${p}">${p}</div>
+      </div>`).join("");
+    lista.querySelectorAll(".w").forEach((el) => el.onclick = () => {
+      valda[+el.dataset.i] = !valda[+el.dataset.i]; rita();
+    });
+    const n = valda.filter(Boolean).length;
+    document.getElementById("n").textContent = n + " valda";
+    document.getElementById("add").textContent = "Lägg till " + n;
+    document.getElementById("toggla").textContent = n ? "Avmarkera alla" : "Välj alla";
+  }
+  document.getElementById("toggla").onclick = () => {
+    const nagon = valda.some(Boolean);
+    valda.fill(!nagon); rita();
+  };
+  rita();
+</script>
+</body>
+</html>
