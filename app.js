@@ -6394,7 +6394,10 @@ async function slaUppViaAI(ord, dir, lang, sprakNamn) {
   const r = await fetch(AI_PROXY + "/slaupp", {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + idToken },
-    body: JSON.stringify({ ord, lang, sprakNamn, riktning: dir }),
+    // Genus-/artikelregeln kommer från app.js (genderPromptNote), samma not som
+    // AI-promptens. Annars hade uppslaget gett "cetriolo" där AI-fliken ger
+    // "il cetriolo", och korten sett olika ut beroende på hur de kom in.
+    body: JSON.stringify({ ord, lang, sprakNamn, riktning: dir, regler: genderPromptNote(lang).trim() }),
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || d.fel) throw new Error(d.fel ? d.fel + (d.status ? " " + d.status : "") : "HTTP " + r.status);
@@ -6459,16 +6462,18 @@ function openAddDialog(opts = {}) {
   const foreignCode = (fullLang || "").slice(0, 2);
   const foreignLabel = fullLang ? langLabel(fullLang) : "Utländska";
   const canLookUp = !!foreignCode;
-  let seg = opts.segment || "manual";
+  // Slå upp är förstahandsvalet sedan uppslaget blev AI-drivet; Manuellt ligger sist
+  // och är kvar för den som vill skriva in rader själv.
+  let seg = opts.segment || (canLookUp ? "lookup" : "manual");
   if (seg === "lookup" && !canLookUp) seg = "manual";
   let luDir = "sv2for", luCards = [], luSrcVal = opts.prefill || "", luAutoDone = false;
 
   const m = openModal(`
     <h3>Lägg till ord</h3>
     <div class="seg add-seg" id="add-seg">
-      <button data-s="manual">Manuellt</button>
       ${canLookUp ? `<button data-s="lookup">Slå upp</button>` : ""}
       <button data-s="ai">AI</button>
+      <button data-s="manual">Manuellt</button>
     </div>
     <div id="add-lesson-pick"></div>
     <div id="add-body"></div>`);
@@ -7378,7 +7383,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v411";
+const APP_VERSION = "v412";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

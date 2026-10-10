@@ -68,6 +68,9 @@ function prompt(ord, k) {
         + ` perfekt med hjälpverb och 3:e person konjunktiv, åtskilda med mittpunkt,`
         + ` t.ex. "înțeleg, înțelege · am înțeles · să înțeleagă". Upprepa aldrig bara`
         + ` uppslagsformen. Tom sträng för andra ordklasser.`,
+    // Genus-/artikelregeln skickas med av appen (genderPromptNote) i stället för att
+    // kodas här: då kan de två vägarna inte glida isär.
+    k.regler && !tillSvenska ? `- ${String(k.regler).replace(/^För substantiv:\s*/i, "oversattning – för substantiv: ")}` : "",
     `- prio: 1 om ordet hör till de mest grundläggande i språket (sådant en nybörjare`,
     `  behöver första veckan), 2 om det är vanligt, 3 om det är perifert.`,
     `- uttal: tom sträng om ${lang} skrivs med latinska bokstäver. Annars ordet med`,
@@ -75,7 +78,7 @@ function prompt(ord, k) {
     ``,
     `Känner du inte igen ett ord: sätt oversattning till tom sträng. Hitta aldrig på.`,
     `Svara med ordens data i samma ordning som de kom.`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function schema() {
