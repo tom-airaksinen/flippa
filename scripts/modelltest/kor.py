@@ -69,10 +69,11 @@ def fraga(modell, prompt, nyck):
     kropp = {
         "model": modell,
         "temperature": 0.2,
-        # 150 glosor med böjning är ~8 000 tokens ut. Flera leverantörer har ett
-        # lågt standardtak, och då hade vi mätt vår egen trunkering som "modellen
-        # tappade sig i svansen".
-        "max_tokens": 20000,
+        # 150 glosor med böjning är ~8 000 tokens svar – men resonerande modeller
+        # lägger 13 000+ tokens på att TÄNKA först, och de räknas in i max_tokens.
+        # Med taket på 20 000 blev svaret avhugget mitt i listan (finish_reason=length)
+        # och vi hade mätt vår egen gräns som "modellen tappade sig i svansen".
+        "max_tokens": 64000,
         "messages": [{"role": "user", "content": prompt}],
         "response_format": {"type": "json_schema",
                             "json_schema": {"name": "lektion", "strict": True, "schema": SCHEMA}},
