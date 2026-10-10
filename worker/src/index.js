@@ -47,6 +47,10 @@ export default {
 function prompt(ord, k) {
   const lang = k.sprakNamn || k.lang || "målspråket";
   const tillSvenska = k.riktning === "for2sv";
+  // Böjningsformuleringarna är medvetet desamma som appens egen AI-prompt
+  // (formPromptNote i app.js). Annars får man "pâine, pâini" ur API:t och
+  // "o pâine, două pâini" ur inklistringen, och korten ser olika ut beroende på
+  // hur ordet kom in.
   return [
     tillSvenska
       ? `Översätt till svenska. Orden är på ${lang}.`
@@ -54,12 +58,23 @@ function prompt(ord, k) {
     `Ord: ${ord.map((o) => JSON.stringify(o)).join(", ")}`,
     ``,
     `För varje ord:`,
-    `- oversattning: den vanligaste motsvarigheten. Flera bara om de används olika ofta i olika sammanhang, åtskilda med komma.`,
-    `- bojning: för substantiv obestämd singular + obestämd plural på ${lang}; för verb de former man inte kan gissa sig till. Tom sträng för andra ordklasser och när riktningen är till svenska.`,
-    `- prio: 1 om ordet hör till de mest grundläggande i språket, 2 om det är vanligt, 3 om det är perifert.`,
-    `- uttal: latinsk translitterering om ${lang} inte skrivs med latinska bokstäver, annars tom sträng.`,
+    `- oversattning: den vanligaste motsvarigheten, i grundform. Flera bara när de`,
+    `  används olika ofta i olika sammanhang, åtskilda med komma.`,
+    tillSvenska
+      ? `- bojning: lämna tom.`
+      : `- bojning: för substantiv obestämd singular + obestämd plural på ${lang} med`
+        + ` räkneord där språket har det, t.ex. "o pâine, două pâini" eller "un perro, dos perros".`
+        + ` För verb de former man inte kan gissa sig till: 1:a och 3:e person presens,`
+        + ` perfekt med hjälpverb och 3:e person konjunktiv, åtskilda med mittpunkt,`
+        + ` t.ex. "înțeleg, înțelege · am înțeles · să înțeleagă". Upprepa aldrig bara`
+        + ` uppslagsformen. Tom sträng för andra ordklasser.`,
+    `- prio: 1 om ordet hör till de mest grundläggande i språket (sådant en nybörjare`,
+    `  behöver första veckan), 2 om det är vanligt, 3 om det är perifert.`,
+    `- uttal: tom sträng om ${lang} skrivs med latinska bokstäver. Annars ordet med`,
+    `  latinska bokstäver som det uttalas, med â för långt a (salâm, âb, khâne).`,
     ``,
-    `Svara bara med ordens data, i samma ordning som de kom.`,
+    `Känner du inte igen ett ord: sätt oversattning till tom sträng. Hitta aldrig på.`,
+    `Svara med ordens data i samma ordning som de kom.`,
   ].join("\n");
 }
 
@@ -95,6 +110,22 @@ function fragaModell(env, text, schema) {
     : fragaGroq(env, text, schema);
 }
 
+// strict-läget hos Groq kräver additionalProperties:false på VARJE objekt och att
+// alla fält står i required. Gemini vill inte ha de nycklarna, så omskrivningen görs
+// här i stället för i det delade schemat. Att allt blir required betyder bara att
+// modellen måste skriva ut fälten – tomma strängar är fortfarande tillåtna.
+function strikt(nod) {
+  if (Array.isArray(nod)) return nod.map(strikt);
+  if (!nod || typeof nod !== "object") return nod;
+  const ut = {};
+  for (const [k, v] of Object.entries(nod)) ut[k] = strikt(v);
+  if (ut.type === "object" && ut.properties) {
+    ut.additionalProperties = false;
+    ut.required = Object.keys(ut.properties);
+  }
+  return ut;
+}
+
 // Groq: OpenAI-kompatibelt chat/completions med json_schema, alltså garanterat
 // schemaenligt svar. Gratisnivå utan kort.
 async function fragaGroq(env, text, schema) {
@@ -110,7 +141,7 @@ async function fragaGroq(env, text, schema) {
         model: env.MODELL_GROQ || "openai/gpt-oss-120b",
         temperature: 0.2,
         messages: [{ role: "user", content: text }],
-        response_format: { type: "json_schema", json_schema: { name: "uppslag", strict: true, schema } },
+        response_format: { type: "json_schema", json_schema: { name: "uppslag", strict: true, schema: strikt(schema) } },
       }),
     });
   } catch (e) {

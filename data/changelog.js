@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "10 oktober 2026", ver: "v411", items: [
+    { t: "Slå upp använder nu en språkmodell: du får böjning och ett prio-förslag på köpet, och översättningarna blir mycket bättre än förut", type: "improved", hi: true, ico: "🔎", desc: "Slå upp ger översättning, böjning och prio i ett svar – allt redigerbart innan du sparar." },
+  ] },
   { date: "7 oktober 2026", ver: "v410", items: [
     { t: "Början på ordet klipptes ofta bort vid automatisk uppläsning – nu kommer hela ordet med", type: "fixed" },
   ] },

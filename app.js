@@ -6378,6 +6378,44 @@ $("add-words").onclick = () => openAddDialog({ segment: "manual" });
 // =========================================================================
 //  Översättning (MyMemory) + lägg till
 // =========================================================================
+// AI-uppslag via egen proxy (worker/). Nyckeln bor där, aldrig här. Går anropet fel
+// faller doLookup tillbaka på MyMemory – den vägen är alltså inte död kod utan
+// reservväg, och körs varje gång API:t strular. Stäng av helt med
+// localStorage["flippa-ai-uppslag"] = "av" (ingen deploy behövs).
+const AI_PROXY = "https://flippa-ai.tomairaksinen.workers.dev";
+function aiUppslagPa() {
+  try { return localStorage.getItem("flippa-ai-uppslag") !== "av"; } catch (_) { return true; }
+}
+// Returnerar [{foreign, swedish, prio, form, tr}] eller kastar.
+async function slaUppViaAI(ord, dir, lang, sprakNamn) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("inte inloggad");
+  const idToken = await user.getIdToken();
+  const r = await fetch(AI_PROXY + "/slaupp", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + idToken },
+    body: JSON.stringify({ ord, lang, sprakNamn, riktning: dir }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.fel) throw new Error(d.fel ? d.fel + (d.status ? " " + d.status : "") : "HTTP " + r.status);
+  const traffar = d.traffar || [];
+  // Svaren paras mot inskickad ordning; modellen ombeds behålla den, men vi matchar
+  // på ordet när den ändå kastar om något.
+  const rader = ord.map((o, i) => {
+    const t = traffar.find((x) => (x.ord || "").trim().toLowerCase() === o.toLowerCase()) || traffar[i] || {};
+    const ut = (t.oversattning || "").trim();   // tom = modellen kände inte igen ordet
+    const prio = [1, 2, 3].includes(t.prio) ? t.prio : null;
+    return dir === "sv2for"
+      ? { foreign: ut, swedish: o, prio, form: (t.bojning || "").trim(), tr: (t.uttal || "").trim() }
+      : { foreign: o, swedish: ut, prio, form: (t.bojning || "").trim(), tr: (t.uttal || "").trim() };
+  });
+  // Ett okänt ord bland flera ska inte kasta bort de andra träffarna – den tomma raden
+  // syns i granskningen och går att fylla i eller ta bort. Är ALLT tomt gick uppslaget
+  // fel på riktigt, och då är MyMemory bättre än ingenting.
+  if (rader.every((r) => !r.foreign.trim() || !r.swedish.trim())) throw new Error("inga träffar");
+  return rader;
+}
+
 async function doTranslate(text, fromCode, toCode) {
   const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromCode}|${toCode}`;
   const r = await fetch(url);
@@ -6513,9 +6551,17 @@ function openAddDialog(opts = {}) {
     const host = m.querySelector("#lu-cards");
     const fF = (c, i) => `<div class="add-card-f"><label>${esc(foreignLabel)}</label><textarea rows="1" data-f="foreign" data-i="${i}">${esc(c.foreign)}</textarea></div>`;
     const fS = (c, i) => `<div class="add-card-f"><label>Svenska</label><textarea rows="1" data-f="swedish" data-i="${i}">${esc(c.swedish)}</textarea></div>`;
+    // Böjning och uttal kommer från modellen och MÅSTE gå att granska innan de sparas –
+    // annars hamnar en gissning på kortet utan att någon sett den. Visas bara när ämnet
+    // använder fältet, och bara när uppslaget faktiskt gav något.
+    const extra = (c, i, nyckel, etikett) => (c[nyckel] !== undefined
+      ? `<div class="add-card-f"><label>${etikett}</label><textarea rows="1" data-f="${nyckel}" data-i="${i}">${esc(c[nyckel] || "")}</textarea></div>` : "");
+    const fB = (c, i) => (formsOn() ? extra(c, i, "form", "Böjning") : "");
+    const fU = (c, i) => (subjectUsesTranslit() ? extra(c, i, "tr", "Uttal") : "");
     host.innerHTML = luCards.map((c, i) => `
       <div class="add-card">
         ${luDir === "sv2for" ? fS(c, i) + fF(c, i) : fF(c, i) + fS(c, i)}
+        ${fU(c, i)}${fB(c, i)}
         <div class="add-card-foot"><span class="add-rprio" data-i="${i}"><span class="pl">Prio</span>
           <button data-p="1" class="${c.prio === 1 ? "on" : ""}">1</button><button data-p="2" class="${c.prio === 2 ? "on" : ""}">2</button><button data-p="3" class="${c.prio === 3 ? "on" : ""}">3</button></span>
           ${luCards.length > 1 ? `<button class="add-rm" data-i="${i}" title="Ta bort">✕</button>` : ""}</div>
@@ -6538,9 +6584,19 @@ function openAddDialog(opts = {}) {
     const go = m.querySelector("#lu-go"); go.textContent = "…";
     go.classList.add("busy");
     try {
-      const out = [];
-      for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
-        out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
+      let out = null;
+      if (aiUppslagPa()) {
+        // Ett anrop för hela listan: modellen ser orden tillsammans och kan hålla
+        // stil och ordklass konsekvent, och det blir ett anrop mot kvoten i stället
+        // för ett per ord.
+        try { out = await slaUppViaAI(parts, luDir, fullLang, foreignLabel); }
+        catch (e) { console.warn("AI-uppslag föll tillbaka:", e); }
+      }
+      if (!out) {
+        out = [];
+        for (const p of parts) { const t = matchCase(p, await doTranslate(p, from, to));
+          out.push(luDir === "sv2for" ? { foreign: t, swedish: p, prio: null } : { foreign: p, swedish: t, prio: null }); }
+      }
       luCards = out; renderLuCards();
     } catch (e) { toast("Uppslag misslyckades: " + (e.message || e), 4000, "error"); }
     go.classList.remove("busy"); go.innerHTML = IC_SEARCH;
@@ -6609,7 +6665,7 @@ function openAddDialog(opts = {}) {
     bodyEl.innerHTML = seg === "manual" ? manualBody() : seg === "lookup" ? lookupBody() : aiBody();
     m.querySelector("#add-cancel").onclick = closeModal;
     if (seg === "manual") m.querySelector("#add-manual-ok").onclick = () => commitCards(parseLines(m.querySelector("#add-manual").value));
-    else if (seg === "lookup") { m.querySelector("#lu-add").onclick = () => commitCards(luCards.map((c) => ({ front: (c.foreign || "").trim(), back: (c.swedish || "").trim(), prio: c.prio }))); wireLookup(); }
+    else if (seg === "lookup") { m.querySelector("#lu-add").onclick = () => commitCards(luCards.map((c) => ({ front: (c.foreign || "").trim(), back: (c.swedish || "").trim(), prio: c.prio, form: formsOn() ? (c.form || "") : "", tr: subjectUsesTranslit() ? (c.tr || "") : "" }))); wireLookup(); }
     else wireAi();
     if (pickLesson) { const acts = bodyEl.querySelector(".modal-actions"); bodyEl.insertBefore(lessonPickEl, acts); } // lektionsväljare direkt ovanför Stäng/Lägg till
   }
@@ -7322,7 +7378,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v410";
+const APP_VERSION = "v411";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
