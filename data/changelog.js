@@ -10,7 +10,8 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
-  { date: "10 oktober 2026", ver: "v418", items: [
+  { date: "10 oktober 2026", ver: "v419", items: [
+    { t: "Går AI-tjänsten inte att nå står det nu varför på vanlig svenska, med en knapp som låter dig fråga din egen AI i stället", type: "improved" },
     { t: "AI-fliken bygger nu lektioner med en betydligt starkare språkmodell – orden blir mer relevanta och böjningarna stämmer oftare", type: "improved", hi: true, ico: "🎓", desc: "Inbyggd lektionsgenerering har bytt motor efter ett blindtest av nio modeller." },
     { t: "Böjningsfältet lämnas tomt för ord som saknar plural (blod, socker, astma) i stället för att hitta på en", type: "fixed" },
   ] },

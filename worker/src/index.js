@@ -50,7 +50,7 @@ export default {
       const profil = String(kropp.profil || "").trim().toLowerCase();
       const tillatna = (env.LEKTION_PROFILER || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
       if (tillatna.length && !tillatna.includes(profil)) {
-        return svar({ fel: "profil", detalj: "Inbyggd AI är av för den här profilen." }, 403);
+        return svar({ fel: "profil", kod: "profil", detalj: "Inbyggd AI är av för den här profilen." }, 403);
       }
       const tema = String(kropp.tema || "").trim();
       if (!tema) return svar({ fel: "inget tema" }, 400);
@@ -63,7 +63,7 @@ export default {
     }
 
     const g = await fragaModell(env, text, schema(), vilken);
-    if (g.fel) return svar(g, 502);
+    if (g.fel) return svar(g, g.status === 429 ? 429 : 502);
     return svar({ traffar: g.traffar });
   },
 };
@@ -250,7 +250,15 @@ async function fragaChat(env, text, schema, o) {
     return { fel: `nätfel mot ${o.namn}`, detalj: String(e) };
   }
   const rå = await r.text();
-  if (!r.ok) return { fel: o.namn, status: r.status, detalj: rå.slice(0, 500) };
+  // En stabil kod som appen kan översätta till begriplig svenska. Rå leverantörsnamn
+  // och HTTP-koder säger ingenting för den som bara vill bygga en lektion.
+  if (!r.ok) {
+    const kod = r.status === 402 ? "budget"
+      : r.status === 429 ? "for-manga"
+      : r.status === 401 || r.status === 403 ? "nyckel"
+      : r.status >= 500 ? "tjanst-nere" : "okant";
+    return { fel: o.namn, kod, status: r.status, detalj: rå.slice(0, 500) };
+  }
   let data;
   try { data = JSON.parse(rå); } catch (_) { return { fel: `${o.namn} svarade inte json`, detalj: rå.slice(0, 300) }; }
   const val = (data.choices || [{}])[0];

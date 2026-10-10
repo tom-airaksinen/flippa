@@ -5820,6 +5820,20 @@ function aiLage() {
 }
 function setAiLage(v) { lsSet(AI_LAGE_KEY, v === "extern" ? "extern" : "inbyggd"); }
 
+// Felkoder från proxyn → vad användaren faktiskt behöver veta. Rå leverantörsnamn
+// och HTTP-koder ("openrouter 402") säger ingenting för den som bara vill bygga en
+// lektion, och avslöjar dessutom vilken tjänst appen råkar använda i dag.
+const AI_FEL = {
+  budget:      { rubrik: "Dagens AI-budget är slut", text: "Den nollställs i natt. Du kan fråga din egen AI så länge." },
+  "for-manga": { rubrik: "För många frågor just nu", text: "Vänta en minut och försök igen." },
+  "tjanst-nere": { rubrik: "AI-tjänsten svarar inte", text: "Det är tillfälligt. Försök igen om en stund." },
+  nyckel:      { rubrik: "AI-tjänsten släppte inte in oss", text: "Något är fel med uppsättningen – säg till Tom." },
+  profil:      { rubrik: "Inbyggd AI är av för den här profilen", text: "Du kan fråga din egen AI i stället." },
+  natverk:     { rubrik: "Kunde inte nå AI-tjänsten", text: "Kontrollera nätet och försök igen." },
+  "inga-nya":  { rubrik: "Inga nya ord", text: "Modellen hittade inget utöver det du redan har. Prova ett smalare tema." },
+  okant:       { rubrik: "Kunde inte fråga modellen", text: "Försök igen, eller fråga din egen AI så länge." },
+};
+
 // Lektionsförslag från proxyn. Samma svarsform som uppslaget, så granskningslistan
 // behöver bara ett format.
 async function foreslaLektion({ tema, antal, undvik }) {
@@ -5839,7 +5853,11 @@ async function foreslaLektion({ tema, antal, undvik }) {
     }),
   });
   const d = await r.json().catch(() => ({}));
-  if (!r.ok || d.fel) throw new Error(d.fel ? d.fel + (d.status ? " " + d.status : "") : "HTTP " + r.status);
+  if (!r.ok || d.fel) {
+    const e = new Error(d.fel ? d.fel + (d.status ? " " + d.status : "") : "HTTP " + r.status);
+    e.kod = d.kod || "okant";   // översätts till svenska i gränssnittet
+    throw e;
+  }
   return (d.traffar || [])
     .map((t) => ({
       foreign: (t.ord || "").trim(),
@@ -6706,7 +6724,8 @@ function openAddDialog(opts = {}) {
 
   // Inbyggda lägets tillstånd. Lever så länge dialogen är öppen; byter man flik och
   // tillbaka är förslagen kvar, precis som Slå upp-korten.
-  let aiForslag = [], aiLaddar = false, aiFelText = "";
+  let aiForslag = [], aiLaddar = false, aiFel = null;
+  let aiTillfalligtExtern = false;   // efter ett fel, utan att ändra det sparade valet
 
   function aiDubblettKarta() {
     const m2 = new Map();
@@ -6723,7 +6742,7 @@ function openAddDialog(opts = {}) {
     const hoger = m.querySelector("#ai2-hoger");
     if (!host) return;
 
-    if (!inbyggdTillaten() || aiLage() === "extern") {
+    if (!inbyggdTillaten() || aiTillfalligtExtern || aiLage() === "extern") {
       host.innerHTML = `<p class="modal-hint" style="margin-top:12px">Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
         ${aiActionHTML("ai2")}
         <div class="add-divider">När du fått svaret</div>
@@ -6748,10 +6767,16 @@ function openAddDialog(opts = {}) {
     }
 
     if (!aiForslag.length) {
-      host.innerHTML = (aiFelText
-        ? `<div class="ai-fel"><b>Kunde inte fråga modellen</b>${esc(aiFelText)}
-             <div class="ai-fel-tips">Byt till <b>Extern</b> här ovanför så kan du fråga din egen AI i stället.</div></div>`
+      host.innerHTML = (aiFel
+        ? `<div class="ai-fel"><b>${esc(AI_FEL[aiFel.kod] ? AI_FEL[aiFel.kod].rubrik : AI_FEL.okant.rubrik)}</b>`
+          + `${esc(AI_FEL[aiFel.kod] ? AI_FEL[aiFel.kod].text : AI_FEL.okant.text)}`
+          + `${aiFel.kod === "inga-nya" ? "" : `<div class="ai-fel-tips"><button type="button" class="btn-secondary ai-mer" id="ai2-byt">Fråga din egen AI i stället</button></div>`}</div>`
         : `<p class="modal-hint" style="margin-top:12px">Appen frågar modellen själv – du får orden i en lista att granska innan något sparas.</p>`);
+      const byt = m.querySelector("#ai2-byt");
+      // En knapp som byter läge på plats, i stället för en text som ber om att leta
+      // efter ett reglage. Valet sparas inte: budgeten är tillbaka i morgon och då
+      // ska Inbyggd vara kvar som förval.
+      if (byt) byt.onclick = () => { aiTillfalligtExtern = true; renderAiMode(); };
       vanster.textContent = "Stäng"; vanster.onclick = () => closeModal();
       hoger.textContent = "Föreslå ord"; hoger.disabled = false; hoger.onclick = () => koraForslag(false);
       return;
@@ -6782,7 +6807,7 @@ function openAddDialog(opts = {}) {
       aiForslag.forEach((f) => { f.vald = !nagon; }); renderAiMode();
     };
     m.querySelector("#ai2-mer").onclick = () => koraForslag(true);
-    vanster.textContent = "Börja om"; vanster.onclick = () => { aiForslag = []; aiFelText = ""; renderAiMode(); };
+    vanster.textContent = "Börja om"; vanster.onclick = () => { aiForslag = []; aiFel = null; renderAiMode(); };
     hoger.textContent = `Lägg till ${valda}`;
     hoger.disabled = !valda;
     hoger.onclick = () => commitCards(aiForslag.filter((f) => f.vald).map((f) => ({
@@ -6795,7 +6820,7 @@ function openAddDialog(opts = {}) {
 
   async function koraForslag(mer) {
     const tema = aiTemaNu();
-    aiLaddar = true; aiFelText = ""; renderAiMode();
+    aiLaddar = true; aiFel = null; renderAiMode();
     try {
       const nya = await foreslaLektion({
         tema,
@@ -6817,10 +6842,10 @@ function openAddDialog(opts = {}) {
       });
       aiForslag = mer ? aiForslag.concat(rader) : rader;
       track("ai-inbyggd/" + (mer ? "mer" : "forsta"));
-      if (!aiForslag.length) aiFelText = "Modellen gav inga nya ord.";
+      if (!aiForslag.length) aiFel = { kod: "inga-nya" };
     } catch (e) {
-      aiFelText = String(e.message || e);
-      track("ai-inbyggd/fel");
+      aiFel = { kod: e.kod || "natverk", detalj: String(e.message || e) };
+      track("ai-inbyggd/fel" + (e.kod ? "/" + e.kod : ""));
     }
     aiLaddar = false; renderAiMode();
   }
@@ -6828,7 +6853,7 @@ function openAddDialog(opts = {}) {
     m.querySelector("#ai2-dec").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() - 5); };
     m.querySelector("#ai2-inc").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() + 5); };
     m.querySelectorAll("#ai2-lage button").forEach((b) => b.onclick = () => {   // saknas för gäst
-      setAiLage(b.dataset.l);
+      setAiLage(b.dataset.l); aiTillfalligtExtern = false;
       m.querySelectorAll("#ai2-lage button").forEach((x) => x.classList.toggle("seg-on", x === b));
       track("ai-lage/" + b.dataset.l);
       renderAiMode();
@@ -7587,7 +7612,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v418";
+const APP_VERSION = "v419";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
