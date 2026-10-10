@@ -39,22 +39,42 @@ export default {
     try { kropp = await req.json(); } catch (_) { return svar({ fel: "trasig json" }, 400); }
 
     const vag = new URL(req.url).pathname.replace(/\/+$/, "");
-    let text;
+    let text, vilken = "slaupp";
     if (vag === "/lektion") {
+      // Lektionsgenerering kostar pengar (Sonnet), uppslag gör det inte (Groq).
+      // Gästkontot delas av vem som helst som provar appen och får därför bara den
+      // externa vägen: prompt ut till egen AI, klistra in svaret. Profilen kommer
+      // från klienten och går att förfalska – det här är en tröskel som stoppar
+      // oavsiktlig förbrukning, inte ett säkerhetslås. Det riktiga taket sätts på
+      // nyckeln hos OpenRouter.
+      const profil = String(kropp.profil || "").trim().toLowerCase();
+      const tillatna = (env.LEKTION_PROFILER || "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      if (tillatna.length && !tillatna.includes(profil)) {
+        return svar({ fel: "profil", detalj: "Inbyggd AI är av för den här profilen." }, 403);
+      }
       const tema = String(kropp.tema || "").trim();
       if (!tema) return svar({ fel: "inget tema" }, 400);
       text = lektionPrompt(tema, kropp);
+      vilken = "lektion";
     } else {
       const ord = (kropp.ord || []).map((o) => String(o || "").trim()).filter(Boolean).slice(0, 25);
       if (!ord.length) return svar({ fel: "inga ord" }, 400);
       text = prompt(ord, kropp);
     }
 
-    const g = await fragaModell(env, text, schema());
+    const g = await fragaModell(env, text, schema(), vilken);
     if (g.fel) return svar(g, 502);
     return svar({ traffar: g.traffar });
   },
 };
+
+// Böjningsinstruktionen pressade modellerna att böja det som inte går att böja:
+// "un sangue, due sangui" dök upp i sex av nio modeller i jämförelsen, plus
+// "due asme" och "due diabeti". Det var vårt fel, inte modellernas – vi bad om
+// plural utan att ge dem vägen ut.
+const ORAKNELIGT = "Lämna bojning TOM för oräkneliga ord (blod, astma, diabetes, vatten, socker,"
+  + " salt och liknande ämnen, sjukdomar och abstrakta begrepp) – hitta aldrig på en plural"
+  + " som inte används.";
 
 // ---- Gemini ----------------------------------------------------------------
 function prompt(ord, k) {
@@ -80,7 +100,8 @@ function prompt(ord, k) {
         + ` För verb de former man inte kan gissa sig till: 1:a och 3:e person presens,`
         + ` perfekt med hjälpverb och 3:e person konjunktiv, åtskilda med mittpunkt,`
         + ` t.ex. "înțeleg, înțelege · am înțeles · să înțeleagă". Upprepa aldrig bara`
-        + ` uppslagsformen. Tom sträng för andra ordklasser.`,
+        + ` uppslagsformen. Tom sträng för andra ordklasser.`
+        + ` ${ORAKNELIGT}`,
     // Genus-/artikelregeln skickas med av appen (genderPromptNote) i stället för att
     // kodas här: då kan de två vägarna inte glida isär.
     k.regler && !tillSvenska ? `- ${String(k.regler).replace(/^För substantiv:\s*/i, "oversattning – för substantiv: ")}` : "",
@@ -114,7 +135,7 @@ function lektionPrompt(tema, k) {
         + ` där språket har det, t.ex. "o pâine, două pâini". För verb de former man inte kan`
         + ` gissa sig till: 1:a och 3:e person presens, perfekt med hjälpverb och 3:e person`
         + ` konjunktiv, åtskilda med mittpunkt. Upprepa aldrig bara uppslagsformen.`
-        + ` Tom sträng för andra ordklasser.`
+        + ` Tom sträng för andra ordklasser. ${ORAKNELIGT}`
       : `- bojning: lämna tom.`,
     `- prio: hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket`,
     `  i stort. 1 = kärnord man måste kunna för temat, 2 = vanliga nyttiga ord, 3 = mer`,
@@ -153,10 +174,30 @@ function schema() {
 // Leverantören byts med LEVERANTOR i wrangler.toml. Båda vägarna hålls levande: att
 // byta tillbaka ska vara en rad, inte en utgrävning ur git-historiken. Svaret ser
 // likadant ut oavsett vem som räknade ut det.
-function fragaModell(env, text, schema) {
-  return (env.LEVERANTOR || "groq") === "gemini"
-    ? fragaGemini(env, text, schema)
-    : fragaGroq(env, text, schema);
+// Leverantör och modell väljs PER ENDPOINT: uppslag av ett känt ord är en lätt
+// uppgift där gratismodellen duger, medan lektionsgenerering kräver domänkunskap
+// (se scripts/modelltest – gpt-oss-120b sist av nio, Sonnet 5.5 etta i sju av åtta).
+function fragaModell(env, text, schema, vilken) {
+  const lev = (vilken === "lektion" ? env.LEVERANTOR_LEKTION : env.LEVERANTOR_SLAUPP) || "groq";
+  const modell = vilken === "lektion" ? env.MODELL_LEKTION : env.MODELL_SLAUPP;
+  if (lev === "openrouter") return fragaOpenRouter(env, text, schema, modell);
+  if (lev === "gemini") return fragaGemini(env, text, schema);
+  return fragaGroq(env, text, schema, modell);
+}
+
+// OpenRouter: en nyckel, alla leverantörer. Samma OpenAI-kompatibla format som Groq,
+// så bara värden och modellnamnet skiljer.
+async function fragaOpenRouter(env, text, schema, modell) {
+  return fragaChat(env, text, schema, {
+    url: "https://openrouter.ai/api/v1/chat/completions",
+    nyckel: env.OPENROUTER_API_KEY,
+    modell: modell || "anthropic/claude-sonnet-5.5",
+    namn: "openrouter",
+    extraHeaders: { "HTTP-Referer": "https://flippa.tomairaksinen.se", "X-Title": "Flippa" },
+    // Resonerande modeller lägger tusentals tokens på att tänka INNAN svaret, och
+    // de räknas in i taket. Ett lågt tak hugger av listan mitt i (finish_reason=length).
+    maxTokens: 64000,
+  });
 }
 
 // strict-läget hos Groq kräver additionalProperties:false på VARJE objekt och att
@@ -175,33 +216,46 @@ function strikt(nod) {
   return ut;
 }
 
-// Groq: OpenAI-kompatibelt chat/completions med json_schema, alltså garanterat
-// schemaenligt svar. Gratisnivå utan kort.
-async function fragaGroq(env, text, schema) {
+// Groq: OpenAI-kompatibelt chat/completions med json_schema. Gratisnivå utan kort.
+async function fragaGroq(env, text, schema, modell) {
+  return fragaChat(env, text, schema, {
+    url: "https://api.groq.com/openai/v1/chat/completions",
+    nyckel: env.GROQ_API_KEY,
+    modell: modell || "openai/gpt-oss-120b",
+    namn: "groq",
+    maxTokens: 16000,
+  });
+}
+
+// Gemensam för alla OpenAI-kompatibla API:er (Groq, OpenRouter).
+async function fragaChat(env, text, schema, o) {
   let r;
   try {
-    r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    r = await fetch(o.url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: "Bearer " + (env.GROQ_API_KEY || "").trim(),
+        Authorization: "Bearer " + (o.nyckel || "").trim(),
+        ...(o.extraHeaders || {}),
       },
       body: JSON.stringify({
-        model: env.MODELL_GROQ || "openai/gpt-oss-120b",
+        model: o.modell,
         temperature: 0.2,
+        max_tokens: o.maxTokens,
         messages: [{ role: "user", content: text }],
         response_format: { type: "json_schema", json_schema: { name: "uppslag", strict: true, schema: strikt(schema) } },
       }),
     });
   } catch (e) {
-    return { fel: "nätfel mot Groq", detalj: String(e) };
+    return { fel: `nätfel mot ${o.namn}`, detalj: String(e) };
   }
   const rå = await r.text();
-  if (!r.ok) return { fel: "groq", status: r.status, detalj: rå.slice(0, 500) };
+  if (!r.ok) return { fel: o.namn, status: r.status, detalj: rå.slice(0, 500) };
   let data;
-  try { data = JSON.parse(rå); } catch (_) { return { fel: "groq svarade inte json", detalj: rå.slice(0, 300) }; }
-  const txt = data?.choices?.[0]?.message?.content;
-  if (!txt) return { fel: "tomt svar", detalj: rå.slice(0, 300) };
+  try { data = JSON.parse(rå); } catch (_) { return { fel: `${o.namn} svarade inte json`, detalj: rå.slice(0, 300) }; }
+  const val = (data.choices || [{}])[0];
+  const txt = (val.message || {}).content;
+  if (!txt) return { fel: "tomt svar", detalj: `finish_reason=${val.finish_reason} ${rå.slice(0, 200)}` };
   return tolkaTraffar(txt);
 }
 

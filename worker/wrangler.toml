@@ -10,20 +10,29 @@ compatibility_date = "2026-10-10"
 preview_urls = false
 
 [vars]
-# "groq" eller "gemini". Gemini-vägen är kvar och fungerar den dag Google slutar
-# neka projektet – byt raden och deploya, inget mer.
-LEVERANTOR = "groq"
-MODELL_GROQ = "openai/gpt-oss-120b"
-# Verifierat namn ur /v1beta/models för den här nyckeln – inte ett alias på chans.
-# 2.5-flash fanns i listan men ges inte ut till nya användare; Google pekade själv
-# på 3.8-flash i felsvaret. Modellen byts här om Google döper om den. Workern skickar
-# tillbaka Googles eget felmeddelande, så ett felaktigt namn syns direkt i svaret.
+# Leverantör och modell PER ENDPOINT. Uppslag av ett känt ord är en lätt uppgift där
+# gratismodellen duger; lektionsgenerering kräver domänkunskap. Underlag:
+# scripts/modelltest (9 modeller blindbedömda, gpt-oss-120b sist, Sonnet 5.5 etta i
+# sju av åtta körningar).
+LEVERANTOR_SLAUPP = "groq"
+MODELL_SLAUPP = "openai/gpt-oss-120b"
+LEVERANTOR_LEKTION = "openrouter"
+MODELL_LEKTION = "anthropic/claude-sonnet-5.5"
+# Billigare andrahandsval om volymen växer: "google/gemini-3.8-flash" (2:a i testet,
+# en tredjedel av priset, dubbelt så snabb).
+
+# Profiler som får använda den INBYGGDA lektionsgenereringen (den som kostar pengar).
+# Gästkontot delas av alla som provar appen och får bara den externa vägen.
+# Tom sträng = alla tillåts.
+LEKTION_PROFILER = "tom,hedvig,wille,karin,harry,maria,lucas,malin"
+
+# Gemini-vägen finns kvar men används inte: Google nekar kontot ("project has been
+# denied access") även för ett nyskapat projekt. Sätt LEVERANTOR_* till "gemini" den
+# dag spärren släpper.
 MODELL = "gemini-3.8-flash"
-# Bara anrop från appen släpps in. Lägg till http://localhost:8080 om du kör lokalt.
-TILLATNA_ORIGIN = "https://flippa.tomairaksinen.se,https://tom-airaksinen.github.io"
-# Firebase-projektet vars inloggningar vi litar på (samma som appens databas).
 FIREBASE_PROJEKT = "flashcards-484e9"
+TILLATNA_ORIGIN = "https://flippa.tomairaksinen.se,https://tom-airaksinen.github.io"
 
 # Nycklarna läggs ALDRIG här. De sätts som secrets:
 #   npx wrangler secret put GROQ_API_KEY
-#   npx wrangler secret put GEMINI_API_KEY
+#   npx wrangler secret put OPENROUTER_API_KEY

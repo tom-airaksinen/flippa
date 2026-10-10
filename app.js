@@ -5831,6 +5831,7 @@ async function foreslaLektion({ tema, antal, undvik }) {
     headers: { "Content-Type": "application/json", Authorization: "Bearer " + (await user.getIdToken()) },
     body: JSON.stringify({
       tema, antal, undvik, lang,
+      profil: currentUser,   // workern håller gästkontot utanför den betalda modellen
       sprakNamn: lang ? langLabel(lang) : "",
       regler: genderPromptNote(lang).trim(),
       bojning: formsOn(),
@@ -6681,17 +6682,21 @@ function openAddDialog(opts = {}) {
   }
 
   // ---- AI (allt-i-ett: skicka/kopiera + klistra in svaret) ----
+  // Gästkontot delas av alla som provar appen och får bara den externa vägen. Valet
+  // döljs helt i stället för att visas och sedan avvisas av servern.
+  function inbyggdTillaten() { return currentUser !== "guest"; }
+
   function aiBody() {
-    const l = aiLage();
+    const l = inbyggdTillaten() ? aiLage() : "extern";
     return `<label>Antal ord/fraser</label>
       <div class="ai-stepper" style="margin:2px 0 0"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
-      <label>Hämta orden</label>
+      ${inbyggdTillaten() ? `<label>Hämta orden</label>
       <div class="seg" id="ai2-lage">
         <button type="button" data-l="inbyggd" class="${l === "inbyggd" ? "seg-on" : ""}">Inbyggd</button>
         <button type="button" data-l="extern" class="${l === "extern" ? "seg-on" : ""}">Extern</button>
-      </div>
+      </div>` : ""}
       <div id="ai2-mode"></div>
       <div class="modal-actions">
         <button class="btn-secondary" id="ai2-vanster">Stäng</button>
@@ -6718,7 +6723,7 @@ function openAddDialog(opts = {}) {
     const hoger = m.querySelector("#ai2-hoger");
     if (!host) return;
 
-    if (aiLage() === "extern") {
+    if (!inbyggdTillaten() || aiLage() === "extern") {
       host.innerHTML = `<p class="modal-hint" style="margin-top:12px">Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
         ${aiActionHTML("ai2")}
         <div class="add-divider">När du fått svaret</div>
@@ -6822,7 +6827,7 @@ function openAddDialog(opts = {}) {
   function wireAi() {
     m.querySelector("#ai2-dec").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() - 5); };
     m.querySelector("#ai2-inc").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() + 5); };
-    m.querySelectorAll("#ai2-lage button").forEach((b) => b.onclick = () => {
+    m.querySelectorAll("#ai2-lage button").forEach((b) => b.onclick = () => {   // saknas för gäst
       setAiLage(b.dataset.l);
       m.querySelectorAll("#ai2-lage button").forEach((x) => x.classList.toggle("seg-on", x === b));
       track("ai-lage/" + b.dataset.l);
@@ -7582,7 +7587,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v417";
+const APP_VERSION = "v418";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
