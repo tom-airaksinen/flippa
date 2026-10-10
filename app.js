@@ -6626,11 +6626,14 @@ function openAddDialog(opts = {}) {
     // att prio och böjning saknades.
     const note = m.querySelector("#lu-note");
     if (note) {
+      // .lu-note är en flexbox (ikon + text). Texten MÅSTE ligga i ett eget span:
+      // inline-element som <b> blir annars egna flexobjekt och meningen slits isär.
+      const rad = (ico, text) => (ico ? `<span>${ico}</span>` : "") + `<span>${text}</span>`;
       note.innerHTML = luKalla === "ai"
-        ? `✨ Förslagen kommer från en språkmodell – granska dem innan du lägger till.`
+        ? rad("✨", "Förslagen kommer från en språkmodell – granska dem innan du lägger till.")
         : luKalla === "enkel"
-          ? `⚠️ Språkmodellen svarade inte${luFelText ? ` (${esc(luFelText)})` : ""} – det här kommer från en enkel gratistjänst, utan böjning och prio.`
-          : `Skriv ett eller flera ord (separera med <b>;</b>) och tryck på förstoringsglaset.`;
+          ? rad("⚠️", `Språkmodellen svarade inte${luFelText ? ` (${esc(luFelText)})` : ""} – det här kommer från en enkel gratistjänst, utan böjning och prio.`)
+          : rad("", "Skriv ett eller flera ord (separera med <b>;</b>) och tryck på förstoringsglaset.");
     }
   }
   async function doLookup() {
@@ -7576,7 +7579,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v414";
+const APP_VERSION = "v415";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
