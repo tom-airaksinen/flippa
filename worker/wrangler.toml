@@ -1,0 +1,15 @@
+name = "flippa-ai"
+main = "src/index.js"
+compatibility_date = "2026-10-10"
+
+[vars]
+# Modellen byts här om Google döper om den. Workern skickar tillbaka Googles eget
+# felmeddelande, så ett felaktigt namn syns direkt i svaret.
+MODELL = "gemini-flash-latest"
+# Bara anrop från appen släpps in. Lägg till http://localhost:8080 om du kör lokalt.
+TILLATNA_ORIGIN = "https://flippa.tomairaksinen.se,https://tom-airaksinen.github.io"
+# Firebase-projektet vars inloggningar vi litar på (samma som appens databas).
+FIREBASE_PROJEKT = "flashcards-484e9"
+
+# Nyckeln läggs ALDRIG här. Den sätts som secret:
+#   npx wrangler secret put GEMINI_API_KEY
