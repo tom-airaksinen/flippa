@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "10 oktober 2026", ver: "v413", items: [
+    { t: "AI-fliken kan nu hämta orden själv: tryck Föreslå ord, bocka av det du vill ha i listan och lägg till. Inget hopp ut till ChatGPT och ingen inklistring", type: "new", hi: true, ico: "✨", desc: "Välj Inbyggd i AI-fliken så fyller appen lektionen åt dig – med granskning innan något sparas." },
+    { t: "Ord som redan finns i ämnet är förkryssade bort i listan, så du slipper dubblettdialogen efteråt", type: "improved" },
+  ] },
   { date: "10 oktober 2026", ver: "v412", items: [
     { t: "Slå upp ger nu bestämd artikel för språk som har det (il cetriolo), precis som AI-fliken", type: "fixed" },
     { t: "Flikarna i Lägg till ord ligger i ordningen Slå upp, AI, Manuellt – och Slå upp är förvalet", type: "improved" },

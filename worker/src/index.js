@@ -3,7 +3,10 @@
 //
 // Vad den gör:
 //   POST /slaupp   { ord: ["hund", ...], lang: "es-ES", riktning: "sv2for" }
+//   POST /lektion  { tema: "Frukter", antal: 30, lang: "it-IT", undvik: [...] }
 //                → { traffar: [{ ord, oversattning, bojning, prio, uttal }] }
+//
+// Samma svarsform från båda: appen har en granskningslista och ska inte behöva två.
 //
 // Skydd: bara anrop från appens origin, och bara med en giltig Firebase-inloggning
 // (samma anonyma inloggning appen redan har). Utan det vore endpointen en öppen
@@ -34,10 +37,20 @@ export default {
 
     let kropp;
     try { kropp = await req.json(); } catch (_) { return svar({ fel: "trasig json" }, 400); }
-    const ord = (kropp.ord || []).map((o) => String(o || "").trim()).filter(Boolean).slice(0, 25);
-    if (!ord.length) return svar({ fel: "inga ord" }, 400);
 
-    const g = await fragaModell(env, prompt(ord, kropp), schema());
+    const vag = new URL(req.url).pathname.replace(/\/+$/, "");
+    let text;
+    if (vag === "/lektion") {
+      const tema = String(kropp.tema || "").trim();
+      if (!tema) return svar({ fel: "inget tema" }, 400);
+      text = lektionPrompt(tema, kropp);
+    } else {
+      const ord = (kropp.ord || []).map((o) => String(o || "").trim()).filter(Boolean).slice(0, 25);
+      if (!ord.length) return svar({ fel: "inga ord" }, 400);
+      text = prompt(ord, kropp);
+    }
+
+    const g = await fragaModell(env, text, schema());
     if (g.fel) return svar(g, 502);
     return svar({ traffar: g.traffar });
   },
@@ -78,6 +91,39 @@ function prompt(ord, k) {
     ``,
     `Känner du inte igen ett ord: sätt oversattning till tom sträng. Hitta aldrig på.`,
     `Svara med ordens data i samma ordning som de kom.`,
+  ].filter(Boolean).join("\n");
+}
+
+// Lektionsgenerering. Prio-definitionen är medvetet densamma som i appens egen
+// AI-prompt (buildAiPrompt): prio = hur central glosan är för TEMAT, inte hur vanlig
+// den är i språket. Annars betyder en 1:a olika saker beroende på hur ordet kom in.
+function lektionPrompt(tema, k) {
+  const lang = k.sprakNamn || k.lang || "målspråket";
+  const antal = Math.min(50, Math.max(1, parseInt(k.antal, 10) || 20));
+  const undvik = (k.undvik || []).map((o) => String(o || "").trim()).filter(Boolean).slice(0, 300);
+  return [
+    `Ge mig ${antal} bra ord och fraser på temat "${tema}" på ${lang}.`,
+    ``,
+    `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet.`,
+    `För varje ord:`,
+    `- ord: ordet eller frasen på ${lang}.`,
+    k.regler ? `- ${String(k.regler).replace(/^För substantiv:\s*/i, "ord – för substantiv: ")}` : "",
+    `- oversattning: den svenska motsvarigheten, i obestämd form.`,
+    k.bojning
+      ? `- bojning: för substantiv obestämd singular + obestämd plural på ${lang} med räkneord`
+        + ` där språket har det, t.ex. "o pâine, două pâini". För verb de former man inte kan`
+        + ` gissa sig till: 1:a och 3:e person presens, perfekt med hjälpverb och 3:e person`
+        + ` konjunktiv, åtskilda med mittpunkt. Upprepa aldrig bara uppslagsformen.`
+        + ` Tom sträng för andra ordklasser.`
+      : `- bojning: lämna tom.`,
+    `- prio: hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket`,
+    `  i stort. 1 = kärnord man måste kunna för temat, 2 = vanliga nyttiga ord, 3 = mer`,
+    `  perifera. Riktmärke vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten`,
+    `  3:or. Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.`,
+    k.uttal
+      ? `- uttal: ordet med latinska bokstäver som det uttalas, med â för långt a.`
+      : `- uttal: lämna tom.`,
+    undvik.length ? `\nTa INTE med något av dessa, de finns redan: ${undvik.join(", ")}` : "",
   ].filter(Boolean).join("\n");
 }
 

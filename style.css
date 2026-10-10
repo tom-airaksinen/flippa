@@ -2124,3 +2124,51 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
 /* Iframen fyller allt under ‹-raden; Gnugga är själv exakt en skärm hög och scrollar inuti */
 #gnugga-holder { flex: 1; min-height: 0; display: flex; }
 #gnugga-frame { flex: 1; width: 100%; border: 0; display: block; background: #0f1b1e; }
+
+/* ---- Inbyggt AI-läge i "Lägg till ord": väntan, granskningslista, fel ---- */
+/* Listan är hela poängen med det inbyggda läget: orden granskas INNAN de sparas,
+   i stället för att dyka upp som kort man får redigera bort ett i taget. */
+.ai-vanta { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 34px 0 30px; }
+.ai-spin {
+  width: 32px; height: 32px; border-radius: 50%;
+  border: 3px solid var(--line); border-top-color: var(--accent); animation: ai-sp 0.9s linear infinite;
+}
+@keyframes ai-sp { to { transform: rotate(360deg); } }
+.ai-vanta-t { font-weight: 700; }
+.ai-vanta-s { color: var(--muted); font-size: 0.84rem; }
+
+.ai-bar { display: flex; align-items: center; gap: 8px; margin: 14px 0 8px; }
+.ai-n { font-weight: 700; font-size: 0.92rem; }
+.ai-bar .link-action { margin-left: auto; }
+.ai-lista { max-height: 46vh; overflow: auto; margin: 0 -2px; padding: 0 2px; }
+.ai-w {
+  display: flex; gap: 10px; align-items: flex-start; background: var(--surface-2);
+  border: 1px solid transparent; border-radius: 12px; padding: 10px 11px; margin-bottom: 7px;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.ai-w.off { opacity: 0.45; }
+.ai-w.dup { border-color: var(--paus); }
+.ai-cb {
+  width: 21px; height: 21px; border-radius: 6px; border: 1.5px solid var(--line); flex: none;
+  margin-top: 2px; display: flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; color: #fff; background: var(--bg);
+}
+.ai-w.on .ai-cb { background: var(--accent); border-color: var(--accent); }
+.ai-txt { flex: 1; min-width: 0; }
+.ai-fo { font-weight: 600; }
+.ai-sv { color: var(--muted); font-size: 0.85rem; }
+.ai-bo { color: var(--muted); font-size: 0.75rem; margin-top: 3px; font-style: italic; }
+.ai-dup { color: var(--paus); font-size: 0.73rem; margin-top: 3px; }
+.ai-p {
+  flex: none; width: 24px; height: 24px; border-radius: 7px; margin-top: 1px;
+  font-size: 0.74rem; font-weight: 700; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+}
+.ai-p.p1 { background: var(--prio1); } .ai-p.p2 { background: var(--prio2); } .ai-p.p3 { background: var(--prio3); }
+.ai-mer { width: 100%; margin-top: 4px; }
+.ai-fel {
+  background: rgba(224, 145, 90, 0.12); border: 1px solid var(--paus); border-radius: 12px;
+  padding: 12px; margin-top: 14px; font-size: 0.88rem;
+}
+.ai-fel b { display: block; margin-bottom: 3px; }
+.ai-fel-tips { color: var(--muted); font-size: 0.82rem; margin-top: 7px; }

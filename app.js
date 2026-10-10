@@ -5812,6 +5812,43 @@ function getCurrentLesson() {
 // för att först fälla ut tre val. Knappen byter då etikett till målet, så man alltid
 // ser vart trycket leder – inget överraskande hopp ur appen.
 const AI_PREF_KEY = "flippa-ai-pref-v1"; // profil → "claude" | "gpt" | "copy"
+// Inbyggd = appen frågar modellen själv via proxyn. Extern = gamla vägen med prompt
+// och inklistring, kvar som jämförelse och som reservväg när kvoten tar slut.
+const AI_LAGE_KEY = "flippa-ai-lage";
+function aiLage() {
+  try { return localStorage.getItem(AI_LAGE_KEY) === "extern" ? "extern" : "inbyggd"; } catch (_) { return "inbyggd"; }
+}
+function setAiLage(v) { lsSet(AI_LAGE_KEY, v === "extern" ? "extern" : "inbyggd"); }
+
+// Lektionsförslag från proxyn. Samma svarsform som uppslaget, så granskningslistan
+// behöver bara ett format.
+async function foreslaLektion({ tema, antal, undvik }) {
+  const user = auth.currentUser;
+  if (!user) throw new Error("inte inloggad");
+  const lang = subjectLang(currentSubject);
+  const r = await fetch(AI_PROXY + "/lektion", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: "Bearer " + (await user.getIdToken()) },
+    body: JSON.stringify({
+      tema, antal, undvik, lang,
+      sprakNamn: lang ? langLabel(lang) : "",
+      regler: genderPromptNote(lang).trim(),
+      bojning: formsOn(),
+      uttal: subjectUsesTranslit(),
+    }),
+  });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok || d.fel) throw new Error(d.fel ? d.fel + (d.status ? " " + d.status : "") : "HTTP " + r.status);
+  return (d.traffar || [])
+    .map((t) => ({
+      foreign: (t.ord || "").trim(),
+      swedish: (t.oversattning || "").trim(),
+      form: (t.bojning || "").trim(),
+      tr: (t.uttal || "").trim(),
+      prio: [1, 2, 3].includes(t.prio) ? t.prio : null,
+    }))
+    .filter((c) => c.foreign && c.swedish);
+}
 const AI_TARGETS = {
   claude: { namn: "Claude",  logo: () => AI_LOGO_CLAUDE, url: (q) => "https://claude.ai/new?q=" + encodeURIComponent(q) },
   gpt:    { namn: "ChatGPT", logo: () => AI_LOGO_GPT,    url: (q) => "https://chatgpt.com/?q=" + encodeURIComponent(q) },
@@ -6623,22 +6660,159 @@ function openAddDialog(opts = {}) {
 
   // ---- AI (allt-i-ett: skicka/kopiera + klistra in svaret) ----
   function aiBody() {
-    return `<p class="modal-hint">Låt en AI föreslå ord. Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
-      <label>Antal ord/fraser</label>
+    const l = aiLage();
+    return `<label>Antal ord/fraser</label>
       <div class="ai-stepper" style="margin:2px 0 0"><button type="button" id="ai2-dec">−</button><span id="ai2-cnt">${aiCount()}</span><button type="button" id="ai2-inc">+</button></div>
       <label>Tema</label>
       <input type="text" id="ai2-theme" value="${esc(lessonName())}" autocomplete="off" placeholder="t.ex. Sjöfart">
-      ${aiActionHTML("ai2")}
-      <div class="add-divider">När du fått svaret</div>
-      <div id="ai2-clipmsg"></div>
-      <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="Klistra in AI:ns svar här"></textarea>
-      <div class="modal-actions"><button class="btn-secondary" id="add-cancel">Stäng</button><button class="btn-primary" id="ai2-add">Lägg till från svaret</button></div>`;
+      <label>Hämta orden</label>
+      <div class="seg" id="ai2-lage">
+        <button type="button" data-l="inbyggd" class="${l === "inbyggd" ? "seg-on" : ""}">Inbyggd</button>
+        <button type="button" data-l="extern" class="${l === "extern" ? "seg-on" : ""}">Extern</button>
+      </div>
+      <div id="ai2-mode"></div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="ai2-vanster">Stäng</button>
+        <button class="btn-primary" id="ai2-hoger">Föreslå ord</button>
+      </div>`;
+  }
+
+  // Inbyggda lägets tillstånd. Lever så länge dialogen är öppen; byter man flik och
+  // tillbaka är förslagen kvar, precis som Slå upp-korten.
+  let aiForslag = [], aiLaddar = false, aiFelText = "";
+
+  function aiDubblettKarta() {
+    const m2 = new Map();
+    currentSubject.lessons.forEach((l) => l.cards.forEach((c) => {
+      const k = normPart(c.front);
+      if (k && !m2.has(k)) m2.set(k, l.name);
+    }));
+    return m2;
+  }
+
+  function renderAiMode() {
+    const host = m.querySelector("#ai2-mode");
+    const vanster = m.querySelector("#ai2-vanster");
+    const hoger = m.querySelector("#ai2-hoger");
+    if (!host) return;
+
+    if (aiLage() === "extern") {
+      host.innerHTML = `<p class="modal-hint" style="margin-top:12px">Öppnas med prompten ifylld (du trycker skicka) – klistra sedan in svaret.</p>
+        ${aiActionHTML("ai2")}
+        <div class="add-divider">När du fått svaret</div>
+        <div id="ai2-clipmsg"></div>
+        <textarea id="ai2-paste" rows="3" autocapitalize="none" autocorrect="off" placeholder="Klistra in AI:ns svar här"></textarea>`;
+      vanster.textContent = "Stäng"; vanster.onclick = () => closeModal();
+      hoger.textContent = "Lägg till från svaret";
+      hoger.disabled = false;
+      hoger.onclick = () => commitCards(parseLines(m.querySelector("#ai2-paste").value));
+      wireExternAi();
+      return;
+    }
+
+    // ---- inbyggt ----
+    if (aiLaddar) {
+      host.innerHTML = `<div class="ai-vanta"><div class="ai-spin"></div>
+        <div class="ai-vanta-t">Tar fram ${esc(String(aiCount()))} ord …</div>
+        <div class="ai-vanta-s">${esc(aiTemaNu())} på ${esc(foreignLabel.toLowerCase())}</div></div>`;
+      vanster.textContent = "Stäng"; vanster.onclick = () => closeModal();
+      hoger.textContent = "Föreslår …"; hoger.disabled = true; hoger.onclick = null;
+      return;
+    }
+
+    if (!aiForslag.length) {
+      host.innerHTML = (aiFelText
+        ? `<div class="ai-fel"><b>Kunde inte fråga modellen</b>${esc(aiFelText)}
+             <div class="ai-fel-tips">Byt till <b>Extern</b> här ovanför så kan du fråga din egen AI i stället.</div></div>`
+        : `<p class="modal-hint" style="margin-top:12px">Appen frågar modellen själv – du får orden i en lista att granska innan något sparas.</p>`);
+      vanster.textContent = "Stäng"; vanster.onclick = () => closeModal();
+      hoger.textContent = "Föreslå ord"; hoger.disabled = false; hoger.onclick = () => koraForslag(false);
+      return;
+    }
+
+    const valda = aiForslag.filter((f) => f.vald).length;
+    host.innerHTML = `<div class="ai-bar"><span class="ai-n">${valda} valda</span>
+        <button type="button" class="link-action" id="ai2-toggla">${valda ? "Avmarkera alla" : "Välj alla"}</button></div>
+      <div class="ai-lista">${aiForslag.map((f, i) => `
+        <div class="ai-w ${f.vald ? "on" : "off"} ${f.dup ? "dup" : ""}" data-i="${i}">
+          <div class="ai-cb">${f.vald ? "✓" : ""}</div>
+          <div class="ai-txt">
+            <div class="ai-fo" dir="auto">${esc(f.foreign)}</div>
+            <div class="ai-sv">${esc(f.swedish)}</div>
+            ${f.tr ? `<div class="ai-bo">${esc(f.tr)}</div>` : ""}
+            ${f.form ? `<div class="ai-bo" dir="auto">${esc(f.form)}</div>` : ""}
+            ${f.dup ? `<div class="ai-dup">finns redan i ${esc(f.dup)}</div>` : ""}
+          </div>
+          ${f.prio ? `<div class="ai-p p${f.prio}">${f.prio}</div>` : ""}
+        </div>`).join("")}</div>
+      <button type="button" class="btn-secondary ai-mer" id="ai2-mer">Hämta 10 till</button>`;
+
+    host.querySelectorAll(".ai-w").forEach((el) => el.onclick = () => {
+      const f = aiForslag[+el.dataset.i]; f.vald = !f.vald; renderAiMode();
+    });
+    m.querySelector("#ai2-toggla").onclick = () => {
+      const nagon = aiForslag.some((f) => f.vald);
+      aiForslag.forEach((f) => { f.vald = !nagon; }); renderAiMode();
+    };
+    m.querySelector("#ai2-mer").onclick = () => koraForslag(true);
+    vanster.textContent = "Börja om"; vanster.onclick = () => { aiForslag = []; aiFelText = ""; renderAiMode(); };
+    hoger.textContent = `Lägg till ${valda}`;
+    hoger.disabled = !valda;
+    hoger.onclick = () => commitCards(aiForslag.filter((f) => f.vald).map((f) => ({
+      front: f.foreign, back: f.swedish, prio: f.prio,
+      form: formsOn() ? f.form : "", tr: subjectUsesTranslit() ? f.tr : "",
+    })));
+  }
+
+  const aiTemaNu = () => (m.querySelector("#ai2-theme").value || lessonName()).trim() || lessonName() || "temat";
+
+  async function koraForslag(mer) {
+    const tema = aiTemaNu();
+    aiLaddar = true; aiFelText = ""; renderAiMode();
+    try {
+      const nya = await foreslaLektion({
+        tema,
+        antal: mer ? 10 : aiCount(),
+        // Modellen ska inte föreslå om det som redan står i listan.
+        undvik: aiForslag.map((f) => f.foreign),
+      });
+      const dupKarta = aiDubblettKarta();
+      // Mängden växer medan vi går igenom: modellen upprepar sig ibland inom SAMMA
+      // svar också, inte bara mellan omgångar ("la mela" och "La Mela").
+      const sedda = new Set(aiForslag.map((f) => normPart(f.foreign)));
+      const rader = [];
+      nya.forEach((c) => {
+        const k = normPart(c.foreign);
+        if (!k || sedda.has(k)) return;
+        sedda.add(k);
+        const dup = dupKarta.get(k) || "";
+        rader.push({ ...c, dup, vald: !dup });            // dubbletter avkryssade från start
+      });
+      aiForslag = mer ? aiForslag.concat(rader) : rader;
+      track("ai-inbyggd/" + (mer ? "mer" : "forsta"));
+      if (!aiForslag.length) aiFelText = "Modellen gav inga nya ord.";
+    } catch (e) {
+      aiFelText = String(e.message || e);
+      track("ai-inbyggd/fel");
+    }
+    aiLaddar = false; renderAiMode();
   }
   function wireAi() {
-    const theme = () => (m.querySelector("#ai2-theme").value || lessonName()).trim() || lessonName() || "temat";
-    const promptNow = () => buildAiPrompt(aiCount(), theme());
     m.querySelector("#ai2-dec").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() - 5); };
     m.querySelector("#ai2-inc").onclick = () => { m.querySelector("#ai2-cnt").textContent = setAiCount(aiCount() + 5); };
+    m.querySelectorAll("#ai2-lage button").forEach((b) => b.onclick = () => {
+      setAiLage(b.dataset.l);
+      m.querySelectorAll("#ai2-lage button").forEach((x) => x.classList.toggle("seg-on", x === b));
+      track("ai-lage/" + b.dataset.l);
+      renderAiMode();
+    });
+    renderAiMode();
+  }
+
+  // Gamla vägen: prompt ut till en extern AI, svaret tillbaka via inklistring. Oförändrad
+  // – den ska fungera exakt som förut, både för jämförelsen och som reservväg.
+  function wireExternAi() {
+    const promptNow = () => buildAiPrompt(aiCount(), aiTemaNu());
     // Modalen behålls här (till skillnad från openAiDialog) → paste-rutan finns kvar vid retur.
     wireAiAction(m, "ai2", promptNow, (val, q) => {
       if (val === "copy") {
@@ -6661,7 +6835,6 @@ function openAddDialog(opts = {}) {
       if (rows.length) { ta.value = text; msg.innerHTML = `<div class="paste-msg ok">✓ Hittade ${rows.length} ${rows.length === 1 ? "glosa" : "glosor"} – tryck Lägg till.</div>`; }
       else { msg.innerHTML = `<div class="paste-msg warn">Det där ser inte ut som glosor. Kopiera AI:ns svar (raderna med <b>;</b>) och försök igen.</div>`; }
     };
-    m.querySelector("#ai2-add").onclick = () => commitCards(parseLines(m.querySelector("#ai2-paste").value));
   }
 
   const lessonPickEl = m.querySelector("#add-lesson-pick"); // flyttas in ovanför knapparna per läge
@@ -7383,7 +7556,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v412";
+const APP_VERSION = "v413";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
