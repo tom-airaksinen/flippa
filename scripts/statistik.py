@@ -18,7 +18,7 @@ det finns ingen tabell i app.js att läsa i stället. Okända koder skrivs som d
 OBS: Toms egen profil skickar aldrig events (se track() i app.js) – allt som syns
 här är någon annans användning.
 """
-import json, os, sys, time, urllib.request, urllib.error
+import json, os, subprocess, sys, time, urllib.request, urllib.error
 from datetime import date, timedelta
 
 SITE = "https://flippa.goatcounter.com"
@@ -56,16 +56,33 @@ def sprakanamn(kod):
     n = SPRAK.get(kod, kod)
     return n[0].upper() + n[1:] if n else kod
 
+# Nyckelringen först, filen som fallback. Poängen med nyckelringen: en token i en
+# vanlig fil kan läsas av vad som helst som kör som du – skript, agenter, allt.
+# Läggs den i Keychain UTAN betrodda program (-T "") kräver varje läsning att du
+# godkänner en dialog, och då kan ingenting hämta den i bakgrunden.
+#
+#   security add-generic-password -a "$USER" -s flippa-goatcounter -w -T "" -U
+#
+KEYCHAIN_TJANST = "flippa-goatcounter"
+
+def fran_keychain():
+    try:
+        r = subprocess.run(["security", "find-generic-password", "-s", KEYCHAIN_TJANST, "-w"],
+                           capture_output=True, text=True, timeout=60)
+        return r.stdout.strip() if r.returncode == 0 else ""
+    except Exception:
+        return ""
+
 def token():
-    t = os.environ.get("GOATCOUNTER_TOKEN", "").strip()
-    if t: return t
-    if os.path.exists(TOKENFIL):
-        t = open(TOKENFIL, encoding="utf-8").read().strip()
+    for t in (os.environ.get("GOATCOUNTER_TOKEN", "").strip(),
+              fran_keychain(),
+              open(TOKENFIL, encoding="utf-8").read().strip() if os.path.exists(TOKENFIL) else ""):
         if t: return t
     die("Ingen API-token.\n"
         f"  1. Gå till {SITE}/user/api – skapa en token med \"Read statistics\".\n"
-        f"  2. Spara den i {TOKENFIL} (en rad), eller sätt GOATCOUNTER_TOKEN.\n"
-        "Filen ska INTE ligga i repot.")
+        f'  2. Lägg den i nyckelringen (rekommenderat – varje läsning kräver ditt godkännande):\n'
+        f'       security add-generic-password -a "$USER" -s {KEYCHAIN_TJANST} -w -T "" -U\n'
+        f"     eller i {TOKENFIL} (en rad), eller sätt GOATCOUNTER_TOKEN.")
 
 # GoatCounter svarar sporadiskt 404 {"error":"not found"} på ett anrop som fungerar
 # direkt när man gör om det – det slår till på första anropet efter en stunds paus.

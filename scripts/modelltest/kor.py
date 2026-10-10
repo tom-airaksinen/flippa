@@ -14,7 +14,7 @@ som skrev dem. Därför
 
 Nyckeln: ~/.config/openrouter-nyckel (en rad) eller OPENROUTER_API_KEY.
 """
-import json, os, random, re, string, sys, time, urllib.request, urllib.error
+import json, os, random, re, string, subprocess, sys, time, urllib.request, urllib.error
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from prompts import alla_korningar, SCHEMA
 
@@ -41,12 +41,26 @@ MODELLER = [
 def die(m): print(m, file=sys.stderr); sys.exit(1)
 
 def nyckel():
+    """Nyckelringen först. Nyckeln ligger medvetet INTE kvar som fil efter att
+    modelltestet kördes – den kostar pengar, och workern har sin egen kopia hos
+    Cloudflare. Lägg tillbaka den bara när testet ska köras om:
+
+        security add-generic-password -a "$USER" -s flippa-openrouter -w -T "" -U
+    """
     t = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if t: return t
+    try:
+        r = subprocess.run(["security", "find-generic-password", "-s", "flippa-openrouter", "-w"],
+                           capture_output=True, text=True, timeout=60)
+        if r.returncode == 0 and r.stdout.strip(): return r.stdout.strip()
+    except Exception:
+        pass
     if os.path.exists(NYCKELFIL):
         t = open(NYCKELFIL, encoding="utf-8").read().strip()
         if t: return t
-    die(f"Ingen nyckel. Lägg den i {NYCKELFIL} (en rad) eller sätt OPENROUTER_API_KEY.")
+    die("Ingen nyckel. Lägg den i nyckelringen:\n"
+        '  security add-generic-password -a "$USER" -s flippa-openrouter -w -T "" -U\n'
+        f"eller i {NYCKELFIL}, eller sätt OPENROUTER_API_KEY.")
 
 def priser():
     with urllib.request.urlopen("https://openrouter.ai/api/v1/models") as r:
