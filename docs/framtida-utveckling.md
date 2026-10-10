@@ -1034,3 +1034,25 @@ skolgloslista, inte en ordbokskonvertering.
 
 **Status 2026-09-26: avvaktar.** Görs när vi ser om Lucas faktiskt kommer igång med
 resepaketet – hellre veta att innehållet används än att producera mer av det.
+
+
+---
+
+## Skicka ämnets befintliga ord som undvik-lista till AI-förslagen
+
+Idé (2026-10-10, under bygget av det inbyggda AI-läget): `POST /lektion` tar redan en
+`undvik`-lista, men appen fyller den bara med ord som redan ligger i den pågående
+förslagslistan. Orden som redan finns **i ämnet** skickas inte med.
+
+Följden syns direkt på ett väl använt tema: ber man om fler ord till "Rumänska 101"
+kommer i stort sett bara dubbletter tillbaka. De märks och kryssas av automatiskt, så
+inget blir fel – men anropet slösas bort och listan fylls med rader man ändå inte kan
+använda.
+
+**Vad som krävs:** skicka `aiDubblettKarta()`-nycklarna (eller ämnets framsidor) i
+`undvik`. Kostar några hundra extra tokens i prompten per anrop. Två saker att tänka
+på: promptens undvik-lista är kapad till 300 ord i workern, och ett stort ämne behöver
+alltså antingen en högre gräns eller ett urval (t.ex. bara den valda lektionens ord).
+
+**Status: avvaktar.** Tom: "Bra idé, spara som tänkbar vidareutveckling men behövs inte
+nu." Dubblettmärkningen gör att problemet syns men inte skadar.

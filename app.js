@@ -6410,7 +6410,10 @@ togglePauseBtn.onclick = () => {
   updatePauseToggle(lesson.id);
   flash(on ? "Lektionen pausad – tyst i Dags att öva" : "Lektionen aktiverad igen", 2000);
 };
-$("add-words").onclick = () => openAddDialog({ segment: "manual" });
+// Inget segment = dialogens eget förval (Slå upp när ämnet har ett språk). Stod
+// "manual" här, från tiden då det var enda sättet att få in flera ord – och då nåddes
+// aldrig förvalet som flikordningen bygger på.
+$("add-words").onclick = () => openAddDialog({});
 
 // =========================================================================
 //  Översättning (MyMemory) + lägg till
@@ -7579,7 +7582,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v416";
+const APP_VERSION = "v417";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
