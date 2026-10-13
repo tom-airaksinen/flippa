@@ -33,7 +33,7 @@ Engångsuppsättning:
 Kör sedan:
   scripts/.venv-tts/bin/python scripts/tts-fa.py plan
 """
-import hashlib, json, os, re, subprocess, sys, urllib.request, wave
+import hashlib, json, os, re, subprocess, sys, time, urllib.error, urllib.request, wave
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
@@ -45,17 +45,41 @@ ROST = "fa-IR-DilaraNeural"   # samma röst finns i Azure under samma namn
 
 def die(m): print("FEL: " + m, file=sys.stderr); sys.exit(1)
 
+# Google svarar ibland 503 på den anonyma inloggningen – en sekunds störning som går
+# över av sig själv. Utan omförsök fällde det hela jobbet, och nödbromsen pausade
+# automatiken för ett fel som inte fanns kvar nästa minut (kör 38286318786,
+# 2026-10-12). Ett riktigt haveri överlever fyra försök; en blinkning gör det inte.
+FLYKTIGA = (429, 500, 502, 503, 504)
+
+def hamta_json(url, data=None, headers=None, forsok=4):
+    for n in range(forsok):
+        r = urllib.request.Request(url, data=data, headers=headers or {},
+                                   method="POST" if data else "GET")
+        try:
+            with urllib.request.urlopen(r, timeout=120) as f:
+                return json.load(f)
+        except urllib.error.HTTPError as e:
+            if e.code in FLYKTIGA and n < forsok - 1:
+                time.sleep(2 * (n + 1)); continue
+            die(f"{url.split('?')[0]} svarade {e.code}: {e.read().decode('utf-8','replace')[:200]}")
+        except Exception as e:
+            if n < forsok - 1:
+                time.sleep(2 * (n + 1)); continue
+            die(f"kom inte fram till {url.split('?')[0]}: {type(e).__name__}: {e}")
+
 # ---------- orden ur databasen ----------
+_tok = None
 def token():
-    r = urllib.request.Request(f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={API_KEY}",
-                               data=b'{"returnSecureToken":true}', method="POST",
-                               headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(r) as f: return json.load(f)["idToken"]
+    global _tok
+    if not _tok:
+        _tok = hamta_json(f"https://identitytoolkit.googleapis.com/v1/accounts:signUp?key={API_KEY}",
+                          data=b'{"returnSecureToken":true}',
+                          headers={"Content-Type": "application/json"})["idToken"]
+    return _tok
 
 def persiska_ord():
     """Alla distinkta framsidor i alla persiska ämnen, oavsett ägare."""
-    with urllib.request.urlopen(f"{DB}/content/subjects.json?auth={token()}") as f:
-        subjects = json.load(f) or {}
+    subjects = hamta_json(f"{DB}/content/subjects.json?auth={token()}") or {}
     ord_ = {}
     for sid, s in subjects.items():
         if not str(s.get("lang") or "").lower().startswith("fa"): continue
