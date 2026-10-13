@@ -5171,6 +5171,29 @@ function splitGlued(line) {
     rest = svans;
   }
   ut.push(rest);
+  return ut.flatMap(delaUtanPrio);
+}
+
+// Andra passet: gränser där prion SAKNAS. Glömmer AI:n prio på en rad finns ingen
+// ";1" att dela vid, och raden klibbar ihop med nästa:
+//   "bun (bună, buni);bra rău;dålig;1"  →  "bun (bună, buni);bra" + "rău;dålig;1"
+// En glosa har högst tre fält (front;back;prio), så fler fält betyder hopklistring.
+// Gränsen ligger vid sista mellanslaget i mittfältet: där slutar en baksida och
+// nästa framsida börjar.
+function delaUtanPrio(bit) {
+  if (bit.includes("{")) return [bit];        // böjningsklammer gör fälträkningen otillförlitlig
+  const f = bit.split(";");
+  if (f.length <= 3) return [bit];
+  const ut = [];
+  let i = 0;
+  while (f.length - i > 3) {
+    const mitt = f[i + 1], sp = mitt.lastIndexOf(" ");
+    if (sp < 0) break;                        // inget mellanslag = ingen gräns att hitta
+    ut.push(f[i] + ";" + mitt.slice(0, sp));
+    f[i + 1] = mitt.slice(sp + 1);
+    i++;
+  }
+  ut.push(f.slice(i).join(";"));
   return ut;
 }
 
@@ -6100,7 +6123,10 @@ function buildAiPrompt(count, theme) {
     + `1 = kärnord man måste kunna för temat\n2 = vanliga, nyttiga ord\n3 = mer perifera eller nischade ord\n\n`
     + `Välj orden efter vad som är bra att kunna för temat – låt ALDRIG prio styra urvalet. `
     + `Som riktmärke (inte kvot) vid 30+ glosor: ungefär hälften 1:or, en tredjedel 2:or, resten 3:or. `
-    + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n\n`
+    + `Korta vardagsteman kan sakna 3:or helt. Sätt prio först när du valt orden.\n`
+    // Prion är inte bara information – den är radgränsen när urklippet tappar
+    // radbrytningarna. En rad utan prio klibbar ihop med nästa.
+    + `VARJE rad måste sluta med en prio-siffra. Hoppa aldrig över den.\n\n`
     + `Exempel på radformat (${rtl ? "två glosor, fyra rader" : "två rader"} – ett ensamt ord och `
     + `en flerordsfras):\n${aiExampleLines(lang)}`;
 }
@@ -7612,7 +7638,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v419";
+const APP_VERSION = "v420";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
