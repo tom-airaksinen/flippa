@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "14 oktober 2026", ver: "v421", items: [
+    { t: "Appen öppnas i området du övade i sist i stället för i listan – tryck ← för att byta", type: "improved", hi: true, ico: "↩️", desc: "Starta appen och du är direkt i rätt språk." },
+  ] },
   { date: "13 oktober 2026", ver: "v420", items: [
     { t: "Inklistring från AI: rader där prio-siffran saknas klibbar inte längre ihop med nästa glosa", type: "fixed" },
   ] },

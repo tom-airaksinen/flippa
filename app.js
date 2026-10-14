@@ -160,6 +160,11 @@ function userName(id) { return (USERS.find((u) => u.id === id) || {}).name || ""
 function applyTheme() {
   document.documentElement.classList.toggle("theme-rosa", currentUser === "hedvig");
 }
+// Bara det FÖRSTA databassvaret får flytta skärmen (kallstart → senaste ämnet).
+// Deklareras här, före setUser som nollställer den – en let i temporal dead zone
+// hade kastat om profilen valdes innan deklarationen hunnit köras.
+let forstaSvaret = true;
+
 function setUser(id) {
   const bytte = id !== currentUser;
   currentUser = id;
@@ -169,6 +174,7 @@ function setUser(id) {
     // Måla direkt ur den nya profilens cache så bytet känns omedelbart, och flytta
     // sedan prenumerationen dit. Har profilen använts på enheten förut behövs ingen
     // hämtning alls – den är redan cachad.
+    forstaSvaret = false;   // aktivt profilbyte – låt användaren vara kvar i listan
     content = loadCachedContent(id);
     cacheOwner = id;
     serverRaw = content.length ? denormalize(content) : null;
@@ -1350,6 +1356,16 @@ function listenContent() {
       const p = pendingRestore; pendingRestore = null;
       if (!restorePlaceAfterUpdate(p) && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
     } else if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
+    else if (forstaSvaret) {
+      // Kallstart: fortsätt i ämnet man senast övade i. Förut gällde "kom tillbaka
+      // till rätt ställe" bara efter en uppdaterings-omladdning och vid notis-tryck,
+      // alltså inte i det vanligaste fallet – att öppna appen från hemskärmen.
+      // Bara om man står kvar på ämneslistan: har man hunnit navigera själv under
+      // laddningen ska appen inte rycka undan skärmen.
+      const s = lastSubject();
+      if (s && activeScreen === "subjects") openSubject(s.id);
+    }
+    forstaSvaret = false;
   };
   contentQuery.on("value", contentHandler, (err) => {
     console.error(err);
@@ -1693,7 +1709,7 @@ async function openBackup() {
 const VAPID_PUBLIC = "BLOmvL_k3k4gnRqJ0bZ3-sBMJDZimWQrKLmDmq32p8fqQaL2dVWE1_NCPVLQCFzPC-sibyUlfwN8_R9jteHeBJs";
 const PUSH_LOCAL_KEY = "flippa-push-local";     // { enabled, time } – lokal spegel för UI
 const DEVICE_KEY = "flippa-device-id";          // slump-id per enhet (nyckel i /push)
-const LAST_SUBJECT_KEY = "flippa-last-subject"; // för deep-link vid notis-tryck
+const LAST_SUBJECT_KEY = "flippa-last-subject"; // senast öppnade ämnet, per profil
 let pendingPushOpen = false;                    // sätts vid kallstart via #pushopen
 // Plats att återgå till efter en uppdaterings-omladdning. sessionStorage överlever
 // reload i samma flik men är tom vid äkta kallstart – så en gammal plats kan inte spöka.
@@ -1782,11 +1798,25 @@ async function testPush() {
   } catch (_) { toast("Kunde inte visa testnotis", 3000, "error"); }
 }
 // Notis-tryck → hoppa in i senast valda ämne (annars huvudskärmen).
+// Per profil: enheten delas, och Hedvigs spanska ska inte öppnas för Wille. Den
+// gamla globala nyckeln läses som fallback så ingen tappar sin plats vid bytet.
+function setLastSubject(id) {
+  const alla = loadLS(LAST_SUBJECT_KEY);
+  if (currentUser) { alla[currentUser] = id; lsSet(LAST_SUBJECT_KEY, JSON.stringify(alla)); }
+}
+function lastSubjectId() {
+  const rå = localStorage.getItem(LAST_SUBJECT_KEY) || "";
+  if (rå && rå[0] !== "{") return rå;                 // äldre format: ett enda id
+  try { return (JSON.parse(rå || "{}"))[currentUser] || ""; } catch (_) { return ""; }
+}
+function lastSubject() {
+  const id = lastSubjectId();
+  return (id && content.find((x) => x.id === id && x.owner === currentUser)) || null;
+}
 function openLastSubjectFromPush() {
   if (!currentUser) { renderSubjects(); return; }
-  const id = localStorage.getItem(LAST_SUBJECT_KEY);
-  const s = id && content.find((x) => x.id === id && x.owner === currentUser);
-  if (s) openSubject(id); else renderSubjects();
+  const s = lastSubject();
+  if (s) openSubject(s.id); else renderSubjects();
 }
 
 // Notis-sektionen i inställningarna – olika states beroende på miljö/behörighet.
@@ -1897,7 +1927,7 @@ function closeChangelog() {
 
 function openSubject(id) {
   currentSubject = content.find((s) => s.id === id);
-  lsSet(LAST_SUBJECT_KEY, id); // för deep-link vid notis-tryck
+  setLastSubject(id); // notis-tryck OCH "fortsätt där du var" vid kallstart
   $("lessons-search").value = "";
   syncLessonsClear();
   renderLessons();
@@ -7638,7 +7668,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v420";
+const APP_VERSION = "v421";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
