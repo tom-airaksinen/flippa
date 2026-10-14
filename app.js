@@ -2878,7 +2878,14 @@ function renderStats() {
   const ltSubjects = statsScope === "all" ? mine : (scopeSubject ? [scopeSubject] : []);
   const stPrioSel = statsPrioLevels(); // vilka prio-nivåer som räknas i Leitner-fördelningen
   const stPrioOn = (c) => stPrioSel.includes(cardPrio(c));
-  ltSubjects.forEach((s) => s.lessons.forEach((l) => l.cards.forEach((c) => { if (stPrioOn(c)) ltCounts[boxOf(c)]++; })));
+  // ltAlla = samma kort utan prio-filtret. Står "424 kort" ensamt bredvid "742 UNIKA"
+  // ser talen jämförbara ut, fast Leitner då kan vara filtrerad till en prio-nivå och
+  // UNIKA räknar alla nivåer (och dessutom per riktning). Filtret ska synas i siffran.
+  let ltAlla = 0;
+  ltSubjects.forEach((s) => s.lessons.forEach((l) => l.cards.forEach((c) => {
+    ltAlla++;
+    if (stPrioOn(c)) ltCounts[boxOf(c)]++;
+  })));
 
   // "Nya ord": idag/7/30 bygger på stämplade förstagångsdatum (funkar bara framåt).
   // "Totalt" räknar istället alla kort som lämnat låda 0 (= studerade minst en gång) –
@@ -2937,7 +2944,7 @@ function renderStats() {
     <div class="st-heatwrap"><div class="st-heat">${heat}</div></div>
     <div class="st-legend"><span>mindre</span><span class="st-d"></span><span class="st-d l1"></span><span class="st-d l2"></span><span class="st-d l3"></span><span class="st-d l4"></span><span>mer</span></div>
     <div class="st-sec st-leitner-head">
-      <span>LEITNER · ${ltTotal} kort</span>
+      <span>LEITNER · ${ltTotal < ltAlla ? `${ltTotal} av ${ltAlla}` : ltTotal} kort</span>
       <div class="st-prio-wrap">
         <button type="button" class="st-prio-pill" id="st-prio-pill" aria-haspopup="true">PRIO<span class="limit-dots">${[1, 2, 3].map((l) => `<i class="p${l}${stPrioSel.includes(l) ? "" : " off"}"></i>`).join("")}</span></button>
         <div class="st-prio-pop${statsPrioPopOpen ? "" : " hidden"}" id="st-prio-pop">${[1, 2, 3].map((l) => `<button type="button" data-lvl="${l}" class="${stPrioSel.includes(l) ? "on" : ""}"><span class="prio-dot p${l}"></span>Prio ${l}</button>`).join("")}</div>
@@ -7668,7 +7675,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v421";
+const APP_VERSION = "v422";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
