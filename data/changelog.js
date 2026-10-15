@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "15 oktober 2026", ver: "v423", items: [
+    { t: "Dubbeltappa kortet för att höra ordet igen – du slipper pricka högtalaren i hörnet", type: "new", hi: true, ico: "👆", desc: "Två snabba tapp på kortet spelar upp ordet igen." },
+  ] },
   { date: "14 oktober 2026", ver: "v422", items: [
     { t: "Leitner-grafen visar \"424 av 834 kort\" när ett prio-filter är på, så det syns att siffran inte är hela ämnet", type: "improved" },
   ] },
