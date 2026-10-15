@@ -3833,10 +3833,15 @@ function autoSpeakCurrent() {
   const lang = subjectLang(currentSubject);
   if (canSpeakText(session.current.front, lang)) speak(session.current.front, lang);
 }
+let speakSoonTimer = null;
 function showSpeakSoon(delay) {
   hideCardActions();
   closeFan();
-  setTimeout(() => {
+  // Två snabba flippar (dubbeltapp) schemalade förut två avslöjningar som talade
+  // över varandra. Bara den sista gäller.
+  if (speakSoonTimer) clearTimeout(speakSoonTimer);
+  speakSoonTimer = setTimeout(() => {
+    speakSoonTimer = null;
     updateCardActions();
     const hoppaOver = skipNextAutoSpeak;   // svaret läses upp – frågan kommer efter det
     skipNextAutoSpeak = false;
@@ -4475,10 +4480,26 @@ function flyOut(grade) {
   setTimeout(settla, 2000);
 }
 
+// Dubbeltapp var som helst på kortet = hör ordet igen. Högtalaren i hörnet är pillig
+// att träffa när man går, och man vill ofta höra om ett ord i ett språk man är mindre
+// van vid. De två flippar som tapparna ger tar ut varandra, så kortet hamnar där det
+// började – ingen extra hantering behövs för det.
+let sisteKortTapp = 0;
 card.addEventListener("click", () => {
   if (didSwipe || animating) return;
   if (fanOpen) { closeFan(); return; } // ett tryck utanför fjädern stänger den (utan att vända kortet)
+  const nu = Date.now();
+  const dubbel = nu - sisteKortTapp < DOUBLE_TAP_MS;
+  sisteKortTapp = dubbel ? 0 : nu;     // tre tappar ska inte bli två dubbeltappar
   card.classList.toggle("flipped");
+  if (dubbel) {
+    const c = session && session.current, lang = subjectLang(currentSubject);
+    if (c && canSpeakText(c.front, lang)) {
+      skipNextAutoSpeak = true;        // annars talar avslöjningen över oss
+      track("uttala-dubbeltapp");
+      speak(c.front, lang);
+    }
+  }
   showSpeakSoon(460); // döljer klustret och visar rätt läge (inkl. ledtråd) efter flippen
 });
 
@@ -7675,7 +7696,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v422";
+const APP_VERSION = "v423";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
