@@ -4485,26 +4485,44 @@ function flyOut(grade) {
 // van vid. De två flippar som tapparna ger tar ut varandra, så kortet hamnar där det
 // började – ingen extra hantering behövs för det.
 let sisteKortTapp = 0;
+let kortPressTimer = null, kortLangtryckTalade = false;
+
+// Läser upp det utländska ordet. Delas av dubbeltapp och långtryck.
+function talaKortetsOrd(tag) {
+  const c = session && session.current, lang = subjectLang(currentSubject);
+  if (!c || !canSpeakText(c.front, lang)) return false;
+  skipNextAutoSpeak = true;          // annars talar avslöjningen över oss
+  track(tag);
+  speak(c.front, lang);
+  return true;
+}
+const avbrytKortPress = () => { if (kortPressTimer) { clearTimeout(kortPressTimer); kortPressTimer = null; } };
+
 card.addEventListener("click", () => {
+  // Långtrycket talade redan – svälj klicket så kortet INTE vänder. Det är hela
+  // poängen med gesten: dubbeltapp vänder kortet fram och tillbaka, långtryck rör
+  // det inte alls.
+  if (kortLangtryckTalade) { kortLangtryckTalade = false; return; }
   if (didSwipe || animating) return;
   if (fanOpen) { closeFan(); return; } // ett tryck utanför fjädern stänger den (utan att vända kortet)
   const nu = Date.now();
   const dubbel = nu - sisteKortTapp < DOUBLE_TAP_MS;
   sisteKortTapp = dubbel ? 0 : nu;     // tre tappar ska inte bli två dubbeltappar
   card.classList.toggle("flipped");
-  if (dubbel) {
-    const c = session && session.current, lang = subjectLang(currentSubject);
-    if (c && canSpeakText(c.front, lang)) {
-      skipNextAutoSpeak = true;        // annars talar avslöjningen över oss
-      track("uttala-dubbeltapp");
-      speak(c.front, lang);
-    }
-  }
+  if (dubbel) talaKortetsOrd("uttala-dubbeltapp");
   showSpeakSoon(460); // döljer klustret och visar rätt läge (inkl. ledtråd) efter flippen
 });
 
 card.addEventListener("pointerdown", (e) => {
   if (animating) return;
+  // Långtryck = hör ordet igen, utan att vända kortet. Avbryts av minsta drag, så
+  // ett svep aldrig råkar läsa upp ordet på vägen.
+  kortLangtryckTalade = false;
+  avbrytKortPress();
+  kortPressTimer = setTimeout(() => {
+    kortPressTimer = null;
+    if (talaKortetsOrd("uttala-langtryck-kort")) kortLangtryckTalade = true;
+  }, LONG_PRESS_MS);
   startX = e.clientX;
   startY = e.clientY;
   dragging = true;
@@ -4520,6 +4538,7 @@ card.addEventListener("pointerdown", (e) => {
 card.addEventListener("pointermove", (e) => {
   if (!dragging || animating) return;
   const dx = e.clientX - startX, dy = e.clientY - startY;
+  if (kortPressTimer && Math.hypot(dx, dy) > 8) avbrytKortPress(); // drag ≠ långtryck
   setDrag(dx, dy);
   if (Math.hypot(dx, dy) < HINT_MIN) {
     clearSwipeHint();
@@ -4530,6 +4549,7 @@ card.addEventListener("pointermove", (e) => {
 });
 
 card.addEventListener("pointerup", (e) => {
+  avbrytKortPress();
   if (!dragging) return;
   // dragging måste släppas även om animating hunnit bli true mitt i draget – annars
   // fastnar den true, och updateCardActions() döljer då ⋯/🔊/💡 för all framtid.
@@ -4550,6 +4570,7 @@ card.addEventListener("pointerup", (e) => {
 });
 
 card.addEventListener("pointercancel", () => {
+  avbrytKortPress();   // systemet tog över gesten – inget långtryck
   if (!dragging) return;
   dragging = false;
   clearSwipeHint();
@@ -7696,7 +7717,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v423";
+const APP_VERSION = "v424";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
