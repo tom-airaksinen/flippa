@@ -6832,8 +6832,19 @@ function openAddDialog(opts = {}) {
     const src = m.querySelector("#lu-src");
     m.querySelectorAll("#lu-dir button").forEach((b) => {
       b.classList.toggle("seg-on", b.dataset.d === luDir);
-      // Byt riktning UTAN att rensa sökfältet (bara resultaten, som är riktnings-specifika).
-      b.onclick = () => { luSrcVal = src.value; luDir = b.dataset.d; luCards = []; renderBody(); m.querySelector("#lu-src").focus(); };
+      // Byt riktning UTAN att rensa sökfältet (bara resultaten, som är riktnings-specifika),
+      // och slå upp direkt igen. Dialogen öppnas med "från svenska" och slår upp
+      // automatiskt; har man skrivit ett utländskt ord byter man riktning – och då är
+      // avsikten lika tydlig som första gången. Förut fick man trycka på
+      // förstoringsglaset själv, eftersom autouppslaget bara gällde första öppningen.
+      b.onclick = () => {
+        if (b.dataset.d === luDir) return;        // samma riktning igen = ingenting att göra
+        luSrcVal = src.value; luDir = b.dataset.d; luCards = [];
+        luAutoDone = true;                        // hindra att wireLookup ALSO slår upp
+        renderBody();
+        m.querySelector("#lu-src").focus();
+        if (luSrcVal.trim()) doLookup();
+      };
     });
     m.querySelector("#lu-go").onclick = doLookup;
     src.oninput = () => { luSrcVal = src.value; };
@@ -7756,7 +7767,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v425";
+const APP_VERSION = "v426";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {

@@ -10,6 +10,11 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "16 oktober 2026", ver: "v426", items: [
+    { t: "Slå upp: byter du riktning slås ordet upp igen direkt – du behöver inte trycka på förstoringsglaset", type: "improved" },
+    { t: "Adjektiv får nu sina former som en serie (nou, nouă, noi) så man ser om pluralen är en eller två former", type: "improved", hi: true, ico: "📐", desc: "Rumänska adjektiv har fått sina böjningsserier ifyllda." },
+    { t: "Håll in kortet läser bara upp när den utländska sidan syns – inte från svenska sidan", type: "fixed" },
+  ] },
   { date: "15 oktober 2026", ver: "v424", items: [
     { t: "Håll in kortet för att höra ordet igen – kortet vänds inte. Dubbeltapp fungerar också", type: "new", hi: true, ico: "👆", desc: "Håll fingret på kortet så läses ordet upp igen." },
   ] },

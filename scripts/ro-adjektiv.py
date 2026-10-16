@@ -26,6 +26,14 @@ import kort
 HERE = os.path.dirname(os.path.abspath(__file__))
 INDEX = os.path.join(HERE, "..", "..", "gnugga", "scripts", "raw", "ro-former-index.json")
 
+# Ord som ordboken också känner som substantiv/verb, men som på Flippas kort
+# entydigt är adjektiv. Bekräftade för hand – listan är medvetet kort och ska bara
+# växa när någon faktiskt granskat ordet.
+GODKANDA = {
+    "alb", "negru", "roșu", "verde", "galben", "albastru", "maro", "gri",
+    "portocaliu", "roz", "mov", "violet", "bej", "auriu", "argintiu",
+}
+
 def rensa(front):
     """Kortets framsida → uppslagsform. '(f)' och liknande markörer bort."""
     return re.sub(r"\s*\([fmn]\)\s*$", "", (front or "").strip())
@@ -47,12 +55,19 @@ def samla(agare=None):
                        "lektion": l.get("name"), "agare": s.get("owner"),
                        "front": c.get("front"), "back": c.get("back"),
                        "serie": ", ".join(serie)}
-                if w in ix["nouns"] or w in ix["verbs"]:
-                    rad["skal"] = "även substantiv/verb i ordboken"
-                    hoppade.append(rad)
-                elif len(set(serie)) == 1:
+                # Ordningen spelar roll: ett oböjligt ord ska hoppas över ÄVEN om det
+                # står på den godkända listan. "maro, maro, maro" är brus på ett kort.
+                if len(set(serie)) == 1:
                     rad["skal"] = "oböjligt – serien säger ingenting"
                     hoppade.append(rad)
+                elif w in ix["nouns"] or w in ix["verbs"]:
+                    # Ordboken vet inte vilken ordklass KORTET menar. Men står ordet
+                    # på en uttrycklig lista har en människa redan avgjort det – t.ex.
+                    # färgerna, som är substantiv i ordboken men adjektiv på korten.
+                    if w in GODKANDA: plan.append(rad)
+                    else:
+                        rad["skal"] = "även substantiv/verb i ordboken"
+                        hoppade.append(rad)
                 else:
                     plan.append(rad)
     return plan, hoppade
