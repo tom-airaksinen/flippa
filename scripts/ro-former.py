@@ -5,6 +5,7 @@ Tanken: en LLM väljer ordet, ordboken bestämmer formerna. Skriptet kan därfö
 slå upp ett ord och granska en färdig glosfil innan den importeras till Flippa.
 
   bygg [dump]            bygger indexet ur kaikki-ro.jsonl (görs en gång, ~1 min)
+                         – substantiv (genus+plural), verb (principaldelar), adjektiv (formserie)
   slau <ord> [...]       visar genus + former för ett eller flera ord
   fyll  <fil>            fyller på genus + böjning ur ordboken:
                          in  'lemma;svenska;prio' → ut 'ord (g);svenska;{…};prio'
@@ -92,10 +93,31 @@ def verb_entry(d):
             "part": sorted(set(part), key=part.index)[:2], "sub": sorted(set(sub), key=sub.index)[:2],
             "en": (d.get("senses") or [{}])[0].get("glosses") or []}
 
+# Adjektivserie: mask. sg (uppslagsformen), fem. sg, plural. Vissa rumänska adjektiv
+# har EN gemensam pluralform (nou, nouă, noi), andra TVÅ (bun, bună, buni, bune) – och
+# just det går inte att gissa, vilket är hela skälet att formerna ska läras som serie.
+# Bestämda former hoppas över: de hör inte till den serie man memorerar.
+def adj_entry(d):
+    def plocka(*krav):
+        for fo in d.get("forms") or []:
+            t = set(fo.get("tags") or [])
+            if t & {"definite", "table-tags", "inflection-template"}: continue
+            if all(k in t for k in krav):
+                f = (fo.get("form") or "").strip()
+                if f and f != "-": return f
+        return None
+    w = d.get("word")
+    fsg = plocka("feminine", "singular")
+    mpl = plocka("masculine", "plural")
+    fpl = plocka("feminine", "plural")
+    if not (fsg and (mpl or fpl)): return None
+    serie = [w, fsg, mpl] if mpl and mpl == fpl else [w, fsg, mpl or fpl, fpl or mpl]
+    return {"serie": [x for x in serie if x]}
+
 def cmd_bygg(dump=None):
     path = dump or DUMP
     if not os.path.exists(path): die(f"hittar inte dumpen: {path}")
-    nouns, verbs, ovriga = {}, {}, set()
+    nouns, verbs, adjs, ovriga = {}, {}, {}, set()
     with open(path, encoding="utf-8") as f:
         for line in f:
             if '"lang_code": "ro"' not in line and '"lang_code":"ro"' not in line:
@@ -103,16 +125,21 @@ def cmd_bygg(dump=None):
             d = json.loads(line)
             if d.get("lang_code") != "ro": continue
             w, pos = d.get("word"), d.get("pos")
-            if pos not in ("noun", "verb") and w: ovriga.add(w)
+            if pos not in ("noun", "verb", "adj") and w: ovriga.add(w)
+            if pos == "adj":
+                e = adj_entry(d)
+                if e: adjs.setdefault(w, []).append(e)
+                else: ovriga.add(w)          # oböjligt adjektiv – ingen serie att visa
             if pos == "noun":
                 e = noun_entry(d)
                 if e["g"] or e["pl"]: nouns.setdefault(w, []).append(e)
             elif pos == "verb":
                 e = verb_entry(d)
                 if e["p1"] or e["p3"]: verbs.setdefault(w, []).append(e)
-    json.dump({"nouns": nouns, "verbs": verbs, "ovriga": sorted(ovriga)},
+    json.dump({"nouns": nouns, "verbs": verbs, "adjs": adjs, "ovriga": sorted(ovriga)},
               open(INDEX, "w"), ensure_ascii=False)
-    print(f"index: {len(nouns)} substantiv, {len(verbs)} verb, {len(ovriga)} övriga ord → {INDEX}")
+    print(f"index: {len(nouns)} substantiv, {len(verbs)} verb, {len(adjs)} adjektiv, "
+          f"{len(ovriga)} övriga ord → {INDEX}")
 
 def load():
     if not os.path.exists(INDEX): die("inget index – kör först: python3 scripts/ro-former.py bygg")
@@ -258,6 +285,9 @@ def cmd_fyll(fil):
                 print(f"{lemma} ({gg});{sv};{prio}")
             else:
                 print(f"{lemma} ({gg});{sv};{{{ART.get(gg,'???')} {lemma}, {NUM.get(gg,'???')} {e['pl'][0]}}};{prio}")
+        elif lemma in (ix.get("adjs") or {}):
+            serie = ix["adjs"][lemma][0]["serie"]
+            print(f"{lemma};{sv};{{{', '.join(serie)}}};{prio}")
         elif " " in lemma or lemma[-1] in ".!?" or lemma in set(ix.get("ovriga") or ()):
             print(f"{lemma};{sv};{prio}")  # fras eller annan ordklass – ingen böjning
         else:

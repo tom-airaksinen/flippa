@@ -76,6 +76,15 @@ const ORAKNELIGT = "Lämna bojning TOM för oräkneliga ord (blod, astma, diabet
   + " salt och liknande ämnen, sjukdomar och abstrakta begrepp) – hitta aldrig på en plural"
   + " som inte används.";
 
+// Adjektiv fick förut tom böjning, och då ser de regelbundna ut. I rumänska (och andra
+// språk med kongruens) är de det ofta inte: vissa har EN gemensam pluralform, andra TVÅ.
+// Just det går inte att gissa sig till, så formerna ska läras som en serie.
+const ADJEKTIV = (lang) => `För ADJEKTIV: ge formerna som en serie i bojning –`
+  + ` maskulinum singular, femininum singular, och därefter pluralformerna`
+  + ` (en gemensam form om språket har det, annars båda), t.ex. "nou, nouă, noi",`
+  + ` "mic, mică, mici", "bun, bună, buni, bune", "frumos, frumoasă, frumoși, frumoase".`
+  + ` Lämna tom bara för oböjliga adjektiv och för språk där adjektiv inte böjs alls.`;
+
 // ---- Gemini ----------------------------------------------------------------
 function prompt(ord, k) {
   const lang = k.sprakNamn || k.lang || "målspråket";
@@ -100,7 +109,7 @@ function prompt(ord, k) {
         + ` För verb de former man inte kan gissa sig till: 1:a och 3:e person presens,`
         + ` perfekt med hjälpverb och 3:e person konjunktiv, åtskilda med mittpunkt,`
         + ` t.ex. "înțeleg, înțelege · am înțeles · să înțeleagă". Upprepa aldrig bara`
-        + ` uppslagsformen. Tom sträng för andra ordklasser.`
+        + ` uppslagsformen. ${ADJEKTIV(lang)} Tom sträng för övriga ordklasser.`
         + ` ${ORAKNELIGT}`,
     // Genus-/artikelregeln skickas med av appen (genderPromptNote) i stället för att
     // kodas här: då kan de två vägarna inte glida isär.
@@ -135,7 +144,7 @@ function lektionPrompt(tema, k) {
         + ` där språket har det, t.ex. "o pâine, două pâini". För verb de former man inte kan`
         + ` gissa sig till: 1:a och 3:e person presens, perfekt med hjälpverb och 3:e person`
         + ` konjunktiv, åtskilda med mittpunkt. Upprepa aldrig bara uppslagsformen.`
-        + ` Tom sträng för andra ordklasser. ${ORAKNELIGT}`
+        + ` ${ADJEKTIV(lang)} Tom sträng för övriga ordklasser. ${ORAKNELIGT}`
       : `- bojning: lämna tom.`,
     `- prio: hur central glosan är för just DET HÄR temat, inte hur vanlig den är i språket`,
     `  i stort. 1 = kärnord man måste kunna för temat, 2 = vanliga nyttiga ord, 3 = mer`,

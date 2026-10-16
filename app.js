@@ -1352,20 +1352,26 @@ function listenContent() {
     showStatus(null);
     renderCurrentScreen();
     flushOutbox(); // hört från servern → försök tömma ev. kö
+    // Tre sätt att hamna rätt, i fallande prioritet. Som en if/else-kedja åt den
+    // FÖRSTA grenen flaggan även när den inte flyttade något – stod man på
+    // ämneslistan när appen uppdaterade sig hade pendingRestore inget ämne att gå
+    // till, och kallstartsåterställningen blev då aldrig av.
+    let flyttad = false;
     if (pendingRestore) {
       const p = pendingRestore; pendingRestore = null;
-      if (!restorePlaceAfterUpdate(p) && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
-    } else if (pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); }
-    else if (forstaSvaret) {
-      // Kallstart: fortsätt i ämnet man senast övade i. Förut gällde "kom tillbaka
-      // till rätt ställe" bara efter en uppdaterings-omladdning och vid notis-tryck,
-      // alltså inte i det vanligaste fallet – att öppna appen från hemskärmen.
-      // Bara om man står kvar på ämneslistan: har man hunnit navigera själv under
-      // laddningen ska appen inte rycka undan skärmen.
+      flyttad = restorePlaceAfterUpdate(p);
+    }
+    if (!flyttad && pendingPushOpen) { pendingPushOpen = false; openLastSubjectFromPush(); flyttad = true; }
+    if (!flyttad && forstaSvaret && content.length) {
+      // Kallstart: fortsätt i ämnet man senast övade i. Bara om man står kvar på
+      // ämneslistan – har man hunnit navigera själv under laddningen ska appen inte
+      // rycka undan skärmen.
       const s = lastSubject();
       if (s && activeScreen === "subjects") openSubject(s.id);
     }
-    forstaSvaret = false;
+    // Bränn inte flaggan på ett tomt svar: Firebase kan leverera en tom ögonblicksbild
+    // före den riktiga, och då hade återställningen förbrukats utan att ha något att gå på.
+    if (content.length) forstaSvaret = false;
   };
   contentQuery.on("value", contentHandler, (err) => {
     console.error(err);
@@ -4480,17 +4486,17 @@ function flyOut(grade) {
   setTimeout(settla, 2000);
 }
 
-// Dubbeltapp var som helst på kortet = hör ordet igen. Högtalaren i hörnet är pillig
-// att träffa när man går, och man vill ofta höra om ett ord i ett språk man är mindre
-// van vid. De två flippar som tapparna ger tar ut varandra, så kortet hamnar där det
-// började – ingen extra hantering behövs för det.
-let sisteKortTapp = 0;
+// Håll in kortet = hör ordet igen. Högtalaren i hörnet är pillig att träffa när man
+// går. Dubbeltapp provades först men vände kortet fram och tillbaka, vilket stör –
+// långtrycket rör inte kortet alls.
 let kortPressTimer = null, kortLangtryckTalade = false;
 
-// Läser upp det utländska ordet. Delas av dubbeltapp och långtryck.
+// Läser upp det utländska ordet vid långtryck. Bara när den UTLÄNDSKA sidan syns:
+// från svenska sidan vore uppläsningen facit, och då kan man inte längre vara ärlig
+// mot sig själv när man svarar.
 function talaKortetsOrd(tag) {
   const c = session && session.current, lang = subjectLang(currentSubject);
-  if (!c || !canSpeakText(c.front, lang)) return false;
+  if (!c || !foreignVisible() || !canSpeakText(c.front, lang)) return false;
   skipNextAutoSpeak = true;          // annars talar avslöjningen över oss
   track(tag);
   speak(c.front, lang);
@@ -4505,11 +4511,7 @@ card.addEventListener("click", () => {
   if (kortLangtryckTalade) { kortLangtryckTalade = false; return; }
   if (didSwipe || animating) return;
   if (fanOpen) { closeFan(); return; } // ett tryck utanför fjädern stänger den (utan att vända kortet)
-  const nu = Date.now();
-  const dubbel = nu - sisteKortTapp < DOUBLE_TAP_MS;
-  sisteKortTapp = dubbel ? 0 : nu;     // tre tappar ska inte bli två dubbeltappar
   card.classList.toggle("flipped");
-  if (dubbel) talaKortetsOrd("uttala-dubbeltapp");
   showSpeakSoon(460); // döljer klustret och visar rätt läge (inkl. ledtråd) efter flippen
 });
 
@@ -6084,6 +6086,36 @@ const AI_EXAMPLES = {
 // för språk som har ett exempel här. För rumänska: 1:a och 3:e person presens (visar
 // stam och ev. infix), perfektparticip (oförutsägbart i konjugation 3) och 3:e person
 // konjunktiv (oregelbunden, och rumänska använder den där andra språk tar infinitiv).
+// Adjektivserier per språk: mask. sg, fem. sg, plural(er). Rumänskan visar båda
+// varianterna – "noi" är gemensam plural, "buni, bune" är två skilda.
+const AI_ADJ_EXAMPLES = {
+  ro: "nou, nouă, noi · bun, bună, buni, bune",
+  it: "nuovo, nuova, nuovi, nuove",
+  es: "nuevo, nueva, nuevos, nuevas",
+  pt: "novo, nova, novos, novas",
+  fr: "nouveau, nouvelle, nouveaux, nouvelles",
+  ca: "nou, nova, nous, noves",
+  pl: "nowy, nowa, nowe",
+  cs: "nový, nová, nové",
+  ru: "новый, новая, новое, новые",
+  uk: "новий, нова, нове, нові",
+  de: "neu, neue, neues",
+  el: "νέος, νέα, νέο",
+  ar: "جديد, جديدة",
+  he: "חדש, חדשה, חדשים, חדשות",
+  is: "nýr, ný, nýtt",
+  lt: "naujas, nauja, nauji, naujos",
+  lv: "jauns, jauna, jauni, jaunas",
+  hr: "nov, nova, novo, novi",
+  sr: "нов, нова, ново, нови",
+  bg: "нов, нова, ново, нови",
+  sl: "nov, nova, novo, novi",
+  sk: "nový, nová, nové",
+  mk: "нов, нова, ново, нови",
+  bs: "nov, nova, novo, novi",
+  gl: "novo, nova, novos, novas",
+};
+
 const AI_VERB_EXAMPLES = {
   ro: "înțeleg, înțelege · am înțeles · să înțeleagă",
 };
@@ -6120,13 +6152,20 @@ function formPromptNote(harGenus) {
     + ` av ordet på ${malspraket} ${plats} – ${AI_FORM_LABELS[bas] || "obestämd singular + obestämd plural"} `
     + `på ${malspraket}, ALDRIG den svenska böjningen, `
     + (substExempel ? `t.ex. {${substExempel}}.` : `i formen {obestämd singular, obestämd plural}.`);
+  // Adjektiv: formerna som en serie. Utan den här raden kom de tillbaka utan böjning,
+  // och då ser de regelbundna ut fast pluralen kan vara antingen en eller två former.
+  const adjExempel = AI_ADJ_EXAMPLES[bas];
+  const adj = adjExempel
+    ? ` För adjektiv: ge formerna som en serie – maskulinum singular, femininum singular,`
+      + ` sedan pluralformerna (en gemensam om språket har det, annars båda): {${adjExempel}}.`
+    : "";
   const verbExempel = AI_VERB_EXAMPLES[bas];
   const verb = verbExempel
     ? ` För verb: lägg i klammern de former man inte kan gissa sig till – 1:a och 3:e `
       + `person presens, perfekt med hjälpverb, och 3:e person konjunktiv, `
       + `åtskilda med mittpunkt: {${verbExempel}}.`
     : "";
-  return subst + verb
+  return subst + adj + verb
     + (verbExempel ? ` Klammern utelämnas för ord som varken är substantiv eller verb.`
                    : ` Klammern utelämnas för ord som inte är substantiv.`);
 }
@@ -7717,7 +7756,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v424";
+const APP_VERSION = "v425";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 function renderVersionTag() {
