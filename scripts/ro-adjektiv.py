@@ -11,11 +11,11 @@ femininum är "veche". Formerna ska komma från en ordbok, modellen får välja 
 Serien är mask. sg, fem. sg, plural – en gemensam pluralform eller två, och just
 det går inte att gissa sig till. Det är hela skälet att den ska läras som serie.
 
-TRE SAKER HOPPAS ÖVER, och de är poängen med skriptet:
+TVÅ SAKER HOPPAS ÖVER, och de är poängen med skriptet:
   * Ord som ocksÅ är substantiv eller verb i ordboken ("august" månaden, "bine"
     adverbet). Ordboken vet inte vilken ordklass KORTET menar.
-  * Serier där alla former är lika – de säger ingenting, och ett fält som bara
-    upprepar uppslagsformen är brus.
+  * (Oböjliga adjektiv fylls däremot: "maro, maro, maro" säger att ordet är samma
+    i alla former, vilket är annat än att fältet är tomt.)
   * Kort som redan har en böjning. Inget skrivs över.
 Det överhoppade listas så att det går att fylla i för hand.
 """
@@ -29,9 +29,21 @@ INDEX = os.path.join(HERE, "..", "..", "gnugga", "scripts", "raw", "ro-former-in
 # Ord som ordboken också känner som substantiv/verb, men som på Flippas kort
 # entydigt är adjektiv. Bekräftade för hand – listan är medvetet kort och ska bara
 # växa när någon faktiskt granskat ordet.
+# Rumänskan gör substantiv av adjektiv fritt (bun = bra / den gode), så "finns också
+# som substantiv" fastnar på helt vanliga adjektiv. Varje ord här är kontrollerat mot
+# ordbokens serie – inklusive de oregelbundna: tânăr→tineri, ud→uzi, copt→coaptă,
+# înțelept→înțeleaptă, greu→grea.
+#
+# MEDVETET UTANFÖR: "bine" (adverb, inte adjektiv) och "august" (månaden – ordbokens
+# serie hör till adjektivet "augustan"). Båda hade fått fel eller meningslös böjning.
 GODKANDA = {
+    # färger
     "alb", "negru", "roșu", "verde", "galben", "albastru", "maro", "gri",
     "portocaliu", "roz", "mov", "violet", "bej", "auriu", "argintiu",
+    # egenskaper
+    "mare", "mic", "gol", "bun", "greu", "ușor", "tânăr", "bătrân", "copt",
+    "prost", "posibil", "imposibil", "sărac", "bogat", "lat", "înțelept",
+    "leneș", "perfect", "ciudat", "străin", "secundar", "ud", "rău",
 }
 
 def rensa(front):
@@ -55,12 +67,10 @@ def samla(agare=None):
                        "lektion": l.get("name"), "agare": s.get("owner"),
                        "front": c.get("front"), "back": c.get("back"),
                        "serie": ", ".join(serie)}
-                # Ordningen spelar roll: ett oböjligt ord ska hoppas över ÄVEN om det
-                # står på den godkända listan. "maro, maro, maro" är brus på ett kort.
-                if len(set(serie)) == 1:
-                    rad["skal"] = "oböjligt – serien säger ingenting"
-                    hoppade.append(rad)
-                elif w in ix["nouns"] or w in ix["verbs"]:
+                # Oböjliga adjektiv fylls OCKSÅ. "maro, maro, maro" ser ut som brus men
+                # bär verklig information: att ordet är samma i alla former. Ett tomt
+                # fält betyder "vi vet inte", och de två ska inte gå att förväxla.
+                if w in ix["nouns"] or w in ix["verbs"]:
                     # Ordboken vet inte vilken ordklass KORTET menar. Men står ordet
                     # på en uttrycklig lista har en människa redan avgjort det – t.ex.
                     # färgerna, som är substantiv i ordboken men adjektiv på korten.
