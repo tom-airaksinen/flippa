@@ -7767,14 +7767,23 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v427";
+const APP_VERSION = "v428";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
+// Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
+// appen vägrar starta – vilket hände på ett flygplan 2026-10-24.
+let offlineStatus = null;    // { har, av, saknas } från service workern
+function offlineText() {
+  if (!offlineStatus) return "";
+  return offlineStatus.har >= offlineStatus.av
+    ? " · ✓ sparad offline"
+    : ` · ⚠️ offline ofullständig (${offlineStatus.har} av ${offlineStatus.av})`;
+}
 function renderVersionTag() {
   if (!versionTag) return;
   versionTag.textContent = availableVersion
     ? `Flippa ${APP_VERSION} → ${availableVersion} · tryck för att uppdatera`
-    : "Flippa " + APP_VERSION;
+    : "Flippa " + APP_VERSION + offlineText();
   versionTag.classList.add("tappable");
   versionTag.classList.toggle("update-ready", !!availableVersion);
   // Finns en ny version är raden en uppdateringsknapp, annars versionshistoriken.
@@ -7783,6 +7792,20 @@ function renderVersionTag() {
     : openChangelog;
 }
 renderVersionTag();
+// Fråga service workern om cachen är komplett. Svaret kommer som ett meddelande och
+// uppdaterar versionsraden.
+function fragaOfflineStatus() {
+  try {
+    const sw = navigator.serviceWorker && navigator.serviceWorker.controller;
+    if (sw) sw.postMessage({ type: "flippa-cachestatus" });
+  } catch (_) {}
+}
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.ready.then(fragaOfflineStatus).catch(() => {});
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") fragaOfflineStatus();
+  });
+}
 
 // Service workern är enda vägen till ny kod (fetch-handlern är cache-first), och den
 // vägen kan fastna: GitHub Pages sätter max-age=600 på sw.js, så en uppdateringskoll kan
@@ -7878,6 +7901,11 @@ if ("serviceWorker" in navigator) {
   // Notis-tryck när appen redan är öppen: service workern ber oss öppna senaste ämne.
   navigator.serviceWorker.addEventListener("message", (e) => {
     if (e.data && e.data.type === "flippa-open-subject") openLastSubjectFromPush();
+    if (e.data && e.data.type === "flippa-cachestatus") {
+      offlineStatus = e.data;
+      if (e.data.saknas && e.data.saknas.length) console.warn("Saknas i offline-cachen:", e.data.saknas);
+      renderVersionTag();
+    }
   });
   navigator.serviceWorker
     .register("sw.js", { updateViaCache: "none" })

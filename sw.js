@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v427";
+const CACHE = "flashcards-v428";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.
@@ -70,6 +70,20 @@ self.addEventListener("notificationclick", (e) => {
   })());
 });
 
+// Appen frågar om den är offline-klar (Inställningar → Om). Utan det här går det
+// inte att veta förrän man står utan nät och appen vägrar starta.
+self.addEventListener("message", (e) => {
+  if (!e.data || e.data.type !== "flippa-cachestatus") return;
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    const lokala = ASSETS.filter((u) => !u.startsWith("http"));
+    const finns = await Promise.all(lokala.map((u) => c.match(u).then((r) => !!r)));
+    const svar = { type: "flippa-cachestatus", har: finns.filter(Boolean).length, av: lokala.length,
+                   saknas: lokala.filter((_, i) => !finns[i]) };
+    (e.source ? [e.source] : await self.clients.matchAll()).forEach((k) => k.postMessage(svar));
+  })());
+});
+
 self.addEventListener("fetch", (e) => {
   const url = e.request.url;
   // Firebase realtime/auth-trafik ska alltid gå till nätet
@@ -97,7 +111,18 @@ self.addEventListener("fetch", (e) => {
     const cached = await caches.match(e.request);
     if (cached) return cached;
     try {
-      return await fetch(e.request);
+      const svar = await fetch(e.request);
+      // Fyll på cachen under vanlig användning. Installationen kan ha misslyckats
+      // (dåligt nät) eller cachen ha rensats av systemet – då läker appen sig själv
+      // nästa gång den används med nät, i stället för att vara tom först när den
+      // behövs offline. Bara egna GET-filer utan frågesträng: sw.js?cb= och
+      // index.json?v= MÅSTE gå till nätet för att uppdateringar ska upptäckas.
+      if (svar.ok && e.request.method === "GET" && url.startsWith(self.registration.scope)
+          && !url.includes("?") && !url.endsWith("/sw.js")) {
+        const kopia = svar.clone();
+        e.waitUntil(caches.open(CACHE).then((c) => c.put(e.request, kopia)).catch(() => {}));
+      }
+      return svar;
     } catch (err) {
       // Offline OCH inget i cachen. Utan det här kastades felet vidare, och för en
       // SIDNAVIGERING betyder det Safaris "FetchEvent.respondWith received an error"
