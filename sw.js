@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v426";
+const CACHE = "flashcards-v427";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.
@@ -13,6 +13,7 @@ const ASSETS = [
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png",
+  "./mall.csv",                 // hjälpens CSV-mall – liten, och länken ska funka offline
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js",
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js",
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js",
@@ -92,7 +93,24 @@ self.addEventListener("fetch", (e) => {
     );
     return;
   }
-  e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
-  );
+  e.respondWith((async () => {
+    const cached = await caches.match(e.request);
+    if (cached) return cached;
+    try {
+      return await fetch(e.request);
+    } catch (err) {
+      // Offline OCH inget i cachen. Utan det här kastades felet vidare, och för en
+      // SIDNAVIGERING betyder det Safaris "FetchEvent.respondWith received an error"
+      // i stället för appen – alltså ingen offline-app alls, vilket är hela poängen
+      // med en PWA. (Hände på ett flygplan 2026-10-24.)
+      if (e.request.mode === "navigate") {
+        const start = await caches.match("./index.html") || await caches.match("./");
+        if (start) return start;
+      }
+      // Övriga resurser: ett riktigt svar i stället för ett kastat fel. Anropande kod
+      // kollar r.ok; en avvisad fetch kräver .catch överallt och ger dessutom en
+      // skrämmande rad i konsolen för varje misslyckad begäran.
+      return new Response("", { status: 503, statusText: "offline" });
+    }
+  })());
 });

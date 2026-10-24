@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "24 oktober 2026", ver: "v427", items: [
+    { t: "Appen startar igen utan nät – offline visade tidigare Safaris felsida i stället för dina ord", type: "fixed", hi: true, ico: "✈️", desc: "Flippa fungerar på flygplanet igen." },
+  ] },
   { date: "16 oktober 2026", ver: "v426", items: [
     { t: "Slå upp: byter du riktning slås ordet upp igen direkt – du behöver inte trycka på förstoringsglaset", type: "improved" },
     { t: "Adjektiv får nu sina former som en serie (nou, nouă, noi) så man ser om pluralen är en eller två former", type: "improved", hi: true, ico: "📐", desc: "Rumänska adjektiv har fått sina böjningsserier ifyllda." },
