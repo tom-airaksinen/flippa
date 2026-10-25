@@ -111,5 +111,13 @@ def main():
     print(f"\nVERIFIERAT: {len(plan) - len(fel)} av {len(plan)} skrivna korrekt")
     for f, v in fel: print("  AVVIKER:", f, "->", repr(v))
 
+# VARFÖR DET HÄR SKRIPTET BARA RÖR ADJEKTIV
+# Samma automatik för SUBSTANTIV vore farlig. En genomgång av Toms rumänska
+# (2026-10-26) gav tio kort där ordboken "kunde fylla" – men eu, cât, dar, mai,
+# salut, bine, cine, care, frig och calm är pronomen, konjunktioner, adverb och
+# interjektioner PÅ KORTEN. Rumänskan gör substantiv av nästan vad som helst
+# ("daruri" = gåvor, "un eu" = ett jag), så ordboken hade satt nonsens på nio av
+# tio. Substantiv fylls därför för hand, med formen kontrollerad mot ordboken.
+
 if __name__ == "__main__":
     main()
