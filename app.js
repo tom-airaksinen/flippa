@@ -7767,17 +7767,17 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v428";
+const APP_VERSION = "v429";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
 // appen vägrar starta – vilket hände på ett flygplan 2026-10-24.
 let offlineStatus = null;    // { har, av, saknas } från service workern
+// TYST när allt är sparat. En rad som alltid säger "allt är bra" bär ingen
+// information och är bara krafs – den ska synas just när något är fel.
 function offlineText() {
-  if (!offlineStatus) return "";
-  return offlineStatus.har >= offlineStatus.av
-    ? " · ✓ sparad offline"
-    : ` · ⚠️ offline ofullständig (${offlineStatus.har} av ${offlineStatus.av})`;
+  if (!offlineStatus || offlineStatus.har >= offlineStatus.av) return "";
+  return ` · ⚠️ ${offlineStatus.av - offlineStatus.har} filer saknas offline`;
 }
 function renderVersionTag() {
   if (!versionTag) return;
@@ -7787,9 +7787,13 @@ function renderVersionTag() {
   versionTag.classList.add("tappable");
   versionTag.classList.toggle("update-ready", !!availableVersion);
   // Finns en ny version är raden en uppdateringsknapp, annars versionshistoriken.
+  // Saknas filer är raden en felsökningsknapp: visa VILKA, så man slipper en konsol.
+  const ofullstandig = offlineStatus && offlineStatus.har < offlineStatus.av;
   versionTag.onclick = availableVersion
     ? () => { track("uppdatering/manuell"); forceUpdate(); }
-    : openChangelog;
+    : ofullstandig
+      ? () => toast("Saknas offline: " + (offlineStatus.saknas || []).join(", "), 8000, "error")
+      : openChangelog;
 }
 renderVersionTag();
 // Fråga service workern om cachen är komplett. Svaret kommer som ett meddelande och
