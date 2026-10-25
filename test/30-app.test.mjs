@@ -178,3 +178,23 @@ test("varje urvalsställe går via kortAktivt eller ordPausat", () => {
     .filter((r) => /isDueNow\(c, dirMode, now\)/.test(r) && !/kortAktivt|ordPausat/.test(r));
   lika(rader.map((r) => r.trim().slice(0, 50)), [], "urval utan pauskontroll");
 });
+
+grupp("Release-rutinen");
+
+test("release.py kräver svar på Hjälp och event-tracking", () => {
+  // Reglerna i CLAUDE.md ska vara omöjliga att glömma, inte bara nedskrivna.
+  const r = las("scripts/release.py");
+  sant(/--hjalp".*required=True|required=True.*--hjalp/s.test(r) || /"--hjalp", required=True/.test(r),
+       "--hjalp måste vara obligatorisk");
+  sant(/"--tracking", required=True/.test(r), "--tracking måste vara obligatorisk");
+});
+
+test("release.py vägrar när app.js och sw.js redan är osynkade", () => {
+  const r = las("scripts/release.py");
+  sant(/måste vara lika INNAN/.test(r), "kontrollen före bump saknas");
+});
+
+test("release.py kör testsviten innan den säger klart", () => {
+  const r = las("scripts/release.py");
+  sant(/test\/kor\.mjs/.test(r), "testsviten körs inte av release.py");
+});
