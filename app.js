@@ -7767,7 +7767,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v429";
+const APP_VERSION = "v430";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och

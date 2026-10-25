@@ -1,8 +1,14 @@
-const CACHE = "flashcards-v429";
+const CACHE = "flashcards-v430";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.
 const AUDIO_CACHE = "flippa-audio-v1";
+// GitHub Pages skickar "Vary: Accept-Encoding" på ALLT. Utan ignoreVary levererar
+// Cache Storage bara ett sparat svar när förfrågans Accept-Encoding är exakt densamma
+// som när svaret sparades – och en SIDNAVIGERING skickar andra rubriker än den fetch()
+// installationen gjorde. Följden: index.html låg i cachen men hittades inte, och appen
+// gick inte att starta utan nät (flygplan 2026-10-24). Gäller varje match i filen.
+const MATCH = { ignoreVary: true };
 const ASSETS = [
   "./",
   "./index.html",
@@ -77,7 +83,7 @@ self.addEventListener("message", (e) => {
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
     const lokala = ASSETS.filter((u) => !u.startsWith("http"));
-    const finns = await Promise.all(lokala.map((u) => c.match(u).then((r) => !!r)));
+    const finns = await Promise.all(lokala.map((u) => c.match(u, MATCH).then((r) => !!r)));
     const svar = { type: "flippa-cachestatus", har: finns.filter(Boolean).length, av: lokala.length,
                    saknas: lokala.filter((_, i) => !finns[i]) };
     (e.source ? [e.source] : await self.clients.matchAll()).forEach((k) => k.postMessage(svar));
@@ -97,7 +103,7 @@ self.addEventListener("fetch", (e) => {
   if (url.includes("/audio/") && url.split("?")[0].endsWith(".mp3")) {
     e.respondWith(
       caches.open(AUDIO_CACHE).then((c) =>
-        c.match(e.request).then((hit) =>
+        c.match(e.request, MATCH).then((hit) =>
           hit || fetch(e.request).then((r) => {
             if (r.ok) c.put(e.request, r.clone());
             return r;
@@ -108,7 +114,7 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   e.respondWith((async () => {
-    const cached = await caches.match(e.request);
+    const cached = await caches.match(e.request, MATCH);
     if (cached) return cached;
     try {
       const svar = await fetch(e.request);
@@ -129,7 +135,7 @@ self.addEventListener("fetch", (e) => {
       // i stället för appen – alltså ingen offline-app alls, vilket är hela poängen
       // med en PWA. (Hände på ett flygplan 2026-10-24.)
       if (e.request.mode === "navigate") {
-        const start = await caches.match("./index.html") || await caches.match("./");
+        const start = await caches.match("./index.html", MATCH) || await caches.match("./", MATCH);
         if (start) return start;
       }
       // Övriga resurser: ett riktigt svar i stället för ett kastat fel. Anropande kod

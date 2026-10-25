@@ -10,7 +10,7 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
-  { date: "25 oktober 2026", ver: "v428", items: [
+  { date: "25 oktober 2026", ver: "v430", items: [
     { t: "Appen startar igen utan nät – offline visade tidigare en felsida i stället för dina ord", type: "fixed", hi: true, ico: "✈️", desc: "Flippa fungerar på flygplanet igen." },
     { t: "Versionsraden under Inställningar → Om visar nu om appen är sparad för offline", type: "new" },
   ] },
