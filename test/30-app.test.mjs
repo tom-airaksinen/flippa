@@ -124,3 +124,57 @@ test("gästkontot släpps inte in på den betalda modellen", () => {
   sant(!/guest/.test(las("worker/wrangler.toml").match(/LEKTION_PROFILER = "([^"]*)"/)[1]),
        "guest får inte stå i LEKTION_PROFILER");
 });
+
+grupp("Pausade ord (experimentellt)");
+
+function paus(profil) {
+  let store = {};
+  const g = sandlada(
+    ["pausordPa", "pausadeOrd", "ordPausat", "setOrdPausat", "toggleOrdPaus", "kortAktivt"]
+      .map((n) => funktion("app.js", n)),
+    {
+      PAUSORD_KEY: "p", PAUSORD_PROFILER: ["tom"], currentUser: profil,
+      unitUser: () => profil, cardKeyOf: (c) => c.front,
+      prioAllowed: () => true,
+      loadLS: (k) => { try { return JSON.parse(store[k] || "{}"); } catch { return {}; } },
+      lsSet: (k, v) => { store[k] = v; },
+    });
+  return g;
+}
+
+test("paus är AV för andra profiler – gästerna behåller stjärnan", () => {
+  const g = paus("guest");
+  g.setOrdPausat({ front: "casă" }, true);
+  lika(g.ordPausat({ front: "casă" }), false, "pausen får inte gälla profiler utanför listan");
+  lika(g.kortAktivt({ front: "casă" }), true);
+});
+
+test("ett pausat ord är inte aktivt", () => {
+  const g = paus("tom");
+  lika(g.kortAktivt({ front: "casă" }), true);
+  g.setOrdPausat({ front: "casă" }, true);
+  lika(g.ordPausat({ front: "casă" }), true);
+  lika(g.kortAktivt({ front: "casă" }), false, "pausat ord får inte komma med i pass");
+});
+
+test("återupptagning släpper in ordet igen", () => {
+  const g = paus("tom");
+  lika(g.toggleOrdPaus({ front: "casă" }), true);
+  lika(g.toggleOrdPaus({ front: "casă" }), false);
+  lika(g.kortAktivt({ front: "casă" }), true);
+});
+
+test("pausen nycklas på ORDET, inte på kortets id", () => {
+  // Samma ord i två lektioner ska pausas tillsammans – som SRS och favoriter.
+  const g = paus("tom");
+  g.setOrdPausat({ front: "casă", id: "a" }, true);
+  lika(g.ordPausat({ front: "casă", id: "b" }), true);
+});
+
+test("varje urvalsställe går via kortAktivt eller ordPausat", () => {
+  // Missas ett ställe smiter pausade ord in i just det passet.
+  const kod = las("app.js");
+  const rader = kod.split("\n")
+    .filter((r) => /isDueNow\(c, dirMode, now\)/.test(r) && !/kortAktivt|ordPausat/.test(r));
+  lika(rader.map((r) => r.trim().slice(0, 50)), [], "urval utan pauskontroll");
+});

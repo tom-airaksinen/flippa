@@ -750,6 +750,34 @@ function setFavKey(key, on) {
 }
 function toggleFav(card) { const on = !isFav(card); setFavKey(cardKeyOf(card), on); return on; }
 
+// ---- Pausade ord (experimentellt, se PAUSORD_PROFILER) ----------------------
+// Ett pausat ord är tyst: det räknas inte som förfallet, kommer inte med i något
+// pass och försvinner direkt ur det pågående. SRS-lådan rörs INTE – återupptar man
+// ordet ligger inlärningen kvar precis där den var. Nyckeln är ordet (cardKeyOf),
+// samma som favoriter och SRS, så pausen följer ordet även mellan lektioner.
+const PAUSORD_KEY = "flippa-pausade-ord-v1";   // profil → [ordnyckel]
+// Stjärnan byts mot paus BARA för de här profilerna. Gästerna kan använda stjärnan
+// och ska inte få en funktion de inte bett om.
+const PAUSORD_PROFILER = ["tom"];
+function pausordPa() { return PAUSORD_PROFILER.includes(currentUser); }
+function pausadeOrd() { return loadLS(PAUSORD_KEY)[unitUser()] || []; }
+function ordPausat(card) {
+  if (!card || !pausordPa()) return false;     // av för andra profiler → allt är aktivt
+  return pausadeOrd().includes(cardKeyOf(card));
+}
+function setOrdPausat(card, pa) {
+  const o = loadLS(PAUSORD_KEY), u = unitUser(), k = cardKeyOf(card);
+  const lista = new Set(o[u] || []);
+  if (pa) lista.add(k); else lista.delete(k);
+  o[u] = [...lista];
+  lsSet(PAUSORD_KEY, JSON.stringify(o));
+}
+function toggleOrdPaus(card) { const pa = !ordPausat(card); setOrdPausat(card, pa); return pa; }
+
+// Får kortet vara med i ett pass? Prio-filtret OCH pausen. Allt som väljer kort går
+// via den här, så ett pausat ord kan inte smita in någonstans.
+function kortAktivt(c, sid) { return prioAllowed(c, sid) && !ordPausat(c); }
+
 function pausedList() { return loadLS(PAUSED_KEY)[unitUser()] || []; }
 function isLessonPaused(lid) { return pausedList().includes(lid); }
 function setLessonPaused(lid, on) {
@@ -861,6 +889,7 @@ function todaysNewCards(subject) {
   try { ledger = JSON.parse(localStorage.getItem(NEW_INTRO_KEY) || "{}"); } catch { ledger = {}; }
   const today = todayStr();
   const lessons = activeLessons(subject); // pausade lektioner bidrar inte med nya ord
+  // ...och ett pausat ORD ska inte heller introduceras som nytt.
   let entry = ledger[subject.id];
   if (!entry || entry.date !== today) {
     // Dagens nya ord väljs i två steg: (1) kvoten fördelas över prio-banden med
@@ -868,7 +897,7 @@ function todaysNewCards(subject) {
     // till nästa band, kärna först), (2) varje bands andel fördelas
     // proportionellt över lektionerna som tidigare. Utan prio-data hamnar allt
     // i band 2 → identiskt beteende med före prio-funktionen.
-    const newByLesson = lessons.map((l) => l.cards.filter((c) => isNewCard(c) && prioAllowed(c, subject.id)));
+    const newByLesson = lessons.map((l) => l.cards.filter((c) => isNewCard(c) && kortAktivt(c, subject.id)));
     const totalNew = newByLesson.reduce((a, b) => a + b.length, 0);
     const quota = Math.min(newPerDay(), totalNew);
     const bands = [1, 2, 3];
@@ -1949,7 +1978,7 @@ function dueCountForLessons(lessons, starredOnly) {
   let n = 0;
   lessons.forEach((l) =>
     l.cards.forEach((c) => {
-      if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && (!starredOnly || isFav(c)) && prioAllowed(c)) n++;
+      if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && (!starredOnly || isFav(c)) && kortAktivt(c)) n++;
     })
   );
   return n;
@@ -2648,7 +2677,7 @@ async function startLessonSession(lessonId, force = false, continuing = false, i
     : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
   // Priofiltret gäller även manuell träning (vill man t.ex. bara nivå 1). ignorePrio =
   // "Öva alla nivåer"-valet i tom-dialogen kör förbi filtret för just den sessionen.
-  const allow = (c) => ignorePrio || prioAllowed(c);
+  const allow = (c) => (ignorePrio || prioAllowed(c)) && !ordPausat(c); // pausen gäller även "Öva alla nivåer"
   const pool = (force ? [...lesson.cards] : lesson.cards.filter(activeToday)).filter((c) => !runSeen.has(c.id) && allow(c));
   if (!pool.length) {
     // Tom lektion → dialog i stället för toast: repetera inlärda / öva alla nivåer.
@@ -2705,7 +2734,7 @@ function startDueSession(continuing = false) {
   const inDue = new Set();
   activeLessons(currentSubject).forEach((l) => // hoppa över pausade lektioner
     l.cards.forEach((c) => {
-      if (isDueNow(c, dirMode, now) && !runSeen.has(c.id) && prioAllowed(c)) {
+      if (isDueNow(c, dirMode, now) && !runSeen.has(c.id) && kortAktivt(c)) {
         due.push(c); inDue.add(c.id);
       }
     })
@@ -3114,7 +3143,7 @@ function remainingForContinue(cont) {
     activeLessons(currentSubject).forEach((l) =>
       l.cards.forEach((c) => {
         if (runSeen.has(c.id)) return;
-        if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && prioAllowed(c) && (!starred || isFav(c))) n++;
+        if ((isDueNow(c, dirMode, now) || newSet.has(c.id)) && kortAktivt(c) && (!starred || isFav(c))) n++;
       })
     );
     return n;
@@ -3127,7 +3156,7 @@ function remainingForContinue(cont) {
     dirMode === "f2b" ? getEntry(c, "f2b").due <= now
     : dirMode === "b2f" ? getEntry(c, "b2f").due <= now
     : (getEntry(c, "f2b").due <= now || getEntry(c, "b2f").due <= now);
-  return lesson.cards.filter((c) => !runSeen.has(c.id) && prioAllowed(c) && (cont.forced || activeToday(c))).length;
+  return lesson.cards.filter((c) => !runSeen.has(c.id) && kortAktivt(c) && (cont.forced || activeToday(c))).length;
 }
 
 // Sparas så man kan ångra sista svaret även EFTER att passet tagit slut (Klar-skärmen).
@@ -4132,8 +4161,15 @@ function placeFan(){
 }
 function openFan(){
   if(!session || !session.current) return;
-  const fav = isFav(session.current), si = FAN_ITEMS.findIndex(x=>x.key==="star"), ico = fanOpts[si].querySelector(".ic");
-  ico.textContent = fav ? "★" : "☆"; ico.classList.toggle("on", fav); fanOpts[si].lastChild.textContent = fav ? "Stjärnmärkt" : "Stjärna";
+  const si = FAN_ITEMS.findIndex(x=>x.key==="star"), ico = fanOpts[si].querySelector(".ic");
+  if (pausordPa()) {
+    // Experimentellt: stjärnan ersätts av paus. I flippläget behövs bara PÅ –
+    // ordet försvinner ur passet i samma stund, och återupptas i ordlistan.
+    ico.textContent = "⏸"; ico.classList.remove("on"); fanOpts[si].lastChild.textContent = "Pausa ordet";
+  } else {
+    const fav = isFav(session.current);
+    ico.textContent = fav ? "★" : "☆"; ico.classList.toggle("on", fav); fanOpts[si].lastChild.textContent = fav ? "Stjärnmärkt" : "Stjärna";
+  }
   placeFan(); cardStack.classList.add("fan-open"); moreBtn.classList.add("armed"); fanOpen = true;
 }
 function closeFan(){ if(!cardStack) return; cardStack.classList.remove("fan-open"); if(moreBtn) moreBtn.classList.remove("armed"); fanOpen = false; fanTapMode = false; fanPressing = false; setFanHot(-1); }
@@ -4182,6 +4218,18 @@ function selectFan(i, src){
   if(key==="image"){ track("bildsok/"+src, {nav:true}); closeFan(); openExternal(googleImageSearchUrl(c.front), src === "tapp"); return; }
   if(key==="lookup"){ track("slaupp/"+src, {nav:true}); closeFan(); openExternal(googleAiExploreUrl(c.front, currentCardForm()), src === "tapp"); return; }
   if(key==="edit"){ track("redigera"); editCurrentCard(); }
+  else if(key==="star" && pausordPa()){
+    setOrdPausat(c, true);
+    track("ordpaus-pa");
+    // Ut ur passet direkt – samma väg som ett raderat ord, men inlärningen ligger kvar.
+    session.queue = session.queue.filter((x) => x.id !== c.id);
+    undoStack = [];                     // ångra ska inte dra tillbaka det pausade ordet
+    updateUndoBtn();
+    flash("⏸ Ordet pausat", 1800);
+    closeFan();
+    loadCard();                         // visa nästa, eller avsluta om kön är tom
+    return;
+  }
   else if(key==="star"){ const on = toggleFav(c); track(on ? "stjarnmark-pa" : "stjarnmark-av"); flash(on ? "⭐ Stjärnmärkt" : "Stjärna borttagen", 1800); }
   closeFan();
 }
@@ -5486,6 +5534,7 @@ const IC_DOC    = `<svg ${_ICL}><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h
 const IC_DOWNLOAD = `<svg ${_ICL}><polyline points="8,12 12,16 16,12"/><line x1="12" y1="4" x2="12" y2="16"/><path d="M5 16v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/></svg>`;
 const IC_LOOKUP = `<svg ${_ICL}><circle cx="11" cy="11" r="6"/><line x1="15.4" y1="15.4" x2="19.2" y2="19.2"/><line x1="11" y1="8.4" x2="11" y2="13.6"/><line x1="8.4" y1="11" x2="13.6" y2="11"/></svg>`;
 const IC_SPEAK  = `<svg class="ic-svg" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M4 9.5h3.5L12 5.5v13L7.5 14.5H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M15.5 9.2a4 4 0 0 1 0 5.6"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M18 6.8a7.2 7.2 0 0 1 0 10.4"/></svg>`;
+const IC_PLAY   = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13a1 1 0 0 0 1.54.84l10-6.5a1 1 0 0 0 0-1.68l-10-6.5A1 1 0 0 0 8 5.5z"/></svg>`;
 const IC_PAUSE  = `<svg class="ic-svg" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="5" width="3.6" height="14" rx="1.4"/><rect x="13.4" y="5" width="3.6" height="14" rx="1.4"/></svg>`;
 (function setStaticIcons() {
   const set = (id, html) => { const el = $(id); if (el) el.innerHTML = html; };
@@ -6374,7 +6423,13 @@ function renderEditor() {
         badge = `<span class="prio-badge p${c.prio}" title="Prio ${c.prio} · ${PRIO_NAMES[c.prio]}">${c.prio}</span>`;
       }
       const fav = isFav(c);
-      return `<div class="word-row" data-id="${c.id}">
+      // Experimentellt: stjärnan ersätts av paus/återuppta för vissa profiler.
+      // Ett pausat ord tonas ned så listan visar i ett ögonkast vad som är tyst.
+      const pausad = ordPausat(c);
+      const hogerKnapp = pausordPa()
+        ? `<button class="word-row-paus${pausad ? " on" : ""}" data-paus="${c.id}" aria-label="${pausad ? "Återuppta ordet" : "Pausa ordet"}" title="${pausad ? "Återuppta – ordet kommer tillbaka i passen" : "Pausa – ordet hoppas över i passen, inlärningen ligger kvar"}">${pausad ? IC_PLAY : IC_PAUSE}</button>`
+        : `<button class="word-row-star${fav ? " on" : ""}" data-star="${c.id}" aria-label="Stjärnmärk" title="Stjärnmärk som favorit">${fav ? "★" : "☆"}</button>`;
+      return `<div class="word-row${pausad ? " ord-pausad" : ""}" data-id="${c.id}">
         <button class="word-row-del" data-del="${c.id}" aria-label="Ta bort ord" title="Ta bort ord">${TRASH_ICON_SVG}</button>
         <div class="word-row-main">
           <div class="word-texts">
@@ -6383,7 +6438,7 @@ function renderEditor() {
             <div class="word-back" dir="auto">${esc(c.back)}</div>
           </div>
           ${badge}
-          <button class="word-row-star${fav ? " on" : ""}" data-star="${c.id}" aria-label="Stjärnmärk" title="Stjärnmärk som favorit">${fav ? "★" : "☆"}</button>
+          ${hogerKnapp}
         </div>
       </div>`;
     })
@@ -6398,6 +6453,21 @@ function renderEditor() {
       const on = toggleFav(c);
       btn.textContent = on ? "★" : "☆";
       btn.classList.toggle("on", on);
+    });
+  });
+  list.querySelectorAll(".word-row-paus").forEach((btn) => {
+    btn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const c = lesson.cards.find((x) => x.id === btn.dataset.paus);
+      if (!c) return;
+      const pa = toggleOrdPaus(c);
+      track(pa ? "ordpaus-pa/lista" : "ordpaus-av/lista");
+      btn.innerHTML = pa ? IC_PLAY : IC_PAUSE;
+      btn.classList.toggle("on", pa);
+      btn.title = pa ? "Återuppta – ordet kommer tillbaka i passen" : "Pausa – ordet hoppas över i passen, inlärningen ligger kvar";
+      btn.setAttribute("aria-label", pa ? "Återuppta ordet" : "Pausa ordet");
+      btn.closest(".word-row").classList.toggle("ord-pausad", pa);
     });
   });
 }
@@ -7767,7 +7837,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v431";
+const APP_VERSION = "v432";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
