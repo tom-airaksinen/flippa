@@ -1,4 +1,4 @@
-const CACHE = "flashcards-v430";
+const CACHE = "flashcards-v431";
 // Uttalsfilerna ändras inte mellan versioner och ska inte hämtas om vid varje deploy →
 // egen cache som överlever versionsbytet. Den fylls på när ett ord spelas första gången,
 // så lektioner man kört fungerar sedan offline.
@@ -25,27 +25,52 @@ const ASSETS = [
   "https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js",
 ];
 
+// Lägg till filer i cachen, en i taget och utan att ge upp på den första som fallerar.
+// Promise.all gjorde förut hela installationen misslyckad om EN fil strulade – och en
+// misslyckad install betyder att ingenting alls cachas. Returnerar vad som inte gick.
+async function cachaSaknade(c, lista) {
+  const misslyckade = [];
+  for (const u of lista) {
+    if (await c.match(u, MATCH)) continue;                 // redan på plats
+    // Två försök: "reload" kringgår webbläsarens HTTP-cache (annars kan en gammal
+    // app.js hämtas ur disk-cachen och sparas under det nya cachenamnet). Går det
+    // inte, pröva en helt vanlig hämtning hellre än att lämna luckan.
+    for (const init of [{ cache: "reload" }, {}]) {
+      try { await c.add(new Request(u, init)); break; } catch (_) {}
+    }
+    if (!(await c.match(u, MATCH))) misslyckade.push(u);
+  }
+  return misslyckade;
+}
+
+const LOKALA = ASSETS.filter((u) => !u.startsWith("http"));
+const CDN = ASSETS.filter((u) => u.startsWith("http"));
+
 self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE).then(async (c) => {
-      // cache:"reload" tvingar nätverk och kringgår webbläsarens HTTP-cache. Annars kan
-      // en gammal app.js/style.css (GitHub Pages sätter max-age=600) hämtas ur disk-cachen
-      // och cachas under det NYA cache-namnet → man fastnar på gammal version trots ny SW.
-      const fresh = (u) => c.add(new Request(u, { cache: "reload" }));
-      // Lokala filer MÅSTE cachas (annars är installationen meningslös)
-      await Promise.all(ASSETS.filter((u) => !u.startsWith("http")).map(fresh));
-      // CDN-filer (Firebase) cachas best-effort – får inte blockera uppdateringen
-      await Promise.allSettled(ASSETS.filter((u) => u.startsWith("http")).map(fresh));
+      const kvar = await cachaSaknade(c, LOKALA);
+      // Installationen får INTE falla på en enstaka fil: då cachas ingenting, och
+      // appen går inte att starta offline alls. Luckan syns i stället på
+      // versionsraden (Inställningar → Om) och lagas vid nästa aktivering.
+      if (kvar.length) console.warn("Flippa: kunde inte cacha", kvar);
+      await cachaSaknade(c, CDN);                           // best-effort
     }).then(() => self.skipWaiting())
   );
 });
 
 self.addEventListener("activate", (e) => {
-  e.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
-  );
+  e.waitUntil((async () => {
+    const keys = await caches.keys();
+    await Promise.all(keys.filter((k) => k !== CACHE && k !== AUDIO_CACHE).map((k) => caches.delete(k)));
+    // Laga luckor som installationen lämnade. Här finns nät oftare än vid install,
+    // och appen läker alltså sig själv i stället för att vara trasig först när den
+    // behövs offline.
+    const c = await caches.open(CACHE);
+    const kvar = await cachaSaknade(c, LOKALA);
+    if (kvar.length) console.warn("Flippa: saknas fortfarande i cachen", kvar);
+    await self.clients.claim();
+  })());
 });
 
 // ---- Push-notiser (daglig påminnelse) ----
@@ -82,10 +107,12 @@ self.addEventListener("message", (e) => {
   if (!e.data || e.data.type !== "flippa-cachestatus") return;
   e.waitUntil((async () => {
     const c = await caches.open(CACHE);
-    const lokala = ASSETS.filter((u) => !u.startsWith("http"));
-    const finns = await Promise.all(lokala.map((u) => c.match(u, MATCH).then((r) => !!r)));
-    const svar = { type: "flippa-cachestatus", har: finns.filter(Boolean).length, av: lokala.length,
-                   saknas: lokala.filter((_, i) => !finns[i]) };
+    // Försök laga innan vi rapporterar: frågan ställs när appen är öppen, alltså
+    // oftast med nät. En varning som försvinner av sig själv är bättre än en som
+    // bara konstaterar.
+    const saknas = await cachaSaknade(c, LOKALA);
+    const svar = { type: "flippa-cachestatus", har: LOKALA.length - saknas.length,
+                   av: LOKALA.length, saknas };
     (e.source ? [e.source] : await self.clients.matchAll()).forEach((k) => k.postMessage(svar));
   })());
 });

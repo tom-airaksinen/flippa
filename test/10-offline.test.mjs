@@ -115,3 +115,40 @@ test("APP_VERSION och sw-CACHE är samma nummer", () => {
   const cache = (sw.match(/const CACHE = "flashcards-(v\d+)"/) || [])[1];
   lika(cache, app, "versionerna måste följas åt");
 });
+
+await testAsync("cachaSaknade ger inte upp på första filen som fallerar", async () => {
+  // Promise.all gjorde förut hela installationen misslyckad om EN fil strulade,
+  // och då cachades INGENTING. De tre filer som saknades på Toms telefon var
+  // just de som sidan aldrig hämtar själv (index.html, icon-512.png, mall.csv).
+  const { funktion: f } = await import("./hamta.mjs");
+  const kod = f("sw.js", "cachaSaknade");
+  const lagrat = new Set();
+  const c = {
+    match: async (u) => (lagrat.has(u) ? {} : undefined),
+    add: async (r) => {
+      const u = r.u;
+      if (u === "./trasig.png") throw new Error("nätfel");
+      lagrat.add(u);
+    },
+  };
+  const sandlada = new Function("MATCH", "Request", `${kod}\nreturn cachaSaknade;`)(
+    { ignoreVary: true }, function (u, init) { return { u, init }; });
+  const kvar = await sandlada(c, ["./a.js", "./trasig.png", "./b.js"]);
+  lika(kvar, ["./trasig.png"], "bara den trasiga ska rapporteras");
+  sant(lagrat.has("./b.js"), "filer EFTER den trasiga måste ändå cachas");
+});
+
+await testAsync("cachaSaknade provar vanlig hämtning när reload fallerar", async () => {
+  const { funktion: f } = await import("./hamta.mjs");
+  const lagrat = new Set();
+  const c = {
+    match: async (u) => (lagrat.has(u) ? {} : undefined),
+    add: async (r) => {
+      if (r.init && r.init.cache === "reload") throw new Error("reload stöds inte");
+      lagrat.add(r.u);
+    },
+  };
+  const sandlada = new Function("MATCH", "Request", `${f("sw.js", "cachaSaknade")}\nreturn cachaSaknade;`)(
+    { ignoreVary: true }, function (u, init) { return { u, init }; });
+  lika(await sandlada(c, ["./a.js"]), [], "andra försöket utan reload ska rädda filen");
+});
