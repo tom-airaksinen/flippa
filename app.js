@@ -3414,6 +3414,7 @@ function launchConfetti() {
 
 function answer(grade) {
   if (!session || !session.current) return; // tom kö/avslutat pass → kasta inte
+  if (grade === "paus") { pausaAktuelltOrd(); return; }
   const c = session.current;
   const dir = session.shownDir;
   // Statistik: räkna svar + unika kort i passet
@@ -3497,6 +3498,7 @@ const GRADE_CUE = {
   good: { sym: "✓", color: "#5bbf72", label: "kan" },
   easy: { sym: "⇈", color: "#f4c542", label: "kan bra" },
   hard: { sym: "⇊", color: "#b06bf0", label: "hopplöst" },
+  paus: { sym: "⏸", color: "#e0915a", label: "pausat" },
 };
 
 // fromHint = svepet hade redan tonat fram symbolen → bekräftelsen fortsätter från DEN
@@ -3606,11 +3608,31 @@ function clearSwipeHint() {
 // =========================================================================
 // quick = utlöst från ångra-knappen (medvetet tryck) → ingen paus, snabb inglidning.
 // Utan flaggan (skakning, röst, Klar-skärmen) behålls den långsamma varianten.
+// Pausa ordet som visas och gå vidare. Samma ångra-snapshot som ett svar, så ett
+// felsvep går att ta tillbaka – det är lätt gjort när man går. SRS rörs inte alls.
+function pausaAktuelltOrd() {
+  const c = session.current;
+  undoStack.push({ card: c, dir: session.shownDir, grade: "paus", pausad: true,
+                   queue: session.queue.slice(),
+                   gradedKey: c.id + ":" + session.shownDir,
+                   gradedHadKey: session.graded.has(c.id + ":" + session.shownDir),
+                   srs: [] });   // tomt: pausen ändrar ingen inlärning
+  if (undoStack.length > 40) undoStack.shift();
+  setOrdPausat(c, true);
+  track("ordpaus-pa/svep");
+  session.queue = session.queue.filter((x) => x.id !== c.id);
+  updateUndoBtn();
+  loadCard();
+}
+
 function undoLastAnswer(quick) {
   if (!session || animating) return false;
   const snap = undoStack.pop();
   if (!snap) return false;
   updateUndoBtn(); // tömdes stacken ska knappen bort direkt, inte om 1,5 s
+  // Ett ångrat PAUS-svep ska också släppa ordet fritt igen, annars ligger det kvar
+  // tyst trots att kortet kommer tillbaka i kön.
+  if (snap.pausad) setOrdPausat(snap.card, false);
   // Återställ SRS-poster (radera de som inte fanns före svaret)
   snap.srs.forEach(([k, v]) => { if (v === null) delete srs[k]; else srs[k] = v; });
   saveSRS();
@@ -3621,7 +3643,7 @@ function undoLastAnswer(quick) {
   showUndoFeedback(quick);
   loadCard(snap.dir);
   // Kortet glider tillbaka in från samma håll det lämnade (omvänd fly-out)
-  const inClass = { good: "in-right", easy: "in-up", hard: "in-down", fail: "in-left" }[snap.grade] || "in-up";
+  const inClass = { good: "in-right", easy: "in-up", hard: "in-down", paus: "in-down", fail: "in-left" }[snap.grade] || "in-up";
   card.classList.remove("emerge", "in-right", "in-left", "in-up", "in-down", "undo-quick");
   card.classList.toggle("undo-quick", !!quick);
   void card.offsetWidth;
@@ -4470,12 +4492,16 @@ const HINT_MIN = 14; // rörelse innan förhandsvisningen tänds – ett tapp sk
 // under draget och av beslutet vid släppet, så de aldrig kan säga emot varandra.
 // Ger samma utfall som den tidigare if-kedjan: dominerande axel avgör riktning,
 // och den axelns sträcka jämförs mot THRESH.
+// "paus" är inget betyg utan ett utfall: ordet tystas i stället för att graderas.
+// Det ersätter nedåtsvepet för profiler i PAUSORD_PROFILER – experimentellt, och
+// bara för svep. Rösten säger fortfarande "hopplöst" och betygsätter som förut.
+const LODRATA_SVEP = ["easy", "hard", "paus"];
 function swipeGrade(dx, dy) {
-  if (Math.abs(dy) > Math.abs(dx)) return dy < 0 ? "easy" : "hard";
+  if (Math.abs(dy) > Math.abs(dx)) return dy < 0 ? "easy" : (pausordPa() ? "paus" : "hard");
   return dx > 0 ? "good" : "fail";
 }
 function swipeAxis(grade, dx, dy) {
-  return (grade === "easy" || grade === "hard") ? Math.abs(dy) : Math.abs(dx);
+  return LODRATA_SVEP.includes(grade) ? Math.abs(dy) : Math.abs(dx);
 }
 function swipePassed(grade, dx, dy) { return swipeAxis(grade, dx, dy) > THRESH; }
 function swipeProgress(grade, dx, dy) { return Math.min(1, swipeAxis(grade, dx, dy) / THRESH); }
@@ -4506,7 +4532,8 @@ function snapBack() {
 
 function flyOut(grade) {
   animating = true;
-  const cls = grade === "good" ? "fly-right" : grade === "easy" ? "fly-up" : grade === "hard" ? "fly-down" : "fly-left";
+  const cls = grade === "good" ? "fly-right" : grade === "easy" ? "fly-up"
+            : (grade === "hard" || grade === "paus") ? "fly-down" : "fly-left";
   card.classList.add(cls);
   // animating spärrar BÅDE flipp (click) och svep (pointerdown). Släpps den inte är
   // kortet dött tills man lämnar passet – bakåtpilen fungerar, inget annat.
@@ -7843,7 +7870,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v433";
+const APP_VERSION = "v434";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och

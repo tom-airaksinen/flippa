@@ -198,3 +198,48 @@ test("release.py kör testsviten innan den säger klart", () => {
   const r = las("scripts/release.py");
   sant(/test\/kor\.mjs/.test(r), "testsviten körs inte av release.py");
 });
+
+grupp("Nedåtsvep = paus (experimentellt)");
+
+function svep(profil) {
+  return sandlada(
+    ["swipeGrade", "swipeAxis", "swipePassed", "swipeProgress", "pausordPa"].map((n) => funktion("app.js", n))
+      .concat([las("app.js").match(/const LODRATA_SVEP = \[[^\]]*\];/)[0]]),
+    { THRESH: 60, PAUSORD_PROFILER: ["tom"], currentUser: profil });
+}
+
+test("nedåt ger hopplöst för vanliga profiler", () => {
+  lika(svep("guest").swipeGrade(0, 100), "hard");
+});
+
+test("nedåt ger paus för profiler med funktionen", () => {
+  lika(svep("tom").swipeGrade(0, 100), "paus");
+});
+
+test("de andra tre svepen är oförändrade", () => {
+  const s = svep("tom");
+  lika([s.swipeGrade(100, 0), s.swipeGrade(-100, 0), s.swipeGrade(0, -100)],
+       ["good", "fail", "easy"]);
+});
+
+test("paus mäts på LODRÄT axel – annars nås tröskeln aldrig", () => {
+  // Missas detta mäts nedåtsvepet i sidled, och svepet känns trasigt.
+  const s = svep("tom");
+  lika(s.swipeAxis("paus", 5, 100), 100);
+  lika(s.swipePassed("paus", 5, 100), true);
+  lika(s.swipePassed("paus", 5, 20), false);
+});
+
+test("varje utfall har symbol och färg", () => {
+  const kod = las("app.js");
+  const tabell = kod.slice(kod.indexOf("const GRADE_CUE"), kod.indexOf("};", kod.indexOf("const GRADE_CUE")));
+  for (const g of ["fail", "good", "easy", "hard", "paus"])
+    sant(new RegExp(`\\b${g}:`).test(tabell), `${g} saknas i GRADE_CUE`);
+});
+
+test("ett ångrat paus-svep släpper ordet fritt igen", () => {
+  // Utan det ligger ordet kvar tyst trots att kortet kommer tillbaka i kön.
+  const kod = funktion("app.js", "undoLastAnswer");
+  sant(/snap\.pausad.*setOrdPausat\(snap\.card, false\)/s.test(kod),
+       "undoLastAnswer måste återuppta ett pausat ord");
+});
