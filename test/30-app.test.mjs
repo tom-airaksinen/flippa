@@ -142,6 +142,13 @@ function paus(profil) {
   return g;
 }
 
+test("paus-rostern är den vi tror – och gästen står inte med", () => {
+  const lista = JSON.parse(las("app.js").match(/const PAUSORD_PROFILER = (\[[^\]]*\]);/)[1].replace(/'/g, '"'));
+  lika(lista.includes("tom"), true, "tom ska ha paus");
+  lika(lista.includes("maria"), true, "maria ska ha paus");
+  lika(lista.includes("guest"), false, "gästen ska INTE få paus i stället för stjärnan");
+});
+
 test("paus är AV för andra profiler – gästerna behåller stjärnan", () => {
   const g = paus("guest");
   g.setOrdPausat({ front: "casă" }, true);
