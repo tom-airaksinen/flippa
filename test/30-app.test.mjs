@@ -251,3 +251,49 @@ test("ett ångrat paus-svep släpper ordet fritt igen", () => {
   sant(/snap\.pausad.*setOrdPausat\(snap\.card, false\)/s.test(kod),
        "undoLastAnswer måste återuppta ett pausat ord");
 });
+
+grupp("Ljudsession / playback (experimentellt)");
+
+// iOS tystar talsyntesen på ljudlöst. "playback" säger att ljudet är media och spelas
+// ändå – men är icke-mixande och stoppar musik i bakgrunden. Därför per profil.
+function ljud(profil, harApi = true) {
+  const session = harApi ? { type: "auto" } : null;
+  const g = sandlada([funktion("app.js", "playbackLjudPa"), funktion("app.js", "sattLjudsession")],
+    { PLAYBACK_PROFILER: ["tom"], currentUser: profil,
+      navigator: harApi ? { audioSession: session } : {} });
+  return { g, session };
+}
+
+test("playback slås på för profilen som utvärderar", () => {
+  const { g, session } = ljud("tom");
+  g.sattLjudsession();
+  lika(session.type, "playback");
+});
+
+test("andra profiler rörs inte – musiken ska överleva deras pass", () => {
+  for (const p of ["guest", "maria", "lucas"]) {
+    const { g, session } = ljud(p);
+    g.sattLjudsession();
+    lika(session.type, "auto", p + " ska ligga kvar på auto");
+  }
+});
+
+test("enhet utan audioSession kraschar inte", () => {
+  const { g } = ljud("tom", false);
+  g.sattLjudsession();   // får inte kasta – allt utom Safari 17+ saknar API:t
+});
+
+test("sessionen sätts både i gesten och vid varje uppläsning", () => {
+  sant(/sattLjudsession\(\)/.test(funktion("app.js", "unlockSpeech")),
+       "unlockSpeech måste sätta sessionen – iOS tar emot bytet bäst i en gest");
+  sant(/sattLjudsession\(\)/.test(funktion("app.js", "speak")),
+       "speak måste sätta sessionen – högtalarknappen går inte via unlockSpeech");
+  sant(/sattLjudsession\(\)/.test(funktion("app.js", "setUser")),
+       "setUser måste nollställa sessionen vid profilbyte");
+});
+
+test("playback-raden syns bara för profilen som kör experimentet", () => {
+  const kod = funktion("app.js", "playbackText");
+  sant(/playbackLjudPa\(\)/.test(kod), "raden måste vara grindad på profilen");
+  sant(/stöds ej/.test(kod), "saknas API:t måste det synas, annars misstolkas tystnaden");
+});

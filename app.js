@@ -170,6 +170,7 @@ function setUser(id) {
   currentUser = id;
   if (id) lsSet(USER_KEY, id); else localStorage.removeItem(USER_KEY);
   applyTheme();
+  sattLjudsession();   // lämnar man en playback-profil ska sessionen tillbaka till auto
   if (bytte) {
     // Måla direkt ur den nya profilens cache så bytet känns omedelbart, och flytta
     // sedan prenumerationen dit. Har profilen använts på enheten förut behövs ingen
@@ -3727,11 +3728,31 @@ const AUTO_SPEAK_KEY = "flippa-autospeak";
 let autoSpeak = localStorage.getItem(AUTO_SPEAK_KEY) !== "0";
 function saveAutoSpeak() { lsSet(AUTO_SPEAK_KEY, autoSpeak ? "1" : "0"); }
 
+// ---- Ljudsession (experimentellt, se PLAYBACK_PROFILER) --------------------
+// iOS tystar talsyntesen när ringreglaget står på ljudlöst: både autouppläsningen
+// och högtalarknappen blir stumma, oavsett volym. LjudFILER (<audio>) slipper undan,
+// talsyntesen gör det inte – så rumänska och spanska drabbas men persiskan inte.
+// navigator.audioSession (Safari 17+) låter sidan säga att ljudet är medieuppspelning,
+// och då spelas det även på ljudlöst.
+//
+// PRISET: "playback" är ICKE-MIXANDE. Musik eller podd i bakgrunden STOPPAS när appen
+// läser upp ett ord. Därför bara på utvalda profiler tills vi vet om bytet är värt det.
+const PLAYBACK_PROFILER = ["tom"];
+function playbackLjudPa() { return PLAYBACK_PROFILER.includes(currentUser); }
+// Finns API:t inte (allt utom Safari 17+) händer ingenting – appen beter sig som förut.
+function sattLjudsession() {
+  if (!navigator.audioSession) return;
+  const vill = playbackLjudPa() ? "playback" : "auto";
+  try { if (navigator.audioSession.type !== vill) navigator.audioSession.type = vill; }
+  catch (_) {}
+}
+
 // iOS låser talsyntesen tills speak() körts i en användargest. Ett tyst (volume:0)
 // uttalande i gesten låser upp den – annars blockeras första autouppspelningen, som
 // vid svep triggas i en fördröjd callback (flyOut → answer) utanför gesten. Kalla vid
 // passtart (klick-gesten) så första kortets uppläsning funkar även om man sveper direkt.
 function unlockSpeech() {
+  sattLjudsession();   // i gesten: iOS tar emot sessionsbytet bäst där
   if (!("speechSynthesis" in window)) return;
   try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (_) {}
 }
@@ -3820,6 +3841,7 @@ function playAudioFile(url, onEnd) {
 // dubbeltappet: ordet hinner börja på första tappet, och böjningen ska glida på efter
 // utan omstart. Allt annat avbryter som förut.
 function speak(text, lang, onEnd, koa) {
+  sattLjudsession();   // även högtalarknapp/långtryck, som inte går via unlockSpeech
   const talat = speakable(text);
   if (!talat) { if (onEnd) setTimeout(onEnd, 0); return; }
   // Finns ordet som färdig fil vinner den: enheten kanske saknar röst för språket,
@@ -7870,7 +7892,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v436";
+const APP_VERSION = "v437";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
@@ -7882,11 +7904,18 @@ function offlineText() {
   if (!offlineStatus || offlineStatus.har >= offlineStatus.av) return "";
   return ` · ⚠️ ${offlineStatus.av - offlineStatus.har} filer saknas offline`;
 }
+// Experimentet med ljudsessionen syns BARA för profilerna som har det påslaget.
+// Poängen är utvärderingen: saknar enheten API:t är tystnaden på ljudlöst oförändrad,
+// och utan den här raden skulle det se ut som att playback inte hjälpte.
+function playbackText() {
+  if (!playbackLjudPa()) return "";
+  return navigator.audioSession ? " · 🔊 playback" : " · 🔊 playback stöds ej här";
+}
 function renderVersionTag() {
   if (!versionTag) return;
   versionTag.textContent = availableVersion
     ? `Flippa ${APP_VERSION} → ${availableVersion} · tryck för att uppdatera`
-    : "Flippa " + APP_VERSION + offlineText();
+    : "Flippa " + APP_VERSION + offlineText() + playbackText();
   versionTag.classList.add("tappable");
   versionTag.classList.toggle("update-ready", !!availableVersion);
   // Finns en ny version är raden en uppdateringsknapp, annars versionshistoriken.
