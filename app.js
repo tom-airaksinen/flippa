@@ -758,7 +758,7 @@ function toggleFav(card) { const on = !isFav(card); setFavKey(cardKeyOf(card), o
 const PAUSORD_KEY = "flippa-pausade-ord-v1";   // profil → [ordnyckel]
 // Stjärnan byts mot paus BARA för de här profilerna. Gästerna kan använda stjärnan
 // och ska inte få en funktion de inte bett om.
-const PAUSORD_PROFILER = ["tom", "maria"];
+const PAUSORD_PROFILER = ["tom", "maria", "lucas"];
 function pausordPa() { return PAUSORD_PROFILER.includes(currentUser); }
 function pausadeOrd() { return loadLS(PAUSORD_KEY)[unitUser()] || []; }
 function ordPausat(card) {
@@ -7870,7 +7870,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v435";
+const APP_VERSION = "v436";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
