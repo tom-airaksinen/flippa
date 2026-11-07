@@ -10,6 +10,10 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "7 november 2026", ver: "v438", items: [
+    { t: "Orden läses upp även när telefonen står på ljudlöst – förut var både 🔊 och den automatiska uppläsningen stumma där, oavsett volym", type: "fixed", hi: true, ico: "🔇", desc: "Uppläsningen funkar nu på ljudlöst." },
+    { t: "Följden: spelar du musik eller podd pausas den när appen läser upp ett ord – stäng av Automatisk uppläsning så rörs bakgrundsljudet inte", type: "improved" },
+  ] },
   { date: "26 oktober 2026", ver: "v432", items: [
     { t: "Nytt på vissa konton: pausa enskilda ord i stället för att stjärnmärka. Ett pausat ord är tyst i alla pass men behåller sin inlärning", type: "new" },
   ] },

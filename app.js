@@ -170,7 +170,6 @@ function setUser(id) {
   currentUser = id;
   if (id) lsSet(USER_KEY, id); else localStorage.removeItem(USER_KEY);
   applyTheme();
-  sattLjudsession();   // lämnar man en playback-profil ska sessionen tillbaka till auto
   if (bytte) {
     // Måla direkt ur den nya profilens cache så bytet känns omedelbart, och flytta
     // sedan prenumerationen dit. Har profilen använts på enheten förut behövs ingen
@@ -3728,22 +3727,22 @@ const AUTO_SPEAK_KEY = "flippa-autospeak";
 let autoSpeak = localStorage.getItem(AUTO_SPEAK_KEY) !== "0";
 function saveAutoSpeak() { lsSet(AUTO_SPEAK_KEY, autoSpeak ? "1" : "0"); }
 
-// ---- Ljudsession (experimentellt, se PLAYBACK_PROFILER) --------------------
+// ---- Ljudsession -----------------------------------------------------------
 // iOS tystar talsyntesen när ringreglaget står på ljudlöst: både autouppläsningen
 // och högtalarknappen blir stumma, oavsett volym. LjudFILER (<audio>) slipper undan,
-// talsyntesen gör det inte – så rumänska och spanska drabbas men persiskan inte.
+// talsyntesen gör det inte – så rumänska och spanska drabbades men persiskan inte.
 // navigator.audioSession (Safari 17+) låter sidan säga att ljudet är medieuppspelning,
-// och då spelas det även på ljudlöst.
+// och då spelas det även på ljudlöst. Utvärderat på Toms konto v437, påslaget för
+// alla (gäster inräknade) i v438.
 //
-// PRISET: "playback" är ICKE-MIXANDE. Musik eller podd i bakgrunden STOPPAS när appen
-// läser upp ett ord. Därför bara på utvalda profiler tills vi vet om bytet är värt det.
-const PLAYBACK_PROFILER = ["tom"];
-function playbackLjudPa() { return PLAYBACK_PROFILER.includes(currentUser); }
+// OBS: "playback" är ICKE-MIXANDE – musik eller podd i bakgrunden stoppas. Därför
+// sätts sessionen LAT, först när appen faktiskt ska låta: den som kör med
+// autouppläsning av och aldrig rör högtalaren stör inte sin musik.
+//
 // Finns API:t inte (allt utom Safari 17+) händer ingenting – appen beter sig som förut.
 function sattLjudsession() {
   if (!navigator.audioSession) return;
-  const vill = playbackLjudPa() ? "playback" : "auto";
-  try { if (navigator.audioSession.type !== vill) navigator.audioSession.type = vill; }
+  try { if (navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback"; }
   catch (_) {}
 }
 
@@ -7892,7 +7891,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v437";
+const APP_VERSION = "v438";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
@@ -7904,18 +7903,11 @@ function offlineText() {
   if (!offlineStatus || offlineStatus.har >= offlineStatus.av) return "";
   return ` · ⚠️ ${offlineStatus.av - offlineStatus.har} filer saknas offline`;
 }
-// Experimentet med ljudsessionen syns BARA för profilerna som har det påslaget.
-// Poängen är utvärderingen: saknar enheten API:t är tystnaden på ljudlöst oförändrad,
-// och utan den här raden skulle det se ut som att playback inte hjälpte.
-function playbackText() {
-  if (!playbackLjudPa()) return "";
-  return navigator.audioSession ? " · 🔊 playback" : " · 🔊 playback stöds ej här";
-}
 function renderVersionTag() {
   if (!versionTag) return;
   versionTag.textContent = availableVersion
     ? `Flippa ${APP_VERSION} → ${availableVersion} · tryck för att uppdatera`
-    : "Flippa " + APP_VERSION + offlineText() + playbackText();
+    : "Flippa " + APP_VERSION + offlineText();
   versionTag.classList.add("tappable");
   versionTag.classList.toggle("update-ready", !!availableVersion);
   // Finns en ny version är raden en uppdateringsknapp, annars versionshistoriken.
