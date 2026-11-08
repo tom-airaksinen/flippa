@@ -11,19 +11,19 @@
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
   { date: "7 november 2026", ver: "v438", items: [
-    { t: "Orden läses upp även när telefonen står på ljudlöst – förut var både 🔊 och den automatiska uppläsningen stumma där, oavsett volym", type: "fixed", hi: true, ico: "🔇", desc: "Uppläsningen funkar nu på ljudlöst." },
+    { t: "Orden läses upp även när telefonen står på ljudlöst – förut var både 🔊 och den automatiska uppläsningen stumma där, oavsett volym", type: "fixed" },
     { t: "Följden: spelar du musik eller podd pausas den när appen läser upp ett ord – stäng av Automatisk uppläsning så rörs bakgrundsljudet inte", type: "improved" },
   ] },
   { date: "26 oktober 2026", ver: "v432", items: [
     { t: "Nytt på vissa konton: pausa enskilda ord i stället för att stjärnmärka. Ett pausat ord är tyst i alla pass men behåller sin inlärning", type: "new" },
   ] },
   { date: "25 oktober 2026", ver: "v430", items: [
-    { t: "Appen startar igen utan nät – offline visade tidigare en felsida i stället för dina ord", type: "fixed", hi: true, ico: "✈️", desc: "Flippa fungerar på flygplanet igen." },
+    { t: "Appen startar igen utan nät – offline visade tidigare en felsida i stället för dina ord", type: "fixed" },
     { t: "Versionsraden under Inställningar → Om visar nu om appen är sparad för offline", type: "new" },
   ] },
   { date: "16 oktober 2026", ver: "v426", items: [
     { t: "Slå upp: byter du riktning slås ordet upp igen direkt – du behöver inte trycka på förstoringsglaset", type: "improved" },
-    { t: "Adjektiv får nu sina former som en serie (nou, nouă, noi) så man ser om pluralen är en eller två former", type: "improved", hi: true, ico: "📐", desc: "Rumänska adjektiv har fått sina böjningsserier ifyllda." },
+    { t: "Adjektiv får nu sina former som en serie (nou, nouă, noi) så man ser om pluralen är en eller två former", type: "improved" },
     { t: "Håll in kortet läser bara upp när den utländska sidan syns – inte från svenska sidan", type: "fixed" },
   ] },
   { date: "15 oktober 2026", ver: "v424", items: [
