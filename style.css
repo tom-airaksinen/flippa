@@ -771,6 +771,8 @@ body.tabbar-on #app-main { padding-bottom: var(--tabbar-h, 56px); }
   .st-period-thumb { transition: none; }
 }
 .opt-sub { color: var(--muted); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.04em; margin: 12px 2px 8px; }
+/* Första rubriken sitter mot panelens egen padding – 12 px till blir en glipa. */
+.opt-sub:first-child { margin-top: 2px; }
 .opt-note { color: var(--muted); font-size: 0.72rem; margin: 8px 2px 0; line-height: 1.4; }
 .opt-toggle-row {
   display: flex; align-items: center; justify-content: space-between; gap: 10px;
