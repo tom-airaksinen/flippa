@@ -296,3 +296,30 @@ test("inget profilberoende blev kvar i ljudsessionen", () => {
   sant(!/playback/.test(funktion("app.js", "renderVersionTag")),
        "versionsraden ska inte nämna playback");
 });
+
+grupp("Stjärnfokus vs paus");
+
+test("fokuspasset gäller inte för profiler som har paus i stället för stjärna", () => {
+  // Hade man "Endast stjärnord" påslaget före bytet låg filtret annars kvar och
+  // tömde passen – utan att det fanns något reglage kvar att stänga av det med.
+  const g = sandlada([funktion("app.js", "onlyStarred"), funktion("app.js", "pausordPa")],
+    { ONLY_STARRED_KEY: "k", PAUSORD_PROFILER: ["tom"], currentUser: "tom",
+      localStorage: { getItem: () => "1" } });
+  lika(g.onlyStarred(), false, "stjärnfokus måste vara avstängt när stjärnan är borta");
+});
+
+test("fokuspasset fungerar som förut för alla andra", () => {
+  const g = sandlada([funktion("app.js", "onlyStarred"), funktion("app.js", "pausordPa")],
+    { ONLY_STARRED_KEY: "k", PAUSORD_PROFILER: ["tom"], currentUser: "guest",
+      localStorage: { getItem: () => "1" } });
+  lika(g.onlyStarred(), true);
+});
+
+test("raden döljs i passinställningarna, inte bara reglaget", () => {
+  const kod = funktion("app.js", "syncOptionPills");
+  sant(/only-starred-row[\s\S]*pausordPa\(\)/.test(kod), "hela raden måste döljas");
+  sant(/only-starred-note[\s\S]*pausordPa\(\)/.test(kod), "förklaringstexten måste döljas med");
+  const html = las("index.html");
+  sant(/id="only-starred-row"/.test(html) && /id="only-starred-note"/.test(html),
+       "id:na saknas i markupen – då döljs ingenting");
+});

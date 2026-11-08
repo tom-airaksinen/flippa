@@ -2537,7 +2537,14 @@ function sessionLimit() {
 
 // ---- Fokuspass: bara stjärnmärkta ord (förfallna) i "Dags att öva" ----
 const ONLY_STARRED_KEY = "flippa-only-starred";
-function onlyStarred() { return localStorage.getItem(ONLY_STARRED_KEY) === "1"; }
+// Profiler med PAUS i stället för stjärna har ingen stjärna att fokusera på. Inställningen
+// döljs för dem (se syncOptionPills) – men den måste också sluta GÄLLA: hade man
+// fokuspasset påslaget innan bytet låg det annars kvar och filtrerade bort nästan allt,
+// osynligt, utan någon reglage att hitta.
+function onlyStarred() {
+  if (pausordPa()) return false;
+  return localStorage.getItem(ONLY_STARRED_KEY) === "1";
+}
 const onlyStarredToggle = $("only-starred-toggle");
 onlyStarredToggle.checked = onlyStarred();
 onlyStarredToggle.addEventListener("change", () => {
@@ -2590,6 +2597,9 @@ function syncOptionPills() {
   const dots = pf ? ' <span class="limit-dots">' + [1, 2, 3].map((l) => `<i class="p${l}${pf.includes(l) ? "" : " off"}"></i>`).join("") + "</span>" : "";
   $("limit-val").innerHTML = esc(sessionLimitSel.value) + (onlyStarred() ? " ⭐" : "") + dots;
   if (onlyStarredToggle.checked !== onlyStarred()) onlyStarredToggle.checked = onlyStarred();
+  // Stjärnan är utbytt mot paus för vissa profiler – då hör fokuspasset inte hit.
+  $("only-starred-row").classList.toggle("hidden", pausordPa());
+  $("only-starred-note").classList.toggle("hidden", pausordPa());
   dirChooser.querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === dirSelect.value));
   $("limit-segs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", b.dataset.v === sessionLimitSel.value));
   const npd = String(newPerDay());
@@ -7891,7 +7901,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v438";
+const APP_VERSION = "v439";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och

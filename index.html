@@ -119,14 +119,14 @@
           <button type="button" data-v="30">30</button>
         </div>
         <p class="opt-note">Höjer du antalet gäller det direkt; sänker du gäller det från imorgon</p>
-        <div class="opt-toggle-row">
+        <div class="opt-toggle-row" id="only-starred-row">
           <span>⭐ Endast stjärnord</span>
           <label class="switch">
             <input type="checkbox" id="only-starred-toggle" />
             <span class="slider"></span>
           </label>
         </div>
-        <p class="opt-note">Fokuspass: bara dina stjärnmärkta ord som är förfallna. Nya ord introduceras som vanligt.</p>
+        <p class="opt-note" id="only-starred-note">Fokuspass: bara dina stjärnmärkta ord som är förfallna. Nya ord introduceras som vanligt.</p>
         <div class="opt-sub">Prio</div>
         <div class="prio-filter" id="prio-filter">
           <button type="button" data-lvl="1"><span class="prio-dot p1"></span>Prio 1<small>Kärna</small></button>
@@ -403,7 +403,7 @@
           <h3>Vad betyder prio 1, 2 och 3?</h3>
           <p><b>1 Kärna</b>, <b>2 Vanlig</b>, <b>3 Nisch</b>. Filtrera på prio under KORT/PASS så övar du det viktigaste först – bortvalda nivåer är helt tysta.</p>
           <p class="help-note">Stjärnmärk ord (☆) och slå på <b>Endast stjärnord</b> för ett fokuspass.</p>
-          <p class="help-note">På vissa konton är stjärnan utbytt mot <b>paus</b> (experimentellt): ett pausat ord hoppas över i alla pass och försvinner direkt ur det pågående. Där betyder <b>👇 nedåt</b> pausa i stället för hopplöst. Inlärningen ligger kvar – återuppta med ▶ i ordlistan så fortsätter ordet där det var, och ↩ Ångra tar tillbaka ett felsvep.</p>
+          <p class="help-note">På vissa konton är stjärnan utbytt mot <b>paus</b> (experimentellt): ett pausat ord hoppas över i alla pass och försvinner direkt ur det pågående. Där betyder <b>👇 nedåt</b> pausa i stället för hopplöst. Inlärningen ligger kvar – återuppta med ▶ i ordlistan så fortsätter ordet där det var, och ↩ Ångra tar tillbaka ett felsvep. <b>Endast stjärnord</b> finns då inte under KORT/PASS, eftersom det inte finns några stjärnor att fokusera på.</p>
         </div>
       </details>
 
