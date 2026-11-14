@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "14 november 2026", ver: "v442", items: [
+    { t: "Fixat: appen kunde ibland rita sig för kort – gloskortet blev nästan kvadratiskt och en tom remsa låg kvar i nederkanten tills man bytte skärm", type: "fixed" },
+  ] },
   { date: "7 november 2026", ver: "v438", items: [
     { t: "Orden läses upp även när telefonen står på ljudlöst – förut var både 🔊 och den automatiska uppläsningen stumma där, oavsett volym", type: "fixed" },
     { t: "Följden: spelar du musik eller podd pausas den när appen läser upp ett ord – stäng av Automatisk uppläsning så rörs bakgrundsljudet inte", type: "improved" },

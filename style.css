@@ -76,8 +76,10 @@ body {
   display: flex;
   flex-direction: column;
   /* min-height (inte height) så body alltid fyller skärmen på iOS standalone-PWA –
-     height:100dvh kan där resolvas till mindre än skärmen och lämna tomrum nedtill */
-  min-height: 100dvh;
+     height:100dvh kan där resolvas till mindre än skärmen och lämna tomrum nedtill.
+     --app-h sätts av latchAppHeight() NÄR 100dvh ändå resolvar för kort (se app.js);
+     går dvh rätt är variabeln osatt och fallbacken gäller. */
+  min-height: var(--app-h, 100dvh);
   /* Ingen safe-area nedtill på body – innehållet/bakgrunden får gå hela vägen ner.
      Varje skärms understa element (listor, träningsfoten, version-taggen) lägger
      själv till safe-area som inre utfyllnad, annars blev det dubbelt → stort gap. */

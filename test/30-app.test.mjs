@@ -323,3 +323,56 @@ test("raden döljs i passinställningarna, inte bara reglaget", () => {
   sant(/id="only-starred-row"/.test(html) && /id="only-starred-note"/.test(html),
        "id:na saknas i markupen – då döljs ingenting");
 });
+
+grupp("Skärmhöjd (iOS standalone)");
+
+function hojd(innerHeight, bodyHeight) {
+  let satt = null;
+  const el = {
+    style: {
+      setProperty: (k, v) => { if (k === "--app-h") satt = v; },
+      removeProperty: (k) => { if (k === "--app-h") satt = null; },
+    },
+  };
+  const g = sandlada([funktion("app.js", "latchAppHeight")],
+    { APP_H_TROSKEL: 24, window: { innerHeight },
+      document: { documentElement: el, body: { getBoundingClientRect: () => ({ height: bodyHeight }) } } });
+  g.latchAppHeight();
+  return satt;
+}
+
+test("för kort dvh rättas till skärmens verkliga höjd", () => {
+  // Symptomet: gloskortet nästan kvadratiskt och en tom remsa i botten.
+  lika(hojd(844, 640), "844px");
+});
+
+test("rätt dvh lämnas i fred", () => {
+  lika(hojd(844, 844), null, "ingen override när layouten redan stämmer");
+});
+
+test("småskillnader skriver inte över en korrekt layout", () => {
+  lika(hojd(844, 830), null, "14 px är avrundning, inte buggen");
+});
+
+test("en body som är HÖGRE än skärmen rörs inte", () => {
+  lika(hojd(844, 1200), null);
+});
+
+test("mätningen görs utan vårt eget värde", () => {
+  // Annars jämförs höjden med sig själv och låses fast när iOS börjat svara rätt.
+  const kod = funktion("app.js", "latchAppHeight");
+  sant(kod.indexOf("removeProperty") < kod.indexOf("getBoundingClientRect"),
+       "--app-h måste tas bort innan höjden mäts");
+});
+
+test("body hänger på --app-h med 100dvh som fallback", () => {
+  sant(/min-height:\s*var\(--app-h,\s*100dvh\)/.test(las("style.css")),
+       "utan fallbacken är layouten beroende av att JS hinner köra");
+});
+
+test("skärmbyte utan show() uppdaterar både flikfält och höjd", () => {
+  // undoFromCongrats byter skärm för hand och missade updateTabbar helt.
+  const kod = funktion("app.js", "undoFromCongrats");
+  sant(/updateTabbar\(\)/.test(kod), "flikfältet måste uppdateras");
+  sant(/latchAppHeight\(\)/.test(kod), "höjden måste mätas om");
+});

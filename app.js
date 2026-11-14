@@ -1436,6 +1436,7 @@ function show(screenName) {
     setOnlyScreen(screenName);
     shownScreen = screenName;
     updateTabbar();
+    latchAppHeight();
     updatePendingStatus();
     return;
   }
@@ -1460,6 +1461,7 @@ function show(screenName) {
   outEl.style.opacity = "0";
   shownScreen = screenName;
   updateTabbar();
+  latchAppHeight();
   updatePendingStatus();
 
   const cleanup = () => {
@@ -1525,12 +1527,35 @@ function latchSafeArea() {
   const capped = Math.min(v, 36);
   if (capped > 0 && capped > cur) document.documentElement.style.setProperty("--sab", capped + "px");
 }
+// Samma familj av iOS-bugg, men för HELA skalet: i standalone-läge kan 100dvh
+// resolva till mindre än skärmen efter en kallstart. Allt hänger på body-höjden
+// (body → #app-main → .screen → .card-area är en kedja av flex:1), så blir den för
+// kort trycks gloskortet ihop till nästan kvadratiskt och en tom remsa blir kvar
+// nedtill. Det självläker vid nästa navigering, vilket gör det svårt att fånga.
+//
+// window.innerHeight är rätt även när dvh är fel. Mät skillnaden och sätt --app-h
+// BARA när den är verklig: går dvh rätt tas variabeln bort och ingenting ändras.
+// Tröskeln skyddar mot att avrundning får oss att skriva över en korrekt layout.
+const APP_H_TROSKEL = 24;
+function latchAppHeight() {
+  const vh = Math.round(window.innerHeight);
+  if (!vh) return;
+  // Mät alltid UTAN vårt eget värde, annars jämför vi med oss själva och låser fast
+  // en höjd som aldrig släpper när iOS väl börjat svara rätt.
+  document.documentElement.style.removeProperty("--app-h");
+  const faktisk = Math.round(document.body.getBoundingClientRect().height);
+  if (vh - faktisk > APP_H_TROSKEL) {
+    document.documentElement.style.setProperty("--app-h", vh + "px");
+  }
+}
+
 latchSafeArea();
+latchAppHeight();
 ["resize", "orientationchange", "pageshow"].forEach((ev) =>
-  window.addEventListener(ev, () => { latchSafeArea(); updateTabbar(); }));
+  window.addEventListener(ev, () => { latchSafeArea(); latchAppHeight(); updateTabbar(); }));
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  latchSafeArea(); updateTabbar();
+  latchSafeArea(); latchAppHeight(); updateTabbar();
   // Appen kan ha legat i bakgrunden medan nya uttalsfiler publicerades.
   if (currentSubject) loadAudioMap(subjectLang(currentSubject));
 });
@@ -3290,6 +3315,9 @@ function undoFromCongrats() {
   setOnlyScreen("training"); // direkt byte – kortets in-glidning är feedbacken
   shownScreen = "training";
   activeScreen = "training";
+  // Skärmen byts utan show(), så flikfältet och höjdmätningen måste uppdateras här.
+  updateTabbar();
+  latchAppHeight();
   updateAutospeakRow();
   if (resumeHF) {
     // Återuppta handsfree: loadCard (i undoLastAnswer) läser då upp kortet och lyssnar.
@@ -7901,7 +7929,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v441";
+const APP_VERSION = "v442";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
