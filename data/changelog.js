@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "24 november 2026", ver: "v443", items: [
+    { t: "Ukrainska har fått sitt första färdiga paket, på prov: flyg, tåg, båt och färja – 115 ord med verbformer och fraser.", type: "new" },
+  ] },
   { date: "14 november 2026", ver: "v442", items: [
     { t: "Fixat: appen kunde ibland rita sig för kort – gloskortet blev nästan kvadratiskt och en tom remsa låg kvar i nederkanten tills man bytte skärm", type: "fixed" },
   ] },

@@ -1,0 +1,121 @@
+# namn: Flyg, tåg, båt & färja
+# Språkneutral master. Rader: id;svenska;engelska nyckelord;prio;klass
+#   engelska nyckelord (a|b|c) används bara för kontroll mot ordboken – syns aldrig i appen
+#   klass: s substantiv · v verb · a adjektiv · f fras eller flerordsuttryck
+# lokalt per språk: vagnsklasser och liggplatser, lokaltåg, landets tågbolag, det man möter ombord
+
+# --- resa i allmänhet ---
+resa;resa;journey|travel|trip;1;s
+tur;kortare resa, tur;trip|journey;2;s
+resa-v;att resa;travel;1;v
+biljett;biljett;ticket;1;s
+enkelbiljett;enkelbiljett;;2;f
+tur-retur;tur och retur;;2;f
+kopa;att köpa;buy;1;v
+boka;att boka;book|reserve;1;v
+bokning;bokning;booking|reservation;2;s
+plats;plats, sittplats;place|seat;1;s
+ledig;ledig;free|vacant;1;a
+upptagen;upptagen;busy|occupied;2;a
+bagage;bagage;luggage|baggage;1;s
+resvaska;resväska;suitcase;1;s
+vaska;väska;bag;1;s
+ryggsack;ryggsäck;backpack|rucksack;2;s
+pass;pass;passport;1;s
+passagerare;passagerare;passenger;2;s
+tidtabell;tidtabell;timetable|schedule;1;s
+avgang;avgång;departure;1;s
+ankomst;ankomst;arrival;1;s
+forsening;försening;delay;1;s
+bli-forsenad;att bli försenad, komma för sent;late;2;v
+installd;inställd;cancel;2;a
+vanta;att vänta;wait;1;v
+aka;att åka (med fordon);go|ride|drive;1;v
+komma-fram;att komma fram (med fordon);arrive|come;1;v
+avga;att avgå, ge sig av;depart|set off|leave;2;v
+byta;att byta (tåg, buss);change|transfer;2;v
+byte;byte;transfer|change;2;s
+stiga-pa;att stiga på;board|get on|sit;2;v
+stiga-av;att stiga av, gå ut;exit|go out|get off;2;v
+ingang;ingång;entrance|entry;1;s
+utgang;utgång;exit;1;s
+kassa;biljettlucka, kassa;ticket office|cash|till|checkout|box office;1;s
+ko;kö;queue|line;2;s
+upplysning;upplysning, information;information|inquiry;2;s
+grans;gräns;border;2;s
+tull;tull;customs;2;s
+passkontroll;passkontroll;;2;f
+
+# --- tåg ---
+tag;tåg;train;1;s
+jarnvagsstation;järnvägsstation;station;1;s
+station;station (tåg, tunnelbana);station;1;s
+perrong;perrong;platform;1;s
+spar;spår;track;1;s
+vagn;vagn;carriage|car|wagon|coach;1;s
+kupe;kupé;compartment;2;s
+sovvagn;sovvagn;;2;f
+restaurangvagn;restaurangvagn;;3;f
+tagvard;tågvärd, konduktör;conductor|attendant;2;s
+nattag;nattåg;;2;f
+snabbtag;snabbtåg;;2;f
+tunnelbana;tunnelbana;metro|subway|underground;1;s
+jarnvag;järnväg;railway|railroad;2;s
+nasta-station;nästa station;;1;f
+slutstation;slutstation;;2;f
+
+# --- flyg ---
+flygplan;flygplan;airplane|aeroplane|plane|aircraft;1;s
+flygplats;flygplats;airport;1;s
+flyg;flyg (en viss avgång);flight|voyage|trip|run;1;s
+flyga;att flyga;fly;1;v
+flygbolag;flygbolag;airline;2;s
+terminal;terminal;terminal;2;s
+gate;gate;;2;f
+incheckning;incheckning;registration|check-in;1;s
+boardingkort;boardingkort;;1;f
+ombordstigning;ombordstigning;boarding|landing;2;s
+sakerhetskontroll;säkerhetskontroll;;2;f
+handbagage;handbagage;;2;f
+bagageutlamning;bagageutlämning;;2;f
+direktflyg;direktflyg;;2;f
+fonsterplats;fönsterplats;;2;f
+gangplats;gångplats;;3;f
+sakerhetsbalte;säkerhetsbälte;;2;f
+start;start, lyft;takeoff|take-off|ascent;3;s
+landning;landning;landing;3;s
+pilot;pilot;pilot;3;s
+flygvardinna;flygvärdinna;stewardess|flight attendant;3;s
+
+# --- båt & färja ---
+bat;båt;boat;1;s
+fartyg;fartyg, skepp;ship|vessel;1;s
+farja;färja;ferry;1;s
+hamn;hamn;port|harbour|harbor;1;s
+kaj;kaj, brygga;pier|wharf|quay|berth|mooring|dock;2;s
+hytt;hytt;cabin;2;s
+dack;däck;deck;2;s
+aka-bat;att åka båt, segla, simma;swim|sail|float;2;v
+ombord;ombord;;2;f
+flytvast;flytväst;;2;f
+overfart;överfart;crossing|ferry;3;s
+kapten;kapten;captain;3;s
+sjosjuka;sjösjuka;;3;f
+kryssning;kryssning;cruise;3;s
+segelbat;segelbåt;sailboat|sailing;3;s
+
+# --- fraser ---
+f-en-biljett;En biljett till …, tack.;;1;f
+f-nar-gar-taget;När går tåget?;;1;f
+f-var-kopa;Var kan jag köpa biljett?;;1;f
+f-vad-kostar;Hur mycket kostar en biljett?;;1;f
+f-ledig-plats;Är den här platsen ledig?;;1;f
+f-var-utgang;Var är utgången?;;1;f
+f-trevlig-resa;Trevlig resa!;;1;f
+f-vilken-perrong;Från vilken perrong?;;2;f
+f-gar-taget-till;Går det här tåget till …?;;2;f
+f-var-byta;Var ska jag byta?;;2;f
+f-taget-forsenat;Tåget är försenat.;;2;f
+f-missat-taget;Jag har missat tåget.;;2;f
+f-har-bokning;Jag har en bokning.;;2;f
+f-hur-lang-tid;Hur lång tid tar resan?;;3;f
