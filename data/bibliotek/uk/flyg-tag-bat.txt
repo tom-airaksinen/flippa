@@ -1,6 +1,7 @@
 # Ukrainska till master/flyg-tag-bat.txt
-# Kärnrader:  id;ukrainska;minnesregel;svenska (bara när masterns svenska ska bytas, t.ex. ortnamn)
-# Lokala ord: +;ukrainska;svenska;prio;minnesregel
+# Kärnrader:  id;ukrainska;svenska (bara när masterns svenska ska bytas, t.ex. ortnamn)
+# Lokala ord: +;ukrainska;svenska;prio
+# Ingen minnesregel i paketen: fältet är inlärarens eget minnesknep, inte en plats för förklaringar.
 # Genusmarkör och verbformer hämtas ur ordboken av scripts/bygg-paket.py. Skriv dem här –
 # "ord (n)" eller "ord {böjning}" – bara när ordboken saknar ordet.
 # Ingen betoning på korten (beslut 2026-11-24): den lärs via uppläsningen.
@@ -11,7 +12,7 @@ tur;поїздка
 resa-v;подорожувати
 biljett;квиток
 enkelbiljett;квиток в один бік
-tur-retur;туди й назад;Квиток туди й назад = tur- och returbiljett.
+tur-retur;туди й назад
 kopa;купувати
 boka;бронювати
 bokning;бронювання
@@ -36,28 +37,28 @@ komma-fram;приїжджати
 avga;відправлятися
 byta;пересідати {пересідаю, пересідаєш, пересідають · perf. пересісти}
 byte;пересадка
-stiga-pa;сідати;Betyder egentligen sätta sig – man "sätter sig på" tåget.
+stiga-pa;сідати
 stiga-av;виходити
 ingang;вхід
 utgang;вихід
 kassa;каса
 ko;черга
-upplysning;довідка;Skylten Довідка på stationer. Ordet betyder också intyg.
+upplysning;довідка
 grans;кордон
 tull;митниця
 passkontroll;паспортний контроль
 
 # --- tåg ---
-tag;поїзд;Потяг är lika vanligt och betyder samma sak.
+tag;поїзд
 jarnvagsstation;вокзал
 station;станція
 perrong;платформа
 spar;колія
 vagn;вагон
-kupe;купе;På nattåg: stängd kupé med fyra bäddar.
+kupe;купе
 sovvagn;спальний вагон
 restaurangvagn;вагон-ресторан
-tagvard;провідник;Varje sovvagn har sin egen värd som kollar biljetter och delar ut sängkläder.
+tagvard;провідник
 nattag;нічний поїзд
 snabbtag;швидкісний поїзд
 tunnelbana;метро
@@ -69,13 +70,13 @@ slutstation;кінцева станція
 flygplan;літак
 flygplats;аеропорт
 flyg;рейс
-flyga;летіти;Летіти är en bestämd resa åt ett håll. Flyga i allmänhet heter літати.
+flyga;летіти
 flygbolag;авіакомпанія
 terminal;термінал
 gate;вихід на посадку
 incheckning;реєстрація
 boardingkort;посадковий талон
-ombordstigning;посадка;Samma ord används för landning.
+ombordstigning;посадка
 sakerhetskontroll;контроль безпеки
 handbagage;ручна поклажа
 bagageutlamning;видача багажу
@@ -106,7 +107,7 @@ kryssning;круїз
 segelbat;вітрильник
 
 # --- fraser ---
-f-en-biljett;Один квиток до Львова, будь ласка.;;En biljett till Lviv, tack.
+f-en-biljett;Один квиток до Львова, будь ласка.;En biljett till Lviv, tack.
 f-nar-gar-taget;Коли відправляється поїзд?
 f-var-kopa;Де можна купити квиток?
 f-vad-kostar;Скільки коштує квиток?
@@ -114,20 +115,20 @@ f-ledig-plats;Це місце вільне?
 f-var-utgang;Де вихід?
 f-trevlig-resa;Щасливої дороги!
 f-vilken-perrong;З якої платформи?
-f-gar-taget-till;Цей поїзд їде до Києва?;;Går det här tåget till Kyiv?
+f-gar-taget-till;Цей поїзд їде до Києва?;Går det här tåget till Kyiv?
 f-var-byta;Де мені пересідати?
 f-taget-forsenat;Поїзд запізнюється.
-f-missat-taget;Я запізнився на поїзд.;En kvinna säger запізнилася.
+f-missat-taget;Я запізнився на поїзд.
 f-har-bokning;У мене є бронювання.
 f-hur-lang-tid;Скільки триває поїздка?
 
 # --- lokalt: ukrainska tåg ---
-+;Укрзалізниця;Ukrainas statliga järnväg;2;Förkortas УЗ.
-+;Інтерсіті;Intercity (snabbtåg dagtid);2;Snabbtågen med sittvagnar mellan storstäderna.
-+;електричка;lokaltåg, pendeltåg;2;Eldrivet regionaltåg – billigt och långsamt.
-+;плацкарт;öppen sovvagn (billigaste liggplatsen);2;Bäddar i öppen vagn utan kupédörrar.
-+;люкс;tvåbäddskupé (dyraste klassen);3;Kallas också СВ, av спальний вагон.
++;Укрзалізниця;Ukrainas statliga järnväg;2
++;Інтерсіті;Intercity (snabbtåg dagtid);2
++;електричка;lokaltåg, pendeltåg;2
++;плацкарт;öppen sovvagn (billigaste liggplatsen);2
++;люкс;tvåbäddskupé (dyraste klassen);3
 +;верхня полиця;överbädd;3
 +;нижня полиця;underbädd;3
-+;постіль;sängkläder;3;Delas ut av tågvärden på nattåget.
-+;підстаканник;teglashållare av metall;3;Klassikern ombord: te i glas med metallhållare.
++;постіль;sängkläder;3
++;підстаканник;teglashållare av metall;3

@@ -54,8 +54,7 @@ ovanligt**, och **lokal krydda** vägs in på nivå 2–3.
 ## Generisk kärna + lokal krydda
 - **Språkoberoende master** per topic×nivå (engelska koncept) → konsekvens, delas
   mellan språk.
-- Per språk: översätt mastern **och** lägg till lokala ord på nivå 2–3 (grönt te i
-  japanska, saltimbocca i italienska) med **minnesregel** som förklarar.
+- Per språk: översätt mastern **och** lägg till lokala ord på nivå 2–3 (grönt te i japanska, saltimbocca i italienska). Behöver ordet förklaras står förklaringen i den svenska översättningen – **aldrig i minnesregeln** (se konventionerna).
 - Lokalt vävs in i nivå 2–3; bryt ev. ut "Kultur & lokalt" om det blir mycket.
 
 ## Produktionspipeline (AI per språk)
@@ -70,7 +69,7 @@ ovanligt**, och **lokal krydda** vägs in på nivå 2–3.
 ## Konventioner för det genererade innehållet
 - **Utländska sidan behåller artikel** (för genus): `il treno`, `la moglie`.
 - **Svenska sidan i obestämd form** för rena substantiv: `hund`, inte `hunden`.
-- `favorit` lämnas tom. `minnesregel` används för kulturella/svåra ord.
+- `favorit` lämnas tom. **`minnesregel` lämnas alltid tom.** Fältet är inlärarens eget knep för att komma ihåg ordet, inte en plats för kommentarer, kontext eller förklaringar. Det fylls i av den som flippar. (Tom 2026-09, igen 2026-11-25; `scripts/bygg-paket.py` stoppar bygget och testsviten faller om ett paket bär minnesregel.)
 - UTF-8, bevara accenter. Fält med `;` eller `,` omsluts med `"`.
 
 ## App-roadmap (efter pilot)
@@ -110,9 +109,7 @@ Kör per språk och topic (eller be om flera topics i ett svep). Byt ut
 > - **svenska** = svensk översättning i **obestämd form** för rena substantiv
 >   (`hund`, inte `hunden`). Fraser/verb/adjektiv lämnas naturliga.
 > - **favorit** = lämna tomt.
-> - **minnesregel** = lämna oftast tomt; fyll i för **lokala/kulturella eller svåra**
->   ord med en kort förklaring (t.ex. `saltimbocca;saltimbocca;;kalvkött med
->   salvia och prosciutto`).
+> - **minnesregel** = lämna ALLTID tomt. Behöver ett lokalt/kulturellt ord förklaras skrivs förklaringen i den svenska översättningen (t.ex. `saltimbocca;saltimbocca (kalvkött med salvia och prosciutto);;`).
 > - Generiskt → specifikt och frekvent → ovanligt uppåt i nivåerna. Undvik dubbletter
 >   mellan nivåerna.
 > - Bevara accenter, spara som UTF-8. Omslut fält som innehåller `;` eller `,` med

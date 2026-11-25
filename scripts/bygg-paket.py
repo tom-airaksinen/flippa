@@ -7,8 +7,8 @@
 
 Källor (data/bibliotek/):
   master/<lektion>.txt    id;svenska;engelska nyckelord;prio;klass     (alla språk)
-  <språk>/<lektion>.txt   id;ord;minnesregel;svenska                   (kärnrader)
-                          +;ord;svenska;prio;minnesregel               (lokala ord)
+  <språk>/<lektion>.txt   id;ord;svenska (bara när masterns ska bytas)  (kärnrader)
+                          +;ord;svenska;prio                           (lokala ord)
   <språk>/paket.json      id, namn, beskrivning, ikon
 
 Samma princip som ro-former.py: modellen väljer ordet, ordboken bestämmer formerna.
@@ -19,6 +19,10 @@ STOPPAR bygget:  kärn-id utan översättning · okänt id · dubblerad framsida
                  verb som saknas i ordboken (formerna går då inte att fylla i)
 VARNAR bara:     ord som saknas i ordboken · betydelsen matchar inte nyckelorden ·
                  okänt ord inuti en fras
+
+Paketen bär ALDRIG minnesregel. Det fältet är inlärarens eget knep för att minnas
+ordet, inte en plats för förklaringar – en rad med ett extra fält stoppar bygget.
+Behöver ett ord förklaras hör det hemma i den svenska översättningen.
 
 Bara ukrainska har språkregler än så länge (genusmarkör, presens + aspektpar).
 Dumpen ligger i gnugga/scripts/raw/ (ej i git), bredvid rumänskans.
@@ -117,13 +121,15 @@ def las(lang):
             master[f[0]] = {"sv": f[1], "en": [k for k in f[2].lower().split("|") if k], "p": int(f[3]), "kl": f[4]}
         over, lokala = {}, []
         for nr, f in rader(sfil):
-            f += [""] * 5
+            if any(f[4 if f[0] == "+" else 3:]):
+                fel.append(f"{lang}/{stam}:{nr}: för många fält – paketen bär ingen minnesregel"); continue
+            f += [""] * 4
             if f[0] == "+":
-                if not f[1] or not f[2] or f[3] not in ("1", "2", "3"): fel.append(f"{lang}/{stam}:{nr}: lokal rad ska vara +;ord;svenska;prio;minnesregel")
-                else: lokala.append({"ord": f[1], "sv": f[2], "p": int(f[3]), "h": f[4], "kl": "f" if " " in f[1] else "s", "en": []})
+                if not f[1] or not f[2] or f[3] not in ("1", "2", "3"): fel.append(f"{lang}/{stam}:{nr}: lokal rad ska vara +;ord;svenska;prio")
+                else: lokala.append({"ord": f[1], "sv": f[2], "p": int(f[3]), "kl": "f" if " " in f[1] else "s", "en": []})
             elif f[0] not in master: fel.append(f"{lang}/{stam}:{nr}: okänt id '{f[0]}'")
             elif not f[1]: fel.append(f"{lang}/{stam}:{nr}: '{f[0]}' saknar ord")
-            else: over[f[0]] = {"ord": f[1], "h": f[2], "sv": f[3]}
+            else: over[f[0]] = {"ord": f[1], "sv": f[2]}
         kort = []
         poster = [dict(m, id=i, **{k: v for k, v in over[i].items() if v or k != "sv"}) if i in over else None
                   for i, m in master.items()]
@@ -161,7 +167,6 @@ def las(lang):
             if front.lower() in sedda: fel.append(f"{stam}: framsidan '{front}' finns redan i {sedda[front.lower()]}")
             sedda[front.lower()] = stam
             k = {"f": front, "b": p["sv"], "p": p["p"]}
-            if p.get("h"): k["h"] = p["h"]
             if form: k["form"] = form
             kort.append(k)
         lektioner.append({"namn": namn.group(1).strip(), "kort": kort})

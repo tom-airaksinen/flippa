@@ -10,6 +10,9 @@
    type: "new" | "improved" | "fixed"   ·   hi: true = höjdpunkt (visas i "Vad är nytt")
    ico/desc används bara för höjdpunkter (kort-vyn). */
 const CHANGELOG = [
+  { date: "25 november 2026", ver: "v444", items: [
+    { t: "Det ukrainska paketet fyller inte längre i minnesregeln åt dig – den är din egen.", type: "fixed" },
+  ] },
   { date: "24 november 2026", ver: "v443", items: [
     { t: "Ukrainska har fått sitt första färdiga paket, på prov: flyg, tåg, båt och färja – 115 ord med verbformer och fraser.", type: "new" },
   ] },

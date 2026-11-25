@@ -23,9 +23,7 @@ Kropp/hälsa/apotek, Småprat & artighet, Nödsituationer. Totalt 447 ord.
 - **Lokal krydda byts ut, inte översätts.** Där rumänskan hade `ciorbă`, `mămăligă`,
   `sarmale`, `papanași` har spanskan `gazpacho`, `tortilla de patatas`, `paella`,
   `churros`, `jamón ibérico`, `bocadillo`, `flan`.
-- **Minnesregel används sparsamt**, bara där ett ord behöver förklaras för en svensk:
-  `la caña` (fatöl i litet glas), `la carta` mot `el menú` (meny mot dagens rätt),
-  `la tapa`, `el bocadillo`.
+- **Ingen minnesregel.** Fältet är inlärarens eget minnesknep och lämnas tomt. Ord som behöver förklaras för en svensk får förklaringen i översättningen.
 
 ## Så importeras det
 
