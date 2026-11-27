@@ -326,19 +326,19 @@ test("raden döljs i passinställningarna, inte bara reglaget", () => {
 
 grupp("Skärmhöjd (iOS standalone)");
 
-function hojd(innerHeight, bodyHeight) {
-  let satt = null;
+function hojd(innerHeight, bodyHeight, prov = null) {
+  let satt = null, glapp = null;
   const el = {
     style: {
-      setProperty: (k, v) => { if (k === "--app-h") satt = v; },
-      removeProperty: (k) => { if (k === "--app-h") satt = null; },
+      setProperty: (k, v) => { if (k === "--app-h") satt = v; if (k === "--vp-glapp") glapp = v; },
+      removeProperty: (k) => { if (k === "--app-h") satt = null; if (k === "--vp-glapp") glapp = null; },
     },
   };
   const g = sandlada([funktion("app.js", "latchAppHeight")],
-    { APP_H_TROSKEL: 24, window: { innerHeight },
+    { APP_H_TROSKEL: 24, window: { innerHeight }, hojdProv: !!prov, skarmMatt: () => prov,
       document: { documentElement: el, body: { getBoundingClientRect: () => ({ height: bodyHeight }) } } });
   g.latchAppHeight();
-  return satt;
+  return prov ? [satt, glapp] : satt;
 }
 
 test("för kort dvh rättas till skärmens verkliga höjd", () => {
@@ -368,6 +368,55 @@ test("mätningen görs utan vårt eget värde", () => {
 test("body hänger på --app-h med 100dvh som fallback", () => {
   sant(/min-height:\s*var\(--app-h,\s*100dvh\)/.test(las("style.css")),
        "utan fallbacken är layouten beroende av att JS hinner köra");
+});
+
+// v445: efter AI-kontext (extern sida i appens inbyggda webbläsare) kom Tom tillbaka
+// till en app som bara fyllde tre fjärdedelar av skärmen – och flikfältet, som är
+// fixed mot viewportens botten, satt lika högt upp. Då är FÖNSTRET för kort, inte bara
+// dvh, och latchAppHeight har inget att jämföra med. Öppen WebKit-bugg 244264.
+// Tills vi vet om ytan nedanför går att rita på finns bara mätning och ett manuellt prov.
+function matt({ standalone, innerHeight, innerWidth = 402 }) {
+  const g = sandlada([funktion("app.js", "skarmMatt")], {
+    window: { innerHeight, innerWidth, visualViewport: { height: innerHeight, offsetTop: 0 } },
+    screen: { height: 874, width: 402 }, navigator: { standalone },
+    matProb: () => innerHeight,
+    document: { body: { getBoundingClientRect: () => ({ height: innerHeight }) } },
+  });
+  return g.skarmMatt();
+}
+
+test("för kort fönster i hemskärmsappen mäts mot hela skärmen", () => {
+  const m = matt({ standalone: true, innerHeight: 700 });
+  lika([m.full, m.glapp], [874, 174]);
+});
+
+test("i en vanlig webbläsarflik är fönstret facit – verktygsfälten är inget glapp", () => {
+  const m = matt({ standalone: undefined, innerHeight: 700 });
+  lika([m.full, m.glapp], [700, 0]);
+});
+
+test("liggande läge jämförs inte med stående skärmhöjd", () => {
+  const m = matt({ standalone: true, innerHeight: 402, innerWidth: 874 });
+  lika(m.glapp, 0);
+});
+
+test("provet fyller skärmen och flyttar ner flikfältet", () => {
+  lika(hojd(700, 700, { full: 874, glapp: 174 }), ["874px", "174px"]);
+});
+
+test("provet rör ingenting när fönstret redan fyller skärmen", () => {
+  lika(hojd(874, 874, { full: 874, glapp: 0 }), [null, null]);
+});
+
+test("utan prov lämnas ett för kort fönster som det är", () => {
+  // Automatisk kompensation är inte verifierad på en riktig telefon – blir den fel
+  // hamnar knapparna utanför skärmen, vilket är värre än ett hoptryckt kort.
+  lika(hojd(700, 700), null);
+});
+
+test("flikfältet följer glappet", () => {
+  sant(/#tabbar\s*\{[^}]*bottom:\s*calc\(0px - var\(--vp-glapp, 0px\)\)/.test(las("style.css")),
+       "annars ligger flikfältet kvar mitt på skärmen när skalet fylls ut");
 });
 
 test("skärmbyte utan show() uppdaterar både flikfält och höjd", () => {

@@ -247,7 +247,8 @@ body {
    buggen där 100dvh resolvar för kort och en in-flow-bar annars flöt upp ~en cm.
    Innehållet (#app-main) reserverar barens höjd via --tabbar-h när den syns. */
 #tabbar {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  /* --vp-glapp är 0 utom under det manuella provet i Skärmmått (se skarmMatt i app.js) */
+  position: fixed; left: 0; right: 0; bottom: calc(0px - var(--vp-glapp, 0px)); z-index: 40;
   display: flex; justify-content: center; gap: 8px;
   background: var(--bg); border-top: 1px solid var(--line);
   /* --sab = latchat safe-area-bottom (växer bara) → ingen höjdglidning när iOS

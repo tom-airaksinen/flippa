@@ -1540,13 +1540,106 @@ const APP_H_TROSKEL = 24;
 function latchAppHeight() {
   const vh = Math.round(window.innerHeight);
   if (!vh) return;
+  const rot = document.documentElement.style;
   // Mät alltid UTAN vårt eget värde, annars jämför vi med oss själva och låser fast
   // en höjd som aldrig släpper när iOS väl börjat svara rätt.
-  document.documentElement.style.removeProperty("--app-h");
+  rot.removeProperty("--app-h");
+  rot.removeProperty("--vp-glapp");
   const faktisk = Math.round(document.body.getBoundingClientRect().height);
-  if (vh - faktisk > APP_H_TROSKEL) {
-    document.documentElement.style.setProperty("--app-h", vh + "px");
+  if (hojdProv) {
+    // Manuellt prov (Inställningar → Om → Skärmmått), se skarmMatt() nedan.
+    const m = skarmMatt();
+    if (m.glapp > APP_H_TROSKEL) {
+      rot.setProperty("--app-h", m.full + "px");
+      rot.setProperty("--vp-glapp", m.glapp + "px");
+      return;
+    }
   }
+  if (vh - faktisk > APP_H_TROSKEL) {
+    rot.setProperty("--app-h", vh + "px");
+  }
+}
+
+// --- Skärmmått: mätning och manuellt prov, INGEN automatik ---
+// Skyddet ovan räcker inte för den andra varianten av felet: efter en utflykt till en
+// extern sida i appens inbyggda webbläsare (AI-kontext, Bildsök) kan iOS lämna kvar
+// HELA fönstret för kort – innerHeight, dvh och allt som är fixed mot botten – så att
+// appen fyller ungefär tre fjärdedelar av skärmen tills telefonen vrids. Öppen
+// WebKit-bugg sedan 2022: https://bugs.webkit.org/show_bug.cgi?id=244264
+//
+// Då finns inget att jämföra innerHeight med, och ingen dokumenterad lagning. Att
+// blint sträcka ut skalet till screen.height vore en chansning: går ytan nedanför
+// inte att rita på hamnar knapparna utanför skärmen, vilket är värre än ett hoptryckt
+// kort. Därför bara det här tills en riktig telefon har svarat: raden Skärmmått under
+// Inställningar → Om visar måtten, och därifrån går två lagningar att prova för hand.
+let hojdProv = false;
+function matProb(css) {
+  const p = document.createElement("div");
+  p.style.cssText = "position:fixed;left:0;top:0;width:0;visibility:hidden;pointer-events:none;" + css;
+  document.body.appendChild(p);
+  const h = Math.round(p.getBoundingClientRect().height);
+  p.remove();
+  return h;
+}
+function skarmMatt() {
+  const vv = window.visualViewport;
+  const m = {
+    skarm: Math.round(screen.height),
+    fonster: Math.round(window.innerHeight),
+    synlig: vv ? Math.round(vv.height) : 0,
+    forskjut: vv ? Math.round(vv.offsetTop) : 0,
+    dvh: matProb("height:100dvh"), lvh: matProb("height:100lvh"), svh: matProb("height:100svh"),
+    fast: matProb("bottom:0"),
+    body: Math.round(document.body.getBoundingClientRect().height),
+    sab: matProb("height:env(safe-area-inset-bottom)"),
+  };
+  // Facit finns bara i hemskärmsappen på iOS i stående läge: där täcker webbvyn hela
+  // skärmen (statusraden är genomskinlig), så fönstret SKA vara lika högt som skärmen.
+  // I en vanlig flik äter verktygsfälten av höjden och fönstret är det som gäller.
+  // iOS rapporterar alltid skärmens stående mått, därav breddjämförelsen.
+  const helskarm = navigator.standalone === true && window.innerWidth === screen.width;
+  m.full = Math.max(m.fonster, helskarm ? m.skarm : 0);
+  m.glapp = m.full - m.fonster;
+  return m;
+}
+function skarmMattText(m) {
+  return `skärm ${m.skarm} · fönster ${m.fonster} · synlig ${m.synlig}${m.forskjut ? "+" + m.forskjut : ""}`
+    + ` · dvh ${m.dvh} · lvh ${m.lvh} · svh ${m.svh} · fast ${m.fast} · body ${m.body} · sab ${m.sab}`;
+}
+// Prov 1: få iOS att räkna om viewporten utan att telefonen vrids. Viewport-metan
+// byts och sätts tillbaka, och sidan knuffas en pixel (i buggrapporten rättar en
+// scrollning dvh). Ingen vet om det hjälper – det är det provet ska visa.
+function knuffaViewport() {
+  const meta = document.querySelector('meta[name="viewport"]');
+  if (!meta) return;
+  const c = meta.getAttribute("content");
+  meta.setAttribute("content", c.replace("viewport-fit=cover", "viewport-fit=auto"));
+  window.scrollTo(0, 1);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    meta.setAttribute("content", c);
+    window.scrollTo(0, 0);
+    latchAppHeight();
+  }));
+}
+// Raden syns för Tom alltid (för att kunna jämföra friskt läge med trasigt) och för
+// alla andra bara när fönstret faktiskt är för kort.
+function skarmMattRad() {
+  const m = skarmMatt();
+  if (currentUser !== "tom" && m.glapp <= APP_H_TROSKEL && !hojdProv) return "";
+  return `<button class="set-row" id="set-matt" type="button">
+        <span class="set-body"><span class="set-t">Skärmmått${hojdProv ? " · prov på" : ""}</span><span class="set-d${m.glapp > APP_H_TROSKEL ? " bad" : ""}">${esc(skarmMattText(m))}</span></span>
+        <span class="set-chev">›</span></button>`;
+}
+async function openSkarmMatt() {
+  const m = skarmMatt();
+  const val = await actionSheet("Skärmmått", [
+    { label: "Knuffa viewporten (prov 1)", value: "knuff" },
+    { label: hojdProv ? "Sluta fylla skärmen" : "Fyll skärmen (prov 2)", value: "fyll" },
+  ], skarmMattText(m) + (m.glapp > APP_H_TROSKEL ? ` – fönstret är ${m.glapp} för kort.` : " – fönstret fyller skärmen."));
+  if (val === "knuff") knuffaViewport();
+  if (val === "fyll") { hojdProv = !hojdProv; latchAppHeight(); updateTabbar(); }
+  // Rita om raden när iOS hunnit svara, så en skärmdump visar måtten EFTER provet.
+  if (val) setTimeout(() => { if (activeScreen === "settings") renderSettingsScreen(); }, 400);
 }
 
 latchSafeArea();
@@ -1692,8 +1785,10 @@ function renderSettingsScreen() {
     <div class="set-card">
       <button class="set-row" id="set-changelog" type="button">
         <span class="set-body"><span class="set-t">Vad är nytt</span><span class="set-d">Flippa ${APP_VERSION}${latestChangelogDate() ? " · senast " + latestChangelogDate() : ""}</span></span>
-        <span class="set-chev">›</span></button>
+        <span class="set-chev">›</span></button>${skarmMattRad()}
     </div>`;
+  const sm = $("set-matt");
+  if (sm) sm.onclick = openSkarmMatt;
   $("set-switch").onclick = pickUser;
   const scl = $("set-changelog");
   if (scl) scl.onclick = openChangelog;
@@ -7929,7 +8024,7 @@ function hfStartListening(resetTimer) {
 // =========================================================================
 //  PWA + start
 // =========================================================================
-const APP_VERSION = "v444";
+const APP_VERSION = "v445";
 const versionTag = $("version-tag"); // kan saknas om en gammal cachad index.html serveras
 let availableVersion = null; // version som ligger på servern, om den skiljer sig
 // Är appen sparad för offline? Går annars inte att veta förrän man står utan nät och
